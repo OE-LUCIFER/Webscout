@@ -14,13 +14,12 @@ setup(
     description="Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com and you.com Also containes AI models",
     long_description=README,
     long_description_content_type="text/markdown",
-    author="OEvortex",
+    author="OEvortex, Zaid",
     author_email="helpingai5@gmail.com",  # Replace with your email
-    url="https://github.com/OE-LUCIFER/Webscout",
     packages=find_packages(),
     classifiers=[
         "Development Status ::  5 - Production/Stable",
-        "License :: OSI Approved :: HelpingAI Simplified Universal License",  # Updated license classifier
+        "License :: OSI Approved :: HelpingAI Simplified Universal License",
         "Operating System :: OS Independent",
         "Programming Language :: Python ::  3",
         "Programming Language :: Python ::  3 :: Only",
@@ -58,5 +57,11 @@ setup(
             "pytest>=7.4.2",
         ],
     },
-    license='HelpingAI Simplified Universal License',  
+    license='HelpingAI Simplified Universal License',
+    project_urls={
+        'Documentation': 'https://github.com/OE-LUCIFER/Webscout/wiki',
+        'Source': 'https://github.com/OE-LUCIFER/Webscout',
+        'Tracker': 'https://github.com/OE-LUCIFER/Webscout/issues',
+        'YouTube': 'https://youtube.com/@OEvortex',
+    },
 )
