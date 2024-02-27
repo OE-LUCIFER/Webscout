@@ -4,8 +4,6 @@ Also containes AI models that you can use
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
-- [What is new](#what-is-new)
-- [What is next](#what-is-next)
 - [Install](#install)
 - [CLI version](#cli-version)
 - [CLI version of AI](#cli-version-of-ai)
@@ -24,19 +22,13 @@ Also containes AI models that you can use
   - [9. `PhindSearch` - Search using Phind.com](#9-phindsearch---search-using-phindcom)
   - [10. `YepChat` - Chat with mistral 8x7b powered by yepchat](#10-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
   - [11. `You.com` - search with you.com](#11-youcom---search-with-youcom)
+  - [12. `Gemini` - search with google gemini](#12-gemini---search-with-google-gemini)
+- [Version History](#version-history)
+  - [v1.0.7](#v107)
+  - [v1.0.6](#v106)
 
-## What is new 
-- Added yep.com as search engine.
-- solved a error where translate was not working.
-- Added Phind AI as webscout.AI
-- Added YepChat as webscout.AI 
-- Added You.com as webscout.AI
-## What is next
-- adding more AI models or fuctions
-- 
 ## Install
-
-```python3
+```python
 pip install -U webscout
 ```
 
@@ -47,7 +39,7 @@ python -m webscout --help
 ```
 ## CLI version of AI
 
-```python
+```python3
 python -m webscout.AI phindsearch --query "your_query_here"
 ```
 
@@ -57,6 +49,10 @@ python -m webscout.AI yepchat --message "your_message_here"
 
 ```python
 python -m webscout.AI youchat --prompt "your_prompt_here"
+```
+
+```python
+python -m  webscout.AI gemini --message "tell me about gemma 7b"
 ```
 
 [Go To TOP](#TOP)
@@ -378,3 +374,30 @@ while True:
     except Exception as e:
         print("⚠️ An error occurred:", e)
 ```
+
+### 12. `Gemini` - search with google gemini
+
+```python
+from webscout.AI import Gemini
+
+# Create an instance of the Gemini class
+gemini = Gemini()
+
+# Use the chat method to send a message to the Gemini assistant
+response = gemini.chat("Your message here")
+
+# Print the response from the Gemini assistant
+print(response)
+```
+
+## Version History
+
+### v1.0.7
+- Added gemini as webscout.AI
+
+### v1.0.6
+- Added yep.com as a search engine
+- Fixed an error related to translation functionality
+- Introduced Phind AI as webscout.AI
+- Included YepChat as webscout.AI
+- Integrated You.com as webscout.AI
