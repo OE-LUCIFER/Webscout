@@ -37,6 +37,19 @@ pip install -U webscout
 ```python3
 python -m webscout --help
 ```
+
+| Command                                   | Description                                                                                           |
+|-------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| python -m webscout answers -k Text        | CLI function to perform an answers search using Webscout.                                       |
+| python -m webscout images -k Text         | CLI function to perform an images search using Webscout.                                        |
+| python -m webscout maps -k Text           | CLI function to perform a maps search using Webscout.                                           |
+| python -m webscout news -k Text           | CLI function to perform a news search using Webscout.                                           |
+| python -m webscout suggestions  -k Text   | CLI function to perform a suggestions search using Webscout.                                    |
+| python -m webscout text -k Text           | CLI function to perform a text search using Webscout.                                           |
+| python -m webscout translate -k Text      | CLI function to perform translate using Webscout.                                               |
+| python -m webscout version                | A command-line interface command that prints and returns the version of the program.            | 
+| python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |  
+
 ## CLI version of AI
 
 ```python3
