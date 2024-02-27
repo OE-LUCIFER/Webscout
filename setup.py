@@ -14,9 +14,9 @@ setup(
     description="Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com and you.com Also containes AI models",
     long_description=README,
     long_description_content_type="text/markdown",
-    author="OEvortex, Zaid",
+    author="OEvortex",
     author_email="helpingai5@gmail.com",  # Replace with your email
-    # url="https://github.com/HelpingAI/webscout",
+    url="https://github.com/OE-LUCIFER/Webscout",
     packages=find_packages(),
     classifiers=[
         "Development Status ::  5 - Production/Stable",
@@ -58,5 +58,5 @@ setup(
             "pytest>=7.4.2",
         ],
     },
-    license='HelpingAI Simplified Universal License',  # Specify your license here
+    license='HelpingAI Simplified Universal License',  
 )
