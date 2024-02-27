@@ -10,7 +10,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="webscout",
-    version="1.0.7",
+    version="1.0.7", # Use the version variable from the version.py file
     description="Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com and you.com Also containes AI models",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -18,19 +18,17 @@ setup(
     author_email="helpingai5@gmail.com",  # Replace with your email
     packages=find_packages(),
     classifiers=[
-        "Development Status ::  5 - Production/Stable",
-        "License :: OSI Approved :: HelpingAI Simplified Universal License",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python ::  3",
-        "Programming Language :: Python ::  3 :: Only",
-        "Programming Language :: Python ::  3.8",
-        "Programming Language :: Python ::  3.9",
-        "Programming Language :: Python ::  3.10",
-        "Programming Language :: Python ::  3.11",
-        "Programming Language :: Python ::  3.12",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
-        "Topic :: Software Development :: Libraries :: Python Modules",
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: Other/Proprietary License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Topic :: Internet :: WWW/HTTP :: Indexing/Search',
+        'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     install_requires=[
         "docstring_inheritance>=2.1.2",
@@ -49,7 +47,7 @@ setup(
             "WEBS = webscout.cli:cli",
             "webscout-ai-phindsearch = webscout.AI:phindsearch",
             "webscout-ai-yepchat = webscout.AI:yepchat",
-            "webscout-ai = webscout.AI:cli",      
+            "webscout-ai = webscout.AI:cli",
         ],
     },
     extras_require={
@@ -58,7 +56,7 @@ setup(
             "pytest>=7.4.2",
         ],
     },
-    license='HelpingAI Simplified Universal License',
+    license='HelpingAI Simplified Universal License',  # Specify your custom license here
     project_urls={
         'Documentation': 'https://github.com/OE-LUCIFER/Webscout/wiki',
         'Source': 'https://github.com/OE-LUCIFER/Webscout',
