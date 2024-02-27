@@ -35,7 +35,8 @@ Also containes AI models that you can use
 - adding more AI models or fuctions
 - 
 ## Install
-```python
+
+```python3
 pip install -U webscout
 ```
 
@@ -46,7 +47,7 @@ python -m webscout --help
 ```
 ## CLI version of AI
 
-``python3
+```python
 python -m webscout.AI phindsearch --query "your_query_here"
 ```
 
