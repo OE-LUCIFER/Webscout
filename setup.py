@@ -42,6 +42,7 @@ setup(
         "tqdm>=4.64.0",
         "webdriver-manager>=3.5.4",
         "halo>=0.0.31",
+        "g4f>=0.2.2.3",
     ],
     entry_points={
         "console_scripts": [
