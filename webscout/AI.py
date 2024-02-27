@@ -13,6 +13,7 @@ from uuid import uuid4
 from re import findall
 from requests.exceptions import RequestException
 from curl_cffi.requests import get, RequestsError
+import g4f
 class PhindSearch:
     def __init__(self, query):
         self.query = query
@@ -168,7 +169,44 @@ class youChat:
         you_chat = youChat()
         completion = you_chat.create(prompt)
         print(completion)
+        
+class Gemini:
+    def __init__(self):
+        self.messages = [
+            {
+                "role": "system",
+                "content": "You are a helpful assistant.",
+            }
+        ]
 
+    def chat(self, *args):
+        assert args != ()
+
+        message = ""
+        for i in args:
+            message += i
+
+        self.messages.append({"role": "user", "content": message})
+
+        response = g4f.ChatCompletion.create(
+            model=g4f.models.default,
+            provider=g4f.Provider.Gemini,
+            messages=self.messages,
+            stream=True,
+        )
+        ms = ""
+        for message in response:
+            ms += message
+            print(message, end="", flush=True)
+        print()
+        self.messages.append({"role": "assistant", "content": ms})
+        return ms
+
+    @staticmethod
+    def chat_cli(message):
+        """Generate completion based on the provided message"""
+        gemini = Gemini()
+        gemini.chat(message)
 
 @click.group()
 def cli():
@@ -188,6 +226,11 @@ def yepchat(message):
 @click.option('--prompt', prompt='Enter your prompt', help='The prompt to generate a completion from.')
 def youchat(prompt):
     youChat.chat_cli(prompt)
+
+@cli.command()
+@click.option('--message', prompt='Enter your message', help='The message to send.')
+def gemini(message):
+    Gemini.chat_cli(message)
 
 if __name__ == '__main__':
     cli()
