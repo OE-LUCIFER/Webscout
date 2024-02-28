@@ -44,7 +44,7 @@ class PhindSearch:
 
             for text in paragraph_texts:
                 spinner.stop()
-                print(text)
+                return text
 
         finally:
             self.driver.quit()
@@ -193,8 +193,6 @@ class Gemini:
         ms = ""
         for message in response:
             ms += message
-        print(ms.strip(), end="", flush=True) # Ensure no trailing whitespace is printed
-        print()
         self.messages.append({"role": "assistant", "content": ms.strip()}) # Strip whitespace from the message content
         return ms.strip() # Return the message without trailing whitespace
 
@@ -202,7 +200,7 @@ class Gemini:
     def chat_cli(message):
         """Generate completion based on the provided message"""
         gemini = Gemini()
-        gemini.chat(message)
+        return gemini.chat(message)
 #------------------------------------------------Prodia-------------------------------------------------------------------------
 class Prodia:
     """
