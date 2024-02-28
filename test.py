@@ -1,19 +1,7 @@
-from webscout.AI import youChat
+from webscout.AI import Prodia
 
-# Instantiate the youchat class
-youChat = youChat()
+# Define a prompt for the image generation
+prompt = "A beautiful sunset over the ocean"
 
-while True:
-    # Ask the user for a prompt
-    prompt = input("💡 Enter a prompt (or type 'exit' to quit): ")
-    
-    # Exit condition
-    if prompt.lower() == 'exit':
-        break
-    
-    # Generate a completion based on the prompt
-    try:
-        completion = youChat.create(prompt)
-        print("💬:", completion)
-    except Exception as e:
-        print("⚠️ An error occurred:", e)
+# Use the prodia_cli method to generate an image based on the prompt
+Prodia.prodia_cli(prompt)

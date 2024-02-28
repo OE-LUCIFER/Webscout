@@ -23,7 +23,10 @@ Also containes AI models that you can use
   - [10. `YepChat` - Chat with mistral 8x7b powered by yepchat](#10-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
   - [11. `You.com` - search with you.com](#11-youcom---search-with-youcom)
   - [12. `Gemini` - search with google gemini](#12-gemini---search-with-google-gemini)
+  - [13. `Prodia` - make image using prodia](#13-prodia---make-image-using-prodia)
 - [Version History](#version-history)
+  - [v1.0.9](#v109)
+  - [v1.0.8](#v108)
   - [v1.0.7](#v107)
   - [v1.0.6](#v106)
 
@@ -68,6 +71,9 @@ python -m webscout.AI youchat --prompt "your_prompt_here"
 python -m  webscout.AI gemini --message "tell me about gemma 7b"
 ```
 
+```python
+python -m webscout.AI prodia --prompt "car"
+```
 [Go To TOP](#TOP)
 
 ## Regions
@@ -414,9 +420,22 @@ response = gemini.chat("Your message here")
 # Print the response from the Gemini assistant
 print(response)
 ```
+### 13. `Prodia` - make image using prodia
+```python
+from webscout.AI import Prodia
+
+# Define a prompt for the image generation
+prompt = "A beautiful sunset over the ocean"
+
+# Use the prodia_cli method to generate an image based on the prompt
+Prodia.prodia_cli(prompt)
+```
 
 ## Version History
 
+### v1.0.9
+- Added Prodia as image generator in webscout.AI
+- 
 ### v1.0.8
 - Solved issue related to Gemini and Yep Chat functions in the Webscout package. 🌟
    Now, Gemini function returns correct outputs without duplication.
