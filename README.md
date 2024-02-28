@@ -361,8 +361,20 @@ WEBSAI.search()
 Thanks To Divyansh Shukla for This code
 ```python
 from webscout.AI import YepChat
-# Example usage of the chat_cli method
-YepChat.chat_cli("Hello, how can I help you today?")
+
+def main():
+    # Initialize the YepChat class with your message
+    yep_chat = YepChat(message="who is pm of india")
+    
+    # Send the request and process the response
+    response = yep_chat.send_request()
+    processed_response = yep_chat.process_response(response)
+    
+    # Print the processed response
+    print(processed_response)
+
+if __name__ == "__main__":
+    main()
 ```
 
 ### 11. `You.com` - search with you.com
@@ -404,6 +416,11 @@ print(response)
 ```
 
 ## Version History
+
+### v1.0.8
+- Solved issue related to Gemini and Yep Chat functions in the Webscout package. 🌟
+   Now, Gemini function returns correct outputs without duplication.
+   Yep Chat function provides accurate responses without repeating them multiple times. 🚀
 
 ### v1.0.7
 - Added gemini as webscout.AI
