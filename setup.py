@@ -10,7 +10,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="webscout",
-    version="1.0.9", # Use the version variable from the version.py file
+    version="1.1.1", # Use the version variable from the version.py file
     description="Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com and you.com Also containes AI models",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -48,6 +48,7 @@ setup(
             "webscout-ai-phindsearch = webscout.AI:phindsearch",
             "webscout-ai-yepchat = webscout.AI:yepchat",
             "webscout-ai = webscout.AI:cli",
+            "webscout-llm = webscout.LLM:chat",
         ],
     },
     extras_require={

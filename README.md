@@ -6,11 +6,12 @@ Also containes AI models that you can use
 - [Table of Contents](#table-of-contents)
 - [Install](#install)
 - [CLI version](#cli-version)
-- [CLI version of AI](#cli-version-of-ai)
+- [CLI version of webscout.AI](#cli-version-of-webscoutai)
+- [CLI to use LLM](#cli-to-use-llm)
 - [Regions](#regions)
 - [WEBS and AsyncWEBS classes](#webs-and-asyncwebs-classes)
 - [Exceptions](#exceptions)
-- [usage](#usage)
+- [usage of webscout](#usage-of-webscout)
   - [1. `text()` - text search by DuckDuckGo.com and Yep.com](#1-text---text-search-by-duckduckgocom-and-yepcom)
   - [2. `answers()` - instant answers by DuckDuckGo.com and Yep.com](#2-answers---instant-answers-by-duckduckgocom-and-yepcom)
   - [3. `images()` - image search by DuckDuckGo.com and Yep.com](#3-images---image-search-by-duckduckgocom-and-yepcom)
@@ -19,12 +20,17 @@ Also containes AI models that you can use
   - [6. `maps()` - map search by DuckDuckGo.com and](#6-maps---map-search-by-duckduckgocom-and)
   - [7. `translate()` - translation by DuckDuckGo.com and Yep.com](#7-translate---translation-by-duckduckgocom-and-yepcom)
   - [8. `suggestions()` - suggestions by DuckDuckGo.com and Yep.com](#8-suggestions---suggestions-by-duckduckgocom-and-yepcom)
-  - [9. `PhindSearch` - Search using Phind.com](#9-phindsearch---search-using-phindcom)
-  - [10. `YepChat` - Chat with mistral 8x7b powered by yepchat](#10-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
-  - [11. `You.com` - search with you.com](#11-youcom---search-with-youcom)
-  - [12. `Gemini` - search with google gemini](#12-gemini---search-with-google-gemini)
-  - [13. `Prodia` - make image using prodia](#13-prodia---make-image-using-prodia)
+- [usage of webscout.AI](#usage-of-webscoutai)
+  - [1. `PhindSearch` - Search using Phind.com](#1-phindsearch---search-using-phindcom)
+  - [2. `YepChat` - Chat with mistral 8x7b powered by yepchat](#2-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
+  - [3. `You.com` - search with you.com](#3-youcom---search-with-youcom)
+  - [4. `Gemini` - search with google gemini](#4-gemini---search-with-google-gemini)
+- [usage of image generator from Webscout.AI](#usage-of-image-generator-from-webscoutai)
+  - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
+- [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
+  - [`LLM`](#llm)
 - [Version History](#version-history)
+  - [v1.1.0](#v110)
   - [v1.0.9](#v109)
   - [v1.0.8](#v108)
   - [v1.0.7](#v107)
@@ -53,26 +59,22 @@ python -m webscout --help
 | python -m webscout version                | A command-line interface command that prints and returns the version of the program.            | 
 | python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |  
 
-## CLI version of AI
+## CLI version of webscout.AI
 
-```python3
-python -m webscout.AI phindsearch --query "your_query_here"
-```
 
+| Command                                    | Description                                                                                            |
+|--------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| `python -m webscout.AI phindsearch --query "your_query_here"` | CLI function to perform a search query using Webscout.AI's Phindsearch feature.              |
+| `python -m webscout.AI yepchat --message "your_message_here"`   | CLI function to send a message using Webscout.AI's Yepchat feature.                             |
+| `python -m webscout.AI youchat --prompt "your_prompt_here"`     | CLI function to generate a response based on a prompt using Webscout.AI's Youchat feature.      |
+| `python -m webscout.AI gemini --message "tell me about gemma 7b"` | CLI function to get information about a specific topic using Webscout.AI's Gemini feature.    |
+| `python -m webscout.AI prodia --prompt "car"`                   | CLI function to generate content related to a prompt using Webscout.AI's Prodia feature.        |
+
+
+
+## CLI to use LLM 
 ```python
-python -m webscout.AI yepchat --message "your_message_here"
-```
-
-```python
-python -m webscout.AI youchat --prompt "your_prompt_here"
-```
-
-```python
-python -m  webscout.AI gemini --message "tell me about gemma 7b"
-```
-
-```python
-python -m webscout.AI prodia --prompt "car"
+python -m webscout.LLM model_name
 ```
 [Go To TOP](#TOP)
 
@@ -223,8 +225,7 @@ This ensures proper resource management and cleanup, as the context manager will
 Exceptions:
 - `WebscoutE`: Raised when there is a generic exception during the API request.
 
-## usage
-Here are the rewritten Python scripts for accessing various functionalities using the WEBS class from the webscout module, in HelpingAI style, for DuckDuckGo.com and Yep.com without explicitly specifying the search engine:
+## usage of webscout
 
 ### 1. `text()` - text search by DuckDuckGo.com and Yep.com
 
@@ -264,11 +265,10 @@ with WEBS() as WEBS:
       region="wt-wt",
       safesearch="off",
       size=None,
-      color="Monochrome",
       type_image=None,
       layout=None,
       license_image=None,
-      max_results=100,
+      max_results=10,
     )
     for r in WEBS_images_gen:
         print(r)
@@ -289,7 +289,7 @@ with WEBS() as WEBS:
       timelimit="w",
       resolution="high",
       duration="medium",
-      max_results=100,
+      max_results=10,
     )
     for r in WEBS_videos_gen:
         print(r)
@@ -343,15 +343,13 @@ with WEBS() as WEBS:
 from webscout import WEBS
 
 # Suggestions for the keyword 'fly' using DuckDuckGo.com and Yep
-# 
-
-.com
 with WEBS() as WEBS:
     for r in WEBS.suggestions("fly"):
         print(r)
 ```
+## usage of webscout.AI
 
-### 9. `PhindSearch` - Search using Phind.com 
+### 1. `PhindSearch` - Search using Phind.com 
 Thanks to Empyros for PhindSearch function
 ```python
 from webscout.AI import PhindSearch
@@ -363,7 +361,7 @@ WEBSAI = PhindSearch(query)
 
 WEBSAI.search()
 ```
-### 10. `YepChat` - Chat with mistral 8x7b powered by yepchat
+### 2. `YepChat` - Chat with mistral 8x7b powered by yepchat
 Thanks To Divyansh Shukla for This code
 ```python
 from webscout.AI import YepChat
@@ -383,7 +381,7 @@ if __name__ == "__main__":
     main()
 ```
 
-### 11. `You.com` - search with you.com
+### 3. `You.com` - search with you.com
 ```python
 from webscout.AI import youChat
 
@@ -406,7 +404,7 @@ while True:
         print("⚠️ An error occurred:", e)
 ```
 
-### 12. `Gemini` - search with google gemini
+### 4. `Gemini` - search with google gemini
 
 ```python
 from webscout.AI import Gemini
@@ -420,7 +418,8 @@ response = gemini.chat("Your message here")
 # Print the response from the Gemini assistant
 print(response)
 ```
-### 13. `Prodia` - make image using prodia
+##  usage of image generator from Webscout.AI
+### 5. `Prodia` - make image using prodia
 ```python
 from webscout.AI import Prodia
 
@@ -430,23 +429,40 @@ prompt = "A beautiful sunset over the ocean"
 # Use the prodia_cli method to generate an image based on the prompt
 Prodia.prodia_cli(prompt)
 ```
+## usage of special .LLM file from webscout (webscout.LLM)
+
+### `LLM`
+```python
+from webscout.LLM import LLM
+
+def chat(model_name):
+    AI = LLM(model_name)
+    AI.chat()
+
+if __name__ == "__main__":
+    model_name = "mistralai/Mistral-7B-Instruct-v0.1" # name of the model you wish to use It supports ALL text generation models on deepinfra.com.
+    chat(model_name)
+```
 
 ## Version History
+### v1.1.0
+🌟 Added LLMs as webscout.LLM  
+🔧 Resolved issue related to Prodia functionality
 
 ### v1.0.9
-- Added Prodia as image generator in webscout.AI
-- 
+🌌 Added Prodia as an image generator in webscout.AI
+
 ### v1.0.8
-- Solved issue related to Gemini and Yep Chat functions in the Webscout package. 🌟
-   Now, Gemini function returns correct outputs without duplication.
-   Yep Chat function provides accurate responses without repeating them multiple times. 🚀
+🚀 Solved issues related to Gemini and Yep Chat functions within the Webscout package.  
+🌟 Gemini function now provides correct outputs without duplication.  
+🌟 Yep Chat function delivers accurate responses without repeating them multiple times.
 
 ### v1.0.7
-- Added gemini as webscout.AI
+🌟 Added Gemini as part of webscout.AI
 
 ### v1.0.6
-- Added yep.com as a search engine
-- Fixed an error related to translation functionality
-- Introduced Phind AI as webscout.AI
-- Included YepChat as webscout.AI
-- Integrated You.com as webscout.AI
+🌟 Integrated yep.com as a search engine  
+🔧 Resolved error associated with the translation feature  
+🌟 Introduced Phind AI within webscout.AI  
+🌟 Included YepChat as part of webscout.AI  
+🌟 Integrated You.com as part of webscout.AI

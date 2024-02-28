@@ -267,7 +267,7 @@ class Prodia:
             image.show()
         except Exception as e:
             print(f"An error occurred: {e}")
-            
+#-------------------------------------------------------Pollination--------------------------------------------------------------------------------------
 class Pollinations:
     """
     This class provides methods for generating images based on prompts.
