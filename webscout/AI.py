@@ -14,6 +14,7 @@ from re import findall
 from requests.exceptions import RequestException
 from curl_cffi.requests import get, RequestsError
 import g4f
+#------------------------------------------------------phind--------------------------------------------------------   
 class PhindSearch:
     def __init__(self, query):
         self.query = query
@@ -52,7 +53,7 @@ class PhindSearch:
         """Use webscout.AI."""
         search_instance = PhindSearch(query)
         search_instance.search()
-
+#------------------------------------------------------yep.com--------------------------------------------------------   
 class YepChat:
     def __init__(self, message="hello"):
         self.url = "https://api.yep.com/v1/chat/completions"
@@ -97,11 +98,9 @@ class YepChat:
                 try:
                     myval = eval(myline)
                     if "choices" in myval and "delta" in myval["choices"][0] and "content" in myval["choices"][0]["delta"]:
-                        print(myval["choices"][0]["delta"]["content"], flush=True, end="")
                         myset += myval["choices"][0]["delta"]["content"]
                 except:
                     continue
-        print(myset)
         return myset
 
     @staticmethod
@@ -109,8 +108,9 @@ class YepChat:
         """Sends a request to the Yep API and processes the response."""
         yep_chat = YepChat(message=message)
         response = yep_chat.send_request()
-        yep_chat.process_response(response)
-
+        processed_response = yep_chat.process_response(response)
+        print(processed_response)
+#------------------------------------------------------youchat--------------------------------------------------------   
 class youChat:
     """
     This class provides methods for generating completions based on prompts.
@@ -169,23 +169,15 @@ class youChat:
         you_chat = youChat()
         completion = you_chat.create(prompt)
         print(completion)
-        
+#------------------------------------------------------Gemini--------------------------------------------------------        
 class Gemini:
     def __init__(self):
-        self.messages = [
-            {
-                "role": "system",
-                "content": "You are a helpful assistant.",
-            }
-        ]
+        self.messages = []
 
     def chat(self, *args):
         assert args != ()
 
-        message = ""
-        for i in args:
-            message += i
-
+        message = " ".join(args)
         self.messages.append({"role": "user", "content": message})
 
         response = g4f.ChatCompletion.create(
@@ -197,10 +189,10 @@ class Gemini:
         ms = ""
         for message in response:
             ms += message
-            print(message, end="", flush=True)
+        print(ms.strip(), end="", flush=True) # Ensure no trailing whitespace is printed
         print()
-        self.messages.append({"role": "assistant", "content": ms})
-        return ms
+        self.messages.append({"role": "assistant", "content": ms.strip()}) # Strip whitespace from the message content
+        return ms.strip() # Return the message without trailing whitespace
 
     @staticmethod
     def chat_cli(message):
