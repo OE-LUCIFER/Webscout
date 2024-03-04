@@ -1,8 +1,9 @@
-from webscout.AI import PhindSearch
+from webscout.LLM import LLM
 
-query = 'Webscout pypi'
+def chat(model_name, system_message="You are Jarvis"):
+    AI = LLM(model_name, system_message)
+    AI.chat()
 
-# Create an instance of WEBSAI with the query
-WEBSAI = PhindSearch(query)
-
-WEBSAI.search()
+if __name__ == "__main__":
+    model_name = "mistralai/Mistral-7B-Instruct-v0.1" # name of the model you wish to use It supports ALL text generation models on deepinfra.com.
+    chat(model_name)

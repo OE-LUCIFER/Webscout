@@ -74,7 +74,7 @@ python -m webscout --help
 
 ## CLI to use LLM 
 ```python
-python -m webscout.LLM model_name
+python -m webscout.LLM model_name 
 ```
 [Go To TOP](#TOP)
 

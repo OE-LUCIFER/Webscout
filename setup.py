@@ -10,7 +10,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="webscout",
-    version="1.1.1", # Use the version variable from the version.py file
+    version="1.1.4", # Use the version variable from the version.py file
     description="Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com and you.com Also containes AI models",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -41,6 +41,8 @@ setup(
         "webdriver-manager>=3.5.4",
         "halo>=0.0.31",
         "g4f>=0.2.2.3",
+        "rich",
+        "python-dotenv",
     ],
     entry_points={
         "console_scripts": [
