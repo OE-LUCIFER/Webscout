@@ -1,6 +1,6 @@
 from webscout.LLM import LLM
 
-def chat(model_name, system_message="You are Jarvis"):
+def chat(model_name, system_message="You are Jarvis"):# system prompt
     AI = LLM(model_name, system_message)
     AI.chat()
 
