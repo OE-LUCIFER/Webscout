@@ -192,6 +192,7 @@ If an error occurs during the search, the server will return a JSON response wit
 ## License
 
 This project is licensed under the [HelpingAI Simplified Universal License](https://raw.githubusercontent.com/OE-LUCIFER/Webscout/main/LICENSE.md).
+# IN python projects
 ## CLI version
 
 ```python3
