@@ -17,6 +17,7 @@ Also containes AI models that you can use
   - [Response Format](#response-format)
   - [Error Handling](#error-handling)
   - [License](#license)
+- [IN python projects](#in-python-projects)
   - [CLI version](#cli-version)
   - [CLI version of webscout.AI](#cli-version-of-webscoutai)
   - [CLI to use LLM](#cli-to-use-llm)
