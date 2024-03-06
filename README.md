@@ -29,12 +29,6 @@ Also containes AI models that you can use
   - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
 - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
   - [`LLM`](#llm)
-- [Version History](#version-history)
-  - [v1.1.0](#v110)
-  - [v1.0.9](#v109)
-  - [v1.0.8](#v108)
-  - [v1.0.7](#v107)
-  - [v1.0.6](#v106)
 
 ## Install
 ```python
@@ -74,7 +68,7 @@ python -m webscout --help
 
 ## CLI to use LLM 
 ```python
-python -m webscout.LLM model_name
+python -m webscout.LLM model_name 
 ```
 [Go To TOP](#TOP)
 
@@ -435,34 +429,11 @@ Prodia.prodia_cli(prompt)
 ```python
 from webscout.LLM import LLM
 
-def chat(model_name):
-    AI = LLM(model_name)
+def chat(model_name, system_message="You are Jarvis"):# system prompt
+    AI = LLM(model_name, system_message)
     AI.chat()
 
 if __name__ == "__main__":
     model_name = "mistralai/Mistral-7B-Instruct-v0.1" # name of the model you wish to use It supports ALL text generation models on deepinfra.com.
     chat(model_name)
 ```
-
-## Version History
-### v1.1.0
-🌟 Added LLMs as webscout.LLM  
-🔧 Resolved issue related to Prodia functionality
-
-### v1.0.9
-🌌 Added Prodia as an image generator in webscout.AI
-
-### v1.0.8
-🚀 Solved issues related to Gemini and Yep Chat functions within the Webscout package.  
-🌟 Gemini function now provides correct outputs without duplication.  
-🌟 Yep Chat function delivers accurate responses without repeating them multiple times.
-
-### v1.0.7
-🌟 Added Gemini as part of webscout.AI
-
-### v1.0.6
-🌟 Integrated yep.com as a search engine  
-🔧 Resolved error associated with the translation feature  
-🌟 Introduced Phind AI within webscout.AI  
-🌟 Included YepChat as part of webscout.AI  
-🌟 Integrated You.com as part of webscout.AI
