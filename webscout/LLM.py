@@ -4,9 +4,9 @@ import json
 from typing import List, Dict, Union
 
 class LLM:
-    def __init__(self, model: str):
+    def __init__(self, model: str, system_message: str = "You are a Helpful AI."):
         self.model = model
-        self.conversation_history = [{"role": "system", "content": "You are a Helpful AI."}]
+        self.conversation_history = [{"role": "system", "content": system_message}]
 
     def mistral_chat(self, messages: List[Dict[str, str]]) -> Union[str, None]:
         url = "https://api.deepinfra.com/v1/openai/chat/completions"
@@ -33,9 +33,9 @@ class LLM:
                 'model': self.model,
                 'messages': messages,
                 'temperature': 0.7,
-                'max_tokens': 4028,
+                'max_tokens': 8028,
                 'stop': [],
-                'stream': False
+                'stream': False #dont change it
             }, separators=(',', ':')
         )
         try:
@@ -61,7 +61,8 @@ if __name__ == "__main__":
                                                                      'python -m webscout.LLM model_name\n'
                                                                      'Replace "model_name" with the name of the model you wish to use It supports ALL text generation models on deepinfra.com.')
     parser.add_argument('model', type=str, help='Model to use for text generation. Specify the full model name, e.g., "mistralai/Mistral-7B-Instruct-v0.1".')
+    parser.add_argument('--system-message', type=str, default="You are a Helpful AI.", help='Custom system prompt for the AI.')
     args = parser.parse_args()
 
-    LLM = LLM(args.model)
+    LLM = LLM(args.model, args.system_message)
     LLM.chat()
