@@ -33,9 +33,9 @@ class LLM:
                 'model': self.model,
                 'messages': messages,
                 'temperature': 0.7,
-                'max_tokens': 4028,
+                'max_tokens': 8028,
                 'stop': [],
-                'stream': False
+                'stream': False #dont change it
             }, separators=(',', ':')
         )
         try:
@@ -61,7 +61,7 @@ if __name__ == "__main__":
                                                                      'python -m webscout.LLM model_name\n'
                                                                      'Replace "model_name" with the name of the model you wish to use It supports ALL text generation models on deepinfra.com.')
     parser.add_argument('model', type=str, help='Model to use for text generation. Specify the full model name, e.g., "mistralai/Mistral-7B-Instruct-v0.1".')
-    parser.add_argument('--system-message', type=str, default="You are a Helpful AI.", help='Custom system message for the AI.')
+    parser.add_argument('--system-message', type=str, default="You are a Helpful AI.", help='Custom system prompt for the AI.')
     args = parser.parse_args()
 
     LLM = LLM(args.model, args.system_message)
