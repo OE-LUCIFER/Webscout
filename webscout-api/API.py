@@ -16,10 +16,10 @@ def search_text():
     timelimit = request.args.get('timelimit', None)
     safesearch = request.args.get('safesearch', 'moderate')
     region = request.args.get('region', 'wt-wt')
-
+    WEBS_instance = WEBS() # Instantiate WEBS without context manager
     results = []
     with WEBS() as webs:
-        for result in webs.text(query, max_results=max_results, timelimit=timelimit, safesearch=safesearch, region=region):
+        for result in enumerate(WEBS_instance.text(query, max_results=max_results, timelimit=timelimit, safesearch=safesearch, region=region)):
             results.append(result)
 
     return jsonify({'results': results})
@@ -31,9 +31,10 @@ def search_images():
     max_results = request.args.get('max_results', 10, type=int)
     safesearch = request.args.get('safesearch', 'moderate')
     region = request.args.get('region', 'wt-wt')
+    WEBS_instance = WEBS()
     results = []
     with WEBS() as webs:
-        for result in webs.images(query, max_results=max_results, safesearch=safesearch, region=region):
+        for result in enumerate(WEBS_instance.images(query, max_results=max_results, safesearch=safesearch, region=region)):
             results.append(result)
 
     return jsonify({'results': results})
@@ -47,10 +48,10 @@ def search_videos():
     timelimit = request.args.get('timelimit', None)
     resolution = request.args.get('resolution', None)
     duration = request.args.get('duration', None)
-
+    WEBS_instance = WEBS()
     results = []
     with WEBS() as webs:
-        for result in webs.videos(query, max_results=max_results, safesearch=safesearch, region=region, timelimit=timelimit, resolution=resolution, duration=duration):
+        for result in enumerate(WEBS_instance.videos(query, max_results=max_results, safesearch=safesearch, region=region, timelimit=timelimit, resolution=resolution, duration=duration)):
             results.append(result)
 
     return jsonify({'results': results})
@@ -62,10 +63,10 @@ def search_news():
     safesearch = request.args.get('safesearch', 'moderate')
     region = request.args.get('region', 'wt-wt')
     timelimit = request.args.get('timelimit', None)
-
+    WEBS_instance = WEBS()
     results = []
     with WEBS() as webs:
-        for result in webs.news(query, max_results=max_results, safesearch=safesearch, region=region, timelimit=timelimit):
+        for result in enumerate(WEBS_instance.news(query, max_results=max_results, safesearch=safesearch, region=region, timelimit=timelimit)):
             results.append(result)
 
     return jsonify({'results': results})
@@ -75,10 +76,10 @@ def search_maps():
     query = request.args.get('q', '')
     place = request.args.get('place', None)
     max_results = request.args.get('max_results', 10, type=int)
-
+    WEBS_instance = WEBS()
     results = []
     with WEBS() as webs:
-        for result in webs.maps(query, place=place, max_results=max_results):
+        for result in enumerate(WEBS_instance.maps(query, place=place, max_results=max_results)):
             results.append(result)
 
     return jsonify({'results': results})
@@ -87,9 +88,9 @@ def search_maps():
 def translate_text():
     query = request.args.get('q', '')
     to_lang = request.args.get('to', 'en')
-
+    WEBS_instance = WEBS()
     with WEBS() as webs:
-        translation = webs.translate(query, to=to_lang)
+        translation = enumerate(WEBS_instance.translate(query, to=to_lang))
 
     return jsonify({'translation': translation})
 
