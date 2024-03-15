@@ -1,69 +1,107 @@
 import asyncio
-import json
 import logging
-import sys
-from collections import deque
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from datetime import datetime, timezone
 from decimal import Decimal
-from itertools import cycle
-from typing import AsyncGenerator, Deque, Dict, Optional, Set, Tuple
+from functools import partial
+from itertools import cycle, islice
+from types import TracebackType
+from typing import Dict, List, Optional, Tuple, Union
 
 from curl_cffi import requests
 from lxml import html
 
 from .exceptions import WebscoutE
-from .models import MapsResult
-from .utils import _extract_vqd, _is_500_in_url, _normalize, _normalize_url, _text_extract_json
+from .utils import (
+    _calculate_distance,
+    _extract_vqd,
+    _is_500_in_url,
+    _normalize,
+    _normalize_url,
+    _text_extract_json,
+    json_loads,
+)
 
-logger = logging.getLogger("webscout.AsyncWEBS")
-# Not working on Windows, NotImplementedError (https://curl-cffi.readthedocs.io/en/latest/faq/)
-if sys.platform.lower().startswith("win"):
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+logger = logging.getLogger("AsyncWEBS")
 
 
 class AsyncWEBS:
-    """Webscout async class to get search results from duckduckgo.com."""
+    """webscout async class to get search results from duckduckgo.com."""
 
-    def __init__(self, headers=None, proxies=None, timeout=10) -> None:
+    _executor: Optional[ThreadPoolExecutor] = None
+
+    def __init__(
+        self,
+        headers: Optional[Dict[str, str]] = None,
+        proxies: Union[Dict[str, str], str, None] = None,
+        timeout: Optional[int] = 10,
+    ) -> None:
         """Initialize the AsyncWEBS object.
 
         Args:
             headers (dict, optional): Dictionary of headers for the HTTP client. Defaults to None.
             proxies (Union[dict, str], optional): Proxies for the HTTP client (can be dict or str). Defaults to None.
             timeout (int, optional): Timeout value for the HTTP client. Defaults to 10.
+
+        Raises:
+            webscoutE: Raised when there is a generic exception during the API request.
         """
-        self.proxies = proxies if proxies and isinstance(proxies, dict) else {"all": proxies}
+        self.proxies = {"all": proxies} if isinstance(proxies, str) else proxies
         self._asession = requests.AsyncSession(
             headers=headers, proxies=self.proxies, timeout=timeout, impersonate="chrome"
         )
         self._asession.headers["Referer"] = "https://duckduckgo.com/"
+        self._parser: Optional[html.HTMLParser] = None
 
     async def __aenter__(self) -> "AsyncWEBS":
         """A context manager method that is called when entering the 'with' statement."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self, exc_type: Optional[BaseException], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+    ) -> None:
         """Closes the session."""
-        return self._asession.close()
+        await self._asession.close()
 
-    async def _aget_url(self, method: str, url: str, **kwargs) -> Optional[requests.Response]:
+    def _get_parser(self) -> html.HTMLParser:
+        """Get HTML parser."""
+        if self._parser is None:
+            self._parser = html.HTMLParser(
+                remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False
+            )
+        return self._parser
+
+    def _get_executor(self, max_workers: int = 1) -> ThreadPoolExecutor:
+        """Get ThreadPoolExecutor. Default max_workers=1, because >=2 leads to a big overhead"""
+        if self._executor is None:
+            self._executor = ThreadPoolExecutor(max_workers=max_workers)
+        return self._executor
+
+    async def _aget_url(
+        self,
+        method: str,
+        url: str,
+        data: Optional[Union[Dict[str, str], bytes]] = None,
+        params: Optional[Dict[str, str]] = None,
+    ) -> bytes:
         try:
-            resp = await self._asession.request(method, url, stream=True, **kwargs)
+            resp = await self._asession.request(method, url, data=data, params=params, stream=True)
             resp.raise_for_status()
-            resp_content = await resp.acontent()
-            logger.debug(f"_aget_url() {url} {resp.status_code} {resp.http_version} {resp.elapsed} {len(resp_content)}")
-            if _is_500_in_url(str(resp.url)) or resp.status_code == 202:
+            resp_content: bytes = await resp.acontent()
+            logger.debug(f"_aget_url() {resp.status_code} {resp.elapsed:.2f} {len(resp_content)} {resp.url}")
+            if _is_500_in_url(resp.url) or resp.status_code == 202:
                 raise WebscoutE("Ratelimit")
             if resp.status_code == 200:
                 return resp_content
         except Exception as ex:
             raise WebscoutE(f"_aget_url() {url} {type(ex).__name__}: {ex}") from ex
+        raise WebscoutE(f"_aget_url() {url} return None. {params=} {data=}")
 
-    async def _aget_vqd(self, keywords: str) -> Optional[str]:
+    async def _aget_vqd(self, keywords: str) -> str:
         """Get vqd value for a search query."""
         resp_content = await self._aget_url("POST", "https://duckduckgo.com", data={"q": keywords})
-        if resp_content:
-            return _extract_vqd(resp_content, keywords)
+        return _extract_vqd(resp_content, keywords)
 
     async def text(
         self,
@@ -73,8 +111,8 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         backend: str = "api",
         max_results: Optional[int] = None,
-    ) -> AsyncGenerator[Dict[str, Optional[str]], None]:
-        """webscout text search generator. Query params: https://duckduckgo.com/params.
+    ) -> List[Dict[str, str]]:
+        """Webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -87,19 +125,19 @@ class AsyncWEBS:
                 lite - collect data from https://lite.duckduckgo.com.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
-        Yields:
-            dict with search results.
+        Returns:
+            List of dictionaries with search results, or None if there was an error.
 
+        Raises:
+            WebscoutE: Raised when there is a generic exception during the API request.
         """
         if backend == "api":
-            results = self._text_api(keywords, region, safesearch, timelimit, max_results)
+            results = await self._text_api(keywords, region, safesearch, timelimit, max_results)
         elif backend == "html":
-            results = self._text_html(keywords, region, safesearch, timelimit, max_results)
+            results = await self._text_html(keywords, region, safesearch, timelimit, max_results)
         elif backend == "lite":
-            results = self._text_lite(keywords, region, timelimit, max_results)
-
-        async for result in results:
-            yield result
+            results = await self._text_lite(keywords, region, timelimit, max_results)
+        return results
 
     async def _text_api(
         self,
@@ -108,7 +146,7 @@ class AsyncWEBS:
         safesearch: str = "moderate",
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
-    ) -> AsyncGenerator[Dict[str, Optional[str]], None]:
+    ) -> List[Dict[str, str]]:
         """webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
@@ -118,9 +156,11 @@ class AsyncWEBS:
             timelimit: d, w, m, y. Defaults to None.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
-        Yields:
-            dict with search results.
+        Returns:
+            List of dictionaries with search results.
 
+        Raises:
+            WebscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
@@ -130,12 +170,9 @@ class AsyncWEBS:
             "q": keywords,
             "kl": region,
             "l": region,
-            "bing_market": region,
-            "s": "0",
-            "df": timelimit,
             "vqd": vqd,
-            # "o": "json",
-            "sp": "0",
+            "bing_market": region,
+            "a": "ftsa",  # something
         }
         safesearch = safesearch.lower()
         if safesearch == "moderate":
@@ -144,37 +181,39 @@ class AsyncWEBS:
             payload["ex"] = "-2"
         elif safesearch == "on":  # strict
             payload["p"] = "1"
+        if timelimit:
+            payload["df"] = timelimit
 
         cache = set()
-        for _ in range(11):
+        results: List[Optional[Dict[str, str]]] = [None] * 1100
+
+        async def _text_api_page(s: int, page: int) -> None:
+            priority = page * 100
+            payload["s"] = f"{s}"
             resp_content = await self._aget_url("GET", "https://links.duckduckgo.com/d.js", params=payload)
-            if resp_content is None:
-                return
-
             page_data = _text_extract_json(resp_content, keywords)
-            if page_data is None:
-                return
 
-            result_exists, next_page_url = False, None
             for row in page_data:
                 href = row.get("u", None)
                 if href and href not in cache and href != f"http://www.google.com/search?q={keywords}":
                     cache.add(href)
                     body = _normalize(row["a"])
                     if body:
-                        result_exists = True
-                        yield {
+                        priority += 1
+                        result = {
                             "title": _normalize(row["t"]),
                             "href": _normalize_url(href),
                             "body": body,
                         }
-                        if max_results and len(cache) >= max_results:
-                            return
-                else:
-                    next_page_url = row.get("n", None)
-            if max_results is None or result_exists is False or next_page_url is None:
-                return
-            payload["s"] = next_page_url.split("s=")[1].split("&")[0]
+                        results[priority] = result
+
+        tasks = [_text_api_page(0, 0)]
+        if max_results:
+            max_results = min(max_results, 500)
+            tasks.extend(_text_api_page(s, i) for i, s in enumerate(range(23, max_results, 50), start=1))
+        await asyncio.gather(*tasks)
+
+        return list(islice(filter(None, results), max_results))
 
     async def _text_html(
         self,
@@ -183,7 +222,7 @@ class AsyncWEBS:
         safesearch: str = "moderate",
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
-    ) -> AsyncGenerator[Dict[str, Optional[str]], None]:
+    ) -> List[Dict[str, str]]:
         """webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
@@ -193,62 +232,72 @@ class AsyncWEBS:
             timelimit: d, w, m, y. Defaults to None.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
-        Yields:
-            dict with search results.
+        Returns:
+            List of dictionaries with search results.
 
+        Raises:
+            WebscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
         self._asession.headers["Referer"] = "https://html.duckduckgo.com/"
-        safesearch_base = {"on": 1, "moderate": -1, "off": -2}
+        safesearch_base = {"on": "1", "moderate": "-1", "off": "-2"}
         payload = {
             "q": keywords,
-            "s": "0",
             "kl": region,
             "p": safesearch_base[safesearch.lower()],
-            "df": timelimit,
+            "o": "json",
+            "api": "d.js",
         }
-        cache: Set[str] = set()
-        for _ in range(11):
+        if timelimit:
+            payload["df"] = timelimit
+        if max_results and max_results > 20:
+            vqd = await self._aget_vqd(keywords)
+            payload["vqd"] = vqd
+
+        cache = set()
+        results: List[Optional[Dict[str, str]]] = [None] * 1100
+
+        async def _text_html_page(s: int, page: int) -> None:
+            priority = page * 100
+            payload["s"] = f"{s}"
             resp_content = await self._aget_url("POST", "https://html.duckduckgo.com/html", data=payload)
-            if resp_content is None:
+            if b"No  results." in resp_content:
                 return
 
-            tree = html.fromstring(resp_content)
-            if tree.xpath('//div[@class="no-results"]/text()'):
-                return
+            tree = await self._asession.loop.run_in_executor(
+                self._get_executor(), partial(html.document_fromstring, resp_content, self._get_parser())
+            )
 
-            result_exists = False
-            for e in tree.xpath('//div[contains(@class, "results_links")]'):
-                href = e.xpath('.//a[contains(@class, "result__a")]/@href')
+            for e in tree.xpath("//div[h2]"):
+                href = e.xpath("./a/@href")
                 href = href[0] if href else None
                 if (
                     href
                     and href not in cache
-                    and href != f"http://www.google.com/search?q={keywords}"
-                    and not href.startswith("https://duckduckgo.com/y.js?ad_domain")
+                    and not href.startswith(
+                        ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                    )
                 ):
                     cache.add(href)
-                    title = e.xpath('.//a[contains(@class, "result__a")]/text()')
-                    body = e.xpath('.//a[contains(@class, "result__snippet")]//text()')
-                    result_exists = True
-                    yield {
-                        "title": _normalize(title[0]) if title else None,
-                        "href": _normalize_url(href),
-                        "body": _normalize("".join(body)) if body else None,
-                    }
-                    if max_results and len(cache) >= max_results:
-                        return
-            if max_results is None or result_exists is False:
-                return
-            next_page = tree.xpath('.//div[@class="nav-link"]')
-            next_page = next_page[-1] if next_page else None
-            if next_page is None:
-                return
+                    title = e.xpath("./h2/a/text()")
+                    body = e.xpath("./a//text()")
 
-            names = next_page.xpath('.//input[@type="hidden"]/@name')
-            values = next_page.xpath('.//input[@type="hidden"]/@value')
-            payload = {n: v for n, v in zip(names, values)}
+                    priority += 1
+                    result = {
+                        "title": _normalize(title[0]),
+                        "href": _normalize_url(href),
+                        "body": _normalize("".join(body)),
+                    }
+                    results[priority] = result
+
+        tasks = [_text_html_page(0, 0)]
+        if max_results:
+            max_results = min(max_results, 500)
+            tasks.extend(_text_html_page(s, i) for i, s in enumerate(range(23, max_results, 50), start=1))
+        await asyncio.gather(*tasks)
+
+        return list(islice(filter(None, results), max_results))
 
     async def _text_lite(
         self,
@@ -256,7 +305,7 @@ class AsyncWEBS:
         region: str = "wt-wt",
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
-    ) -> AsyncGenerator[Dict[str, Optional[str]], None]:
+    ) -> List[Dict[str, str]]:
         """webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
@@ -265,33 +314,38 @@ class AsyncWEBS:
             timelimit: d, w, m, y. Defaults to None.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
-        Yields:
-            dict with search results.
+        Returns:
+            List of dictionaries with search results.
 
+        Raises:
+            WebscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
         self._asession.headers["Referer"] = "https://lite.duckduckgo.com/"
         payload = {
             "q": keywords,
-            "s": "0",
             "o": "json",
             "api": "d.js",
             "kl": region,
-            "df": timelimit,
         }
-        cache: Set[str] = set()
-        for _ in range(11):
-            resp_content = await self._aget_url("POST", "https://lite.duckduckgo.com/lite/", data=payload)
-            if resp_content is None:
-                return
+        if timelimit:
+            payload["df"] = timelimit
 
+        cache = set()
+        results: List[Optional[Dict[str, str]]] = [None] * 1100
+
+        async def _text_lite_page(s: int, page: int) -> None:
+            priority = page * 100
+            payload["s"] = f"{s}"
+            resp_content = await self._aget_url("POST", "https://lite.duckduckgo.com/lite/", data=payload)
             if b"No more results." in resp_content:
                 return
 
-            tree = html.fromstring(resp_content)
+            tree = await self._asession.loop.run_in_executor(
+                self._get_executor(), partial(html.document_fromstring, resp_content, self._get_parser())
+            )
 
-            result_exists = False
             data = zip(cycle(range(1, 5)), tree.xpath("//table[last()]//tr"))
             for i, e in data:
                 if i == 1:
@@ -300,8 +354,7 @@ class AsyncWEBS:
                     if (
                         href is None
                         or href in cache
-                        or href == f"http://www.google.com/search?q={keywords}"
-                        or href.startswith("https://duckduckgo.com/y.js?ad_domain")
+                        or href.startswith(("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain"))
                     ):
                         [next(data, None) for _ in range(3)]  # skip block(i=1,2,3,4)
                     else:
@@ -311,21 +364,21 @@ class AsyncWEBS:
                     body = e.xpath(".//td[@class='result-snippet']//text()")
                     body = "".join(body).strip()
                 elif i == 3:
-                    result_exists = True
-                    yield {
+                    priority += 1
+                    result = {
                         "title": _normalize(title),
                         "href": _normalize_url(href),
                         "body": _normalize(body),
                     }
-                    if max_results and len(cache) >= max_results:
-                        return
-            if max_results is None or result_exists is False:
-                return
-            next_page_s = tree.xpath("//form[./input[contains(@value, 'ext')]]/input[@name='s']/@value")
-            if not next_page_s:
-                return
-            payload["s"] = next_page_s[0]
-            payload["vqd"] = _extract_vqd(resp_content, keywords)
+                    results[priority] = result
+
+        tasks = [_text_lite_page(0, 0)]
+        if max_results:
+            max_results = min(max_results, 500)
+            tasks.extend(_text_lite_page(s, i) for i, s in enumerate(range(23, max_results, 50), start=1))
+        await asyncio.gather(*tasks)
+
+        return list(islice(filter(None, results), max_results))
 
     async def images(
         self,
@@ -339,7 +392,7 @@ class AsyncWEBS:
         layout: Optional[str] = None,
         license_image: Optional[str] = None,
         max_results: Optional[int] = None,
-    ) -> AsyncGenerator[Dict[str, Optional[str]], None]:
+    ) -> List[Dict[str, str]]:
         """webscout images search. Query params: https://duckduckgo.com/params.
 
         Args:
@@ -359,15 +412,17 @@ class AsyncWEBS:
                 Use Commercially). Defaults to None.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
-        Yields:
-            dict with image search results.
+        Returns:
+            List of dictionaries with images search results.
 
+        Raises:
+            WebscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
         vqd = await self._aget_vqd(keywords)
 
-        safesearch_base = {"on": 1, "moderate": 1, "off": -1}
+        safesearch_base = {"on": "1", "moderate": "1", "off": "-1"}
         timelimit = f"time:{timelimit}" if timelimit else ""
         size = f"size:{size}" if size else ""
         color = f"color:{color}" if color else ""
@@ -384,25 +439,22 @@ class AsyncWEBS:
         }
 
         cache = set()
-        for _ in range(10):
-            resp_content = await self._aget_url("GET", "https://duckduckgo.com/i.js", params=payload)
-            if resp_content is None:
-                return
-            try:
-                resp_json = json.loads(resp_content)
-            except Exception:
-                return
-            page_data = resp_json.get("results", None)
-            if page_data is None:
-                return
+        results: List[Optional[Dict[str, str]]] = [None] * 600
 
-            result_exists = False
+        async def _images_page(s: int, page: int) -> None:
+            priority = page * 100
+            payload["s"] = f"{s}"
+            resp_content = await self._aget_url("GET", "https://duckduckgo.com/i.js", params=payload)
+            resp_json = json_loads(resp_content)
+
+            page_data = resp_json.get("results", [])
+
             for row in page_data:
-                image_url = row.get("image", None)
+                image_url = row.get("image")
                 if image_url and image_url not in cache:
                     cache.add(image_url)
-                    result_exists = True
-                    yield {
+                    priority += 1
+                    result = {
                         "title": row["title"],
                         "image": _normalize_url(image_url),
                         "thumbnail": _normalize_url(row["thumbnail"]),
@@ -411,14 +463,15 @@ class AsyncWEBS:
                         "width": row["width"],
                         "source": row["source"],
                     }
-                    if max_results and len(cache) >= max_results:
-                        return
-            if max_results is None or result_exists is False:
-                return
-            next = resp_json.get("next", None)
-            if next is None:
-                return
-            payload["s"] = next.split("s=")[-1].split("&")[0]
+                    results[priority] = result
+
+        tasks = [_images_page(0, page=0)]
+        if max_results:
+            max_results = min(max_results, 500)
+            tasks.extend(_images_page(s, i) for i, s in enumerate(range(100, max_results, 100), start=1))
+        await asyncio.gather(*tasks)
+
+        return list(islice(filter(None, results), max_results))
 
     async def videos(
         self,
@@ -430,7 +483,7 @@ class AsyncWEBS:
         duration: Optional[str] = None,
         license_videos: Optional[str] = None,
         max_results: Optional[int] = None,
-    ) -> AsyncGenerator[Dict[str, Optional[str]], None]:
+    ) -> List[Dict[str, str]]:
         """webscout videos search. Query params: https://duckduckgo.com/params.
 
         Args:
@@ -443,15 +496,17 @@ class AsyncWEBS:
             license_videos: creativeCommon, youtube. Defaults to None.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
-        Yields:
-            dict with videos search results
+        Returns:
+            List of dictionaries with videos search results.
 
+        Raises:
+            WebscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
         vqd = await self._aget_vqd(keywords)
 
-        safesearch_base = {"on": 1, "moderate": -1, "off": -2}
+        safesearch_base = {"on": "1", "moderate": "-1", "off": "-2"}
         timelimit = f"publishedAfter:{timelimit}" if timelimit else ""
         resolution = f"videoDefinition:{resolution}" if resolution else ""
         duration = f"videoDuration:{duration}" if duration else ""
@@ -459,7 +514,6 @@ class AsyncWEBS:
         payload = {
             "l": region,
             "o": "json",
-            "s": 0,
             "q": keywords,
             "vqd": vqd,
             "f": f"{timelimit},{resolution},{duration},{license_videos}",
@@ -467,32 +521,29 @@ class AsyncWEBS:
         }
 
         cache = set()
-        for _ in range(10):
-            resp_content = await self._aget_url("GET", "https://duckduckgo.com/v.js", params=payload)
-            if resp_content is None:
-                return
-            try:
-                resp_json = json.loads(resp_content)
-            except Exception:
-                return
-            page_data = resp_json.get("results", None)
-            if page_data is None:
-                return
+        results: List[Optional[Dict[str, str]]] = [None] * 700
 
-            result_exists = False
+        async def _videos_page(s: int, page: int) -> None:
+            priority = page * 100
+            payload["s"] = f"{s}"
+            resp_content = await self._aget_url("GET", "https://duckduckgo.com/v.js", params=payload)
+            resp_json = json_loads(resp_content)
+
+            page_data = resp_json.get("results", [])
+
             for row in page_data:
                 if row["content"] not in cache:
                     cache.add(row["content"])
-                    result_exists = True
-                    yield row
-                    if max_results and len(cache) >= max_results:
-                        return
-            if max_results is None or result_exists is False:
-                return
-            next = resp_json.get("next", None)
-            if next is None:
-                return
-            payload["s"] = next.split("s=")[-1].split("&")[0]
+                    priority += 1
+                    results[priority] = row
+
+        tasks = [_videos_page(0, 0)]
+        if max_results:
+            max_results = min(max_results, 400)
+            tasks.extend(_videos_page(s, i) for i, s in enumerate(range(59, max_results, 59), start=1))
+        await asyncio.gather(*tasks)
+
+        return list(islice(filter(None, results), max_results))
 
     async def news(
         self,
@@ -501,7 +552,7 @@ class AsyncWEBS:
         safesearch: str = "moderate",
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
-    ) -> AsyncGenerator[Dict[str, Optional[str]], None]:
+    ) -> List[Dict[str, str]]:
         """webscout news search. Query params: https://duckduckgo.com/params.
 
         Args:
@@ -511,15 +562,17 @@ class AsyncWEBS:
             timelimit: d, w, m. Defaults to None.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
-        Yields:
-            dict with news search results.
+        Returns:
+            List of dictionaries with news search results.
 
+        Raises:
+            webscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
         vqd = await self._aget_vqd(keywords)
 
-        safesearch_base = {"on": 1, "moderate": -1, "off": -2}
+        safesearch_base = {"on": "1", "moderate": "-1", "off": "-2"}
         payload = {
             "l": region,
             "o": "json",
@@ -527,55 +580,54 @@ class AsyncWEBS:
             "q": keywords,
             "vqd": vqd,
             "p": safesearch_base[safesearch.lower()],
-            "df": timelimit,
-            "s": 0,
         }
+        if timelimit:
+            payload["df"] = timelimit
 
         cache = set()
-        for _ in range(10):
-            resp_content = await self._aget_url("GET", "https://duckduckgo.com/news.js", params=payload)
-            if resp_content is None:
-                return
-            try:
-                resp_json = json.loads(resp_content)
-            except Exception:
-                return
-            page_data = resp_json.get("results", None)
-            if page_data is None:
-                return
+        results: List[Optional[Dict[str, str]]] = [None] * 700
 
-            result_exists = False
+        async def _news_page(s: int, page: int) -> None:
+            priority = page * 100
+            payload["s"] = f"{s}"
+            resp_content = await self._aget_url("GET", "https://duckduckgo.com/news.js", params=payload)
+            resp_json = json_loads(resp_content)
+            page_data = resp_json.get("results", [])
+
             for row in page_data:
                 if row["url"] not in cache:
                     cache.add(row["url"])
                     image_url = row.get("image", None)
-                    result_exists = True
-                    yield {
+                    priority += 1
+                    result = {
                         "date": datetime.fromtimestamp(row["date"], timezone.utc).isoformat(),
                         "title": row["title"],
                         "body": _normalize(row["excerpt"]),
                         "url": _normalize_url(row["url"]),
-                        "image": _normalize_url(image_url) if image_url else None,
+                        "image": _normalize_url(image_url),
                         "source": row["source"],
                     }
-                    if max_results and len(cache) >= max_results:
-                        return
-            if max_results is None or result_exists is False:
-                return
-            next = resp_json.get("next", None)
-            if next is None:
-                return
-            payload["s"] = next.split("s=")[-1].split("&")[0]
+                    results[priority] = result
 
-    async def answers(self, keywords: str) -> AsyncGenerator[Dict[str, Optional[str]], None]:
+        tasks = [_news_page(0, 0)]
+        if max_results:
+            max_results = min(max_results, 200)
+            tasks.extend(_news_page(s, i) for i, s in enumerate(range(29, max_results, 29), start=1))
+        await asyncio.gather(*tasks)
+
+        return list(islice(filter(None, results), max_results))
+
+    async def answers(self, keywords: str) -> List[Dict[str, str]]:
         """webscout instant answers. Query params: https://duckduckgo.com/params.
 
         Args:
-            keywords: keywords for query.
+            keywords: keywords for query,
 
-        Yields:
-            dict with instant answers results.
+        Returns:
+            List of dictionaries with instant answers results.
 
+        Raises:
+            WebscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
@@ -583,69 +635,69 @@ class AsyncWEBS:
             "q": f"what is {keywords}",
             "format": "json",
         }
-
         resp_content = await self._aget_url("GET", "https://api.duckduckgo.com/", params=payload)
-        if resp_content is None:
-            yield None
-        try:
-            page_data = json.loads(resp_content)
-        except Exception:
-            page_data = None
+        page_data = json_loads(resp_content)
 
-        if page_data:
-            answer = page_data.get("AbstractText", None)
-            url = page_data.get("AbstractURL", None)
-            if answer:
-                yield {
+        results = []
+        answer = page_data.get("AbstractText")
+        url = page_data.get("AbstractURL")
+        if answer:
+            results.append(
+                {
                     "icon": None,
                     "text": answer,
                     "topic": None,
                     "url": url,
                 }
+            )
 
-        # related:
+        # related
         payload = {
             "q": f"{keywords}",
             "format": "json",
         }
         resp_content = await self._aget_url("GET", "https://api.duckduckgo.com/", params=payload)
-        if resp_content is None:
-            yield None
-        try:
-            page_data = json.loads(resp_content).get("RelatedTopics", None)
-        except Exception:
-            page_data = None
+        resp_json = json_loads(resp_content)
+        page_data = resp_json.get("RelatedTopics", [])
 
-        if page_data:
-            for row in page_data:
-                topic = row.get("Name", None)
-                if not topic:
-                    icon = row["Icon"].get("URL", None)
-                    yield {
-                        "icon": f"https://duckduckgo.com{icon}" if icon else None,
+        for row in page_data:
+            topic = row.get("Name")
+            if not topic:
+                icon = row["Icon"].get("URL")
+                results.append(
+                    {
+                        "icon": f"https://duckduckgo.com{icon}" if icon else "",
                         "text": row["Text"],
                         "topic": None,
                         "url": row["FirstURL"],
                     }
-                else:
-                    for subrow in row["Topics"]:
-                        icon = subrow["Icon"].get("URL", None)
-                        yield {
-                            "icon": f"https://duckduckgo.com{icon}" if icon else None,
+                )
+            else:
+                for subrow in row["Topics"]:
+                    icon = subrow["Icon"].get("URL")
+                    results.append(
+                        {
+                            "icon": f"https://duckduckgo.com{icon}" if icon else "",
                             "text": subrow["Text"],
                             "topic": topic,
                             "url": subrow["FirstURL"],
                         }
+                    )
 
-    async def suggestions(self, keywords: str, region: str = "wt-wt") -> AsyncGenerator[Dict[str, Optional[str]], None]:
+        return results
+
+    async def suggestions(self, keywords: str, region: str = "wt-wt") -> List[Dict[str, str]]:
         """webscout suggestions. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
             region: wt-wt, us-en, uk-en, ru-ru, etc. Defaults to "wt-wt".
 
-        Yields:
-            dict with suggestions results.
+        Returns:
+            List of dictionaries with suggestions results.
+
+        Raises:
+            WebscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
@@ -654,14 +706,8 @@ class AsyncWEBS:
             "kl": region,
         }
         resp_content = await self._aget_url("GET", "https://duckduckgo.com/ac", params=payload)
-        if resp_content is None:
-            yield None
-        try:
-            page_data = json.loads(resp_content)
-            for r in page_data:
-                yield r
-        except Exception:
-            pass
+        page_data = json_loads(resp_content)
+        return [r for r in page_data]
 
     async def maps(
         self,
@@ -677,7 +723,7 @@ class AsyncWEBS:
         longitude: Optional[str] = None,
         radius: int = 0,
         max_results: Optional[int] = None,
-    ) -> AsyncGenerator[Dict[str, Optional[str]], None]:
+    ) -> List[Dict[str, str]]:
         """webscout maps search. Query params: https://duckduckgo.com/params.
 
         Args:
@@ -695,8 +741,11 @@ class AsyncWEBS:
             radius: expand the search square by the distance in kilometers. Defaults to 0.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
-        Yields:
-            dict with maps search results
+        Returns:
+            List of dictionaries with maps search results, or None if there was an error.
+
+        Raises:
+            webscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
@@ -713,38 +762,40 @@ class AsyncWEBS:
         # otherwise request about bbox to nominatim api
         else:
             if place:
-                params: Dict[str, Optional[str]] = {
+                params = {
                     "q": place,
                     "polygon_geojson": "0",
                     "format": "jsonv2",
                 }
             else:
                 params = {
-                    "street": street,
-                    "city": city,
-                    "county": county,
-                    "state": state,
-                    "country": country,
-                    "postalcode": postalcode,
                     "polygon_geojson": "0",
                     "format": "jsonv2",
                 }
-                params = {k: v for k, v in params.items() if v is not None}
-            try:
-                resp_content = await self._aget_url(
-                    "GET",
-                    "https://nominatim.openstreetmap.org/search.php",
-                    params=params,
-                )
-                if resp_content is None:
-                    yield None
-
-                coordinates = json.loads(resp_content)[0]["boundingbox"]
-                lat_t, lon_l = Decimal(coordinates[1]), Decimal(coordinates[2])
-                lat_b, lon_r = Decimal(coordinates[0]), Decimal(coordinates[3])
-            except Exception as ex:
-                logger.debug(f"ddg_maps() keywords={keywords} {type(ex).__name__} {ex}")
-                return
+                if street:
+                    params["street"] = street
+                if city:
+                    params["city"] = city
+                if county:
+                    params["county"] = county
+                if state:
+                    params["state"] = state
+                if country:
+                    params["country"] = country
+                if postalcode:
+                    params["postalcode"] = postalcode
+            # request nominatim api to get coordinates box
+            resp_content = await self._aget_url(
+                "GET",
+                "https://nominatim.openstreetmap.org/search.php",
+                params=params,
+            )
+            if resp_content == b"[]":
+                raise WebscoutE("maps() Сoordinates are not found, check function parameters.")
+            resp_json = json_loads(resp_content)
+            coordinates = resp_json[0]["boundingbox"]
+            lat_t, lon_l = Decimal(coordinates[1]), Decimal(coordinates[2])
+            lat_b, lon_r = Decimal(coordinates[0]), Decimal(coordinates[3])
 
         # if a radius is specified, expand the search square
         lat_t += Decimal(radius) * Decimal(0.008983)
@@ -753,14 +804,15 @@ class AsyncWEBS:
         lon_r += Decimal(radius) * Decimal(0.008983)
         logger.debug(f"bbox coordinates\n{lat_t} {lon_l}\n{lat_b} {lon_r}")
 
-        # сreate a queue of search squares (bboxes)
-        work_bboxes: Deque[Tuple[Decimal, Decimal, Decimal, Decimal]] = deque()
-        work_bboxes.append((lat_t, lon_l, lat_b, lon_r))
-
-        # bbox iterate
         cache = set()
-        while work_bboxes:
-            lat_t, lon_l, lat_b, lon_r = work_bboxes.pop()
+        results: List[Dict[str, str]] = []
+
+        async def _maps_page(
+            bbox: Tuple[Decimal, Decimal, Decimal, Decimal],
+        ) -> Optional[List[Dict[str, str]]]:
+            if max_results and len(results) >= max_results:
+                return None
+            lat_t, lon_l, lat_b, lon_r = bbox
             params = {
                 "q": keywords,
                 "vqd": vqd,
@@ -774,64 +826,87 @@ class AsyncWEBS:
                 "strict_bbox": "1",
             }
             resp_content = await self._aget_url("GET", "https://duckduckgo.com/local.js", params=params)
-            if resp_content is None:
-                return
-            try:
-                page_data = json.loads(resp_content).get("results", [])
-            except Exception:
-                return
-            if page_data is None:
-                return
+            resp_json = json_loads(resp_content)
+            page_data = resp_json.get("results", [])
 
+            page_results = []
             for res in page_data:
-                result = MapsResult()
-                result.title = res["name"]
-                result.address = res["address"]
-                if f"{result.title} {result.address}" in cache:
+                r_name = f'{res["name"]} {res["address"]}'
+                if r_name in cache:
                     continue
                 else:
-                    cache.add(f"{result.title} {result.address}")
-                    result.country_code = res["country_code"]
-                    result.url = _normalize_url(res["website"])
-                    result.phone = res["phone"]
-                    result.latitude = res["coordinates"]["latitude"]
-                    result.longitude = res["coordinates"]["longitude"]
-                    result.source = _normalize_url(res["url"])
-                    if res["embed"]:
-                        result.image = res["embed"].get("image", "")
-                        result.desc = res["embed"].get("description", "")
-                    result.hours = res["hours"]
-                    result.category = res["ddg_category"]
-                    result.facebook = f"www.facebook.com/profile.php?id={x}" if (x := res["facebook_id"]) else None
-                    result.instagram = f"https://www.instagram.com/{x}" if (x := res["instagram_id"]) else None
-                    result.twitter = f"https://twitter.com/{x}" if (x := res["twitter_id"]) else None
-                    yield result.__dict__
-                    if max_results and len(cache) >= max_results:
-                        return
-            if max_results is None:
-                return
-            # divide the square into 4 parts and add to the queue
-            if len(page_data) >= 15:
-                lat_middle = (lat_t + lat_b) / 2
-                lon_middle = (lon_l + lon_r) / 2
-                bbox1 = (lat_t, lon_l, lat_middle, lon_middle)
-                bbox2 = (lat_t, lon_middle, lat_middle, lon_r)
-                bbox3 = (lat_middle, lon_l, lat_b, lon_middle)
-                bbox4 = (lat_middle, lon_middle, lat_b, lon_r)
-                work_bboxes.extendleft([bbox1, bbox2, bbox3, bbox4])
+                    cache.add(r_name)
+                    result = {
+                        "title": res["name"],
+                        "address": res["address"],
+                        "country_code": res["country_code"],
+                        "url": _normalize_url(res["website"]),
+                        "phone": res["phone"] or "",
+                        "latitude": res["coordinates"]["latitude"],
+                        "longitude": res["coordinates"]["longitude"],
+                        "source": _normalize_url(res["url"]),
+                        "image": x.get("image", "") if (x := res["embed"]) else "",
+                        "desc": x.get("description", "") if (x := res["embed"]) else "",
+                        "hours": res["hours"] or "",
+                        "category": res["ddg_category"] or "",
+                        "facebook": f"www.facebook.com/profile.php?id={x}" if (x := res["facebook_id"]) else "",
+                        "instagram": f"https://www.instagram.com/{x}" if (x := res["instagram_id"]) else "",
+                        "twitter": f"https://twitter.com/{x}" if (x := res["twitter_id"]) else "",
+                    }
+                    page_results.append(result)
+
+            return page_results
+
+        # search squares (bboxes)
+        start_bbox = (lat_t, lon_l, lat_b, lon_r)
+        work_bboxes = [start_bbox]
+        while work_bboxes:
+            queue_bboxes = []  # for next iteration, at the end of the iteration work_bboxes = queue_bboxes
+            tasks = []
+            for bbox in work_bboxes:
+                tasks.append(asyncio.create_task(_maps_page(bbox)))
+                # if distance between coordinates > 1, divide the square into 4 parts and save them in queue_bboxes
+                if _calculate_distance(lat_t, lon_l, lat_b, lon_r) > 1:
+                    lat_t, lon_l, lat_b, lon_r = bbox
+                    lat_middle = (lat_t + lat_b) / 2
+                    lon_middle = (lon_l + lon_r) / 2
+                    bbox1 = (lat_t, lon_l, lat_middle, lon_middle)
+                    bbox2 = (lat_t, lon_middle, lat_middle, lon_r)
+                    bbox3 = (lat_middle, lon_l, lat_b, lon_middle)
+                    bbox4 = (lat_middle, lon_middle, lat_b, lon_r)
+                    queue_bboxes.extend([bbox1, bbox2, bbox3, bbox4])
+
+            # gather tasks using asyncio.wait_for and timeout
+            with suppress(Exception):
+                work_bboxes_results = await asyncio.gather(*[asyncio.wait_for(task, timeout=10) for task in tasks])
+
+            for x in work_bboxes_results:
+                if isinstance(x, list):
+                    results.extend(x)
+                elif isinstance(x, dict):
+                    results.append(x)
+
+            work_bboxes = queue_bboxes
+            if not max_results or len(results) >= max_results or len(work_bboxes_results) == 0:
+                break
+
+        return list(islice(results, max_results))
 
     async def translate(
-        self, keywords: str, from_: Optional[str] = None, to: str = "en"
-    ) -> Optional[Dict[str, Optional[str]]]:
+        self, keywords: Union[List[str], str], from_: Optional[str] = None, to: str = "en"
+    ) -> List[Dict[str, str]]:
         """webscout translate.
 
         Args:
-            keywords: string or a list of strings to translate
+            keywords: string or list of strings to translate.
             from_: translate from (defaults automatically). Defaults to None.
             to: what language to translate. Defaults to "en".
 
         Returns:
-            dict with translated keywords.
+            List od dictionaries with translated keywords.
+
+        Raises:
+            webscoutE: Raised when there is a generic exception during the API request.
         """
         assert keywords, "keywords is mandatory"
 
@@ -845,17 +920,22 @@ class AsyncWEBS:
         if from_:
             payload["from"] = from_
 
-        resp_content = await self._aget_url(
-            "POST",
-            "https://duckduckgo.com/translation.js",
-            params=payload,
-            data=keywords.encode(),
-        )
-        if resp_content is None:
-            return None
-        try:
-            page_data = json.loads(resp_content)
-            page_data["original"] = keywords
-        except Exception:
-            page_data = None
-        return page_data
+        results = []
+
+        async def _translate_keyword(keyword: str) -> None:
+            resp_content = await self._aget_url(
+                "POST",
+                "https://duckduckgo.com/translation.js",
+                params=payload,
+                data=keyword.encode(),
+            )
+            page_data = json_loads(resp_content)
+            page_data["original"] = keyword
+            results.append(page_data)
+
+        if isinstance(keywords, str):
+            keywords = [keywords]
+        tasks = [_translate_keyword(keyword) for keyword in keywords]
+        await asyncio.gather(*tasks)
+
+        return results

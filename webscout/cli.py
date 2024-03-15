@@ -1,5 +1,4 @@
 import csv
-import json
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -9,7 +8,8 @@ from urllib.parse import unquote
 import click
 from curl_cffi import requests
 
-from .webscout_search import WEBS
+from .webscout_search_search import WEBS
+from .utils import json_dumps
 from .version import __version__
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ COLORS = {
 
 def _save_json(jsonfile, data):
     with open(jsonfile, "w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
+        file.write(json_dumps(data))
 
 
 def _save_csv(csvfile, data):
@@ -143,16 +143,14 @@ def version():
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def text(keywords, region, safesearch, timelimit, backend, output, download, threads, max_results, proxy):
     """CLI function to perform a text search using DuckDuckGo API."""
-    data = []
-    for r in WEBS(proxies=proxy).text(
+    data = WEBS(proxies=proxy).text(
         keywords=keywords,
         region=region,
         safesearch=safesearch,
         timelimit=timelimit,
         backend=backend,
         max_results=max_results,
-    ):
-        data.append(r)
+    )
     keywords = _sanitize_keywords(keywords)
     filename = f"text_{keywords}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print" and not download:
@@ -171,9 +169,7 @@ def text(keywords, region, safesearch, timelimit, backend, output, download, thr
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def answers(keywords, output, proxy):
     """CLI function to perform a answers search using DuckDuckGo API."""
-    data = []
-    for r in WEBS(proxies=proxy).answers(keywords=keywords):
-        data.append(r)
+    data = WEBS(proxies=proxy).answers(keywords=keywords)
     filename = f"answers_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)
@@ -244,8 +240,7 @@ def images(
     proxy,
 ):
     """CLI function to perform a images search using DuckDuckGo API."""
-    data = []
-    for r in WEBS(proxies=proxy).images(
+    data = WEBS(proxies=proxy).images(
         keywords=keywords,
         region=region,
         safesearch=safesearch,
@@ -256,8 +251,7 @@ def images(
         layout=layout,
         license_image=license_image,
         max_results=max_results,
-    ):
-        data.append(r)
+    )
     keywords = _sanitize_keywords(keywords)
     filename = f"images_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print" and not download:
@@ -283,8 +277,7 @@ def images(
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def videos(keywords, region, safesearch, timelimit, resolution, duration, license_videos, max_results, output, proxy):
     """CLI function to perform a videos search using DuckDuckGo API."""
-    data = []
-    for r in WEBS(proxies=proxy).videos(
+    data = WEBS(proxies=proxy).videos(
         keywords=keywords,
         region=region,
         safesearch=safesearch,
@@ -293,8 +286,7 @@ def videos(keywords, region, safesearch, timelimit, resolution, duration, licens
         duration=duration,
         license_videos=license_videos,
         max_results=max_results,
-    ):
-        data.append(r)
+    )
     filename = f"videos_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)
@@ -314,11 +306,9 @@ def videos(keywords, region, safesearch, timelimit, resolution, duration, licens
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def news(keywords, region, safesearch, timelimit, max_results, output, proxy):
     """CLI function to perform a news search using DuckDuckGo API."""
-    data = []
-    for r in WEBS(proxies=proxy).news(
+    data = WEBS(proxies=proxy).news(
         keywords=keywords, region=region, safesearch=safesearch, timelimit=timelimit, max_results=max_results
-    ):
-        data.append(r)
+    )
     filename = f"news_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)
@@ -360,27 +350,20 @@ def maps(
     proxy,
 ):
     """CLI function to perform a maps search using DuckDuckGo API."""
-    data = []
-    for i, r in enumerate(
-        WEBS(proxies=proxy).maps(
-            keywords=keywords,
-            place=place,
-            street=street,
-            city=city,
-            county=county,
-            state=state,
-            country=country,
-            postalcode=postalcode,
-            latitude=latitude,
-            longitude=longitude,
-            radius=radius,
-            max_results=max_results,
-        ),
-        start=1,
-    ):
-        data.append(r)
-        if i % 100 == 0:
-            print(i)
+    data = WEBS(proxies=proxy).maps(
+        keywords=keywords,
+        place=place,
+        street=street,
+        city=city,
+        county=county,
+        state=state,
+        country=country,
+        postalcode=postalcode,
+        latitude=latitude,
+        longitude=longitude,
+        radius=radius,
+        max_results=max_results,
+    )
     filename = f"maps_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)
@@ -399,7 +382,6 @@ def maps(
 def translate(keywords, from_, to, output, proxy):
     """CLI function to perform translate using DuckDuckGo API."""
     data = WEBS(proxies=proxy).translate(keywords=keywords, from_=from_, to=to)
-    data = [data]
     filename = f"translate_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)
@@ -416,9 +398,7 @@ def translate(keywords, from_, to, output, proxy):
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def suggestions(keywords, region, output, proxy):
     """CLI function to perform a suggestions search using DuckDuckGo API."""
-    data = []
-    for r in WEBS(proxies=proxy).suggestions(keywords=keywords, region=region):
-        data.append(r)
+    data = WEBS(proxies=proxy).suggestions(keywords=keywords, region=region)
     filename = f"suggestions_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)

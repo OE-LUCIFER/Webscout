@@ -1,61 +1,61 @@
 import asyncio
-import logging
-from typing import Dict, Generator, Optional
-
-import nest_asyncio
+from concurrent.futures import Future
+from threading import Thread
+from types import TracebackType
+from typing import Any, Awaitable, Dict, Optional, Type, Union
 
 from .webscout_search_async import AsyncWEBS
 
-logger = logging.getLogger("webscout.WEBS")
-nest_asyncio.apply()
-
 
 class WEBS(AsyncWEBS):
-    def __init__(self, headers=None, proxies=None, timeout=10):
-        super().__init__(headers, proxies, timeout)
+    _loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
+    Thread(target=_loop.run_forever, daemon=True).start()  # Start the event loop run in a separate thread.
+
+    def __init__(
+        self,
+        headers: Optional[Dict[str, str]] = None,
+        proxies: Union[Dict[str, str], str, None] = None,
+        timeout: Optional[int] = 10,
+    ) -> None:
+        super().__init__(headers=headers, proxies=proxies, timeout=timeout)
 
     def __enter__(self) -> "WEBS":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        asyncio.run(super().__aexit__(exc_type, exc_val, exc_tb))
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> bool:
+        return True
 
-    def _iter_over_async(self, async_gen):
-        """Iterate over an async generator."""
-        while True:
-            try:
-                yield asyncio.run(async_gen.__anext__())
-            except StopAsyncIteration:
-                break
+    def _run_async_in_thread(self, coro: Awaitable[Any]) -> Any:
+        """Runs an async coroutine in a separate thread."""
+        future: Future[Any] = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        result = future.result()
+        return result
 
-    def text(self, *args, **kwargs) -> Generator[Dict[str, Optional[str]], None, None]:
-        async_gen = super().text(*args, **kwargs)
-        return self._iter_over_async(async_gen)
+    def text(self, *args: Any, **kwargs: Any) -> Any:
+        return self._run_async_in_thread(super().text(*args, **kwargs))
 
-    def images(self, *args, **kwargs) -> Generator[Dict[str, Optional[str]], None, None]:
-        async_gen = super().images(*args, **kwargs)
-        return self._iter_over_async(async_gen)
+    def images(self, *args: Any, **kwargs: Any) -> Any:
+        return self._run_async_in_thread(super().images(*args, **kwargs))
 
-    def videos(self, *args, **kwargs) -> Generator[Dict[str, Optional[str]], None, None]:
-        async_gen = super().videos(*args, **kwargs)
-        return self._iter_over_async(async_gen)
+    def videos(self, *args: Any, **kwargs: Any) -> Any:
+        return self._run_async_in_thread(super().videos(*args, **kwargs))
 
-    def news(self, *args, **kwargs) -> Generator[Dict[str, Optional[str]], None, None]:
-        async_gen = super().news(*args, **kwargs)
-        return self._iter_over_async(async_gen)
+    def news(self, *args: Any, **kwargs: Any) -> Any:
+        return self._run_async_in_thread(super().news(*args, **kwargs))
 
-    def answers(self, *args, **kwargs) -> Generator[Dict[str, Optional[str]], None, None]:
-        async_gen = super().answers(*args, **kwargs)
-        return self._iter_over_async(async_gen)
+    def answers(self, *args: Any, **kwargs: Any) -> Any:
+        return self._run_async_in_thread(super().answers(*args, **kwargs))
 
-    def suggestions(self, *args, **kwargs) -> Generator[Dict[str, Optional[str]], None, None]:
-        async_gen = super().suggestions(*args, **kwargs)
-        return self._iter_over_async(async_gen)
+    def suggestions(self, *args: Any, **kwargs: Any) -> Any:
+        return self._run_async_in_thread(super().suggestions(*args, **kwargs))
 
-    def maps(self, *args, **kwargs) -> Generator[Dict[str, Optional[str]], None, None]:
-        async_gen = super().maps(*args, **kwargs)
-        return self._iter_over_async(async_gen)
+    def maps(self, *args: Any, **kwargs: Any) -> Any:
+        return self._run_async_in_thread(super().maps(*args, **kwargs))
 
-    def translate(self, *args, **kwargs) -> Optional[Dict[str, Optional[str]]]:
-        async_coro = super().translate(*args, **kwargs)
-        return asyncio.run(async_coro)
+    def translate(self, *args: Any, **kwargs: Any) -> Any:
+        return self._run_async_in_thread(super().translate(*args, **kwargs))
