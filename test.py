@@ -1,8 +1,7 @@
-from webscout.AI import PERPLEXITY
-# Create an instance of the PERPLEXITY class
-perplexity = PERPLEXITY()
+from webscout.AI import OPENGPT
 
-# Example usage:
-prompt = "Explain the concept of recursion in simple terms."
-response = perplexity.chat(prompt)
-print(response)
+opengpt = OPENGPT(is_conversation=True, max_tokens=8000, timeout=30)
+# This example sends a simple greeting and prints the response
+prompt = "tell me about india"
+response_str = opengpt.chat(prompt)
+print(response_str)

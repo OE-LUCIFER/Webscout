@@ -41,7 +41,8 @@ Also containes AI models that you can use
   - [usage of image generator from Webscout.AI](#usage-of-image-generator-from-webscoutai)
     - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
     - [6. `BlackBox` - Search/chat With BlackBox](#6-blackbox---searchchat-with-blackbox)
-    - [6. `Perplixity` - Search/chat With BlackBox](#6-perplixity---searchchat-with-blackbox)
+    - [7. `PERPLEXITY` - Search With PERPLEXITY](#7-perplexity---search-with-perplexity)
+    - [8. `OpenGPT` - chat With OPENGPT](#8-opengpt---chat-with-opengpt)
   - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
     - [`LLM`](#llm)
 
@@ -226,7 +227,7 @@ python -m webscout --help
 | `python -m webscout.AI prodia --prompt "car"` | CLI function to generate content related to a prompt using Webscout.AI's Prodia feature. |
 | `python -m webscout.AI blackboxai --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's Blackbox search feature. |
 | `python -m webscout.AI perplexity --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's PERPLEXITY feature. |
-
+| `python -m webscout.AI opengpt --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's OPENGPT feature. |
 
 
 ## CLI to use LLM 
@@ -622,7 +623,7 @@ response_text = ai.get_message(response)
 # Print the response text
 print(response_text)
 ```
-### 6. `Perplixity` - Search/chat With BlackBox
+### 7. `PERPLEXITY` - Search With PERPLEXITY
 ```python
 from webscout.AI import PERPLEXITY
 # Create an instance of the PERPLEXITY class
@@ -632,6 +633,16 @@ perplexity = PERPLEXITY()
 prompt = "Explain the concept of recursion in simple terms."
 response = perplexity.chat(prompt)
 print(response)
+```
+### 8. `OpenGPT` - chat With OPENGPT
+```python
+from webscout.AI import OPENGPT
+
+opengpt = OPENGPT(is_conversation=True, max_tokens=8000, timeout=30)
+# This example sends a simple greeting and prints the response
+prompt = "tell me about india"
+response_str = opengpt.chat(prompt)
+print(response_str)
 ```
 
 ## usage of special .LLM file from webscout (webscout.LLM)
