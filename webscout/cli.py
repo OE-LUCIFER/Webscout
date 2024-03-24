@@ -8,7 +8,7 @@ from urllib.parse import unquote
 import click
 from curl_cffi import requests
 
-from .webscout_search_search import WEBS
+from .webscout_search import WEBS
 from .utils import json_dumps
 from .version import __version__
 
