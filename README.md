@@ -41,6 +41,7 @@ Also containes AI models that you can use
   - [usage of image generator from Webscout.AI](#usage-of-image-generator-from-webscoutai)
     - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
     - [6. `BlackBox` - Search/chat With BlackBox](#6-blackbox---searchchat-with-blackbox)
+    - [6. `Perplixity` - Search/chat With BlackBox](#6-perplixity---searchchat-with-blackbox)
   - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
     - [`LLM`](#llm)
 
@@ -224,6 +225,7 @@ python -m webscout --help
 | `python -m webscout.AI gemini --message "tell me about gemma 7b"` | CLI function to get information about a specific topic using Webscout.AI's Gemini feature. |
 | `python -m webscout.AI prodia --prompt "car"` | CLI function to generate content related to a prompt using Webscout.AI's Prodia feature. |
 | `python -m webscout.AI blackboxai --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's Blackbox search feature. |
+| `python -m webscout.AI perplexity --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's PERPLEXITY feature. |
 
 
 
@@ -620,6 +622,18 @@ response_text = ai.get_message(response)
 # Print the response text
 print(response_text)
 ```
+### 6. `Perplixity` - Search/chat With BlackBox
+```python
+from webscout.AI import PERPLEXITY
+# Create an instance of the PERPLEXITY class
+perplexity = PERPLEXITY()
+
+# Example usage:
+prompt = "Explain the concept of recursion in simple terms."
+response = perplexity.chat(prompt)
+print(response)
+```
+
 ## usage of special .LLM file from webscout (webscout.LLM)
 
 ### `LLM`
