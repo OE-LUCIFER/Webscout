@@ -40,6 +40,7 @@ Also containes AI models that you can use
     - [4. `Gemini` - search with google gemini](#4-gemini---search-with-google-gemini)
   - [usage of image generator from Webscout.AI](#usage-of-image-generator-from-webscoutai)
     - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
+    - [6. `BlackBox` - Search/chat With BlackBox](#6-blackbox---searchchat-with-blackbox)
   - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
     - [`LLM`](#llm)
 
@@ -212,16 +213,17 @@ python -m webscout --help
 | python -m webscout version                | A command-line interface command that prints and returns the version of the program.            | 
 | python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |  
 
+
+
 ## CLI version of webscout.AI
-
-
-| Command                                    | Description                                                                                            |
-|--------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| `python -m webscout.AI phindsearch --query "your_query_here"` | CLI function to perform a search query using Webscout.AI's Phindsearch feature.              |
-| `python -m webscout.AI yepchat --message "your_message_here"`   | CLI function to send a message using Webscout.AI's Yepchat feature.                             |
-| `python -m webscout.AI youchat --prompt "your_prompt_here"`     | CLI function to generate a response based on a prompt using Webscout.AI's Youchat feature.      |
-| `python -m webscout.AI gemini --message "tell me about gemma 7b"` | CLI function to get information about a specific topic using Webscout.AI's Gemini feature.    |
-| `python -m webscout.AI prodia --prompt "car"`                   | CLI function to generate content related to a prompt using Webscout.AI's Prodia feature.        |
+| Command | Description |
+|-----------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| `python -m webscout.AI phindsearch --prompt "your search query"` | CLI function to perform a search query using Webscout.AI's Phindsearch feature. |
+| `python -m webscout.AI yepchat --message "your_message_here"` | CLI function to send a message using Webscout.AI's Yepchat feature. |
+| `python -m webscout.AI youchat --prompt "your_prompt_here"` | CLI function to generate a response based on a prompt using Webscout.AI's Youchat feature. |
+| `python -m webscout.AI gemini --message "tell me about gemma 7b"` | CLI function to get information about a specific topic using Webscout.AI's Gemini feature. |
+| `python -m webscout.AI prodia --prompt "car"` | CLI function to generate content related to a prompt using Webscout.AI's Prodia feature. |
+| `python -m webscout.AI blackboxai --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's Blackbox search feature. |
 
 
 
@@ -503,16 +505,22 @@ with WEBS() as WEBS:
 ## usage of webscout.AI
 
 ### 1. `PhindSearch` - Search using Phind.com 
-Thanks to Empyros for PhindSearch function
+
 ```python
 from webscout.AI import PhindSearch
 
-query = 'Webscout pypi'
+# Create an instance of the PHIND class
+ph = PhindSearch()
 
-# Create an instance of WEBSAI with the query
-WEBSAI = PhindSearch(query)
+# Define a prompt to send to the AI
+prompt = "write a essay on phind"
 
-WEBSAI.search()
+# Use the 'ask' method to send the prompt and receive a response
+response = ph.ask(prompt)
+
+# Extract and print the message from the response
+message = ph.get_message(response)
+print(message)
 ```
 ### 2. `YepChat` - Chat with mistral 8x7b powered by yepchat
 Thanks To Divyansh Shukla for This code
@@ -581,6 +589,36 @@ prompt = "A beautiful sunset over the ocean"
 
 # Use the prodia_cli method to generate an image based on the prompt
 Prodia.prodia_cli(prompt)
+```
+### 6. `BlackBox` - Search/chat With BlackBox
+```python
+from webscout.AI import BLACKBOXAI
+from rich import print
+
+ai = BLACKBOXAI(
+    is_conversation=True,
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+    model=None # You can specify a model if needed
+)
+
+# Define a prompt to send to the AI
+prompt = "Tell me about india"
+
+# Use the 'ask' method to send the prompt and receive a response
+response = ai.ask(prompt)
+
+# Extract the text from the response
+response_text = ai.get_message(response)
+
+# Print the response text
+print(response_text)
 ```
 ## usage of special .LLM file from webscout (webscout.LLM)
 

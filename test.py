@@ -1,9 +1,27 @@
-from webscout.LLM import LLM
+from webscout.AI import BLACKBOXAI
+from rich import print
 
-def chat(model_name, system_message="You are Jarvis"):# system prompt
-    AI = LLM(model_name, system_message)
-    AI.chat()
+ai = BLACKBOXAI(
+    is_conversation=True,
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+    model=None # You can specify a model if needed
+)
 
-if __name__ == "__main__":
-    model_name = "mistralai/Mistral-7B-Instruct-v0.1" # name of the model you wish to use It supports ALL text generation models on deepinfra.com.
-    chat(model_name)
+# Define a prompt to send to the AI
+prompt = "Tell me about india"
+
+# Use the 'ask' method to send the prompt and receive a response
+response = ai.ask(prompt)
+
+# Extract the text from the response
+response_text = ai.get_message(response)
+
+# Print the response text
+print(response_text)
