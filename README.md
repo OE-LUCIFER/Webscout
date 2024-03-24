@@ -1,8 +1,17 @@
-Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com and you.com
+#  webscout
+<p align="center">
+
+<a href="#"><img alt="Python version" src="https://img.shields.io/pypi/pyversions/webscout"/></a>
+<a href="https://pepy.tech/project/webscout"><img alt="Downloads" src="https://static.pepy.tech/badge/webscout"></a>
+
+Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com, you.com, etc also contains AI models
 Also containes AI models that you can use
 **⚠️ Warning: use AsyncWEBS in asynchronous code**
 
 ## Table of Contents
+- [webscout](#webscout)
+  - [Table of Contents](#table-of-contents)
+  - [Install](#install)
 - [Webscout API Server](#webscout-api-server)
   - [Installation](#installation)
   - [Usage](#usage)

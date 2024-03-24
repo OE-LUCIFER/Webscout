@@ -9,8 +9,8 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="webscout",
-    version="1.1.6", # Use the version variable from the version.py file
-    description="Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com and you.com Also containes AI models",
+    version="1.1.7", # Use the version variable from the version.py file
+    description="Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models",
     long_description=README,
     long_description_content_type="text/markdown",
     author="OEvortex",
@@ -25,6 +25,8 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Internet :: WWW/HTTP :: Indexing/Search',
         'Topic :: Software Development :: Libraries :: Python Modules',
@@ -42,6 +44,7 @@ setup(
         "g4f>=0.2.2.3",
         "rich",
         "python-dotenv",
+        "Helpingai-T2",
     ],
     entry_points={
         "console_scripts": [
