@@ -1,14 +1,15 @@
 import asyncio
 from concurrent.futures import Future
 from threading import Thread
+import sys
 from types import TracebackType
 from typing import Any, Awaitable, Dict, Optional, Type, Union
-# Attempt to set the event loop policy to WindowsSelectorEventLoopPolicy
-try:
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-except AttributeError:
-    # Fall back to ProactorEventLoopPolicy if WindowsSelectorEventLoopPolicy is not available
-    asyncio.set_event_loop_policy(asyncio.ProactorEventLoopPolicy())
+if sys.platform == 'win32':
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except AttributeError:
+        # If WindowsSelectorEventLoopPolicy is not available, do nothing
+        pass
 from .webscout_search_async import AsyncWEBS
 
 
