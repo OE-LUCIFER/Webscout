@@ -1,8 +1,4 @@
-from webscout.AI import PERPLEXITY
-# Create an instance of the PERPLEXITY class
-perplexity = PERPLEXITY()
+from webscout import WEBS
 
-# Example usage:
-prompt = "Explain the concept of recursion in simple terms."
-response = perplexity.chat(prompt)
-print(response)
+R = WEBS().text("python programming", max_results=5)
+print(R)

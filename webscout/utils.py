@@ -1,35 +1,27 @@
-import json
 import re
 from decimal import Decimal
-from functools import lru_cache
 from html import unescape
 from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Union
 from urllib.parse import unquote
 
+import orjson
+
 from .exceptions import WebscoutE
 
-try:
-    import orjson
-except ModuleNotFoundError:
-    HAS_ORJSON = False
-else:
-    HAS_ORJSON = True
-
-REGEX_500_IN_URL = re.compile(r"(?:\d{3}-\d{2}\.js)")
 REGEX_STRIP_TAGS = re.compile("<.*?>")
 
 
 def json_dumps(obj: Any) -> str:
     try:
-        return orjson.dumps(obj).decode("utf-8") if HAS_ORJSON else json.dumps(obj)
+        return orjson.dumps(obj).decode("utf-8")
     except Exception as ex:
         raise WebscoutE(f"{type(ex).__name__}: {ex}") from ex
 
 
 def json_loads(obj: Union[str, bytes]) -> Any:
     try:
-        return orjson.loads(obj) if HAS_ORJSON else json.loads(obj)
+        return orjson.loads(obj)
     except Exception as ex:
         raise WebscoutE(f"{type(ex).__name__}: {ex}") from ex
 
@@ -61,12 +53,6 @@ def _text_extract_json(html_bytes: bytes, keywords: str) -> List[Dict[str, str]]
     except Exception as ex:
         raise WebscoutE(f"_text_extract_json() {keywords=} {type(ex).__name__}: {ex}") from ex
     raise WebscoutE(f"_text_extract_json() {keywords=} return None")
-
-
-@lru_cache
-def _is_500_in_url(url: str) -> bool:
-    """Something like '506-00.js' inside the url."""
-    return bool(REGEX_500_IN_URL.search(url))
 
 
 def _normalize(raw_html: str) -> str:

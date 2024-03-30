@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from datetime import datetime, timezone
@@ -10,24 +11,30 @@ from types import TracebackType
 from typing import Dict, List, Optional, Tuple, Union
 
 from curl_cffi import requests
-from lxml import html
 
-from .exceptions import WebscoutE
+try:
+    from lxml.html import HTMLParser as LHTMLParser
+    from lxml.html import document_fromstring
+
+    LXML_AVAILABLE = True
+except ImportError:
+    LXML_AVAILABLE = False
+
+from .exceptions import WebscoutE, RatelimitE, TimeoutE
 from .utils import (
     _calculate_distance,
     _extract_vqd,
-    _is_500_in_url,
     _normalize,
     _normalize_url,
     _text_extract_json,
     json_loads,
 )
 
-logger = logging.getLogger("AsyncWEBS")
+logger = logging.getLogger("webscout_search.AsyncWEBS")
 
 
 class AsyncWEBS:
-    """webscout async class to get search results from duckduckgo.com."""
+    """Webscout async class to get search results from duckduckgo.com."""
 
     _executor: Optional[ThreadPoolExecutor] = None
 
@@ -43,33 +50,45 @@ class AsyncWEBS:
             headers (dict, optional): Dictionary of headers for the HTTP client. Defaults to None.
             proxies (Union[dict, str], optional): Proxies for the HTTP client (can be dict or str). Defaults to None.
             timeout (int, optional): Timeout value for the HTTP client. Defaults to 10.
-
-        Raises:
-            webscoutE: Raised when there is a generic exception during the API request.
         """
         self.proxies = {"all": proxies} if isinstance(proxies, str) else proxies
         self._asession = requests.AsyncSession(
-            headers=headers, proxies=self.proxies, timeout=timeout, impersonate="chrome"
+            headers=headers,
+            proxies=self.proxies,
+            timeout=timeout,
+            impersonate="chrome",
+            allow_redirects=False,
         )
         self._asession.headers["Referer"] = "https://duckduckgo.com/"
-        self._parser: Optional[html.HTMLParser] = None
+        self._parser: Optional[LHTMLParser] = None
+        self._exception_event = asyncio.Event()
+        self._exit_done = False
 
     async def __aenter__(self) -> "AsyncWEBS":
-        """A context manager method that is called when entering the 'with' statement."""
         return self
 
     async def __aexit__(
-        self, exc_type: Optional[BaseException], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+        self,
+        exc_type: Optional[BaseException] = None,
+        exc_val: Optional[BaseException] = None,
+        exc_tb: Optional[TracebackType] = None,
     ) -> None:
-        """Closes the session."""
-        await self._asession.close()
+        await self._session_close()
 
-    def _get_parser(self) -> html.HTMLParser:
+    def __del__(self) -> None:
+        if self._exit_done is False:
+            asyncio.create_task(self._session_close())
+
+    async def _session_close(self) -> None:
+        """Close the curl-cffi async session."""
+        if self._exit_done is False:
+            await self._asession.close()
+            self._exit_done = True
+
+    def _get_parser(self) -> "LHTMLParser":
         """Get HTML parser."""
         if self._parser is None:
-            self._parser = html.HTMLParser(
-                remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False
-            )
+            self._parser = LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
         return self._parser
 
     def _get_executor(self, max_workers: int = 1) -> ThreadPoolExecutor:
@@ -85,18 +104,23 @@ class AsyncWEBS:
         data: Optional[Union[Dict[str, str], bytes]] = None,
         params: Optional[Dict[str, str]] = None,
     ) -> bytes:
+        if self._exception_event.is_set():
+            raise WebscoutE("Exception occurred in previous call.")
         try:
             resp = await self._asession.request(method, url, data=data, params=params, stream=True)
-            resp.raise_for_status()
             resp_content: bytes = await resp.acontent()
-            logger.debug(f"_aget_url() {resp.status_code} {resp.elapsed:.2f} {len(resp_content)} {resp.url}")
-            if _is_500_in_url(resp.url) or resp.status_code == 202:
-                raise WebscoutE("Ratelimit")
-            if resp.status_code == 200:
-                return resp_content
         except Exception as ex:
-            raise WebscoutE(f"_aget_url() {url} {type(ex).__name__}: {ex}") from ex
-        raise WebscoutE(f"_aget_url() {url} return None. {params=} {data=}")
+            self._exception_event.set()
+            if "time" in str(ex).lower():
+                raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
+            raise WebscoutE(f"{url} {type(ex).__name__}: {ex}") from ex
+        logger.debug(f"_aget_url() {resp.url} {resp.status_code} {resp.elapsed:.2f} {len(resp_content)}")
+        if resp.status_code == 200:
+            return resp_content
+        self._exception_event.set()
+        if resp.status_code in (202, 301, 403):
+            raise RatelimitE(f"{resp.url} {resp.status_code}")
+        raise WebscoutE(f"{resp.url} return None. {params=} {data=}")
 
     async def _aget_vqd(self, keywords: str) -> str:
         """Get vqd value for a search query."""
@@ -129,8 +153,14 @@ class AsyncWEBS:
             List of dictionaries with search results, or None if there was an error.
 
         Raises:
-            WebscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
+        if LXML_AVAILABLE is False and backend != "api":
+            backend = "api"
+            warnings.warn("lxml is not installed. Using backend='api'.", stacklevel=2)
+
         if backend == "api":
             results = await self._text_api(keywords, region, safesearch, timelimit, max_results)
         elif backend == "html":
@@ -147,7 +177,7 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """webscout text search generator. Query params: https://duckduckgo.com/params.
+        """Webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -160,7 +190,9 @@ class AsyncWEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -170,9 +202,11 @@ class AsyncWEBS:
             "q": keywords,
             "kl": region,
             "l": region,
+            "p": "",
+            "s": "0",
+            "df": "",
             "vqd": vqd,
-            "bing_market": region,
-            "a": "ftsa",  # something
+            "ex": "",
         }
         safesearch = safesearch.lower()
         if safesearch == "moderate":
@@ -223,7 +257,7 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """webscout text search generator. Query params: https://duckduckgo.com/params.
+        """Webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -236,7 +270,9 @@ class AsyncWEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -266,7 +302,7 @@ class AsyncWEBS:
                 return
 
             tree = await self._asession.loop.run_in_executor(
-                self._get_executor(), partial(html.document_fromstring, resp_content, self._get_parser())
+                self._get_executor(), partial(document_fromstring, resp_content, self._get_parser())
             )
 
             for e in tree.xpath("//div[h2]"):
@@ -306,7 +342,7 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """webscout text search generator. Query params: https://duckduckgo.com/params.
+        """Webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -318,7 +354,9 @@ class AsyncWEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -343,7 +381,7 @@ class AsyncWEBS:
                 return
 
             tree = await self._asession.loop.run_in_executor(
-                self._get_executor(), partial(html.document_fromstring, resp_content, self._get_parser())
+                self._get_executor(), partial(document_fromstring, resp_content, self._get_parser())
             )
 
             data = zip(cycle(range(1, 5)), tree.xpath("//table[last()]//tr"))
@@ -393,7 +431,7 @@ class AsyncWEBS:
         license_image: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """webscout images search. Query params: https://duckduckgo.com/params.
+        """Webscout images search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -416,7 +454,9 @@ class AsyncWEBS:
             List of dictionaries with images search results.
 
         Raises:
-            WebscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -484,7 +524,7 @@ class AsyncWEBS:
         license_videos: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """webscout videos search. Query params: https://duckduckgo.com/params.
+        """Webscout videos search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -500,7 +540,9 @@ class AsyncWEBS:
             List of dictionaries with videos search results.
 
         Raises:
-            WebscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -553,7 +595,7 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """webscout news search. Query params: https://duckduckgo.com/params.
+        """Webscout news search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -566,7 +608,9 @@ class AsyncWEBS:
             List of dictionaries with news search results.
 
         Raises:
-            webscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -618,7 +662,7 @@ class AsyncWEBS:
         return list(islice(filter(None, results), max_results))
 
     async def answers(self, keywords: str) -> List[Dict[str, str]]:
-        """webscout instant answers. Query params: https://duckduckgo.com/params.
+        """Webscout instant answers. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query,
@@ -627,7 +671,9 @@ class AsyncWEBS:
             List of dictionaries with instant answers results.
 
         Raises:
-            WebscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -687,7 +733,7 @@ class AsyncWEBS:
         return results
 
     async def suggestions(self, keywords: str, region: str = "wt-wt") -> List[Dict[str, str]]:
-        """webscout suggestions. Query params: https://duckduckgo.com/params.
+        """Webscout suggestions. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -697,7 +743,9 @@ class AsyncWEBS:
             List of dictionaries with suggestions results.
 
         Raises:
-            WebscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -705,7 +753,7 @@ class AsyncWEBS:
             "q": keywords,
             "kl": region,
         }
-        resp_content = await self._aget_url("GET", "https://duckduckgo.com/ac", params=payload)
+        resp_content = await self._aget_url("GET", "https://duckduckgo.com/ac/", params=payload)
         page_data = json_loads(resp_content)
         return [r for r in page_data]
 
@@ -724,7 +772,7 @@ class AsyncWEBS:
         radius: int = 0,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """webscout maps search. Query params: https://duckduckgo.com/params.
+        """Webscout maps search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query
@@ -745,7 +793,9 @@ class AsyncWEBS:
             List of dictionaries with maps search results, or None if there was an error.
 
         Raises:
-            webscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
@@ -895,7 +945,7 @@ class AsyncWEBS:
     async def translate(
         self, keywords: Union[List[str], str], from_: Optional[str] = None, to: str = "en"
     ) -> List[Dict[str, str]]:
-        """webscout translate.
+        """Webscout translate.
 
         Args:
             keywords: string or list of strings to translate.
@@ -906,7 +956,9 @@ class AsyncWEBS:
             List od dictionaries with translated keywords.
 
         Raises:
-            webscoutE: Raised when there is a generic exception during the API request.
+            WebscoutE: Base exception for Webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 

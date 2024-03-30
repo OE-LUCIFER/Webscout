@@ -3,7 +3,7 @@ from concurrent.futures import Future
 from threading import Thread
 from types import TracebackType
 from typing import Any, Awaitable, Dict, Optional, Type, Union
-
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 from .webscout_search_async import AsyncWEBS
 
 
@@ -18,6 +18,7 @@ class WEBS(AsyncWEBS):
         timeout: Optional[int] = 10,
     ) -> None:
         super().__init__(headers=headers, proxies=proxies, timeout=timeout)
+        self._exit_done = False
 
     def __enter__(self) -> "WEBS":
         return self
@@ -27,8 +28,21 @@ class WEBS(AsyncWEBS):
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
-    ) -> bool:
-        return True
+    ) -> None:
+        self._close_session()
+
+    def __del__(self) -> None:
+        self._close_session()
+
+    def _close_session(self) -> None:
+        """Close the curl-cffi async session."""
+        if self._exit_done is False:
+            # Ensure self._asession.close() is a coroutine
+            coro = self._asession.close()
+            # Check if coro is a coroutine object
+            if asyncio.iscoroutine(coro):
+                self._run_async_in_thread(coro)
+            self._exit_done = True
 
     def _run_async_in_thread(self, coro: Awaitable[Any]) -> Any:
         """Runs an async coroutine in a separate thread."""

@@ -333,14 +333,8 @@ Here is an example of initializing the WEBS class:
 ```python3
 from webscout import WEBS
 
-# Instantiating the WEBS class from webscout module
-WEBS_instance = WEBS()
-
-# Fetching text results for the query "python programming" with a maximum of 5 results
-results = [result for result in WEBS_instance.text("python programming", max_results=5)]
-
-# Displaying the obtained results
-print(results)
+R = WEBS().text("python programming", max_results=5)
+print(R)
 ```
 Here is an example of initializing the AsyncWEBS class:
 ```python3
