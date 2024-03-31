@@ -18,6 +18,7 @@ Also containes AI models that you can use
   - [Regions](#regions)
   - [DeepWEBS: Advanced Web Searches](#deepwebs-advanced-web-searches)
     - [Activating DeepWEBS](#activating-deepwebs)
+    - [Point to remember before using `DeepWEBS`](#point-to-remember-before-using-deepwebs)
     - [Usage Example](#usage-example)
   - [WEBS and AsyncWEBS classes](#webs-and-asyncwebs-classes)
   - [Exceptions](#exceptions)
@@ -173,26 +174,33 @@ ___
 
 To utilize the `DeepWEBS` feature, you must first create an instance of the `DeepWEBS` . This is designed to be used independently of the `WEBS` , offering a focused approach to web searches.
 
+### Point to remember before using `DeepWEBS`
+As `DeepWEBS` is designed to extract relevant information directly from webpages and Search engine, It extracts html from webpages and saves them to folder named files in `DeepWEBS` that can be found at `C:\Users\Username\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\DeepWEBS`
+
 ### Usage Example
 
 Here's a basic example of how to use the `DeepWEBS` :
 ```python
 from webscout import DeepWEBS
 
-
 def perform_web_search(query):
-    D = DeepWEBS() 
-    item = D.DeepSearch(
-        queries=[query],  # Query to search
-        result_num=5,  # Number of search results
-        safe=True,  # Enable SafeSearch
-        types=["web"],  # Search type:  web
+    # Initialize the DeepWEBS class
+    D = DeepWEBS()
+    
+    # Set up the search parameters
+    search_params = D.DeepSearch(
+        queries=[query], # Query to search
+        result_num=5, # Number of search results
+        safe=True, # Enable SafeSearch
+        types=["web"], # Search type: web
         extract_webpage=True, # True for extracting webpages
         overwrite_query_html=False,
         overwrite_webpage_html=False,
     )
-    results = D.queries_to_search_results(item)
-
+    
+    # Execute the search and retrieve results
+    results = D.queries_to_search_results(search_params)
+    
     return results
 
 def print_search_results(results):
@@ -209,8 +217,13 @@ def print_search_results(results):
         print("No search results found.")
 
 def main():
+    # Prompt the user for a search query
     query = input("Enter your search query: ")
+    
+    # Perform the web search
     results = perform_web_search(query)
+    
+    # Print the search results
     print_search_results(results)
 
 if __name__ == "__main__":

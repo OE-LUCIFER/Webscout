@@ -51,13 +51,23 @@ class DeepWEBS:
             query_results_extractor = QueryResultsExtractor()
             if not query.strip():
                 continue
-            query_html_path = google_searcher.search(
-                query=query,
-                result_num=item.result_num,
-                safe=item.safe,
-                overwrite=item.overwrite_query_html,
-            )
-            query_search_results = query_results_extractor.extract(query_html_path)
+            try:
+                query_html_path = google_searcher.search(
+                    query=query,
+                    result_num=item.result_num,
+                    safe=item.safe,
+                    overwrite=item.overwrite_query_html,
+                )
+            except Exception as e:
+                logger.error(f"Failed to search for query '{query}': {e}")
+                continue
+
+            try:
+                query_search_results = query_results_extractor.extract(query_html_path)
+            except Exception as e:
+                logger.error(f"Failed to extract search results for query '{query}': {e}")
+                continue
+
             queries_search_results.append(query_search_results)
         logger.note(queries_search_results)
 
@@ -70,17 +80,21 @@ class DeepWEBS:
 
     def extract_webpages(self, queries_search_results, overwrite_webpage_html=False):
         for query_idx, query_search_results in enumerate(queries_search_results):
-            # Fetch webpages with urls
-            batch_webpage_fetcher = BatchWebpageFetcher()
-            urls = [
-                query_result["url"]
-                for query_result in query_search_results["query_results"]
-            ]
-            url_and_html_path_list = batch_webpage_fetcher.fetch(
-                urls,
-                overwrite=overwrite_webpage_html,
-                output_parent=query_search_results["query"],
-            )
+            try:
+                # Fetch webpages with urls
+                batch_webpage_fetcher = BatchWebpageFetcher()
+                urls = [
+                    query_result["url"]
+                    for query_result in query_search_results["query_results"]
+                ]
+                url_and_html_path_list = batch_webpage_fetcher.fetch(
+                    urls,
+                    overwrite=overwrite_webpage_html,
+                    output_parent=query_search_results["query"],
+                )
+            except Exception as e:
+                logger.error(f"Failed to fetch webpages for query '{query_search_results['query']}': {e}")
+                continue
 
             # Extract webpage contents from htmls
             html_paths = [
@@ -88,9 +102,13 @@ class DeepWEBS:
                 for url_and_html_path in url_and_html_path_list
             ]
             batch_webpage_content_extractor = BatchWebpageContentExtractor()
-            html_path_and_extracted_content_list = (
-                batch_webpage_content_extractor.extract(html_paths)
-            )
+            try:
+                html_path_and_extracted_content_list = (
+                    batch_webpage_content_extractor.extract(html_paths)
+                )
+            except Exception as e:
+                logger.error(f"Failed to extract webpage contents for query '{query_search_results['query']}': {e}")
+                continue
 
             # Build the map of url to extracted_content
             html_path_to_url_dict = {
@@ -109,7 +127,7 @@ class DeepWEBS:
                 query_search_results["query_results"]
             ):
                 url = query_result["url"]
-                extracted_content = url_to_extracted_content_dict[url]
+                extracted_content = url_to_extracted_content_dict.get(url, "")
                 queries_search_results[query_idx]["query_results"][query_result_idx][
                     "text"
                 ] = extracted_content
