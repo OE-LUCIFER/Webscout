@@ -1,47 +1,28 @@
-from webscout import DeepWEBS
+from webscout import GPT4ALL
 
-def perform_web_search(query):
-    # Initialize the DeepWEBS class
-    D = DeepWEBS()
-    
-    # Set up the search parameters
-    search_params = D.DeepSearch(
-        queries=[query], # Query to search
-        result_num=5, # Number of search results
-        safe=True, # Enable SafeSearch
-        types=["web"], # Search type: web
-        extract_webpage=True, # True for extracting webpages
-        overwrite_query_html=False,
-        overwrite_webpage_html=False,
-    )
-    
-    # Execute the search and retrieve results
-    results = D.queries_to_search_results(search_params)
-    
-    return results
+# Initialize the GPT4ALL class with your model path and other optional parameters
+gpt4all_instance = GPT4ALL(
+    model="path/to/your/model/file", # Replace with the actual path to your model file
+    is_conversation=True,
+    max_tokens=800,
+    temperature=0.7,
+    presence_penalty=0,
+    frequency_penalty=1.18,
+    top_p=0.4,
+    intro="Hello, how can I assist you today?", # sys
+    filepath="path/to/conversation/history/file", # Optional, for conversation history
+    update_file=True,
+    history_offset=10250,
+    act=None # Optional, for using an awesome prompt as intro
+)
 
-def print_search_results(results):
-    """
-    Print the search results.
-    
-    Args:
-    - search_results (list): List of search results to print.
-    """
-    if results:
-        for index, result in enumerate(results, start=1):
-            print(f"Result {index}: {result}")
-    else:
-        print("No search results found.")
+# Generate a response from the AI model
+response = gpt4all_instance.chat(
+    prompt="What is the weather like today?",
+    stream=False, # Set to True if you want to stream the response
+    optimizer=None, # Optional, specify an optimizer if needed
+    conversationally=False # Set to True for conversationally generated responses
+)
 
-def main():
-    # Prompt the user for a search query
-    query = input("Enter your search query: ")
-    
-    # Perform the web search
-    results = perform_web_search(query)
-    
-    # Print the search results
-    print_search_results(results)
-
-if __name__ == "__main__":
-    main()
+# Print the generated response
+print(response)

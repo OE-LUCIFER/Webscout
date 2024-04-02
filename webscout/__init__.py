@@ -9,6 +9,7 @@ from .webscout_search import WEBS
 from .webscout_search_async import AsyncWEBS
 from .version import __version__
 from .DWEBS import DeepWEBS
+from .offlineAI import GPT4ALL
 __all__ = ["WEBS", "AsyncWEBS", "__version__", "cli"]
 
 logging.getLogger("webscout").addHandler(logging.NullHandler())

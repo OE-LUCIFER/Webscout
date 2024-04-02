@@ -9,7 +9,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="webscout",
-    version="1.2.3", # Use the version variable from the version.py file
+    version="1.2.4", # Use the version variable from the version.py file
     description="Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -53,6 +53,8 @@ setup(
         "termcolor",
         "tiktoken",
         "tldextract",
+        "gpt4all",
+        "orjson",
     ],
     entry_points={
         "console_scripts": [
