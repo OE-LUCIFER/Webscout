@@ -11,7 +11,7 @@ import click
 from rich.markdown import Markdown
 from rich.console import Console
 
-appdir = appdirs.AppDirs("pytgpt", "Smartwa")
+appdir = appdirs.AppDirs("AIWEBS", "vortex")
 
 default_path = appdir.user_cache_dir
 
