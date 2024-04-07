@@ -25,7 +25,7 @@ from webscout.AIbase import Provider
 from Helpingai_T2 import Perplexity
 from typing import Any
 import logging
-#------------------------------------------------------OpenGPT-----------------------------------------------------------
+#------------------------------------------------------KOBOLDAI-----------------------------------------------------------
 class KOBOLDAI(Provider):
     def __init__(
         self,

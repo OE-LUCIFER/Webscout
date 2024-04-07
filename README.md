@@ -4,8 +4,7 @@
 <a href="#"><img alt="Python version" src="https://img.shields.io/pypi/pyversions/webscout"/></a>
 <a href="https://pepy.tech/project/webscout"><img alt="Downloads" src="https://static.pepy.tech/badge/webscout"></a>
 
-Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models
-Also containes AI models that you can use
+Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models and now can transcribe yt videos
 
 
 ## Table of Contents
@@ -16,6 +15,7 @@ Also containes AI models that you can use
   - [CLI version of webscout.AI](#cli-version-of-webscoutai)
   - [CLI to use LLM](#cli-to-use-llm)
   - [Regions](#regions)
+  - [Transcriber](#transcriber)
   - [DeepWEBS: Advanced Web Searches](#deepwebs-advanced-web-searches)
     - [Activating DeepWEBS](#activating-deepwebs)
     - [Point to remember before using `DeepWEBS`](#point-to-remember-before-using-deepwebs)
@@ -166,7 +166,55 @@ ___
 [Go To TOP](#TOP)
 
 
+## Transcriber
+The transcriber function in webscout is a handy tool that transcribes YouTube videos. Here's an example code demonstrating its usage:
+```python
+import sys
+from webscout import transcriber
 
+def extract_transcript(video_id):
+    """Extracts the transcript from a YouTube video."""
+    try:
+        transcript_list = transcriber.list_transcripts(video_id)
+        for transcript in transcript_list:
+            transcript_text_list = transcript.fetch()
+            lang = transcript.language
+            transcript_text = ""
+            if transcript.language_code == 'en':
+                for line in transcript_text_list:
+                    transcript_text += " " + line["text"]
+                return transcript_text
+            elif transcript.is_translatable:
+                english_transcript_list = transcript.translate('en').fetch()
+                for line in english_transcript_list:
+                    transcript_text += " " + line["text"]
+                return transcript_text
+        print("Transcript extraction failed. Please check the video URL.")
+    except Exception as e:
+        print(f"Error: {e}")
+
+def main():
+    video_url = input("Enter the video link: ")
+
+    if video_url:
+        video_id = video_url.split("=")[1]
+        print("Video URL:", video_url)
+        submit = input("Press 'Enter' to get the transcript or type 'exit' to quit: ")
+        if submit == '':
+            print("Extracting Transcript...")
+            transcript = extract_transcript(video_id)
+            print('Transcript:')
+            print(transcript)
+            print("__________________________________________________________________________________")
+        elif submit.lower() == 'exit':
+            print("Exiting...")
+            sys.exit()
+        else:
+            print("Invalid input. Please try again.")
+
+if __name__ == "__main__":
+    main()
+```
 ## DeepWEBS: Advanced Web Searches
 
 `DeepWEBS` is a standalone feature designed to perform advanced web searches with enhanced capabilities. It is particularly powerful in extracting relevant information directly from webpages and Search engine, focusing exclusively on text (web) searches. Unlike the `WEBS` , which provides a broader range of search functionalities, `DeepWEBS` is specifically tailored for in-depth web searches.

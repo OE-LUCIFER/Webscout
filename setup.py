@@ -9,8 +9,8 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="webscout",
-    version="1.2.5", 
-    description="Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models",
+    version="1.2.6", 
+    description="Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models and now can transcribe yt videos",
     long_description=README,
     long_description_content_type="text/markdown",
     author="OEvortex",
