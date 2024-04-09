@@ -6,17 +6,23 @@ def extract_transcript(video_id):
     try:
         transcript_list = transcriber.list_transcripts(video_id)
         for transcript in transcript_list:
-            transcript_text_list = transcript.fetch()
+            transcript_data_list = transcript.fetch()
             lang = transcript.language
             transcript_text = ""
             if transcript.language_code == 'en':
-                for line in transcript_text_list:
-                    transcript_text += " " + line["text"]
+                for line in transcript_data_list:
+                    start_time = line['start']
+                    end_time = start_time + line['duration']
+                    formatted_line = f"{start_time:.2f} - {end_time:.2f}: {line['text']}\n"
+                    transcript_text += formatted_line
                 return transcript_text
             elif transcript.is_translatable:
                 english_transcript_list = transcript.translate('en').fetch()
                 for line in english_transcript_list:
-                    transcript_text += " " + line["text"]
+                    start_time = line['start']
+                    end_time = start_time + line['duration']
+                    formatted_line = f"{start_time:.2f} - {end_time:.2f}: {line['text']}\n"
+                    transcript_text += formatted_line
                 return transcript_text
         print("Transcript extraction failed. Please check the video URL.")
     except Exception as e:

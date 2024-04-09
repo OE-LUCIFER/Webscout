@@ -1,15 +1,15 @@
 from setuptools import setup, find_packages
 
-version = None
-with open("webscout/version.py") as version_file:
-    exec(version_file.read())
+# version = None
+# with open("webscout/version.py") as version_file:
+#     exec(version_file.read())
 
 with open("README.md", encoding="utf-8") as f:
     README = f.read()
 
 setup(
     name="webscout",
-    version="1.2.6", 
+    version="1.2.8", 
     description="Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models and now can transcribe yt videos",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -54,6 +54,7 @@ setup(
         "tiktoken",
         "tldextract",
         "orjson",
+        # "appdirs"
     ],
     entry_points={
         "console_scripts": [

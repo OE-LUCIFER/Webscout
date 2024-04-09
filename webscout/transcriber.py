@@ -27,7 +27,6 @@ class TranscriptRetrievalError(Exception):
         'https://github.com/OE-LUCIFER/Webscout/issues. '
         'Please add which version of youtube_transcript_api you are using '
         'and provide the information needed to replicate the error. '
-        'Also make sure that there are no open issues which already describe your problem!'
     )
 
     def __init__(self, video_id):
