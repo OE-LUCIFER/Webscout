@@ -305,11 +305,12 @@ import logging
 import sys
 from itertools import chain
 from random import shuffle
-
 import requests
 from webscout import AsyncWEBS
 
-# bypass curl-cffi NotImplementedError in windows https://curl-cffi.readthedocs.io/en/latest/faq/
+# If you have proxies, define them here
+proxies = None
+
 if sys.platform.lower().startswith("win"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -321,24 +322,21 @@ def get_words():
 
 async def aget_results(word):
     async with AsyncWEBS(proxies=proxies) as WEBS:
-        results = [r async for r in WEBS.text(word, max_results=None)]
+        results = await WEBS.text(word, max_results=None)
         return results
 
 async def main():
     words = get_words()
     shuffle(words)
-    tasks = []
-    for word in words[:10]:
-        tasks.append(aget_results(word))
+    tasks = [aget_results(word) for word in words[:10]]
     results = await asyncio.gather(*tasks)
     print(f"Done")
     for r in chain.from_iterable(results):
         print(r)
-    
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    asyncio.run(main())
+logging.basicConfig(level=logging.DEBUG)
+
+await main()
 ```
 It is important to note that the WEBS and AsyncWEBS classes should always be used as a context manager (with statement).
 This ensures proper resource management and cleanup, as the context manager will automatically handle opening and closing the HTTP client connection.
