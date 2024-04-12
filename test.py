@@ -1,51 +1,26 @@
-import sys
-from webscout import transcriber
+from flask import Flask, render_template, request
+from webscout import WEBS
+import arrow
 
-def extract_transcript(video_id):
-    """Extracts the transcript from a YouTube video."""
-    try:
-        transcript_list = transcriber.list_transcripts(video_id)
-        for transcript in transcript_list:
-            transcript_data_list = transcript.fetch()
-            lang = transcript.language
-            transcript_text = ""
-            if transcript.language_code == 'en':
-                for line in transcript_data_list:
-                    start_time = line['start']
-                    end_time = start_time + line['duration']
-                    formatted_line = f"{start_time:.2f} - {end_time:.2f}: {line['text']}\n"
-                    transcript_text += formatted_line
-                return transcript_text
-            elif transcript.is_translatable:
-                english_transcript_list = transcript.translate('en').fetch()
-                for line in english_transcript_list:
-                    start_time = line['start']
-                    end_time = start_time + line['duration']
-                    formatted_line = f"{start_time:.2f} - {end_time:.2f}: {line['text']}\n"
-                    transcript_text += formatted_line
-                return transcript_text
-        print("Transcript extraction failed. Please check the video URL.")
-    except Exception as e:
-        print(f"Error: {e}")
+app = Flask(__name__)
 
-def main():
-    video_url = input("Enter the video link: ")
+@app.route('/', methods=['GET'])
+def home():
+    keywords = request.args.get('keywords', 'holiday')
+    timelimit = request.args.get('timelimit', 'm')
+    news_list = []
+    with WEBS() as webs_instance:
+        WEBS_news_gen = webs_instance.news(
+          keywords,
+          region="wt-wt",
+          safesearch="off",
+          timelimit=timelimit,
+          max_results=20
+        )
+        for r in WEBS_news_gen:
+            r['date'] = arrow.get(r['date']).humanize()
+            news_list.append(r)
+    return render_template('news.html', news=news_list, keywords=keywords)
 
-    if video_url:
-        video_id = video_url.split("=")[1]
-        print("Video URL:", video_url)
-        submit = input("Press 'Enter' to get the transcript or type 'exit' to quit: ")
-        if submit == '':
-            print("Extracting Transcript...")
-            transcript = extract_transcript(video_id)
-            print('Transcript:')
-            print(transcript)
-            print("__________________________________________________________________________________")
-        elif submit.lower() == 'exit':
-            print("Exiting...")
-            sys.exit()
-        else:
-            print("Invalid input. Please try again.")
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run(debug=True)
