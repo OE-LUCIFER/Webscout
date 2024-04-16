@@ -10,6 +10,7 @@ from .webscout_search_async import AsyncWEBS
 from .version import __version__
 from .DWEBS import DeepWEBS
 from .transcriber import transcriber
+from .voice import play_audio
 
 
 __all__ = ["WEBS", "AsyncWEBS", "__version__", "cli"]

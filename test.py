@@ -1,26 +1,8 @@
-from flask import Flask, render_template, request
-from webscout import WEBS
-import arrow
+from webscout import play_audio
 
-app = Flask(__name__)
+message = "This is an example of text-to-speech."
+audio_content = play_audio(message, voice="Brian")
 
-@app.route('/', methods=['GET'])
-def home():
-    keywords = request.args.get('keywords', 'holiday')
-    timelimit = request.args.get('timelimit', 'm')
-    news_list = []
-    with WEBS() as webs_instance:
-        WEBS_news_gen = webs_instance.news(
-          keywords,
-          region="wt-wt",
-          safesearch="off",
-          timelimit=timelimit,
-          max_results=20
-        )
-        for r in WEBS_news_gen:
-            r['date'] = arrow.get(r['date']).humanize()
-            news_list.append(r)
-    return render_template('news.html', news=news_list, keywords=keywords)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+# Save the audio to a file
+with open("output.mp3", "wb") as f:
+    f.write(audio_content)
