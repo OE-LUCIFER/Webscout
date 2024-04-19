@@ -12,6 +12,7 @@ from .DWEBS import DeepWEBS
 from .transcriber import transcriber
 from .voice import play_audio
 
+
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 
 webai = [
