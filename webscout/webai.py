@@ -2184,15 +2184,7 @@ class Gpt4free:
                 total=amount,
                 visible=quiet == False,
             )
-            imager = Imager(timeout=timeout, proxies=proxy if proxy else {})
-            for image in imager.generate(
-                prompt=prompt,
-                amount=amount,
-                additives=no_additives == False,
-                stream=True,
-            ):
-                imager.save([image], name=name, dir=directory)
-                progress.update(task, advance=1)
+
 
 
 class Utils:
@@ -2217,16 +2209,16 @@ class Utils:
         """Install latest version of webscout"""
         if dev:
             source = "git+" + webscout.__repo__ + ".git"
-        source = "python-tgpt" if source is None else source
+        source = "webscout" if source is None else source
         assert (
             "tgpt" in source or source == "."
         ), f"Cannot update webscout from the source '{source}'"
         click.secho(
-            f"[*] Updating from '{'pip' if source=='python-tgpt' else source}'",
+            f"[*] Updating from '{'pip' if source=='webscout' else source}'",
             fg="yellow",
         )
         this.run_system_command(f"{sudo or ''}pip install --upgrade {source}")
-        response = this.run_system_command("pip show python-tgpt")[1]
+        response = this.run_system_command("pip show webscout")[1]
         click.secho(response.stdout)
         click.secho("Congratulations! webscout updated successfully.", fg="cyan")
 

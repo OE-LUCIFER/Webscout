@@ -11,7 +11,7 @@ from .version import __version__
 from .DWEBS import DeepWEBS
 from .transcriber import transcriber
 from .voice import play_audio
-from .LLM import LLM
+
 
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 
