@@ -50,6 +50,9 @@ setup(
         "tiktoken",
         "tldextract",
         "orjson",
+        "clipman",
+        "paperclip",
+        "GoogleBard1",
         # "appdirs"
     ],
     entry_points={
