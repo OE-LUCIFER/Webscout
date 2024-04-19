@@ -224,7 +224,7 @@ class Conversation:
 
 class AwesomePrompts:
     awesome_prompt_url = (
-        "https://github.com/Simatwa/gpt-cli/blob/main/assets/all-acts.json?raw=true"
+        "https://raw.githubusercontent.com/OE-LUCIFER/prompts/main/prompt.json"
     )
     awesome_prompt_path = os.path.join(default_path, "all-acts.json")
 
@@ -363,9 +363,9 @@ class AwesomePrompts:
 
 
 class Updates:
-    """Pytgpt latest release info"""
+    """Webscout latest release info"""
 
-    url = "https://api.github.com/repos/Simatwa/python-tgpt/releases/latest"
+    url = "https://api.github.com/repos/OE-LUCIFER/Webscout/releases/latest"
 
     @property
     def latest_version(self):
@@ -385,7 +385,7 @@ class Updates:
                 return entry.get("url")
 
     def latest(self, whole: bool = False, version: bool = False) -> dict:
-        """Check pytgpt latest version info
+        """Check Webscout latest version info
 
         Args:
             whole (bool, optional): Return whole json response. Defaults to False.
@@ -508,7 +508,7 @@ print("The essay is about...")
                 f"{self.interpreter} --version",
                 exit_on_error=True,
                 stdout_error=True,
-                help="If you're using pytgpt-cli, use the flag '--internal-exec'",
+                help="If you're using Webscout-cli, use the flag '--internal-exec'",
             )[1].stdout.split(" ")[1]
         )
 
@@ -588,7 +588,7 @@ Current Datetime : {datetime.datetime.now()}
         if self.quiet:
             return
 
-        message = "[PYTGPT] - " + message
+        message = "[Webscout] - " + message
         if category == "error":
             logging.error(message)
         else:

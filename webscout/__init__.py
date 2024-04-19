@@ -3,7 +3,7 @@
 Search for words, documents, images, videos, news, maps and text translation 
 using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models
 """
-
+import g4f
 import logging
 from .webscout_search import WEBS
 from .webscout_search_async import AsyncWEBS
@@ -13,6 +13,26 @@ from .transcriber import transcriber
 from .voice import play_audio
 from .LLM import LLM
 
+__repo__ = "https://github.com/OE-LUCIFER/Webscout"
+
+webai = [
+    "leo",
+    "openai",
+    "opengpt",
+    "koboldai",
+    "gemini",
+    "phind",
+    "blackboxai",
+    "g4fauto",
+    "perplexity",
+    "sean",
+]
+
+gpt4free_providers = [
+    provider.__name__ for provider in g4f.Provider.__providers__  # if provider.working
+]
+
+available_providers = webai + gpt4free_providers
 
 __all__ = ["WEBS", "AsyncWEBS", "__version__", "cli"]
 

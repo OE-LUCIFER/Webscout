@@ -12,7 +12,6 @@ Search for words, documents, images, videos, news, maps and text translation usi
   - [Table of Contents](#table-of-contents)
   - [Install](#install)
   - [CLI version](#cli-version)
-  - [CLI version of webscout.AI](#cli-version-of-webscoutai)
   - [CLI to use LLM](#cli-to-use-llm)
   - [Regions](#regions)
   - [Transcriber](#transcriber)
@@ -45,6 +44,7 @@ Search for words, documents, images, videos, news, maps and text translation usi
     - [7. `PERPLEXITY` - Search With PERPLEXITY](#7-perplexity---search-with-perplexity)
     - [8. `OpenGPT` - chat With OPENGPT](#8-opengpt---chat-with-opengpt)
     - [9. `KOBOLDIA` -](#9-koboldia--)
+    - [10. `Sean` - chat With Sean](#10-sean---chat-with-sean)
   - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
     - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
@@ -71,19 +71,6 @@ python -m webscout --help
 | python -m webscout version                | A command-line interface command that prints and returns the version of the program.            | 
 | python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |  
 
-
-
-## CLI version of webscout.AI
-| Command | Description |
-|-----------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| `python -m webscout.AI phindsearch --prompt "your search query"` | CLI function to perform a search query using Webscout.AI's Phindsearch feature. |
-| `python -m webscout.AI yepchat --message "your_message_here"` | CLI function to send a message using Webscout.AI's Yepchat feature. |
-| `python -m webscout.AI youchat --prompt "your_prompt_here"` | CLI function to generate a response based on a prompt using Webscout.AI's Youchat feature. |
-| `python -m webscout.AI gemini --message "tell me about gemma 7b"` | CLI function to get information about a specific topic using Webscout.AI's Gemini feature. |
-| `python -m webscout.AI prodia --prompt "car"` | CLI function to generate content related to a prompt using Webscout.AI's Prodia feature. |
-| `python -m webscout.AI blackboxai --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's Blackbox search feature. |
-| `python -m webscout.AI perplexity --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's PERPLEXITY feature. |
-| `python -m webscout.AI opengpt --prompt "Your prompt here"` | CLI function to perform a search using Webscout.AI's OPENGPT feature. |
 
 
 ## CLI to use LLM 
@@ -645,6 +632,16 @@ response = koboldai.ask(prompt)
 message = koboldai.get_message(response)
 print(message)
 
+```
+### 10. `Sean` - chat With Sean
+```python
+from webscout.AI import Sean
+
+a = Sean(is_conversation=True, max_tokens=8000, timeout=30)
+# This example sends a simple greeting and prints the response
+prompt = "tell me about india"
+response_str = a.chat(prompt)
+print(response_str)
 ```
 
 ## usage of special .LLM file from webscout (webscout.LLM)
