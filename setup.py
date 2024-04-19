@@ -1,16 +1,12 @@
 from setuptools import setup, find_packages
 
-# version = None
-# with open("webscout/version.py") as version_file:
-#     exec(version_file.read())
-
 with open("README.md", encoding="utf-8") as f:
     README = f.read()
 
 setup(
     name="webscout",
-    version="1.3.0", 
-    description="Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models and now can transcribe yt videos",
+    version="1.3.1", 
+    description="Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models, can transcribe yt videos and have TTS support",
     long_description=README,
     long_description_content_type="text/markdown",
     author="OEvortex",
