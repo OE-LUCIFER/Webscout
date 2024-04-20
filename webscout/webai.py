@@ -416,14 +416,14 @@ class Main(cmd.Cmd):
             elif provider == "leo":
                 from webscout.AI import LEO
 
-                self.bot = LEO.LEO(
+                self.bot = LEO(
                     is_conversation=disable_conversation,
                     max_tokens=max_tokens,
                     temperature=temperature,
                     top_k=top_k,
                     top_p=top_p,
-                    model=getOr(model, LEO.model),
-                    brave_key=getOr(auth, LEO.key),
+                    model=getOr(model, "llama-2-13b-chat"),
+                    brave_key=getOr(auth, "qztbjzBqJueQZLFkwTTJrieu8Vw3789u"),
                     timeout=timeout,
                     intro=intro,
                     filepath=filepath,
@@ -463,6 +463,30 @@ class Main(cmd.Cmd):
                 self.bot = OPENGPT(
                     is_conversation=disable_conversation,
                     max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
+            elif provider == "groq":
+                assert auth, (
+                    "GROQ's API-key is required. " "Use the flag `--key` or `-k`"
+                )
+                from webscout.AI import GROQ
+
+
+                self.bot = GROQ(
+                    api_key=auth,
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    presence_penalty=top_p,
+                    frequency_penalty=top_k,
+                    top_p=top_p,
+                    model=getOr(model, "mixtral-8x7b-32768"),
                     timeout=timeout,
                     intro=intro,
                     filepath=filepath,
