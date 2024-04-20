@@ -10,14 +10,31 @@ import sys
 import click
 from rich.markdown import Markdown
 from rich.console import Console
-
+import g4f
 appdir = appdirs.AppDirs("AIWEBS", "vortex")
 
 default_path = appdir.user_cache_dir
 
 if not os.path.exists(default_path):
     os.makedirs(default_path)
+webai = [
+    "leo",
+    "openai",
+    "opengpt",
+    "koboldai",
+    "gemini",
+    "phind",
+    "blackboxai",
+    "g4fauto",
+    "perplexity",
+    "sean",
+]
 
+gpt4free_providers = [
+    provider.__name__ for provider in g4f.Provider.__providers__  # if provider.working
+]
+
+available_providers = webai + gpt4free_providers
 
 def run_system_command(
     command: str,
@@ -468,7 +485,6 @@ print("The essay is about...")
 ```
 """
 
-    # Idea borrowed from https://github.com/AbanteAI/rawdog
 
     def __init__(
         self,

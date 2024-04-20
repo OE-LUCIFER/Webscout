@@ -1,25 +1,41 @@
 import json
 import os
-
 from pathlib import Path
-from DeepWEBS.utilsdw.logger import logger
+from typing import Dict, Optional
+
+from DeepWEBS.utilsdw.logger import OSLogger
 
 
 class OSEnver:
-    def __init__(self):
-        self.envs_stack = []
-        self.envs = os.environ.copy()
+    """Manages the OS environment variables."""
 
-    def store_envs(self):
-        self.envs_stack.append(self.envs)
+    def __init__(self) -> None:
+        """Initializes the OSEnver object."""
+        self.envs_stack: list[Dict[str, str]] = []
+        self.envs: Dict[str, str] = os.environ.copy()
 
-    def restore_envs(self):
+    def store_envs(self) -> None:
+        """Stores a copy of the current environment variables on a stack."""
+        self.envs_stack.append(self.envs.copy())
+
+    def restore_envs(self) -> None:
+        """Restores environment variables from the top of the stack."""
         self.envs = self.envs_stack.pop()
 
-    def set_envs(self, secrets=True, proxies=None, store_envs=True):
-        # caller_info = inspect.stack()[1]
-        # logger.back(f"OS Envs is set by: {caller_info.filename}")
+    def set_envs(
+        self,
+        secrets: bool = True,
+        proxies: Optional[str] = None,
+        store_envs: bool = True,
+    ) -> None:
+        """Sets environment variables based on the contents of secrets.json.
 
+        Args:
+            secrets (bool): Whether to load secrets from secrets.json.
+            proxies (Optional[str]): Proxy URL to set as environment variable.
+            store_envs (bool): Whether to store a copy of the environment variables
+                on the stack.
+        """
         if store_envs:
             self.store_envs()
 
@@ -54,7 +70,9 @@ class OSEnver:
         }
 
         if self.proxy:
-            logger.note(f"Using proxy: [{self.proxy}]")
+            OSLogger().note(f"Using proxy: [{self.proxy}]")
 
 
-enver = OSEnver()
+enver: OSEnver = OSEnver()
+
+

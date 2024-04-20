@@ -78,20 +78,18 @@ class BatchWebpageFetcher:
         self.urls = urls
         self.total_count = len(self.urls)
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
             futures = [
-                executor.submit(self.fetch_single_webpage, url, overwrite, output_parent)
+                executor.submit(WebpageFetcher().fetch, url, overwrite, output_parent)
                 for url in urls
             ]
             concurrent.futures.wait(futures)
 
+        self.url_and_html_path_list = [
+            {"url": future.result().url, "html_path": str(future.result().html_path)}
+            for future in futures
+        ]
+
         return self.url_and_html_path_list
 
-if __name__ == "__main__":
-    urls = [
-        "https://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename",
-        "https://www.liaoxuefeng.com/wiki/1016959663602400/1017495723838528",
-        "https://docs.python.org/zh-cn/3/tutorial/interpreter.html",
-    ]
-    batch_webpage_fetcher = BatchWebpageFetcher()
-    batch_webpage_fetcher.fetch(urls=urls, overwrite=True, output_parent="python tutorials")
+
