@@ -1,7 +1,6 @@
 """Webscout.
 
-Search for words, documents, images, videos, news, maps and text translation 
-using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models
+Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models, can transcribe yt videos, have TTS support and now has webai(terminal gpt and open interpeter) support
 """
 import g4f
 import logging

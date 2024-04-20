@@ -4,7 +4,7 @@
 <a href="#"><img alt="Python version" src="https://img.shields.io/pypi/pyversions/webscout"/></a>
 <a href="https://pepy.tech/project/webscout"><img alt="Downloads" src="https://static.pepy.tech/badge/webscout"></a>
 
-Search for words, documents, images, videos, news, maps and text translation using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models and now can transcribe yt videos
+Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models, can transcribe yt videos, have TTS support and now has webai(terminal gpt and open interpeter) support
 
 
 ## Table of Contents
@@ -48,6 +48,8 @@ Search for words, documents, images, videos, news, maps and text translation usi
   - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
     - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
+  - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
+    - [for using as terminal gpt](#for-using-as-terminal-gpt)
 
 ## Install
 ```python
@@ -748,4 +750,50 @@ if __name__ == "__main__":
             print("AI:", response)
         else:
             print("No response")
+```
+## `Webai` - terminal gpt and a open interpeter
+
+```python
+from webscout.webai import Main
+
+def use_rawdog_with_webai(prompt):
+    """
+    Wrap the webscout default method in a try-except block to catch any unhandled
+    exceptions and print a helpful message.
+    """
+    try:
+        webai_bot = Main(
+            max_tokens=500, 
+            provider="phind",
+            temperature=0.7,  
+            top_k=40,          
+            top_p=0.95,        
+            model="Phind Model",  # Replace with your desired model
+            auth=None,       # Replace with your auth key/value (if needed)
+            timeout=30,
+            disable_conversation=True,
+            filepath=None,
+            update_file=True,
+            intro=None,
+            rawdog=True,
+            history_offset=10250,
+            awesome_prompt=None,
+            proxy_path=None,
+            quiet=True
+        )
+        webai_response = webai_bot.default(prompt) 
+    except Exception as e:
+        print("Unexpected error:", e)
+
+
+if __name__ == "__main__":
+    user_prompt = input("Enter your prompt: ")
+    use_rawdog_with_webai(user_prompt)
+```
+```shell
+python -m webscout.webai webai --provider "phind" --rawdog
+```
+### for using as terminal gpt
+```python
+python -m webscout.webai webai --provider "sean"
 ```

@@ -29,6 +29,7 @@ from webscout.AIutel import Optimizers
 from webscout.AIutel import default_path
 from webscout.AIutel import AwesomePrompts
 from webscout.AIutel import RawDog
+from webscout import available_providers
 from colorama import Fore
 from colorama import init as init_colorama
 from dotenv import load_dotenv
@@ -41,7 +42,7 @@ init_colorama(autoreset=True)
 load_dotenv()  # loads .env variables
 
 logging.basicConfig(
-    format="%(asctime)s - %(levelname)s : %(message)s ",  # [%(module)s,%(lineno)s]", # for debug purposes
+    format="%(asctime)s - %(levelname)s : %(message)s ",  
     datefmt="%H:%M:%S",
     level=logging.INFO,
 )
@@ -61,7 +62,7 @@ class this:
 
     rich_code_themes = ["monokai", "paraiso-dark", "igor", "vs", "fruity", "xcode"]
 
-    default_provider = "sean"
+    default_provider = "phind"
 
     getExc = lambda e: e.args[1] if len(e.args) > 1 else str(e)
 
@@ -1077,7 +1078,7 @@ class EntryGroup:
         pass
 
 
-
+import webscout
 class Chatwebai:
     """webai command"""
 
@@ -1194,7 +1195,7 @@ class Chatwebai:
     @click.option(
         "-p",
         "--provider",
-        type=click.Choice(webscout.available_providers),
+        type=click.Choice(available_providers),
         default=this.default_provider,
         help="Name of LLM provider.",
         metavar=(

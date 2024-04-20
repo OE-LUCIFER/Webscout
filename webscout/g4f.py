@@ -2,7 +2,7 @@ import g4f
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
-from webscout.AIutel import Provider
+from webscout.AIbase import Provider
 from webscout.AIutel import available_providers
 
 
