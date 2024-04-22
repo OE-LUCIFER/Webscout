@@ -51,7 +51,7 @@ setup(
         "tldextract",
         "orjson",
         "rich",
-        "clipman>=3.2.3",
+        "clipman==3.2.3",
         "pyperclip",
         "colorama",
         "GoogleBard1",
