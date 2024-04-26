@@ -657,7 +657,8 @@ class GROQ(Provider):
             return response["choices"][0]["message"]["content"]
         except KeyError:
             return ""
-#----------------------------------------------------------Sean-------------------------------------class Sean:
+#----------------------------------------------------------Sean-------------------------------------
+class Sean:
     def __init__(
         self,
         is_conversation: bool = True,
