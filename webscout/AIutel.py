@@ -29,7 +29,8 @@ webai = [
     "perplexity",
     "sean",
     "groq",
-    "reka"
+    "reka",
+    "cohere"
 ]
 
 gpt4free_providers = [

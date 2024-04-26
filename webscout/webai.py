@@ -509,6 +509,27 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
+            elif provider == "cohere":
+                assert auth, (
+                    "Cohere's API-key is required. Use the flag `--key` or `-k`"
+                )
+                from webscout.AI import Cohere
+                self.bot = Cohere(
+                    api_key=auth,
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_k=top_k,
+                    top_p=top_p,
+                    model=getOr(model, "command-r-plus"),
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+            )
             elif provider == "reka":
                 from webscout.AI import REKA
 

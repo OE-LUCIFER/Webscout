@@ -45,11 +45,12 @@ Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.co
     - [8. `OpenGPT` - chat With OPENGPT](#8-opengpt---chat-with-opengpt)
     - [9. `KOBOLDIA` -](#9-koboldia--)
     - [10. `Sean` - chat With Sean](#10-sean---chat-with-sean)
+    - [11. `Reka` - chat with reka](#11-reka---chat-with-reka)
+    - [12. `Cohere` - chat with cohere](#12-cohere---chat-with-cohere)
   - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
     - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
   - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
-    - [for using as terminal gpt](#for-using-as-terminal-gpt)
 
 ## Install
 ```python
@@ -646,6 +647,27 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
+### 11. `Reka` - chat with reka
+```python
+from webscout.AI import REKA
+
+a = REKA(is_conversation=True, max_tokens=8000, timeout=30,api_key="")
+
+prompt = "tell me about india"
+response_str = a.chat(prompt)
+print(response_str)
+```
+
+### 12. `Cohere` - chat with cohere
+```python
+from webscout.AI import Cohere
+
+a = Cohere(is_conversation=True, max_tokens=8000, timeout=30,api_key="")
+
+prompt = "tell me about india"
+response_str = a.chat(prompt)
+print(response_str)
+```
 ## usage of special .LLM file from webscout (webscout.LLM)
 
 ### `LLM`
@@ -764,12 +786,12 @@ def use_rawdog_with_webai(prompt):
     try:
         webai_bot = Main(
             max_tokens=500, 
-            provider="phind",
+            provider="cohere",
             temperature=0.7,  
             top_k=40,          
             top_p=0.95,        
-            model="Phind Model",  # Replace with your desired model
-            auth=None,       # Replace with your auth key/value (if needed)
+            model="command-r-plus",  # Replace with your desired model
+            auth="0zoQbKs1AAgd8WrPBO9CTIGgVvm5ZMbDcCqJOVyl",     # Replace with your auth key/value (if needed)
             timeout=30,
             disable_conversation=True,
             filepath=None,
@@ -789,11 +811,8 @@ def use_rawdog_with_webai(prompt):
 if __name__ == "__main__":
     user_prompt = input("Enter your prompt: ")
     use_rawdog_with_webai(user_prompt)
+
 ```
 ```shell
 python -m webscout.webai webai --provider "phind" --rawdog
-```
-### for using as terminal gpt
-```python
-python -m webscout.webai webai --provider "sean"
 ```
