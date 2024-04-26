@@ -50,13 +50,7 @@ setup(
         "tiktoken",
         "tldextract",
         "orjson",
-        "rich",
-        "clipman==3.2.3",
-        "pyperclip",
-        "colorama",
-        "GoogleBard1",
-        "brotli",
-        "appdirs",
+        # "appdirs"
     ],
     entry_points={
         "console_scripts": [

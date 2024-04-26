@@ -509,6 +509,23 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
+            elif provider == "reka":
+                from webscout.AI import REKA
+
+                self.bot = REKA(
+                    api_key=auth,
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                    model=getOr(model, "reka-core"),
+                    # quiet=quiet,
+                )
 
             elif provider == "koboldai":
                 from webscout.AI import KOBOLDAI

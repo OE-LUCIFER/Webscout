@@ -26,6 +26,7 @@ webai = [
     "perplexity",
     "sean",
     "groq",
+    "reka"
 ]
 
 gpt4free_providers = [
