@@ -29,6 +29,7 @@ from webscout.AIutel import Optimizers
 from webscout.AIutel import default_path
 from webscout.AIutel import AwesomePrompts
 from webscout.AIutel import RawDog
+from webscout.AIutel import Audio
 from webscout import available_providers
 from colorama import Fore
 from colorama import init as init_colorama
@@ -670,6 +671,9 @@ class Main(cmd.Cmd):
         self.confirm_script = confirm_script
         self.interpreter = interpreter
         self.rawdog = rawdog
+        self.read_aloud = False
+        self.read_aloud_voice = "Brian"
+        self.path_to_last_response_audio = None
         self.__init_time = time.time()
         self.__start_time = time.time()
         self.__end_time = time.time()
@@ -977,6 +981,12 @@ class Main(cmd.Cmd):
             self.bot.last_response,
             is_json=True,
         )
+    @busy_bar.run(help="While rereading aloud", index=3, immediate=True)
+    def do_reread(self, line):
+        """Reread aloud last ai response"""
+        if not self.path_to_last_response_audio:
+            raise Exception("Path to last response audio is null")
+        Audio.play(self.path_to_last_response_audio)
 
     @busy_bar.run()
     def do_exec(self, line):
@@ -1086,9 +1096,22 @@ class Main(cmd.Cmd):
                 logging.error(this.getExc(e))
                 if exit_on_error:
                     sys.exit(1)
+            
+            else:
+                self.post_default()
+
             finally:
                 self.__end_time = time.time()
-
+    @busy_bar.run(help="While reading aloud", immediate=True, index=3)
+    def post_default(self):
+        """Actions to be taken after upon successfull complete response generation triggered by `default` function"""
+        last_text: str = self.bot.get_message(self.bot.last_response)
+        if self.read_aloud and last_text is not None:
+            # Talk back to user
+            self.path_to_last_response_audio = Audio.text_to_audio(
+                last_text, voice=self.read_aloud_voice, auto=True
+            )
+            Audio.play(self.path_to_last_response_audio)
     def do_sys(self, line):
         """Execute system commands
         shortcut [./<command>]
@@ -1339,6 +1362,20 @@ class Chatwebai:
         default="python",
         help="RawDog : Python's interpreter name",
     )
+    @click.option(
+        "-ttm",
+        "--talk-to-me",
+        is_flag=True,
+        help="Audiolize responses upon complete generation",
+    )
+    @click.option(
+        "-ttmv",
+        "--talk-to-me-voice",
+        help="The voice to use for speech synthesis",
+        type=click.Choice(Audio.all_voices),
+        metavar="|".join(Audio.all_voices[:8]),
+        default="Brian",
+    )
     @click.help_option("-h", "--help")
     def webai(
         model,
@@ -1373,6 +1410,8 @@ class Chatwebai:
         internal_exec,
         confirm_script,
         interpreter,
+        talk_to_me,
+        talk_to_me_voice,
     ):
         """Chat with AI webaily (Default)"""
         this.clear_history_file(filepath, new)
@@ -1407,6 +1446,8 @@ class Chatwebai:
         bot.prettify = prettify
         bot.vertical_overflow = vertical_overflow
         bot.disable_stream = whole
+        bot.read_aloud = talk_to_me
+        bot.read_aloud_voice = talk_to_me_voice
         if prompt:
             if with_copied:
                 prompt = prompt + "\n" + clipman.get()
@@ -1621,6 +1662,20 @@ class ChatGenerate:
         default="python",
         help="RawDog : Python's interpreter name",
     )
+    @click.option(
+        "-ttm",
+        "--talk-to-me",
+        is_flag=True,
+        help="Audiolize responses upon complete generation",
+    )
+    @click.option(
+        "-ttmv",
+        "--talk-to-me-voice",
+        help="The voice to use for speech synthesis",
+        type=click.Choice(Audio.all_voices),
+        metavar="|".join(Audio.all_voices[:8]),
+        default="Brian",
+    )
     @click.help_option("-h", "--help")
     def generate(
         model,
@@ -1655,6 +1710,8 @@ class ChatGenerate:
         internal_exec,
         confirm_script,
         interpreter,
+        talk_to_me,
+        talk_to_me_voice,
     ):
         """Generate a quick response with AI"""
         this.clear_history_file(filepath, new)
@@ -1732,6 +1789,8 @@ class ChatGenerate:
         bot.prettify = prettify
         bot.vertical_overflow = vertical_overflow
         bot.disable_stream = whole
+        bot.read_aloud = talk_to_me
+        bot.read_aloud_voice = talk_to_me_voice
         bot.default(prompt, True, normal_stdout=(sys.stdout.isatty() == False))
 
 
