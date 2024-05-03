@@ -36,7 +36,7 @@ Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.co
   - [usage of webscout.AI](#usage-of-webscoutai)
     - [1. `PhindSearch` - Search using Phind.com](#1-phindsearch---search-using-phindcom)
     - [2. `YepChat` - Chat with mistral 8x7b powered by yepchat](#2-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
-    - [3. `You.com` - search with you.com](#3-youcom---search-with-youcom)
+    - [3. `You.com` - search with you.com -NOT WORKING](#3-youcom---search-with-youcom--not-working)
     - [4. `Gemini` - search with google gemini](#4-gemini---search-with-google-gemini)
   - [usage of image generator from Webscout.AI](#usage-of-image-generator-from-webscoutai)
     - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
@@ -46,7 +46,7 @@ Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.co
     - [9. `KOBOLDIA` -](#9-koboldia--)
     - [10. `Reka` - chat with reka](#10-reka---chat-with-reka)
     - [11. `Cohere` - chat with cohere](#11-cohere---chat-with-cohere)
-    - [`LLM`](#llm)
+    - [`LLM` --not working](#llm---not-working)
     - [`LLM` with internet](#llm-with-internet)
   - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
 
@@ -498,26 +498,22 @@ message = ph.get_message(response)
 print(message)
 ```
 ### 2. `YepChat` - Chat with mistral 8x7b powered by yepchat
-Thanks To Divyansh Shukla for This code
 ```python
-from webscout.AI import YepChat
+from webscout.AI import YEPCHAT
 
-def main():
-    # Initialize the YepChat class with your message
-    yep_chat = YepChat(message="who is pm of india")
-    
-    # Send the request and process the response
-    response = yep_chat.send_request()
-    processed_response = yep_chat.process_response(response)
-    
-    # Print the processed response
-    print(processed_response)
+# Instantiate the YEPCHAT class with default parameters
+YEPCHAT = YEPCHAT()
 
-if __name__ == "__main__":
-    main()
+# Define a prompt to send to the AI
+prompt = "What is the capital of France?"
+
+# Use the 'cha' method to get a response from the AI
+r = YEPCHAT.chat(prompt)
+print(r)
+
 ```
 
-### 3. `You.com` - search with you.com
+### 3. `You.com` - search with you.com -NOT WORKING
 ```python
 from webscout.AI import youChat
 
@@ -543,15 +539,34 @@ while True:
 ### 4. `Gemini` - search with google gemini
 
 ```python
-from webscout.AI import Gemini
+import webscout
+from webscout.AI import GEMINI
 
-# Create an instance of the Gemini class
-gemini = Gemini()
+# Replace with the path to your bard.google.com.cookies.json file
+COOKIE_FILE = "path/to/bard.google.com.cookies.json"
 
-# Use the chat method to send a message to the Gemini assistant
-response = gemini.chat("Your message here")
+# Optional: Provide proxy details if needed
+PROXIES = {
+    "http": "http://proxy_server:port",
+    "https": "https://proxy_server:port",
+}
 
-# Print the response from the Gemini assistant
+# Initialize GEMINI with cookie file and optional proxies
+gemini = GEMINI(cookie_file=COOKIE_FILE, proxy=PROXIES)
+
+# Ask a question and print the response
+response = gemini.chat("What is the meaning of life?")
+print(response)
+
+# Ask another question, this time streaming the response
+for chunk in gemini.chat("Tell me a story", stream=True):
+    print(chunk, end="")
+
+# Reset the conversation to start a new interaction
+gemini.reset()
+
+# Ask a question with the code optimizer
+response = gemini.chat("Write Python code to print 'Hello, world!'", optimizer="code")
 print(response)
 ```
 ##  usage of image generator from Webscout.AI
@@ -583,17 +598,18 @@ ai = BLACKBOXAI(
     model=None # You can specify a model if needed
 )
 
-# Define a prompt to send to the AI
-prompt = "Tell me about india"
-
-# Use the 'ask' method to send the prompt and receive a response
-response = ai.ask(prompt)
-
-# Extract the text from the response
-response_text = ai.get_message(response)
-
-# Print the response text
-print(response_text)
+# Start an infinite loop for continuous interaction
+while True:
+    # Define a prompt to send to the AI
+    prompt = input("Enter your prompt: ")
+    
+    # Check if the user wants to exit the loop
+    if prompt.lower() == "exit":
+        break
+    
+    # Use the 'chat' method to send the prompt and receive a response
+    r = ai.chat(prompt)
+    print(r)
 ```
 ### 7. `PERPLEXITY` - Search With PERPLEXITY
 ```python
@@ -611,10 +627,12 @@ print(response)
 from webscout.AI import OPENGPT
 
 opengpt = OPENGPT(is_conversation=True, max_tokens=8000, timeout=30)
-# This example sends a simple greeting and prints the response
-prompt = "tell me about india"
-response_str = opengpt.chat(prompt)
-print(response_str)
+while True:
+    # Prompt the user for input
+    prompt = input("Enter your prompt: ")
+    # Send the prompt to the OPENGPT model and print the response
+    response_str = opengpt.chat(prompt)
+    print(response_str)
 ```
 ### 9. `KOBOLDIA` - 
 ```python
@@ -657,7 +675,7 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-### `LLM`
+### `LLM` --not working
 ```python
 from webscout.LLM import LLM
 
