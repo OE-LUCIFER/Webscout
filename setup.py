@@ -51,7 +51,7 @@ setup(
         "tldextract",
         "orjson",
         "PyYAML",
-        "appdirs"
+        "appdirs",
         "GoogleBard1>=2.1.4"
     ],
     entry_points={
