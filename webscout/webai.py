@@ -35,7 +35,6 @@ from colorama import Fore
 from colorama import init as init_colorama
 from dotenv import load_dotenv
 import g4f
-
 import webscout.AIutel
 
 init_colorama(autoreset=True)
@@ -464,6 +463,25 @@ class Main(cmd.Cmd):
                 self.bot = OPENGPT(
                     is_conversation=disable_conversation,
                     max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
+            elif provider == "yepchat":
+                from webscout.AI import YEPCHAT
+
+                self.bot = YEPCHAT(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    presence_penalty=top_p,
+                    frequency_penalty=top_k,
+                    top_p=top_p,
+                    model=getOr(model, "Mixtral-8x7B-Instruct-v0.1"),
                     timeout=timeout,
                     intro=intro,
                     filepath=filepath,
@@ -1135,7 +1153,7 @@ class EntryGroup:
     # @staticmethod
     @click.group()
     @click.version_option(
-        webscout.__version__, "-v", "--version", package_name="Webscout"
+        webscout.__version__, "-v", "--version", package_name="webscout"
     )
     @click.help_option("-h", "--help")
     def webai_():

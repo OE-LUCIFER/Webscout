@@ -5,7 +5,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="webscout",
-    version="1.3.8", 
+    version="1.3.9", 
     description="Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models, can transcribe yt videos, have TTS support and now has webai(terminal gpt and open interpeter) support",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -51,7 +51,8 @@ setup(
         "tldextract",
         "orjson",
         "PyYAML",
-        # "appdirs"
+        "appdirs"
+        "GoogleBard1>=2.1.4"
     ],
     entry_points={
         "console_scripts": [

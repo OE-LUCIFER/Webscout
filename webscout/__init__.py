@@ -24,10 +24,10 @@ webai = [
     "blackboxai",
     "g4fauto",
     "perplexity",
-    "sean",
     "groq",
     "reka",
-    "cohere"
+    "cohere",
+    "yepchat",
 ]
 
 gpt4free_providers = [

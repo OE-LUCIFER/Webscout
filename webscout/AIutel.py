@@ -34,10 +34,10 @@ webai = [
     "blackboxai",
     "g4fauto",
     "perplexity",
-    "sean",
     "groq",
     "reka",
-    "cohere"
+    "cohere",
+    "yepchat",
 ]
 
 gpt4free_providers = [
@@ -45,7 +45,24 @@ gpt4free_providers = [
 ]
 
 available_providers = webai + gpt4free_providers
+def sanitize_stream(
+    chunk: str, intro_value: str = "data:", to_json: bool = True
+) -> str | dict:
+    """Remove streaming flags
 
+    Args:
+        chunk (str): Streamig chunk.
+        intro_value (str, optional): streaming flag. Defaults to "data:".
+        to_json (bool, optional). Return chunk as dictionary. Defaults to True.
+
+    Returns:
+        str: Sanitized streaming value.
+    """
+
+    if chunk.startswith(intro_value):
+        chunk = chunk[len(intro_value) :]
+
+    return json.loads(chunk) if to_json else chunk
 def run_system_command(
     command: str,
     exit_on_error: bool = True,

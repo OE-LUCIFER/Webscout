@@ -8,3 +8,6 @@ class RatelimitE(Exception):
 
 class TimeoutE(Exception):
     """Raised for timeout errors during API requests."""
+    
+class FailedToGenerateResponseError(Exception):
+    """Provider failed to fetch response"""

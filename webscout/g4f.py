@@ -2,7 +2,7 @@ import g4f
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, AsyncProvider
 from webscout.AIutel import available_providers
 
 
@@ -26,7 +26,199 @@ default_models = {
 
 default_provider = "Koala"
 
+class AsyncGPT4FREE(AsyncProvider):
+    def __init__(
+        self,
+        provider: str = default_provider,
+        is_conversation: bool = True,
+        auth: str = None,
+        max_tokens: int = 600,
+        model: str = None,
+        ignore_working: bool = False,
+        timeout: int = 30,
+        intro: str = None,
+        filepath: str = None,
+        update_file: bool = True,
+        proxies: dict = {},
+        history_offset: int = 10250,
+        act: str = None,
+    ):
+        """Initialies GPT4FREE
 
+        Args:
+            provider (str, optional): gpt4free based provider name. Defaults to Koala.
+            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
+            auth (str, optional): Authentication value for the provider incase it needs. Defaults to None.
+            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
+            model (str, optional): LLM model name. Defaults to text-davinci-003|gpt-3.5-turbo.
+            ignore_working (bool, optional): Ignore working status of the provider. Defaults to False.
+            timeout (int, optional): Http request timeout. Defaults to 30.
+            intro (str, optional): Conversation introductory prompt. Defaults to None.
+            filepath (str, optional): Path to file containing conversation history. Defaults to None.
+            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
+            proxies (dict, optional): Http request proxies. Defaults to {}.
+            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
+            act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+        """
+        assert provider in available_providers, (
+            f"Provider '{provider}' is not yet supported. "
+            f"Try others like {', '.join(available_providers)}"
+        )
+        if model is None:
+            model = default_models["chat_completion"]
+
+        self.is_conversation = is_conversation
+        self.max_tokens_to_sample = max_tokens
+        self.stream_chunk_size = 64
+        self.timeout = timeout
+        self.last_response = {}
+
+        self.__available_optimizers = (
+            method
+            for method in dir(Optimizers)
+            if callable(getattr(Optimizers, method)) and not method.startswith("__")
+        )
+        Conversation.intro = (
+            AwesomePrompts().get_act(
+                act, raise_not_found=True, default=None, case_insensitive=True
+            )
+            if act
+            else intro or Conversation.intro
+        )
+        self.conversation = Conversation(
+            is_conversation,
+            self.max_tokens_to_sample,
+            filepath,
+            update_file,
+        )
+        self.conversation.history_offset = history_offset
+        self.model = model
+        self.provider = provider
+        self.ignore_working = ignore_working
+        self.auth = auth
+        self.proxy = None if not proxies else list(proxies.values())[0]
+
+    def __str__(self):
+        return f"AsyncGPTFREE(provider={self.provider})"
+
+    async def ask(
+        self,
+        prompt: str,
+        stream: bool = False,
+        raw: bool = False,
+        optimizer: str = None,
+        conversationally: bool = False,
+    ) -> dict | AsyncGenerator:
+        """Chat with AI asynchronously.
+
+        Args:
+            prompt (str): Prompt to be send.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            raw (bool, optional): Stream back raw response as received. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+        Returns:
+           dict|AsyncGenerator : ai content
+        ```json
+        {
+          "text" : "How may I help you today?"
+        }
+        ```
+        """
+        conversation_prompt = self.conversation.gen_complete_prompt(prompt)
+        if optimizer:
+            if optimizer in self.__available_optimizers:
+                conversation_prompt = getattr(Optimizers, optimizer)(
+                    conversation_prompt if conversationally else prompt
+                )
+            else:
+                raise Exception(
+                    f"Optimizer is not one of {self.__available_optimizers}"
+                )
+
+        payload = dict(
+            model=self.model,
+            provider=self.provider,  # g4f.Provider.Aichat,
+            messages=[{"role": "user", "content": conversation_prompt}],
+            stream=True,
+            ignore_working=self.ignore_working,
+            auth=self.auth,
+            proxy=self.proxy,
+            timeout=self.timeout,
+        )
+
+        async def format_response(response):
+            return dict(text=response)
+
+        async def for_stream():
+            previous_chunks = ""
+            response = g4f.ChatCompletion.create_async(**payload)
+
+            async for chunk in response:
+                previous_chunks += chunk
+                formatted_resp = await format_response(previous_chunks)
+                self.last_response.update(formatted_resp)
+                yield previous_chunks if raw else formatted_resp
+
+            self.conversation.update_chat_history(
+                prompt,
+                previous_chunks,
+            )
+
+        async def for_non_stream():
+            async for _ in for_stream():
+                pass
+            return self.last_response
+
+        return for_stream() if stream else await for_non_stream()
+
+    async def chat(
+        self,
+        prompt: str,
+        stream: bool = False,
+        optimizer: str = None,
+        conversationally: bool = False,
+    ) -> dict | AsyncGenerator:
+        """Generate response `str` asynchronously.
+        Args:
+            prompt (str): Prompt to be send.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+        Returns:
+            str|AsyncGenerator: Response generated
+        """
+
+        async def for_stream():
+            async_ask = await self.ask(
+                prompt, True, optimizer=optimizer, conversationally=conversationally
+            )
+            async for response in async_ask:
+                yield await self.get_message(response)
+
+        async def for_non_stream():
+            return await self.get_message(
+                await self.ask(
+                    prompt,
+                    False,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
+                )
+            )
+
+        return for_stream() if stream else await for_non_stream()
+
+    async def get_message(self, response: dict) -> str:
+        """Retrieves message only from response
+
+        Args:
+            response (dict): Response generated by `self.ask`
+
+        Returns:
+            str: Message extracted
+        """
+        assert isinstance(response, dict), "Response should be of dict data-type only"
+        return response["text"]
 class GPT4FREE(Provider):
     def __init__(
         self,

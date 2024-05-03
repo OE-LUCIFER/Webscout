@@ -44,10 +44,8 @@ Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.co
     - [7. `PERPLEXITY` - Search With PERPLEXITY](#7-perplexity---search-with-perplexity)
     - [8. `OpenGPT` - chat With OPENGPT](#8-opengpt---chat-with-opengpt)
     - [9. `KOBOLDIA` -](#9-koboldia--)
-    - [10. `Sean` - chat With Sean](#10-sean---chat-with-sean)
-    - [11. `Reka` - chat with reka](#11-reka---chat-with-reka)
-    - [12. `Cohere` - chat with cohere](#12-cohere---chat-with-cohere)
-  - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
+    - [10. `Reka` - chat with reka](#10-reka---chat-with-reka)
+    - [11. `Cohere` - chat with cohere](#11-cohere---chat-with-cohere)
     - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
   - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
@@ -636,18 +634,8 @@ message = koboldai.get_message(response)
 print(message)
 
 ```
-### 10. `Sean` - chat With Sean
-```python
-from webscout.AI import Sean
 
-a = Sean(is_conversation=True, max_tokens=8000, timeout=30)
-# This example sends a simple greeting and prints the response
-prompt = "tell me about india"
-response_str = a.chat(prompt)
-print(response_str)
-```
-
-### 11. `Reka` - chat with reka
+### 10. `Reka` - chat with reka
 ```python
 from webscout.AI import REKA
 
@@ -658,7 +646,7 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-### 12. `Cohere` - chat with cohere
+### 11. `Cohere` - chat with cohere
 ```python
 from webscout.AI import Cohere
 
@@ -668,7 +656,6 @@ prompt = "tell me about india"
 response_str = a.chat(prompt)
 print(response_str)
 ```
-## usage of special .LLM file from webscout (webscout.LLM)
 
 ### `LLM`
 ```python
@@ -791,7 +778,7 @@ def use_rawdog_with_webai(prompt):
             top_k=40,          
             top_p=0.95,        
             model="command-r-plus",  # Replace with your desired model
-            auth="0zoQbKs1AAgd8WrPBO9CTIGgVvm5ZMbDcCqJOVyl",     # Replace with your auth key/value (if needed)
+            auth=None,     # Replace with your auth key/value (if needed)
             timeout=30,
             disable_conversation=True,
             filepath=None,
