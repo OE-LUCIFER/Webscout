@@ -4,7 +4,7 @@
 <a href="#"><img alt="Python version" src="https://img.shields.io/pypi/pyversions/webscout"/></a>
 <a href="https://pepy.tech/project/webscout"><img alt="Downloads" src="https://static.pepy.tech/badge/webscout"></a>
 
-Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models, can transcribe yt videos, have TTS support and now has webai(terminal gpt and open interpeter) support
+Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI models, can transcribe yt videos, temporary email and phone number generation, have TTS support and webai(terminal gpt and open interpeter)
 
 
 ## Table of Contents
@@ -14,6 +14,9 @@ Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.co
   - [CLI version](#cli-version)
   - [CLI to use LLM](#cli-to-use-llm)
   - [Regions](#regions)
+  - [Tempmail and Temp number](#tempmail-and-temp-number)
+    - [Temp number](#temp-number)
+    - [Tempmail](#tempmail)
   - [Transcriber](#transcriber)
   - [DeepWEBS: Advanced Web Searches](#deepwebs-advanced-web-searches)
     - [Activating DeepWEBS](#activating-deepwebs)
@@ -48,7 +51,7 @@ Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.co
     - [11. `Cohere` - chat with cohere](#11-cohere---chat-with-cohere)
     - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
-  - [LLM with deepwebs](#llm-with-deepwebs)
+    - [LLM with deepwebs](#llm-with-deepwebs)
   - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
 
 ## Install
@@ -158,7 +161,91 @@ ___
 
 [Go To TOP](#TOP)
 
+## Tempmail and Temp number
 
+### Temp number
+```python
+from rich.console import Console
+from webscout import tempid
+
+def main():
+    console = Console()
+    phone = tempid.TemporaryPhoneNumber()
+
+    try:
+        # Get a temporary phone number for a specific country (or random)
+        number = phone.get_number(country="Finland")
+        console.print(f"Your temporary phone number: [bold cyan]{number}[/bold cyan]")
+
+        # Pause execution briefly (replace with your actual logic)
+        # import time module
+        import time
+        time.sleep(30)  # Adjust the waiting time as needed
+
+        # Retrieve and print messages
+        messages = phone.get_messages(number)
+        if messages:
+            # Access individual messages using indexing:
+            console.print(f"[bold green]{messages[0].frm}:[/] {messages[0].content}")
+            # (Add more lines if you expect multiple messages)
+        else:
+            console.print("No messages received.")
+
+    except Exception as e:
+        console.print(f"[bold red]An error occurred: {e}")
+
+if __name__ == "__main__":
+    main()
+
+```
+### Tempmail
+```python
+import asyncio
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
+from webscout import tempid
+
+async def main() -> None:
+    console = Console()
+    client = tempid.Client()
+    
+    try:
+        domains = await client.get_domains()
+        if not domains:
+            console.print("[bold red]No domains available. Please try again later.")
+            return
+
+        email = await client.create_email(domain=domains[0].name)
+        console.print(f"Your temporary email: [bold cyan]{email.email}[/bold cyan]")
+        console.print(f"Token for accessing the email: [bold cyan]{email.token}[/bold cyan]")
+
+        while True:
+            messages = await client.get_messages(email.email)
+            if messages is not None:
+                break
+
+        if messages:
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("From", style="bold cyan")
+            table.add_column("Subject", style="bold yellow")
+            table.add_column("Body", style="bold green")
+            for message in messages:
+                body_preview = Text(message.body_text if message.body_text else "No body")
+                table.add_row(message.email_from or "Unknown", message.subject or "No Subject", body_preview)
+            console.print(table)
+        else:
+            console.print("No messages found.")
+    
+    except Exception as e:
+        console.print(f"[bold red]An error occurred: {e}")
+    
+    finally:
+        await client.close()
+
+if __name__ == '__main__':
+    asyncio.run(main())
+```
 ## Transcriber
 The transcriber function in webscout is a handy tool that transcribes YouTube videos. Here's an example code demonstrating its usage:
 ```python
@@ -430,19 +517,47 @@ with WEBS() as WEBS:
 
 ```python
 from webscout import WEBS
+import datetime
 
-# News search for the keyword 'holiday' using DuckDuckGo.com and yep.com
-with WEBS() as WEBS:
-    keywords = 'holiday'
-    WEBS_news_gen = WEBS.news(
-      keywords,
-      region="wt-wt",
-      safesearch="off",
-      timelimit="m",
-      max_results=20
-    )
-    for r in WEBS_news_gen:
-        print(r)
+def fetch_news(keywords, timelimit):
+    news_list = []
+    with WEBS() as webs_instance:
+        WEBS_news_gen = webs_instance.news(
+            keywords,
+            region="wt-wt",
+            safesearch="off",
+            timelimit=timelimit,
+            max_results=20
+        )
+        for r in WEBS_news_gen:
+            # Convert the date to a human-readable format using datetime
+            r['date'] = datetime.datetime.fromisoformat(r['date']).strftime('%B %d, %Y')
+            news_list.append(r)
+    return news_list
+
+def _format_headlines(news_list, max_headlines: int = 100):
+    headlines = []
+    for idx, news_item in enumerate(news_list):
+        if idx >= max_headlines:
+            break
+        new_headline = f"{idx + 1}. {news_item['title'].strip()} "
+        new_headline += f"(URL: {news_item['url'].strip()}) "
+        new_headline += f"{news_item['body'].strip()}"
+        new_headline += "\n"
+        headlines.append(new_headline)
+
+    headlines = "\n".join(headlines)
+    return headlines
+
+# Example usage
+keywords = 'latest AI news'
+timelimit = 'd'
+news_list = fetch_news(keywords, timelimit)
+
+# Format and print the headlines
+formatted_headlines = _format_headlines(news_list)
+print(formatted_headlines)
+
 ```
 
 ### 6. `maps()` - map search by DuckDuckGo.com and
@@ -775,7 +890,7 @@ if __name__ == "__main__":
         else:
             print("No response")
 ```
-## LLM with deepwebs
+### LLM with deepwebs
 ```python
 from __future__ import annotations
 from typing import List, Optional
