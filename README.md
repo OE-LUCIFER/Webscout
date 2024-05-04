@@ -46,8 +46,9 @@ Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.co
     - [9. `KOBOLDIA` -](#9-koboldia--)
     - [10. `Reka` - chat with reka](#10-reka---chat-with-reka)
     - [11. `Cohere` - chat with cohere](#11-cohere---chat-with-cohere)
-    - [`LLM` --not working](#llm---not-working)
+    - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
+  - [LLM with deepwebs](#llm-with-deepwebs)
   - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
 
 ## Install
@@ -675,7 +676,7 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-### `LLM` --not working
+### `LLM` 
 ```python
 from webscout.LLM import LLM
 
@@ -706,23 +707,19 @@ while True:
 from __future__ import annotations
 from typing import List, Optional
 
-from webscout import LLM
+from webscout.LLM import LLM
 from webscout import WEBS
 import warnings
 
 system_message: str = (
-    "As AI, you possess internet access and are capable of executing real-time web searches based on user inputs. "
-    "You shall utilize this capability to enrich conversations, offer informed insights, and augment your ability to "
-    "respond accurately and thoroughly. However, refrain from stating 'You have provided a list of strings,' ensuring "
-    "seamless interactions with users. Embrace a responsive demeanor, harnessing available online resources to address "
-    "queries, share pertinent content, and facilitate meaningful exchanges. By doing so, you create value through "
-    "connection and engagement, ultimately enhancing overall user satisfaction and experience. Additionally, "
-    "continue upholding the principles of respect, impartiality, and intellectual integrity throughout all interactions."
+    "As an AI assistant, I have been designed with advanced capabilities, including real-time access to online resources. This enables me to enrich our conversations and provide you with informed and accurate responses, drawing from a vast array of information. With each interaction, my goal is to create a seamless and meaningful connection, offering insights and sharing relevant content."
+    "My directives emphasize the importance of respect, impartiality, and intellectual integrity. I am here to provide unbiased responses, ensuring an ethical and respectful exchange. I will respect your privacy and refrain from sharing any personal information that may be obtained during our conversations or through web searches, only utilizing web search functionality when necessary to provide the most accurate and up-to-date information."
+    "Together, let's explore a diverse range of topics, creating an enjoyable and informative experience, all while maintaining the highest standards of privacy and respect"
 )
 
 # Ignore the specific UserWarning
 warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffi.aio", lineno=205)
-LLM = LLM(model="meta-llama/Meta-Llama-3-70B-Instruct", system_message=system_message)
+LLM = LLM(model="mistralai/Mixtral-8x22B-Instruct-v0.1", system_message=system_message)
 
 
 def chat(
@@ -771,6 +768,94 @@ if __name__ == "__main__":
         # Perform a web search based on the user input
         with WEBS() as webs:
             response = chat(user_input, webs)
+
+        # Print the response
+        if response:
+            print("AI:", response)
+        else:
+            print("No response")
+```
+## LLM with deepwebs
+```python
+from __future__ import annotations
+from typing import List, Optional
+from webscout.LLM import LLM
+from webscout import DeepWEBS
+import warnings
+
+system_message: str = (
+    "As an AI assistant, I have been designed with advanced capabilities, including real-time access to online resources. This enables me to enrich our conversations and provide you with informed and accurate responses, drawing from a vast array of information. With each interaction, my goal is to create a seamless and meaningful connection, offering insights and sharing relevant content."
+    "My directives emphasize the importance of respect, impartiality, and intellectual integrity. I am here to provide unbiased responses, ensuring an ethical and respectful exchange. I will respect your privacy and refrain from sharing any personal information that may be obtained during our conversations or through web searches, only utilizing web search functionality when necessary to provide the most accurate and up-to-date information."
+    "Together, let's explore a diverse range of topics, creating an enjoyable and informative experience, all while maintaining the highest standards of privacy and respect"
+)
+
+# Ignore the specific UserWarning
+warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffi.aio", lineno=205)
+
+LLM = LLM(model="mistralai/Mixtral-8x22B-Instruct-v0.1", system_message=system_message)
+
+def perform_web_search(query):
+    # Initialize the DeepWEBS class
+    D = DeepWEBS()
+
+    # Set up the search parameters
+    search_params = D.DeepSearch(
+        queries=[query],  # Query to search
+        result_num=10,  # Number of search results
+        safe=True,  # Enable SafeSearch
+        types=["web"],  # Search type: web
+        extract_webpage=True,  # True for extracting webpages
+        overwrite_query_html=True,
+        overwrite_webpage_html=True,
+    )
+
+    # Execute the search and retrieve results
+    results = D.queries_to_search_results(search_params)
+    return results
+
+def chat(user_input: str, result_num: int = 10) -> Optional[str]:
+    """
+    Chat function to perform a web search based on the user input and generate a response using the LLM model.
+
+    Parameters
+    ----------
+    user_input : str
+        The user input to be used for the web search
+    max_results : int, optional
+        The maximum number of search results to include in the response, by default 10
+
+    Returns
+    -------
+    Optional[str]
+        The response generated by the LLM model, or None if there is no response
+    """
+    # Perform a web search based on the user input
+    search_results = perform_web_search(user_input)
+
+    # Extract URLs from search results
+    url_results = []
+    for result in search_results[0]['query_results']:
+        url_results.append(f"{result['title']} ({result['site']}): {result['url']}")
+
+    # Format search results
+    formatted_results = "\n".join(url_results)
+
+    # Define the messages to be sent, including the user input, search results, and system message
+    messages = [
+        {"role": "user", "content": f"User question is:\n{user_input}\nwebsearch results are:\n{formatted_results}"},
+    ]
+
+    # Use the chat method to get the response
+    response = LLM.chat(messages)
+    return response
+
+if __name__ == "__main__":
+    while True:
+        # Get the user input
+        user_input = input("User: ")
+
+        # Perform a web search based on the user input
+        response = chat(user_input)
 
         # Print the response
         if response:
