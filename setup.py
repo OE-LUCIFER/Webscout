@@ -52,7 +52,8 @@ setup(
         "orjson",
         "PyYAML",
         "appdirs",
-        "GoogleBard1>=2.1.4"
+        "GoogleBard1>=2.1.4",
+        "tls_client",
     ],
     entry_points={
         "console_scripts": [
