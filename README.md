@@ -1,6 +1,28 @@
-#  webscout
-<p align="center">
+<div align="center">
+  <!-- Replace `#` with your actual links -->
+  <a href="https://t.me/devsdocode"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+  <a href="https://www.instagram.com/sree.shades_/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
+  <a href="https://www.linkedin.com/in/developer-sreejan/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
+  <a href="https://buymeacoffee.com/devsdocode"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>
+</div>
 
+<div align="center">
+  <!-- Replace `#` with your actual links -->
+  <a href="https://youtube.com/@@OEvortex">&#10148; Vortex's YouTube Channel</a>
+  </div>
+<div align="center">
+  <a href="https://youtube.com/@devsdocode">&#10148; Devs Do Code's YouTube Channel</a>
+</div>
+
+
+
+  
+# WEBSCOUT
+</div>
+<p align="center">
+<div align="center">
+  <img src="https://img.shields.io/badge/WebScout-API-blue?style=for-the-badge&logo=WebScout" alt="WebScout API Badge">
+</div>
 <a href="#"><img alt="Python version" src="https://img.shields.io/pypi/pyversions/webscout"/></a>
 <a href="https://pepy.tech/project/webscout"><img alt="Downloads" src="https://static.pepy.tech/badge/webscout"></a>
 
@@ -1037,3 +1059,21 @@ if __name__ == "__main__":
 ```shell
 python -m webscout.webai webai --provider "phind" --rawdog
 ```
+
+<div align="center">
+  <!-- Replace `#` with your actual links -->
+  <a href="https://t.me/devsdocode"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+  <a href="https://www.instagram.com/sree.shades_/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
+  <a href="https://www.linkedin.com/in/developer-sreejan/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
+  <a href="https://buymeacoffee.com/devsdocode"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>
+</div>
+
+<div align="center">
+  <!-- Replace `#` with your actual links -->
+  <a href="https://youtube.com/@@OEvortex">&#10148; Vortex's YouTube Channel</a>
+  </div>
+<div align="center">
+  <a href="https://youtube.com/@devsdocode">&#10148; Devs Do Code's YouTube Channel</a>
+</div>
+
+
