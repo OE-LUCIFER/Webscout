@@ -4,7 +4,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider, AsyncProvider
 from webscout.AIutel import available_providers
-
+from typing import Any, AsyncGenerator
 
 g4f.debug.version_check = False
 

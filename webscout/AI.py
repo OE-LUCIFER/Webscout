@@ -1,4 +1,5 @@
 import time
+import uuid
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -4373,8 +4374,6 @@ class YEPCHAT(Provider):
             return response["choices"][0]["message"]["content"]
         except KeyError:
             return ""
-
-
 class AsyncYEPCHAT(AsyncProvider):
     def __init__(
         self,
@@ -4598,16 +4597,13 @@ class AsyncYEPCHAT(AsyncProvider):
             return response["choices"][0]["message"]["content"]
         except KeyError:
             return ""
-class AsyncYEPCHAT(AsyncProvider):
+
+#-------------------------------------------------------youchat--------------------------------------------------------   
+class YouChat(Provider):
     def __init__(
         self,
         is_conversation: bool = True,
         max_tokens: int = 600,
-        temperature: float = 0.6,
-        presence_penalty: int = 0,
-        frequency_penalty: int = 0,
-        top_p: float = 0.7,
-        model: str = "Mixtral-8x7B-Instruct-v0.1",
         timeout: int = 30,
         intro: str = None,
         filepath: str = None,
@@ -4616,43 +4612,34 @@ class AsyncYEPCHAT(AsyncProvider):
         history_offset: int = 10250,
         act: str = None,
     ):
-        """Instantiates YEPCHAT
-
-        Args:
-            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
-            temperature (float, optional): Charge of the generated text's randomness. Defaults to 0.6.
-            presence_penalty (int, optional): Chances of topic being repeated. Defaults to 0.
-            frequency_penalty (int, optional): Chances of word being repeated. Defaults to 0.
-            top_p (float, optional): Sampling threshold during inference time. Defaults to 0.7.
-            model (str, optional): LLM model name. Defaults to "gpt-3.5-turbo".
-            timeout (int, optional): Http request timeout. Defaults to 30.
-            intro (str, optional): Conversation introductory prompt. Defaults to None.
-            filepath (str, optional): Path to file containing conversation history. Defaults to None.
-            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
-            proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
-            act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-        """
+        self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.model = model
-        self.temperature = temperature
-        self.presence_penalty = presence_penalty
-        self.frequency_penalty = frequency_penalty
-        self.top_p = top_p
-        self.chat_endpoint = "https://api.yep.com/v1/chat/completions"
+        self.chat_endpoint = "https://you.com/api/streamingSearch"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
+
+        self.payload = {
+            "q": "",
+            "page": 1,
+            "count": 10,
+            "safeSearch": "Off",
+            "onShoppingPage": False,
+            "mkt": "",
+            "responseFilter": "WebPages,Translations,TimeZone,Computation,RelatedSearches",
+            "domain": "youchat",
+            "queryTraceId": uuid.uuid4(),
+            "conversationTurnId": uuid.uuid4(),
+            "pastChatLength": 0,
+            "selectedChatMode": "default",
+            "chat": "[]",
+        }
+
         self.headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Content-Type": "application/json; charset=utf-8",
-            "Origin": "https://yep.com",
-            "Referer": "https://yep.com/",
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "cache-control": "no-cache",
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Referer': f'https://you.com/search?q={self.payload["q"]}&fromSearchBar=true&tbm=youchat&chatMode=default'
         }
 
         self.__available_optimizers = (
@@ -4660,6 +4647,7 @@ class AsyncYEPCHAT(AsyncProvider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
+        self.session.headers.update(self.headers)
         Conversation.intro = (
             AwesomePrompts().get_act(
                 act, raise_not_found=True, default=None, case_insensitive=True
@@ -4671,12 +4659,9 @@ class AsyncYEPCHAT(AsyncProvider):
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
-        self.session = httpx.AsyncClient(
-            headers=self.headers,
-            proxies=proxies,
-        )
+        self.session.proxies = proxies
 
-    async def ask(
+    def ask(
         self,
         prompt: str,
         stream: bool = False,
@@ -4684,35 +4669,6 @@ class AsyncYEPCHAT(AsyncProvider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
-        """Chat with AI asynchronously.
-
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-           dict : {}
-        ```json
-        {
-            "id": "cmpl-c61c1c88de4e4ad3a79134775d17ea0c",
-            "object": "chat.completion.chunk",
-            "created": 1713876886,
-            "model": "Mixtral-8x7B-Instruct-v0.1",
-            "choices": [
-                {
-                    "index": 0,
-                    "delta": {
-                        "role": null,
-                        "content": " Sure, I can help with that. Are you looking for information on how to start coding, or do you need help with a specific coding problem? We can discuss various programming languages like Python, JavaScript, Java, C++, or others. Please provide more details so I can assist you better."
-                        },
-                    "finish_reason": null
-                }
-            ]
-        }
-        ```
-        """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -4723,58 +4679,60 @@ class AsyncYEPCHAT(AsyncProvider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        payload = {
-            "stream": True,
-            "max_tokens": 1280,
-            "top_p": self.top_p,
-            "temperature": self.temperature,
-            "messages": [{"content": conversation_prompt, "role": "user"}],
-            "model": self.model,
-        }
+        self.session.headers.update(self.headers)
+        self.session.headers.update(
+            dict(
+                cookie=f"safesearch_guest=Off; uuid_guest={str(uuid4())}",
+            )
+        )
+        self.payload["q"] = prompt
 
-        async def for_stream():
-            async with self.session.stream(
-                "POST", self.chat_endpoint, json=payload, timeout=self.timeout
-            ) as response:
-                if not response.is_success:
-                    raise exceptions.FailedToGenerateResponseError(
-                        f"Failed to generate response - ({response.status_code}, {response.reason_phrase}) - {response.text}"
-                    )
-
-                message_load = ""
-                async for value in response.aiter_lines():
-                    try:
-                        resp = sanitize_stream(value)
-                        incomplete_message = await self.get_message(resp)
-                        if incomplete_message:
-                            message_load += incomplete_message
-                            resp["choices"][0]["delta"]["content"] = message_load
-                            self.last_response.update(resp)
-                            yield value if raw else resp
-                        elif raw:
-                            yield value
-                    except json.decoder.JSONDecodeError:
-                        pass
-
-            self.conversation.update_chat_history(
-                prompt, await self.get_message(self.last_response)
+        def for_stream():
+            response = self.session.get(
+                self.chat_endpoint,
+                params=self.payload,
+                stream=True,
+                timeout=self.timeout,
             )
 
-        async def for_non_stream():
-            async for _ in for_stream():
+            if not response.ok:
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to generate response - ({response.status_code}, {response.reason})"
+                )
+
+            streaming_response = ""
+            for line in response.iter_lines(decode_unicode=True, chunk_size=64):
+                if line:
+                    modified_value = re.sub("data:", "", line)
+                    try:
+                        json_modified_value = json.loads(modified_value)
+                        if "youChatToken" in json_modified_value:
+                            streaming_response += json_modified_value["youChatToken"]
+                            if print:
+                                print(json_modified_value["youChatToken"], end="")
+                    except:
+                        continue
+            self.last_response.update(dict(text=streaming_response))
+            self.conversation.update_chat_history(
+                prompt, self.get_message(self.last_response)
+            )
+            return streaming_response
+
+        def for_non_stream():
+            for _ in for_stream():
                 pass
             return self.last_response
 
-        return for_stream() if stream else await for_non_stream()
+        return for_stream() if stream else for_non_stream()
 
-    async def chat(
+    def chat(
         self,
         prompt: str,
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        """Generate response `str` asynchronously.
+        """Generate response `str`
         Args:
             prompt (str): Prompt to be send.
             stream (bool, optional): Flag for streaming response. Defaults to False.
@@ -4784,17 +4742,32 @@ class AsyncYEPCHAT(AsyncProvider):
             str: Response generated
         """
 
-        async def for_stream():
-            async_ask = await self.ask(
+    def chat(
+        self,
+        prompt: str,
+        stream: bool = False,
+        optimizer: str = None,
+        conversationally: bool = False,
+    ) -> str:
+        """Generate response `str`
+        Args:
+            prompt (str): Prompt to be send.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+        Returns:
+            str: Response generated
+        """
+
+        def for_stream():
+            for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
-            )
+            ):
+                yield self.get_message(response)
 
-            async for response in async_ask:
-                yield await self.get_message(response)
-
-        async def for_non_stream():
-            return await self.get_message(
-                await self.ask(
+        def for_non_stream():
+            return self.get_message(
+                self.ask(
                     prompt,
                     False,
                     optimizer=optimizer,
@@ -4802,9 +4775,9 @@ class AsyncYEPCHAT(AsyncProvider):
                 )
             )
 
-        return for_stream() if stream else await for_non_stream()
+        return for_stream() if stream else for_non_stream()
 
-    async def get_message(self, response: dict) -> str:
+    def get_message(self, response: dict) -> str:
         """Retrieves message only from response
 
         Args:
@@ -4814,71 +4787,7 @@ class AsyncYEPCHAT(AsyncProvider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        try:
-            if response["choices"][0].get("delta"):
-                return response["choices"][0]["delta"]["content"]
-            return response["choices"][0]["message"]["content"]
-        except KeyError:
-            return ""
-#-------------------------------------------------------youchat--------------------------------------------------------   
-class youChat:
-    """
-    This class provides methods for generating completions based on prompts.
-    """
-    def create(self, prompt):
-        """
-        Generate a completion based on the provided prompt.
-
-        Args:
-            prompt (str): The input prompt to generate a completion from.
-
-        Returns:
-            str: The generated completion as a text string.
-
-        Raises:
-            Exception: If the response does not contain the expected "youChatToken".
-        """
-        resp = get(
-            "https://you.com/api/streamingSearch",
-            headers={
-                "cache-control": "no-cache",
-                "referer": "https://you.com/search?q=gpt4&tbm=youchat",
-                "cookie": f"safesearch_guest=Off; uuid_guest={str(uuid4())}",
-            },
-            params={
-                "q": prompt,
-                "page": 1,
-                "count": 10,
-                "safeSearch": "Off",
-                "onShoppingPage": False,
-                "mkt": "",
-                "responseFilter": "WebPages,Translations,TimeZone,Computation,RelatedSearches",
-                "domain": "youchat",
-                "queryTraceId": str(uuid4()),
-                "chat": [],
-            },
-            impersonate="chrome107",
-        )
-        if "youChatToken" not in resp.text:
-            raise RequestsError("Unable to fetch the response.")
-        return (
-            "".join(
-                findall(
-                    r"{\"youChatToken\": \"(.*?)\"}",
-                    resp.content.decode("unicode-escape"),
-                )
-            )
-            .replace("\\n", "\n")
-            .replace("\\\\", "\\")
-            .replace('\\"', '"')
-        )
-
-    @staticmethod
-    def chat_cli(prompt):
-        """Generate completion based on the provided prompt"""
-        you_chat = youChat()
-        completion = you_chat.create(prompt)
-        print(completion)
+        return response["text"]
 #-------------------------------------------------------Gemini--------------------------------------------------------        
 from Bard import Chatbot
 import logging

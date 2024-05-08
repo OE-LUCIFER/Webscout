@@ -629,7 +629,21 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
+            elif provider == "you":
 
+                from webscout.AI import YouChat
+
+                self.bot = YouChat(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
 
             elif provider in webscout.gpt4free_providers:
                 from webscout.g4f import GPT4FREE

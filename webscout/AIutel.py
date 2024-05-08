@@ -38,6 +38,7 @@ webai = [
     "reka",
     "cohere",
     "yepchat",
+    "you",
 ]
 
 gpt4free_providers = [

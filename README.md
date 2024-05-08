@@ -39,7 +39,7 @@ Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI m
   - [usage of webscout.AI](#usage-of-webscoutai)
     - [1. `PhindSearch` - Search using Phind.com](#1-phindsearch---search-using-phindcom)
     - [2. `YepChat` - Chat with mistral 8x7b powered by yepchat](#2-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
-    - [3. `You.com` - search with you.com -NOT WORKING](#3-youcom---search-with-youcom--not-working)
+    - [3. `You.com` - search/chat with you.com](#3-youcom---searchchat-with-youcom)
     - [4. `Gemini` - search with google gemini](#4-gemini---search-with-google-gemini)
   - [usage of image generator from Webscout.AI](#usage-of-image-generator-from-webscoutai)
     - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
@@ -629,27 +629,30 @@ print(r)
 
 ```
 
-### 3. `You.com` - search with you.com -NOT WORKING
+### 3. `You.com` - search/chat with you.com 
 ```python
-from webscout.AI import youChat
+from webscout.AI import YouChat
+from rich import print
 
-# Instantiate the youchat class
-youChat = youChat()
+ai = YouChat(
+    is_conversation=True,
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+)
 
-while True:
-    # Ask the user for a prompt
-    prompt = input("💡 Enter a prompt (or type 'exit' to quit): ")
-    
-    # Exit condition
-    if prompt.lower() == 'exit':
-        break
-    
-    # Generate a completion based on the prompt
-    try:
-        completion = youChat.create(prompt)
-        print("💬:", completion)
-    except Exception as e:
-        print("⚠️ An error occurred:", e)
+prompt = "what is meaning of life"
+
+response = ai.ask(prompt)
+
+# Extract and print the message from the response
+message = ai.get_message(response)
+print(message)
 ```
 
 ### 4. `Gemini` - search with google gemini
@@ -672,17 +675,6 @@ gemini = GEMINI(cookie_file=COOKIE_FILE, proxy=PROXIES)
 
 # Ask a question and print the response
 response = gemini.chat("What is the meaning of life?")
-print(response)
-
-# Ask another question, this time streaming the response
-for chunk in gemini.chat("Tell me a story", stream=True):
-    print(chunk, end="")
-
-# Reset the conversation to start a new interaction
-gemini.reset()
-
-# Ask a question with the code optimizer
-response = gemini.chat("Write Python code to print 'Hello, world!'", optimizer="code")
 print(response)
 ```
 ##  usage of image generator from Webscout.AI

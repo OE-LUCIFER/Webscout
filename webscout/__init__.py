@@ -1,6 +1,6 @@
 """Webscout.
 
-Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models, can transcribe yt videos, have TTS support and now has webai(terminal gpt and open interpeter) support
+Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI models, can transcribe yt videos, temporary email and phone number generation, have TTS support and webai(terminal gpt and open interpeter)
 """
 import g4f
 import logging
@@ -10,7 +10,7 @@ from .version import __version__
 from .DWEBS import DeepWEBS
 from .transcriber import transcriber
 from .voice import play_audio
-# from .tempid import *
+
 
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 
@@ -28,8 +28,7 @@ webai = [
     "reka",
     "cohere",
     "yepchat",
-
-
+    "you",
 ]
 
 gpt4free_providers = [
