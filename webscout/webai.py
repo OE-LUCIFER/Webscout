@@ -514,20 +514,6 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
-            elif provider == "sean":
-                from webscout.AI import Sean
-
-                self.bot = Sean(
-                    is_conversation=disable_conversation,
-                    max_tokens=max_tokens,
-                    timeout=timeout,
-                    intro=intro,
-                    filepath=filepath,
-                    update_file=update_file,
-                    proxies=proxies,
-                    history_offset=history_offset,
-                    act=awesome_prompt,
-                )
             elif provider == "cohere":
                 assert auth, (
                     "Cohere's API-key is required. Use the flag `--key` or `-k`"
@@ -571,6 +557,22 @@ class Main(cmd.Cmd):
                 from webscout.AI import KOBOLDAI
 
                 self.bot = KOBOLDAI(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
+            elif provider == "xjai":
+                from webscout.AI import Xjai
+
+                self.bot = Xjai(
                     is_conversation=disable_conversation,
                     max_tokens=max_tokens,
                     temperature=temperature,
@@ -2365,7 +2367,7 @@ class Utils:
             source = "git+" + webscout.__repo__ + ".git"
         source = "webscout" if source is None else source
         assert (
-            "tgpt" in source or source == "."
+            "webscout" in source or source == "."
         ), f"Cannot update webscout from the source '{source}'"
         click.secho(
             f"[*] Updating from '{'pip' if source=='webscout' else source}'",
