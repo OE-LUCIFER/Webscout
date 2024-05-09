@@ -2802,6 +2802,7 @@ class AsyncKOBOLDAI(AsyncProvider):
 class OPENGPT:
     def __init__(
         self,
+        assistant_id,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
@@ -2834,7 +2835,7 @@ class OPENGPT:
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
-        self.assistant_id = "bca37014-6f97-4f2b-8928-81ea8d478d88"
+        self.assistant_id = assistant_id
         self.authority = "opengpts-example-vz4y4ooboq-uc.a.run.app"
 
         self.headers = {
@@ -3026,7 +3027,6 @@ class OPENGPT:
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["content"]
 class AsyncOPENGPT(AsyncProvider):
     def __init__(
         self,

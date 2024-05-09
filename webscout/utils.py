@@ -4,7 +4,6 @@ from html import unescape
 from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Union
 from urllib.parse import unquote
-
 import orjson
 
 from .exceptions import WebscoutE

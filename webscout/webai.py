@@ -981,7 +981,7 @@ class Main(cmd.Cmd):
         self.output_bond("Chat History", formatted_history, self.color)
         if click.confirm("Do you wish to save this chat"):
             save_to = click.prompt(
-                "Enter path/file-name", default="llama-conversation.txt"
+                "Enter path/file-name", default=f"{self.provider}-chat.txt"
             )
             with open(save_to, "a") as fh:
                 fh.write(history)

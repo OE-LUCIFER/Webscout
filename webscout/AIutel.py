@@ -18,6 +18,7 @@ from pathlib import Path
 from playsound import playsound
 from time import sleep as wait
 import pathlib
+import urllib.parse
 appdir = appdirs.AppDirs("AIWEBS", "vortex")
 
 default_path = appdir.user_cache_dir
@@ -938,7 +939,7 @@ class Audio:
         ), f"Voice '{voice}' not one of [{', '.join(cls.all_voices)}]"
         # Base URL for provider API
         url: str = (
-            f"https://api.streamelements.com/kappa/v2/speech?voice={voice}&text={{{message}}}"
+            f"https://api.streamelements.com/kappa/v2/speech?voice={voice}&text={{{urllib.parse.quote(message)}}}"
         )
         resp = requests.get(url=url, headers=cls.headers, stream=True)
         if not resp.ok:

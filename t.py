@@ -1,7 +1,7 @@
-from webscout.AI import YouChat
+from webscout.AI import Xjai
 from rich import print
 
-ai = YouChat(
+ai = Xjai(
     is_conversation=True,
     max_tokens=800,
     timeout=30,
@@ -13,10 +13,8 @@ ai = YouChat(
     act=None,
 )
 
-prompt = "what is meaning of life"
+prompt = "Tell me about india"
 
 response = ai.ask(prompt)
-
-# Extract and print the message from the response
 message = ai.get_message(response)
-print(message)
+print(response)

@@ -30,7 +30,7 @@ Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI m
 
 
 ## Table of Contents
-- [webscout](#webscout)
+- [WEBSCOUT](#webscout)
   - [Table of Contents](#table-of-contents)
   - [Install](#install)
   - [CLI version](#cli-version)
@@ -756,7 +756,7 @@ print(response)
 ```python
 from webscout.AI import OPENGPT
 
-opengpt = OPENGPT(is_conversation=True, max_tokens=8000, timeout=30)
+opengpt = OPENGPT(is_conversation=True, max_tokens=8000, timeout=30, assistant_id="bca37014-6f97-4f2b-8928-81ea8d478d88")
 while True:
     # Prompt the user for input
     prompt = input("Enter your prompt: ")
