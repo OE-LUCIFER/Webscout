@@ -4,12 +4,6 @@ from threading import Thread
 import sys
 from types import TracebackType
 from typing import Any, Awaitable, Dict, Optional, Type, Union
-if sys.platform == 'win32':
-    try:
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    except AttributeError:
-        # If WindowsSelectorEventLoopPolicy is not available, do nothing
-        pass
 from .webscout_search_async import AsyncWEBS
 
 
@@ -24,7 +18,7 @@ class WEBS(AsyncWEBS):
         proxies: Union[Dict[str, str], str, None] = None,  # deprecated
         timeout: Optional[int] = 10,
     ) -> None:
-        """Initialize the DDGS object.
+        """Initialize the WEBS object.
 
         Args:
             headers (dict, optional): Dictionary of headers for the HTTP client. Defaults to None.
