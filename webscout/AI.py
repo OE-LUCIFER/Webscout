@@ -3277,6 +3277,7 @@ class OPENGPT:
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
+        return response["content"]
 class AsyncOPENGPT(AsyncProvider):
     def __init__(
         self,

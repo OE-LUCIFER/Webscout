@@ -41,7 +41,9 @@ webai = [
     "yepchat",
     "you",
     "xjai",
-    "thinkany"
+    "thinkany",
+    "auto",
+
 ]
 
 gpt4free_providers = [

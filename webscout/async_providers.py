@@ -7,7 +7,7 @@ from webscout.AI import AsyncLEO
 from webscout.AI import AsyncKOBOLDAI
 from webscout.AI import AsyncGROQ
 from webscout.AI import AsyncBLACKBOXAI
-from webscout.AI import AsyncGPT4FREE
+from webscout.g4f import AsyncGPT4FREE
 
 mapper: dict[str, object] = {
     "phind": AsyncPhindSearch,
@@ -20,14 +20,4 @@ mapper: dict[str, object] = {
     "leo": AsyncLEO,
     "groq": AsyncGROQ,
     "openai": AsyncOPENAI,
-}
-
-tgpt_mapper: dict[str, object] = {
-    "phind": AsyncPhindSearch,
-    "opengpt": AsyncOPENGPT,
-    "koboldai": AsyncKOBOLDAI,
-    # "gpt4free": AsyncGPT4FREE,
-    "blackboxai": AsyncBLACKBOXAI,
-    "llama2": AsyncLLAMA2,
-    "yepchat": AsyncYEPCHAT,
 }

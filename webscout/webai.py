@@ -456,7 +456,20 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
+            if provider == "auto":
+                from webscout.AIauto import AUTO
 
+                self.bot = AUTO(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
             elif provider == "opengpt":
                 from webscout.AI import OPENGPT
 
@@ -470,6 +483,7 @@ class Main(cmd.Cmd):
                     proxies=proxies,
                     history_offset=history_offset,
                     act=awesome_prompt,
+                    assistant_id="bca37014-6f97-4f2b-8928-81ea8d478d88"
                 )
             elif provider == "thinkany":
                 from webscout.AI import ThinkAnyAI
@@ -725,7 +739,13 @@ class Main(cmd.Cmd):
         self.__init_time = time.time()
         self.__start_time = time.time()
         self.__end_time = time.time()
-
+        
+    @property
+    def get_provider(self):
+        if self.provider == "auto" and self.bot.provider_name is not None:
+            return self.bot.provider_name
+        else:
+            return self.provider
     @property
     def prompt(self):
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
@@ -740,7 +760,7 @@ class Main(cmd.Cmd):
         if not self.disable_coloring:
             cmd_prompt = (
                 f"╭─[`{Fore.GREEN}{getpass.getuser().capitalize()}@webai]`"
-                f"(`{Fore.YELLOW}{self.provider})`"
+                f"(`{Fore.YELLOW}{self.get_provider})`"
                 f"~[`{Fore.LIGHTWHITE_EX}⏰{Fore.MAGENTA}{current_time}-`"
                 f"{Fore.LIGHTWHITE_EX}💻{Fore.BLUE}{find_range(self.__init_time, time.time(), True)}-`"
                 f"{Fore.LIGHTWHITE_EX}⚡️{Fore.RED}{find_range(self.__start_time, self.__end_time)}s]`"
@@ -753,7 +773,7 @@ class Main(cmd.Cmd):
 
         else:
             return (
-                f"╭─[{getpass.getuser().capitalize()}@webscout]({self.provider})"
+                f"╭─[{getpass.getuser().capitalize()}@webscout]({self.get_provider})"
                 f"~[⏰{current_time}"
                 f"-💻{find_range(self.__init_time, time.time(), True)}"
                 f"-⚡️{find_range(self.__start_time, self.__end_time)}s]"
@@ -1125,7 +1145,7 @@ class Main(cmd.Cmd):
                     busy_bar.stop_spinning()
                     this.stream_output(
                         generated_response,
-                        title="AI Response",
+                        title="Webscout",
                         is_markdown=self.prettify,
                         style=Style(
                             color=self.color,
