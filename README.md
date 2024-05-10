@@ -71,6 +71,7 @@ Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI m
     - [10. `Reka` - chat with reka](#10-reka---chat-with-reka)
     - [11. `Cohere` - chat with cohere](#11-cohere---chat-with-cohere)
     - [12. `Xjai` - chat with free gpt 3.5](#12-xjai---chat-with-free-gpt-35)
+    - [`ThinkAny` - AI search engine](#thinkany---ai-search-engine)
     - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
     - [LLM with deepwebs](#llm-with-deepwebs)
@@ -828,7 +829,31 @@ prompt = "Tell me about india"
 response = ai.chat(prompt)
 print(response)
 ```
+### `ThinkAny` - AI search engine
+```python
+from webscout.AI import ThinkAnyAI
 
+ai = ThinkAnyAI(
+    is_conversation=True,
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+    web_search=False,
+)
+
+prompt = "what is meaning of life"
+
+response = ai.ask(prompt)
+
+# Extract and print the message from the response
+message = ai.get_message(response)
+print(message)
+```
 ### `LLM` 
 ```python
 from webscout.LLM import LLM

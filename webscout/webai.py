@@ -471,6 +471,20 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
+            elif provider == "thinkany":
+                from webscout.AI import ThinkAnyAI
+
+                self.bot = ThinkAnyAI(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
             elif provider == "yepchat":
                 from webscout.AI import YEPCHAT
 

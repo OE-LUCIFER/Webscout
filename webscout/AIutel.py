@@ -40,7 +40,8 @@ webai = [
     "cohere",
     "yepchat",
     "you",
-    "xjai"
+    "xjai",
+    "thinkany"
 ]
 
 gpt4free_providers = [
