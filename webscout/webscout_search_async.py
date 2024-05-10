@@ -5,10 +5,10 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from datetime import datetime, timezone
 from decimal import Decimal
-from functools import partial
+from functools import cached_property, partial
 from itertools import cycle, islice
 from types import TracebackType
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Type, Union, cast
 
 from curl_cffi import requests
 
@@ -34,68 +34,71 @@ logger = logging.getLogger("webscout_search.AsyncWEBS")
 
 
 class AsyncWEBS:
-    """Webscout async class to get search results from duckduckgo.com."""
+    """webscout_search async class to get search results from duckduckgo.com."""
 
     _executor: Optional[ThreadPoolExecutor] = None
 
     def __init__(
         self,
         headers: Optional[Dict[str, str]] = None,
-        proxies: Union[Dict[str, str], str, None] = None,
+        proxy: Optional[str] = None,
+        proxies: Union[Dict[str, str], str, None] = None,  # deprecated
         timeout: Optional[int] = 10,
     ) -> None:
         """Initialize the AsyncWEBS object.
 
         Args:
             headers (dict, optional): Dictionary of headers for the HTTP client. Defaults to None.
-            proxies (Union[dict, str], optional): Proxies for the HTTP client (can be dict or str). Defaults to None.
+            proxy (str, optional): proxy for the HTTP client, supports http/https/socks5 protocols.
+                example: "http://user:pass@example.com:3128". Defaults to None.
             timeout (int, optional): Timeout value for the HTTP client. Defaults to 10.
         """
-        self.proxies = {"all": proxies} if isinstance(proxies, str) else proxies
+        self.proxy: Optional[str] = proxy
+        assert self.proxy is None or isinstance(self.proxy, str), "proxy must be a str"
+        if not proxy and proxies:
+            warnings.warn("'proxies' is deprecated, use 'proxy' instead.", stacklevel=1)
+            self.proxy = proxies.get("http") or proxies.get("https") if isinstance(proxies, dict) else proxies
         self._asession = requests.AsyncSession(
             headers=headers,
-            proxies=self.proxies,
+            proxy=self.proxy,
             timeout=timeout,
             impersonate="chrome",
             allow_redirects=False,
         )
         self._asession.headers["Referer"] = "https://duckduckgo.com/"
-        self._parser: Optional[LHTMLParser] = None
         self._exception_event = asyncio.Event()
-        self._exit_done = False
 
     async def __aenter__(self) -> "AsyncWEBS":
         return self
 
     async def __aexit__(
         self,
-        exc_type: Optional[BaseException] = None,
+        exc_type: Optional[Type[BaseException]] = None,
         exc_val: Optional[BaseException] = None,
         exc_tb: Optional[TracebackType] = None,
     ) -> None:
-        await self._session_close()
+        await self._asession.__aexit__(exc_type, exc_val, exc_tb)  # type: ignore
 
     def __del__(self) -> None:
-        if self._exit_done is False:
-            asyncio.create_task(self._session_close())
+        if hasattr(self, "_asession") and self._asession._closed is False:
+            with suppress(RuntimeError, RuntimeWarning):
+                asyncio.create_task(self._asession.close())  # type: ignore
 
-    async def _session_close(self) -> None:
-        """Close the curl-cffi async session."""
-        if self._exit_done is False:
-            await self._asession.close()
-            self._exit_done = True
-
-    def _get_parser(self) -> "LHTMLParser":
+    @cached_property
+    def parser(self) -> Optional["LHTMLParser"]:
         """Get HTML parser."""
-        if self._parser is None:
-            self._parser = LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
-        return self._parser
+        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
 
-    def _get_executor(self, max_workers: int = 1) -> ThreadPoolExecutor:
+    @classmethod
+    def _get_executor(cls, max_workers: int = 1) -> ThreadPoolExecutor:
         """Get ThreadPoolExecutor. Default max_workers=1, because >=2 leads to a big overhead"""
-        if AsyncWEBS._executor is None:
-            AsyncWEBS._executor = ThreadPoolExecutor(max_workers=max_workers)
-        return AsyncWEBS._executor
+        if cls._executor is None:
+            cls._executor = ThreadPoolExecutor(max_workers=max_workers)
+        return cls._executor
+
+    @property
+    def executor(cls) -> Optional[ThreadPoolExecutor]:
+        return cls._get_executor()
 
     async def _aget_url(
         self,
@@ -107,19 +110,18 @@ class AsyncWEBS:
         if self._exception_event.is_set():
             raise WebscoutE("Exception occurred in previous call.")
         try:
-            resp = await self._asession.request(method, url, data=data, params=params, stream=True)
-            resp_content: bytes = await resp.acontent()
+            resp = await self._asession.request(method, url, data=data, params=params)
         except Exception as ex:
             self._exception_event.set()
             if "time" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
             raise WebscoutE(f"{url} {type(ex).__name__}: {ex}") from ex
-        logger.debug(f"_aget_url() {resp.url} {resp.status_code} {resp.elapsed:.2f} {len(resp_content)}")
+        logger.debug(f"_aget_url() {resp.url} {resp.status_code} {resp.elapsed:.2f} {len(resp.content)}")
         if resp.status_code == 200:
-            return resp_content
+            return cast(bytes, resp.content)
         self._exception_event.set()
         if resp.status_code in (202, 301, 403):
-            raise RatelimitE(f"{resp.url} {resp.status_code}")
+            raise RatelimitE(f"{resp.url} {resp.status_code} Ratelimit")
         raise WebscoutE(f"{resp.url} return None. {params=} {data=}")
 
     async def _aget_vqd(self, keywords: str) -> str:
@@ -136,7 +138,7 @@ class AsyncWEBS:
         backend: str = "api",
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout text search generator. Query params: https://duckduckgo.com/params.
+        """webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -153,7 +155,7 @@ class AsyncWEBS:
             List of dictionaries with search results, or None if there was an error.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -177,7 +179,7 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout text search generator. Query params: https://duckduckgo.com/params.
+        """webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -190,7 +192,7 @@ class AsyncWEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -241,11 +243,19 @@ class AsyncWEBS:
                         }
                         results[priority] = result
 
-        tasks = [_text_api_page(0, 0)]
+        tasks = [asyncio.create_task(_text_api_page(0, 0))]
         if max_results:
             max_results = min(max_results, 500)
-            tasks.extend(_text_api_page(s, i) for i, s in enumerate(range(23, max_results, 50), start=1))
-        await asyncio.gather(*tasks)
+            tasks.extend(
+                asyncio.create_task(_text_api_page(s, i)) for i, s in enumerate(range(23, max_results, 50), start=1)
+            )
+        try:
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise e
 
         return list(islice(filter(None, results), max_results))
 
@@ -257,7 +267,7 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout text search generator. Query params: https://duckduckgo.com/params.
+        """webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -270,7 +280,7 @@ class AsyncWEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -302,7 +312,7 @@ class AsyncWEBS:
                 return
 
             tree = await self._asession.loop.run_in_executor(
-                self._get_executor(), partial(document_fromstring, resp_content, self._get_parser())
+                self.executor, partial(document_fromstring, resp_content, self.parser)
             )
 
             for e in tree.xpath("//div[h2]"):
@@ -327,11 +337,19 @@ class AsyncWEBS:
                     }
                     results[priority] = result
 
-        tasks = [_text_html_page(0, 0)]
+        tasks = [asyncio.create_task(_text_html_page(0, 0))]
         if max_results:
             max_results = min(max_results, 500)
-            tasks.extend(_text_html_page(s, i) for i, s in enumerate(range(23, max_results, 50), start=1))
-        await asyncio.gather(*tasks)
+            tasks.extend(
+                asyncio.create_task(_text_html_page(s, i)) for i, s in enumerate(range(23, max_results, 50), start=1)
+            )
+        try:
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise e
 
         return list(islice(filter(None, results), max_results))
 
@@ -342,7 +360,7 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout text search generator. Query params: https://duckduckgo.com/params.
+        """webscout text search generator. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -354,7 +372,7 @@ class AsyncWEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -381,7 +399,7 @@ class AsyncWEBS:
                 return
 
             tree = await self._asession.loop.run_in_executor(
-                self._get_executor(), partial(document_fromstring, resp_content, self._get_parser())
+                self.executor, partial(document_fromstring, resp_content, self.parser)
             )
 
             data = zip(cycle(range(1, 5)), tree.xpath("//table[last()]//tr"))
@@ -410,11 +428,19 @@ class AsyncWEBS:
                     }
                     results[priority] = result
 
-        tasks = [_text_lite_page(0, 0)]
+        tasks = [asyncio.create_task(_text_lite_page(0, 0))]
         if max_results:
             max_results = min(max_results, 500)
-            tasks.extend(_text_lite_page(s, i) for i, s in enumerate(range(23, max_results, 50), start=1))
-        await asyncio.gather(*tasks)
+            tasks.extend(
+                asyncio.create_task(_text_lite_page(s, i)) for i, s in enumerate(range(23, max_results, 50), start=1)
+            )
+        try:
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise e
 
         return list(islice(filter(None, results), max_results))
 
@@ -431,7 +457,7 @@ class AsyncWEBS:
         license_image: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout images search. Query params: https://duckduckgo.com/params.
+        """webscout images search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -454,7 +480,7 @@ class AsyncWEBS:
             List of dictionaries with images search results.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -505,11 +531,19 @@ class AsyncWEBS:
                     }
                     results[priority] = result
 
-        tasks = [_images_page(0, page=0)]
+        tasks = [asyncio.create_task(_images_page(0, page=0))]
         if max_results:
             max_results = min(max_results, 500)
-            tasks.extend(_images_page(s, i) for i, s in enumerate(range(100, max_results, 100), start=1))
-        await asyncio.gather(*tasks)
+            tasks.extend(
+                asyncio.create_task(_images_page(s, i)) for i, s in enumerate(range(100, max_results, 100), start=1)
+            )
+        try:
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise e
 
         return list(islice(filter(None, results), max_results))
 
@@ -524,7 +558,7 @@ class AsyncWEBS:
         license_videos: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout videos search. Query params: https://duckduckgo.com/params.
+        """webscout videos search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -540,7 +574,7 @@ class AsyncWEBS:
             List of dictionaries with videos search results.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -579,11 +613,19 @@ class AsyncWEBS:
                     priority += 1
                     results[priority] = row
 
-        tasks = [_videos_page(0, 0)]
+        tasks = [asyncio.create_task(_videos_page(0, 0))]
         if max_results:
             max_results = min(max_results, 400)
-            tasks.extend(_videos_page(s, i) for i, s in enumerate(range(59, max_results, 59), start=1))
-        await asyncio.gather(*tasks)
+            tasks.extend(
+                asyncio.create_task(_videos_page(s, i)) for i, s in enumerate(range(59, max_results, 59), start=1)
+            )
+        try:
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise e
 
         return list(islice(filter(None, results), max_results))
 
@@ -595,7 +637,7 @@ class AsyncWEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout news search. Query params: https://duckduckgo.com/params.
+        """webscout news search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -608,7 +650,7 @@ class AsyncWEBS:
             List of dictionaries with news search results.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -653,16 +695,24 @@ class AsyncWEBS:
                     }
                     results[priority] = result
 
-        tasks = [_news_page(0, 0)]
+        tasks = [asyncio.create_task(_news_page(0, 0))]
         if max_results:
             max_results = min(max_results, 200)
-            tasks.extend(_news_page(s, i) for i, s in enumerate(range(29, max_results, 29), start=1))
-        await asyncio.gather(*tasks)
+            tasks.extend(
+                asyncio.create_task(_news_page(s, i)) for i, s in enumerate(range(29, max_results, 29), start=1)
+            )
+        try:
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise e
 
         return list(islice(filter(None, results), max_results))
 
     async def answers(self, keywords: str) -> List[Dict[str, str]]:
-        """Webscout instant answers. Query params: https://duckduckgo.com/params.
+        """webscout instant answers. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query,
@@ -671,7 +721,7 @@ class AsyncWEBS:
             List of dictionaries with instant answers results.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -733,7 +783,7 @@ class AsyncWEBS:
         return results
 
     async def suggestions(self, keywords: str, region: str = "wt-wt") -> List[Dict[str, str]]:
-        """Webscout suggestions. Query params: https://duckduckgo.com/params.
+        """webscout suggestions. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -743,7 +793,7 @@ class AsyncWEBS:
             List of dictionaries with suggestions results.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -772,7 +822,7 @@ class AsyncWEBS:
         radius: int = 0,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout maps search. Query params: https://duckduckgo.com/params.
+        """webscout maps search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query
@@ -793,7 +843,7 @@ class AsyncWEBS:
             List of dictionaries with maps search results, or None if there was an error.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -945,7 +995,7 @@ class AsyncWEBS:
     async def translate(
         self, keywords: Union[List[str], str], from_: Optional[str] = None, to: str = "en"
     ) -> List[Dict[str, str]]:
-        """Webscout translate.
+        """webscout translate.
 
         Args:
             keywords: string or list of strings to translate.
@@ -956,7 +1006,7 @@ class AsyncWEBS:
             List od dictionaries with translated keywords.
 
         Raises:
-            WebscoutE: Base exception for Webscout errors.
+            WebscoutE: Base exception for webscout_search errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -987,7 +1037,13 @@ class AsyncWEBS:
 
         if isinstance(keywords, str):
             keywords = [keywords]
-        tasks = [_translate_keyword(keyword) for keyword in keywords]
-        await asyncio.gather(*tasks)
+        tasks = [asyncio.create_task(_translate_keyword(keyword)) for keyword in keywords]
+        try:
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise e
 
         return results
