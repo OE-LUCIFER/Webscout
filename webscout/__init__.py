@@ -38,7 +38,7 @@ from .Provider import (
     AsyncYEPCHAT,
     YouChat,
     GEMINI,
-    ChatGPTlogin,
+
 )
 
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
@@ -106,7 +106,7 @@ __all__ = [
     "AsyncYEPCHAT",
     "YouChat",
     "GEMINI",
-    "ChatGPTlogin",
+
 ]
 
 # Set up basic logger
