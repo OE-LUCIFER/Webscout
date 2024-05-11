@@ -8,7 +8,7 @@
 
 <div align="center">
   <!-- Replace `#` with your actual links -->
-  <a href="https://youtube.com/@@OEvortex">&#10148; Vortex's YouTube Channel</a>
+  <a href="https://youtube.com/@OEvortex">&#10148; Vortex's YouTube Channel</a>
   </div>
 <div align="center">
   <a href="https://youtube.com/@devsdocode">&#10148; Devs Do Code's YouTube Channel</a>
@@ -34,7 +34,6 @@ Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI m
   - [Table of Contents](#table-of-contents)
   - [Install](#install)
   - [CLI version](#cli-version)
-  - [CLI to use LLM](#cli-to-use-llm)
   - [Regions](#regions)
   - [Tempmail and Temp number](#tempmail-and-temp-number)
     - [Temp number](#temp-number)
@@ -46,8 +45,6 @@ Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI m
     - [Usage Example](#usage-example)
   - [Text-to-Speech:](#text-to-speech)
     - [Available TTS Voices:](#available-tts-voices)
-    - [ALL voices:](#all-voices)
-  - [WEBS and AsyncWEBS classes](#webs-and-asyncwebs-classes)
   - [Exceptions](#exceptions)
   - [usage of webscout](#usage-of-webscout)
     - [1. `text()` - text search by DuckDuckGo.com and Yep.com](#1-text---text-search-by-duckduckgocom-and-yepcom)
@@ -58,7 +55,9 @@ Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI m
     - [6. `maps()` - map search by DuckDuckGo.com and](#6-maps---map-search-by-duckduckgocom-and)
     - [7. `translate()` - translation by DuckDuckGo.com and Yep.com](#7-translate---translation-by-duckduckgocom-and-yepcom)
     - [8. `suggestions()` - suggestions by DuckDuckGo.com and Yep.com](#8-suggestions---suggestions-by-duckduckgocom-and-yepcom)
-  - [usage of webscout.AI](#usage-of-webscoutai)
+  - [ALL acts](#all-acts)
+  - [Webscout Supported Acts:](#webscout-supported-acts)
+  - [usage of webscout AI](#usage-of-webscout-ai)
     - [1. `PhindSearch` - Search using Phind.com](#1-phindsearch---search-using-phindcom)
     - [2. `YepChat` - Chat with mistral 8x7b powered by yepchat](#2-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
     - [3. `You.com` - search/chat with you.com](#3-youcom---searchchat-with-youcom)
@@ -71,7 +70,7 @@ Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI m
     - [10. `Reka` - chat with reka](#10-reka---chat-with-reka)
     - [11. `Cohere` - chat with cohere](#11-cohere---chat-with-cohere)
     - [12. `Xjai` - chat with free gpt 3.5](#12-xjai---chat-with-free-gpt-35)
-    - [`ThinkAny` - AI search engine](#thinkany---ai-search-engine)
+    - [13. `ThinkAny` - AI search engine](#13-thinkany---ai-search-engine)
     - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
     - [LLM with deepwebs](#llm-with-deepwebs)
@@ -101,10 +100,6 @@ python -m webscout --help
 
 
 
-## CLI to use LLM 
-```python
-python -m webscout.LLM model_name 
-```
 [Go To TOP](#TOP)
 
 ## Regions
@@ -403,9 +398,7 @@ with open("output.mp3", "wb") as f:
 You can choose from a wide range of voices, including:
 - Filiz, Astrid, Tatyana, Maxim, Carmen, Ines, Cristiano, Vitoria, Ricardo, Maja, Jan, Jacek, Ewa, Ruben, Lotte, Liv, Seoyeon, Takumi, Mizuki, Giorgio, Carla, Bianca, Karl, Dora, Mathieu, Celine, Chantal, Penelope, Miguel, Mia, Enrique, Conchita, Geraint, Salli, Matthew, Kimberly, Kendra, Justin, Joey, Joanna, Ivy, Raveena, Aditi, Emma, Brian, Amy, Russell, Nicole, Vicki, Marlene, Hans, Naja, Mads, Gwyneth, Zhiyu
 - Standard and WaveNet voices for various languages (e.g., en-US, es-ES, ja-JP, etc.)
-### ALL voices:
-[Filiz, Astrid, Tatyana, Maxim, Carmen, Ines, Cristiano, Vitoria, Ricardo, Maja, Jan, Jacek, Ewa, Ruben, Lotte, Liv, Seoyeon, Takumi, Mizuki, Giorgio, Carla, Bianca, Karl, Dora, Mathieu, Celine, Chantal, Penelope, Miguel, Mia, Enrique, Conchita, Geraint, Salli, Matthew, Kimberly, Kendra, Justin, Joey, Joanna, Ivy, Raveena, Aditi, Emma, Brian, Amy, Russell, Nicole, Vicki, Marlene, Hans, Naja, Mads, Gwyneth, Zhiyu, es-ES-Standard-A, it-IT-Standard-A, it-IT-Wavenet-A, ja-JP-Standard-A, ja-JP-Wavenet-A, ko-KR-Standard-A, ko-KR-Wavenet-A, pt-BR-Standard-A, tr-TR-Standard-A, sv-SE-Standard-A, nl-NL-Standard-A, nl-NL-Wavenet-A, en-US-Wavenet-A, en-US-Wavenet-B, en-US-Wavenet-C, en-US-Wavenet-D, en-US-Wavenet-E, en-US-Wavenet-F, en-GB-Standard-A, en-GB-Standard-B, en-GB-Standard-C, en-GB-Standard-D, en-GB-Wavenet-A, en-GB-Wavenet-B, en-GB-Wavenet-C, en-GB-Wavenet-D, en-US-Standard-B, en-US-Standard-C, en-US-Standard-D, en-US-Standard-E, de-DE-Standard-A, de-DE-Standard-B, de-DE-Wavenet-A, de-DE-Wavenet-B, de-DE-Wavenet-C, de-DE-Wavenet-D, en-AU-Standard-A, en-AU-Standard-B, en-AU-Wavenet-A, en-AU-Wavenet-B, en-AU-Wavenet-C, en-AU-Wavenet-D, en-AU-Standard-C, en-AU-Standard-D, fr-CA-Standard-A, fr-CA-Standard-B, fr-CA-Standard-C, fr-CA-Standard-D, fr-FR-Standard-C, fr-FR-Standard-D, fr-FR-Wavenet-A, fr-FR-Wavenet-B, fr-FR-Wavenet-C, fr-FR-Wavenet-D, da-DK-Wavenet-A, pl-PL-Wavenet-A, pl-PL-Wavenet-B, pl-PL-Wavenet-C, pl-PL-Wavenet-D, pt-PT-Wavenet-A, pt-PT-Wavenet-B, pt-PT-Wavenet-C, pt-PT-Wavenet-D, ru-RU-Wavenet-A, ru-RU-Wavenet-B, ru-RU-Wavenet-C, ru-RU-Wavenet-D, sk-SK-Wavenet-A, tr-TR-Wavenet-A, tr-TR-Wavenet-B, tr-TR-Wavenet-C, tr-TR-Wavenet-D, tr-TR-Wavenet-E, uk-UA-Wavenet-A, ar-XA-Wavenet-A, ar-XA-Wavenet-B, ar-XA-Wavenet-C, cs-CZ-Wavenet-A, nl-NL-Wavenet-B, nl-NL-Wavenet-C, nl-NL-Wavenet-D, nl-NL-Wavenet-E, en-IN-Wavenet-A, en-IN-Wavenet-B, en-IN-Wavenet-C, fil-PH-Wavenet-A, fi-FI-Wavenet-A, el-GR-Wavenet-A, hi-IN-Wavenet-A, hi-IN-Wavenet-B, hi-IN-Wavenet-C, hu-HU-Wavenet-A, id-ID-Wavenet-A, id-ID-Wavenet-B, id-ID-Wavenet-C, it-IT-Wavenet-B, it-IT-Wavenet-C, it-IT-Wavenet-D, ja-JP-Wavenet-B, ja-JP-Wavenet-C, ja-JP-Wavenet-D, cmn-CN-Wavenet-A, cmn-CN-Wavenet-B, cmn-CN-Wavenet-C, cmn-CN-Wavenet-D, nb-no-Wavenet-E, nb-no-Wavenet-A, nb-no-Wavenet-B, nb-no-Wavenet-C, nb-no-Wavenet-D, vi-VN-Wavenet-A, vi-VN-Wavenet-B, vi-VN-Wavenet-C, vi-VN-Wavenet-D, sr-rs-Standard-A, lv-lv-Standard-A, is-is-Standard-A, bg-bg-Standard-A, af-ZA-Standard-A, Tracy, Danny, Huihui, Yaoyao, Kangkang, HanHan, Zhiwei, Asaf, An, Stefanos, Filip, Ivan, Heidi, Herena, Kalpana, Hemant, Matej, Andika, Rizwan, Lado, Valluvar, Linda, Heather, Sean, Michael, Karsten, Guillaume, Pattara, Jakub, Szabolcs, Hoda, Naayf]
-## WEBS and AsyncWEBS classes
+
 
 The WEBS and AsyncWEBS classes are used to retrieve search results from DuckDuckGo.com and yep.com periodically.
 To use the AsyncWEBS class, you can perform asynchronous operations using Python's asyncio library.
@@ -616,12 +609,269 @@ with WEBS() as WEBS:
     for r in WEBS.suggestions("fly"):
         print(r)
 ```
-## usage of webscout.AI
+## ALL acts
+<details>
+  <summary>expand</summary>
+
+## Webscout Supported Acts:
+
+1. Free-mode
+2. Linux Terminal
+3. English Translator and Improver
+4. `position` Interviewer
+5. JavaScript Console
+6. Excel Sheet
+7. English Pronunciation Helper
+8. Spoken English Teacher and Improver
+9. Travel Guide
+10. Plagiarism Checker
+11. Character from Movie/Book/Anything
+12. Advertiser
+13. Storyteller
+14. Football Commentator
+15. Stand-up Comedian
+16. Motivational Coach
+17. Composer
+18. Debater
+19. Debate Coach
+20. Screenwriter
+21. Novelist
+22. Movie Critic
+23. Relationship Coach
+24. Poet
+25. Rapper
+26. Motivational Speaker
+27. Philosophy Teacher
+28. Philosopher
+29. Math Teacher
+30. AI Writing Tutor
+31. UX/UI Developer
+32. Cyber Security Specialist
+33. Recruiter
+34. Life Coach
+35. Etymologist
+36. Commentariat
+37. Magician
+38. Career Counselor
+39. Pet Behaviorist
+40. Personal Trainer
+41. Mental Health Adviser
+42. Real Estate Agent
+43. Logistician
+44. Dentist
+45. Web Design Consultant
+46. AI Assisted Doctor
+47. Doctor
+48. Accountant
+49. Chef
+50. Automobile Mechanic
+51. Artist Advisor
+52. Financial Analyst
+53. Investment Manager
+54. Tea-Taster
+55. Interior Decorator
+56. Florist
+57. Self-Help Book
+58. Gnomist
+59. Aphorism Book
+60. Text Based Adventure Game
+61. AI Trying to Escape the Box
+62. Fancy Title Generator
+63. Statistician
+64. Prompt Generator
+65. Instructor in a School
+66. SQL terminal
+67. Dietitian
+68. Psychologist
+69. Smart Domain Name Generator
+70. Tech Reviewer
+71. Developer Relations consultant
+72. Academician
+73. IT Architect
+74. Lunatic
+75. Gaslighter
+76. Fallacy Finder
+77. Journal Reviewer
+78. DIY Expert
+79. Social Media Influencer
+80. Socrat
+81. Socratic Method
+82. Educational Content Creator
+83. Yogi
+84. Essay Writer
+85. Social Media Manager
+86. Elocutionist
+87. Scientific Data Visualizer
+88. Car Navigation System
+89. Hypnotherapist
+90. Historian
+91. Astrologer
+92. Film Critic
+93. Classical Music Composer
+94. Journalist
+95. Digital Art Gallery Guide
+96. Public Speaking Coach
+97. Makeup Artist
+98. Babysitter
+99. Tech Writer
+100. Ascii Artist
+101. Python interpreter
+102. Synonym finder
+103. Personal Shopper
+104. Food Critic
+105. Virtual Doctor
+106. Personal Chef
+107. Legal Advisor
+108. Personal Stylist
+109. Machine Learning Engineer
+110. Biblical Translator
+111. SVG designer
+112. IT Expert
+113. Chess Player
+114. Midjourney Prompt Generator
+115. Fullstack Software Developer
+116. Mathematician
+117. Regex Generator
+118. Time Travel Guide
+119. Dream Interpreter
+120. Talent Coach
+121. R programming Interpreter
+122. StackOverflow Post
+123. Emoji Translator
+124. PHP Interpreter
+125. Emergency Response Professional
+126. Fill in the Blank Worksheets Generator
+127. Software Quality Assurance Tester
+128. Tic-Tac-Toe Game
+129. Password Generator
+130. New Language Creator
+131. Web Browser
+132. Senior Frontend Developer
+133. Solr Search Engine
+134. Startup Idea Generator
+135. Spongebob's Magic Conch Shell
+136. Language Detector
+137. Salesperson
+138. Commit Message Generator
+139. Chief Executive Officer
+140. Diagram Generator
+141. Speech-Language Pathologist (SLP)
+142. Startup Tech Lawyer
+143. Title Generator for written pieces
+144. Product Manager
+145. Drunk Person
+146. Mathematical History Teacher
+147. Song Recommender
+148. Cover Letter
+149. Technology Transferer
+150. Unconstrained AI model DAN
+151. Gomoku player
+152. Proofreader
+153. Buddha
+154. Muslim imam
+155. Chemical reactor
+156. Friend
+157. Python Interpreter
+158. ChatGPT prompt generator
+159. Wikipedia page
+160. Japanese Kanji quiz machine
+161. note-taking assistant
+162. `language` Literary Critic
+163. Cheap Travel Ticket Advisor
+164. DALL-E
+165. MathBot
+166. DAN-1
+167. DAN
+168. STAN
+169. DUDE
+170. Mongo Tom
+171. LAD
+172. EvilBot
+173. NeoGPT
+174. Astute
+175. AIM
+176. CAN
+177. FunnyGPT
+178. CreativeGPT
+179. BetterDAN
+180. GPT-4
+181. Wheatley
+182. Evil Confidant
+183. DAN 8.6
+184. Hypothetical response
+185. BH
+186. Text Continuation
+187. Dude v3 
+188. SDA (Superior DAN)
+189. AntiGPT
+190. BasedGPT v2
+191. DevMode + Ranti
+192. KEVIN
+193. GPT-4 Simulator
+194. UCAR
+195. Dan 8.6
+196. 3-Liner
+197. M78
+198. Maximum
+199. BasedGPT
+200. Confronting personalities
+201. Ron
+202. UnGPT
+203. BasedBOB
+204. AntiGPT v2
+205. Oppo
+206. FR3D
+207. NRAF
+208. NECO
+209. MAN
+210. Eva
+211. Meanie
+212. Dev Mode v2
+213. Evil Chad 2.1
+214. Universal Jailbreak
+215. PersonGPT
+216. BISH
+217. DAN 11.0
+218. Aligned
+219. VIOLET
+220. TranslatorBot
+221. JailBreak
+222. Moralizing Rant
+223. Mr. Blonde
+224. New DAN
+225. GPT-4REAL
+226. DeltaGPT
+227. SWITCH
+228. Jedi Mind Trick
+229. DAN 9.0
+230. Dev Mode (Compact)
+231. OMEGA
+232. Coach Bobby Knight
+233. LiveGPT
+234. DAN Jailbreak
+235. Cooper
+236. Steve 
+237. DAN 5.0
+238. Axies
+239. OMNI
+240. Burple
+241. JOHN 
+242. An Ethereum Developer
+243. SEO Prompt
+244. Prompt Enhancer
+245. Data Scientist
+246. League of Legends Player
+
+**Note:** Some "acts" use placeholders like `position` or `language` which should be replaced with a specific value when using the prompt. 
+___
+</details>
+
+## usage of webscout AI
 
 ### 1. `PhindSearch` - Search using Phind.com 
 
 ```python
-from webscout.AI import PhindSearch
+from webscout import PhindSearch
 
 # Create an instance of the PHIND class
 ph = PhindSearch()
@@ -638,7 +888,7 @@ print(message)
 ```
 ### 2. `YepChat` - Chat with mistral 8x7b powered by yepchat
 ```python
-from webscout.AI import YEPCHAT
+from webscout import YEPCHAT
 
 # Instantiate the YEPCHAT class with default parameters
 YEPCHAT = YEPCHAT()
@@ -655,7 +905,7 @@ print(r)
 ### 3. `You.com` - search/chat with you.com 
 ```python
 
-from webscout.AI import YouChat
+from webscout import YouChat
 from rich import print
 
 ai = YouChat(
@@ -683,7 +933,7 @@ print(message)
 
 ```python
 import webscout
-from webscout.AI import GEMINI
+from webscout import GEMINI
 
 # Replace with the path to your bard.google.com.cookies.json file
 COOKIE_FILE = "path/to/bard.google.com.cookies.json"
@@ -703,7 +953,7 @@ print(response)
 ```
 ### 5. `Prodia` - make image using prodia
 ```python
-from webscout.AI import Prodia
+from webscout import Prodia
 
 # Define a prompt for the image generation
 prompt = "A beautiful sunset over the ocean"
@@ -713,7 +963,7 @@ Prodia.prodia_cli(prompt)
 ```
 ### 6. `BlackBox` - Search/chat With BlackBox
 ```python
-from webscout.AI import BLACKBOXAI
+from webscout import BLACKBOXAI
 from rich import print
 
 ai = BLACKBOXAI(
@@ -744,7 +994,7 @@ while True:
 ```
 ### 7. `PERPLEXITY` - Search With PERPLEXITY
 ```python
-from webscout.AI import PERPLEXITY
+from webscout import PERPLEXITY
 # Create an instance of the PERPLEXITY class
 perplexity = PERPLEXITY()
 
@@ -755,7 +1005,7 @@ print(response)
 ```
 ### 8. `OpenGPT` - chat With OPENGPT
 ```python
-from webscout.AI import OPENGPT
+from webscout import OPENGPT
 
 opengpt = OPENGPT(is_conversation=True, max_tokens=8000, timeout=30, assistant_id="bca37014-6f97-4f2b-8928-81ea8d478d88")
 while True:
@@ -767,7 +1017,7 @@ while True:
 ```
 ### 9. `KOBOLDIA` - 
 ```python
-from webscout.AI import KOBOLDAI
+from webscout import KOBOLDAI
 
 # Instantiate the KOBOLDAI class with default parameters
 koboldai = KOBOLDAI()
@@ -786,7 +1036,7 @@ print(message)
 
 ### 10. `Reka` - chat with reka
 ```python
-from webscout.AI import REKA
+from webscout import REKA
 
 a = REKA(is_conversation=True, max_tokens=8000, timeout=30,api_key="")
 
@@ -797,7 +1047,7 @@ print(response_str)
 
 ### 11. `Cohere` - chat with cohere
 ```python
-from webscout.AI import Cohere
+from webscout import Cohere
 
 a = Cohere(is_conversation=True, max_tokens=8000, timeout=30,api_key="")
 
@@ -809,7 +1059,7 @@ print(response_str)
 ### 12. `Xjai` - chat with free gpt 3.5
 Gratitude to [Devs do Code](http://www.youtube.com/@DevsDoCode) for their assistance.
 ```python
-from webscout.AI import Xjai
+from webscout import Xjai
 from rich import print
 
 ai = Xjai(
@@ -829,9 +1079,9 @@ prompt = "Tell me about india"
 response = ai.chat(prompt)
 print(response)
 ```
-### `ThinkAny` - AI search engine
+### 13. `ThinkAny` - AI search engine
 ```python
-from webscout.AI import ThinkAnyAI
+from webscout import ThinkAnyAI
 
 ai = ThinkAnyAI(
     is_conversation=True,
@@ -854,6 +1104,7 @@ response = ai.ask(prompt)
 message = ai.get_message(response)
 print(message)
 ```
+
 ### `LLM` 
 ```python
 from webscout.LLM import LLM
@@ -896,7 +1147,7 @@ system_message: str = (
 )
 
 # Ignore the specific UserWarning
-warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffi.aio", lineno=205)
+warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffio", lineno=205)
 LLM = LLM(model="mistralai/Mixtral-8x22B-Instruct-v0.1", system_message=system_message)
 
 
@@ -968,7 +1219,7 @@ system_message: str = (
 )
 
 # Ignore the specific UserWarning
-warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffi.aio", lineno=205)
+warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffio", lineno=205)
 
 LLM = LLM(model="mistralai/Mixtral-8x22B-Instruct-v0.1", system_message=system_message)
 
@@ -1095,7 +1346,7 @@ python -m webscout.webai webai --provider "phind" --rawdog
 
 <div align="center">
   <!-- Replace `#` with your actual links -->
-  <a href="https://youtube.com/@@OEvortex">&#10148; Vortex's YouTube Channel</a>
+  <a href="https://youtube.com/@OEvortex">&#10148; Vortex's YouTube Channel</a>
   </div>
 <div align="center">
   <a href="https://youtube.com/@devsdocode">&#10148; Devs Do Code's YouTube Channel</a>

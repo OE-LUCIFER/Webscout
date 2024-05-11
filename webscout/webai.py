@@ -25,16 +25,17 @@ from rich.table import Table
 from rich.prompt import Prompt
 from rich.progress import Progress
 from typing import Iterator
-from webscout.AIutel import Optimizers
-from webscout.AIutel import default_path
-from webscout.AIutel import AwesomePrompts
-from webscout.AIutel import RawDog
-from webscout.AIutel import Audio
+from .AIutel import Optimizers
+from .AIutel import default_path
+from .AIutel import AwesomePrompts
+from .AIutel import RawDog
+from .AIutel import Audio
 from webscout import available_providers
 from colorama import Fore
 from colorama import init as init_colorama
 from dotenv import load_dotenv
 import g4f
+import webscout
 import webscout.AIutel
 
 init_colorama(autoreset=True)
@@ -414,7 +415,7 @@ class Main(cmd.Cmd):
                     )
 
             elif provider == "leo":
-                from webscout.AI import LEO
+                from webscout import LEO
 
                 self.bot = LEO(
                     is_conversation=disable_conversation,
@@ -437,7 +438,7 @@ class Main(cmd.Cmd):
                 assert auth, (
                     "OpenAI's API-key is required. " "Use the flag `--key` or `-k`"
                 )
-                from webscout.AI import OPENAI
+                from webscout import OPENAI
 
                 self.bot = OPENAI(
                     api_key=auth,
@@ -457,7 +458,7 @@ class Main(cmd.Cmd):
                     act=awesome_prompt,
                 )
             if provider == "auto":
-                from webscout.AIauto import AUTO
+                from webscout import AUTO
 
                 self.bot = AUTO(
                     is_conversation=disable_conversation,
@@ -471,7 +472,7 @@ class Main(cmd.Cmd):
                     act=awesome_prompt,
                 )
             elif provider == "opengpt":
-                from webscout.AI import OPENGPT
+                from webscout import OPENGPT
 
                 self.bot = OPENGPT(
                     is_conversation=disable_conversation,
@@ -486,7 +487,7 @@ class Main(cmd.Cmd):
                     assistant_id="bca37014-6f97-4f2b-8928-81ea8d478d88"
                 )
             elif provider == "thinkany":
-                from webscout.AI import ThinkAnyAI
+                from webscout import ThinkAnyAI
 
                 self.bot = ThinkAnyAI(
                     is_conversation=disable_conversation,
@@ -499,8 +500,22 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
+            # elif provider == "chatgptlogin":
+            #     from webscout import ChatGPTlogin
+
+            #     self.bot = ChatGPTlogin(
+            #         is_conversation=disable_conversation,
+            #         max_tokens=max_tokens,
+            #         timeout=timeout,
+            #         intro=intro,
+            #         filepath=filepath,
+            #         update_file=update_file,
+            #         proxies=proxies,
+            #         history_offset=history_offset,
+            #         act=awesome_prompt,
+            #     )
             elif provider == "yepchat":
-                from webscout.AI import YEPCHAT
+                from webscout import YEPCHAT
 
                 self.bot = YEPCHAT(
                     is_conversation=disable_conversation,
@@ -522,7 +537,7 @@ class Main(cmd.Cmd):
                 assert auth, (
                     "GROQ's API-key is required. " "Use the flag `--key` or `-k`"
                 )
-                from webscout.AI import GROQ
+                from webscout import GROQ
 
 
                 self.bot = GROQ(
@@ -546,7 +561,7 @@ class Main(cmd.Cmd):
                 assert auth, (
                     "Cohere's API-key is required. Use the flag `--key` or `-k`"
                 )
-                from webscout.AI import Cohere
+                from webscout import Cohere
                 self.bot = Cohere(
                     api_key=auth,
                     is_conversation=disable_conversation,
@@ -564,7 +579,7 @@ class Main(cmd.Cmd):
                     act=awesome_prompt,
             )
             elif provider == "reka":
-                from webscout.AI import REKA
+                from webscout import REKA
 
                 self.bot = REKA(
                     api_key=auth,
@@ -582,7 +597,7 @@ class Main(cmd.Cmd):
                 )
 
             elif provider == "koboldai":
-                from webscout.AI import KOBOLDAI
+                from webscout import KOBOLDAI
 
                 self.bot = KOBOLDAI(
                     is_conversation=disable_conversation,
@@ -598,7 +613,7 @@ class Main(cmd.Cmd):
                     act=awesome_prompt,
                 )
             elif provider == "xjai":
-                from webscout.AI import Xjai
+                from webscout import Xjai
 
                 self.bot = Xjai(
                     is_conversation=disable_conversation,
@@ -615,7 +630,7 @@ class Main(cmd.Cmd):
                 )
 
             elif provider == "gemini":
-                from webscout.AI import GEMINI
+                from webscout import GEMINI
 
                 assert auth, (
                     "Path to gemini.google.com.cookies.json file is required. "
@@ -628,7 +643,7 @@ class Main(cmd.Cmd):
                 )
 
             elif provider == "phind":
-                from webscout.AI import PhindSearch
+                from webscout import PhindSearch
 
                 self.bot = PhindSearch(
                     is_conversation=disable_conversation,
@@ -646,7 +661,7 @@ class Main(cmd.Cmd):
 
             elif provider == "blackboxai":
 
-                from webscout.AI import BLACKBOXAI
+                from webscout import BLACKBOXAI
 
                 self.bot = BLACKBOXAI(
                     is_conversation=disable_conversation,
@@ -661,7 +676,7 @@ class Main(cmd.Cmd):
                 )
             elif provider == "you":
 
-                from webscout.AI import YouChat
+                from webscout import YouChat
 
                 self.bot = YouChat(
                     is_conversation=disable_conversation,
@@ -697,7 +712,7 @@ class Main(cmd.Cmd):
 
 
             elif provider == "perplexity":
-                from webscout.AI import PERPLEXITY
+                from webscout import PERPLEXITY
 
                 self.bot = PERPLEXITY(
                     is_conversation=disable_conversation,
