@@ -38,7 +38,8 @@ from .Provider import (
     AsyncYEPCHAT,
     YouChat,
     GEMINI,
-
+    Berlin4h,
+    ChatGPTUK,
 )
 
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
@@ -60,7 +61,8 @@ webai = [
     "you",
     "xjai",
     "thinkany",
-    # "chatgptlogin",
+    "berlin4h",
+    "chatgptuk",
     "auto",
 ]
 
@@ -106,7 +108,8 @@ __all__ = [
     "AsyncYEPCHAT",
     "YouChat",
     "GEMINI",
-
+    "Berlin4h",
+    "ChatGPTUK",
 ]
 
 # Set up basic logger

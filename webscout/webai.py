@@ -500,20 +500,34 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
-            # elif provider == "chatgptlogin":
-            #     from webscout import ChatGPTlogin
+            elif provider == "berlin4h":
+                from webscout import Berlin4h
 
-            #     self.bot = ChatGPTlogin(
-            #         is_conversation=disable_conversation,
-            #         max_tokens=max_tokens,
-            #         timeout=timeout,
-            #         intro=intro,
-            #         filepath=filepath,
-            #         update_file=update_file,
-            #         proxies=proxies,
-            #         history_offset=history_offset,
-            #         act=awesome_prompt,
-            #     )
+                self.bot = Berlin4h(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
+            elif provider == "chatgptuk":
+                from webscout import ChatGPTUK
+
+                self.bot = ChatGPTUK(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
             elif provider == "yepchat":
                 from webscout import YEPCHAT
 

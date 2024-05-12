@@ -62,15 +62,16 @@ Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI m
     - [2. `YepChat` - Chat with mistral 8x7b powered by yepchat](#2-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
     - [3. `You.com` - search/chat with you.com](#3-youcom---searchchat-with-youcom)
     - [4. `Gemini` - search with google gemini](#4-gemini---search-with-google-gemini)
-    - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
+    - [5. `Berlin4h` - chat with Berlin4h](#5-berlin4h---chat-with-berlin4h)
     - [6. `BlackBox` - Search/chat With BlackBox](#6-blackbox---searchchat-with-blackbox)
     - [7. `PERPLEXITY` - Search With PERPLEXITY](#7-perplexity---search-with-perplexity)
     - [8. `OpenGPT` - chat With OPENGPT](#8-opengpt---chat-with-opengpt)
-    - [9. `KOBOLDIA` -](#9-koboldia--)
+    - [9. `KOBOLDAI` -](#9-koboldai--)
     - [10. `Reka` - chat with reka](#10-reka---chat-with-reka)
     - [11. `Cohere` - chat with cohere](#11-cohere---chat-with-cohere)
     - [12. `Xjai` - chat with free gpt 3.5](#12-xjai---chat-with-free-gpt-35)
     - [13. `ThinkAny` - AI search engine](#13-thinkany---ai-search-engine)
+    - [14. `chatgptuk` - Chat with gemini-pro](#14-chatgptuk---chat-with-gemini-pro)
     - [`LLM`](#llm)
     - [`LLM` with internet](#llm-with-internet)
     - [LLM with deepwebs](#llm-with-deepwebs)
@@ -951,15 +952,26 @@ gemini = GEMINI(cookie_file=COOKIE_FILE, proxy=PROXIES)
 response = gemini.chat("What is the meaning of life?")
 print(response)
 ```
-### 5. `Prodia` - make image using prodia
+### 5. `Berlin4h` - chat with Berlin4h
 ```python
-from webscout import Prodia
+from webscout import Berlin4h
+# Create an instance of the PERPLEXITY class
+ai = Berlin4h(
+    is_conversation=True,
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+)
 
-# Define a prompt for the image generation
-prompt = "A beautiful sunset over the ocean"
-
-# Use the prodia_cli method to generate an image based on the prompt
-Prodia.prodia_cli(prompt)
+# Example usage:
+prompt = "Explain the concept of recursion in simple terms."
+response = ai.chat(prompt)
+print(response)
 ```
 ### 6. `BlackBox` - Search/chat With BlackBox
 ```python
@@ -1015,7 +1027,7 @@ while True:
     response_str = opengpt.chat(prompt)
     print(response_str)
 ```
-### 9. `KOBOLDIA` - 
+### 9. `KOBOLDAI` - 
 ```python
 from webscout import KOBOLDAI
 
@@ -1104,7 +1116,27 @@ response = ai.ask(prompt)
 message = ai.get_message(response)
 print(message)
 ```
+### 14. `chatgptuk` - Chat with gemini-pro
+```python
+from webscout import ChatGPTUK
+# Create an instance of the PERPLEXITY class
+ai = ChatGPTUK(
+    is_conversation=True,
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+)
 
+# Example usage:
+prompt = "Explain the concept of recursion in simple terms."
+response = ai.chat(prompt)
+print(response)
+```
 ### `LLM` 
 ```python
 from webscout.LLM import LLM

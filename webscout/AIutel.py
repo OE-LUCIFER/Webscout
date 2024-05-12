@@ -42,8 +42,9 @@ webai = [
     "you",
     "xjai",
     "thinkany",
+    "berlin4h",
+    "chatgptuk",
     "auto",
-
 ]
 
 gpt4free_providers = [
