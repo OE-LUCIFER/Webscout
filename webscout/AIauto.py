@@ -1,13 +1,29 @@
-from webscout.AI import Provider, AsyncProvider
-from webscout.AI import OPENGPT, AsyncOPENGPT
-from webscout.AI import KOBOLDAI, AsyncKOBOLDAI
-from webscout.AI import PhindSearch, AsyncPhindSearch
-from webscout.AI import LLAMA2, AsyncLLAMA2
-from webscout.AI import BLACKBOXAI, AsyncBLACKBOXAI
-from webscout.AI import PERPLEXITY
-from webscout.AI import ThinkAnyAI
-from webscout.AI import YouChat
-from webscout.AI import YEPCHAT
+from webscout.AIbase import Provider, AsyncProvider
+from webscout import OPENGPT, AsyncOPENGPT
+from webscout import KOBOLDAI, AsyncKOBOLDAI
+from webscout import PhindSearch, AsyncPhindSearch
+from webscout import LLAMA2, AsyncLLAMA2
+from webscout import BLACKBOXAI, AsyncBLACKBOXAI
+from webscout import PERPLEXITY
+from webscout import ThinkAnyAI
+from webscout import YouChat
+from webscout import YEPCHAT
+from webscout.AIbase import Provider, AsyncProvider
+from webscout import KOBOLDAI, AsyncKOBOLDAI
+from webscout import PhindSearch, AsyncPhindSearch
+from webscout import LLAMA2, AsyncLLAMA2
+from webscout import BLACKBOXAI, AsyncBLACKBOXAI
+from webscout import PERPLEXITY
+from webscout import ThinkAnyAI
+from webscout import YouChat
+from webscout import YEPCHAT, AsyncYEPCHAT
+from webscout import LEO, AsyncLEO
+from webscout import GROQ, AsyncGROQ
+from webscout import OPENAI, AsyncOPENAI
+from webscout import REKA
+from webscout import Xjai
+from webscout import Berlin4h
+from webscout import ChatGPTUK
 from webscout.g4f import GPT4FREE, AsyncGPT4FREE
 from webscout.g4f import TestProviders
 from webscout.exceptions import AllProvidersFailure
@@ -20,7 +36,26 @@ import logging
 
 
 provider_map: dict[
-    str, Union[OPENGPT, KOBOLDAI, PhindSearch, LLAMA2, BLACKBOXAI, PERPLEXITY, GPT4FREE, ThinkAnyAI, YEPCHAT, YouChat]
+    str, Union[    ThinkAnyAI,
+    Xjai,
+    LLAMA2,
+    AsyncLLAMA2,
+    LEO,
+    AsyncLEO,
+    KOBOLDAI,
+    AsyncKOBOLDAI,
+    OPENGPT,
+    AsyncOPENGPT,
+    PERPLEXITY,
+    BLACKBOXAI,
+    AsyncBLACKBOXAI,
+    PhindSearch,
+    AsyncPhindSearch,
+    YEPCHAT,
+    AsyncYEPCHAT,
+    YouChat,
+    Berlin4h,
+    ChatGPTUK,]
 ] = {
     "PhindSearch": PhindSearch,
     "perplexity": PERPLEXITY,
@@ -32,6 +67,12 @@ provider_map: dict[
     "thinkany": ThinkAnyAI,
     "yepchat": YEPCHAT,
     "you": YouChat,
+    "leo": LEO,
+    "xjai": Xjai,
+    "berlin4h": Berlin4h,
+    "chatgptuk": ChatGPTUK,
+    "gpt4free": GPT4FREE,
+    
 }
 
 
@@ -113,13 +154,13 @@ class AUTO(Provider):
             "conversationally": conversationally,
         }
 
-        # tgpt-based providers
+        # webscout-based providers
         for provider_name, provider_obj in provider_map.items():
             # continue
             if provider_name in self.exclude:
                 continue
             try:
-                self.provider_name = f"tgpt-{provider_name}"
+                self.provider_name = f"webscout-{provider_name}"
                 self.provider = provider_obj(
                     is_conversation=self.is_conversation,
                     max_tokens=self.max_tokens,

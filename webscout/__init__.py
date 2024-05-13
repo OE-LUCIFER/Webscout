@@ -1,15 +1,19 @@
 """Webscout.
 
-Search for anything using the Google, DuckDuckGo, phind.com. Also containes AI models, can transcribe yt videos, temporary email and phone number generation, have TTS support and webai(terminal gpt and open interpeter)
+Search for anything using the Google, DuckDuckGo, phind.com. Also contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, and webai (terminal gpt and open interpreter).
 """
 # webscout/__init__.py
 
-from .webscout_search import WEBS 
-from .webscout_search_async import AsyncWEBS 
+from .webscout_search import WEBS
+from .webscout_search_async import AsyncWEBS
 from .version import __version__
-from .DWEBS import DeepWEBS 
+from .DWEBS import DeepWEBS
 from .transcriber import transcriber
-from .voice import play_audio
+from .voice import play_audio, talk
+from .tempid import Client as TempMailClient, TemporaryPhoneNumber
+from .models import MapsResult
+from .LLM import LLM
+from .Local import *
 import g4f
 # Import provider classes for direct access
 from .Provider import (
@@ -74,13 +78,19 @@ available_providers = webai + gpt4free_providers
 
 # Add all the provider classes you want to directly import to __all__
 __all__ = [
-    "WEBS", 
-    "AsyncWEBS", 
-    "__version__", 
-    "cli", 
-    "DeepWEBS", 
-    "transcriber", 
+    "WEBS",
+    "AsyncWEBS",
+    "__version__",
+    "DeepWEBS",
+    "transcriber",
     "play_audio",
+    "talk",
+    "TempMailClient", 
+    "TemporaryPhoneNumber",
+    "MapsResult",
+    "LLM",
+    "Model",
+    "Thread",
 
     # AI Providers
     "ThinkAnyAI",

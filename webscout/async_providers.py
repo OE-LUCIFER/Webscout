@@ -1,12 +1,12 @@
-from webscout.AI import AsyncPhindSearch
-from webscout.AI import AsyncYEPCHAT
-from webscout.AI import AsyncOPENGPT
-from webscout.AI import AsyncOPENAI
-from webscout.AI import AsyncLLAMA2
-from webscout.AI import AsyncLEO
-from webscout.AI import AsyncKOBOLDAI
-from webscout.AI import AsyncGROQ
-from webscout.AI import AsyncBLACKBOXAI
+from webscout import AsyncPhindSearch
+from webscout import AsyncYEPCHAT
+from webscout import AsyncOPENGPT
+from webscout import AsyncOPENAI
+from webscout import AsyncLLAMA2
+from webscout import AsyncLEO
+from webscout import AsyncKOBOLDAI
+from webscout import AsyncGROQ
+from webscout import AsyncBLACKBOXAI
 from webscout.g4f import AsyncGPT4FREE
 
 mapper: dict[str, object] = {
