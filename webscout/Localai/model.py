@@ -679,7 +679,7 @@ def assert_model_is_loaded(model: Model) -> None:
     """
     if not hasattr(model, 'llama'):
         raise ModelUnloadedException(
-            "easy_llama.Model instance has no attribute 'llama'"
+            "webscout.Model instance has no attribute 'llama'"
         )
     if not hasattr(model.llama, '_model'):
         raise ModelUnloadedException(
