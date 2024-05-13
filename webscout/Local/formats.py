@@ -1,3 +1,5 @@
+from ._version import __version__, __llama_cpp_version__
+
 from typing import Union
 
 

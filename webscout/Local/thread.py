@@ -1,3 +1,9 @@
+# thread.py
+# https://github.com/ddh0/easy-llama/
+from ._version import __version__, __llama_cpp_version__
+
+"""Submodule containing the Thread class, used for interaction with a Model"""
+
 import sys
 
 from .model    import Model, assert_model_is_loaded, _SupportsWriteAndFlush
@@ -12,7 +18,7 @@ class Thread:
     """
     Provide functionality to facilitate easy interactions with a Model
 
-    This is just a brief overview of .Thread.
+    This is just a brief overview of webscout.Local.Thread.
     To see a full description of each method and its parameters,
     call help(Thread), or see the relevant docstring.
 
@@ -30,7 +36,7 @@ class Thread:
     The following attributes are available:
     - `.format` - The format being used for messages in this thread
     - `.messages` - The list of messages in this thread
-    - `.model` - The `.Model` instance used by this thread
+    - `.model` - The `webscout.Local.Model` instance used by this thread
     - `.sampler` - The SamplerSettings object used in this thread
     """
 
@@ -44,7 +50,7 @@ class Thread:
         Given a Model and a format, construct a Thread instance.
 
         model: The Model to use for text generation
-        format: The format specifying how messages should be structured (see .formats)
+        format: The format specifying how messages should be structured (see webscout.Local.formats)
 
         The following parameter is optional:
         - sampler: The SamplerSettings object used to control text generation
@@ -52,7 +58,7 @@ class Thread:
         
         assert isinstance(model, Model), \
             "Thread: model should be an " + \
-            f"instance of webscout.Model, not {type(model)}"
+            f"instance of webscout.Local.Model, not {type(model)}"
         
         assert_model_is_loaded(model)
 
@@ -62,7 +68,7 @@ class Thread:
         if any(k not in format.keys() for k in formats_blank.keys()):
             raise KeyError(
                 "Thread: format is missing one or more required keys, see " + \
-                "webscout.formats.blank for an example"
+                "webscout.Local.formats.blank for an example"
             )
 
         assert isinstance(format['stops'], list), \
@@ -277,7 +283,7 @@ class Thread:
             new_top_k = input(f'top_k: {self.sampler.top_k} -> ')
         
         except KeyboardInterrupt:
-            print('\nwebscout: sampler settings not updated\n')
+            print('\nwebscout.Local: sampler settings not updated\n')
             return
         print()
 
@@ -286,56 +292,56 @@ class Thread:
         except ValueError:
             pass
         else:
-            print('webscout: max_len_tokens updated')
+            print('webscout.Local: max_len_tokens updated')
         
         try:
             self.sampler.temp = float(new_temp)
         except ValueError:
             pass
         else:
-            print('webscout: temp updated')
+            print('webscout.Local: temp updated')
         
         try:
             self.sampler.top_p = float(new_top_p)
         except ValueError:
             pass
         else:
-            print('webscout: top_p updated')
+            print('webscout.Local: top_p updated')
 
         try:
             self.sampler.min_p = float(new_min_p)
         except ValueError:
             pass
         else:
-            print('webscout: min_p updated')
+            print('webscout.Local: min_p updated')
 
         try:
             self.sampler.frequency_penalty = float(new_frequency_penalty)
         except ValueError:
             pass
         else:
-            print('webscout: frequency_penalty updated')
+            print('webscout.Local: frequency_penalty updated')
         
         try:
             self.sampler.presence_penalty = float(new_presence_penalty)
         except ValueError:
             pass
         else:
-            print('webscout: presence_penalty updated')
+            print('webscout.Local: presence_penalty updated')
         
         try:
             self.sampler.repeat_penalty = float(new_repeat_penalty)
         except ValueError:
             pass
         else:
-            print('webscout: repeat_penalty updated')
+            print('webscout.Local: repeat_penalty updated')
         
         try:
             self.sampler.top_k = int(new_top_k)
         except ValueError:
             pass
         else:
-            print('webscout: top_k updated')
+            print('webscout.Local: top_k updated')
         print()
                 
 

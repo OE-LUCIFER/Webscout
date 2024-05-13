@@ -1,3 +1,7 @@
+from ._version import __version__, __llama_cpp_version__
+
+"""Submodule containing the Model class to work with language models"""
+
 import sys
 import numpy as np
 
@@ -29,7 +33,7 @@ class Model:
     """
     A high-level abstraction of a llama model
 
-    This is just a brief overview of Model.
+    This is just a brief overview of webscout.Local.Model.
     To see a full description of each method and its parameters,
     call help(Model), or see the relevant docstring.
 
@@ -79,7 +83,10 @@ class Model:
         - verbose: Whether to print additional backend information
         """
 
-        # validate parameters
+        if verbose:
+            print_verbose(f"webscout.Local package version: {__version__}")
+            print_verbose(f"llama_cpp package version: {__llama_cpp_version__}")
+
         assert isinstance(model_path, str), \
             f"Model: model_path should be a string, not {type(model_path)}"
         assert exists(model_path), \
@@ -679,7 +686,7 @@ def assert_model_is_loaded(model: Model) -> None:
     """
     if not hasattr(model, 'llama'):
         raise ModelUnloadedException(
-            "webscout.Model instance has no attribute 'llama'"
+            "webscout.Local.Model instance has no attribute 'llama'"
         )
     if not hasattr(model.llama, '_model'):
         raise ModelUnloadedException(

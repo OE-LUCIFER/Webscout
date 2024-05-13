@@ -1,3 +1,5 @@
+from ._version import __version__, __llama_cpp_version__
+
 import sys
 import numpy as np
 
@@ -160,10 +162,10 @@ def truncate(text: str) -> str:
     return text if len(text) < 63 else f"{text[:60]}..."
 
 def print_verbose(text: str) -> None:
-    print("webscout: verbose:", text, file=sys.stderr, flush=True)
+    print("webscout.Local: verbose:", text, file=sys.stderr, flush=True)
 
 def print_info(text: str) -> None:
-    print("webscout: info:", text, file=sys.stderr, flush=True)
+    print("webscout.Local: info:", text, file=sys.stderr, flush=True)
 
 def print_warning(text: str) -> None:
-    print("webscout: warning:", text, file=sys.stderr, flush=True)
+    print("webscout.Local: warning:", text, file=sys.stderr, flush=True)
