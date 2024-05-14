@@ -54,7 +54,7 @@ setup(
         "GoogleBard1>=2.1.4",
         "tls_client",
         "clipman",
-        "Helpingai-T2"
+        "Helpingai-T2",
         "playsound",
     ],
     entry_points={
