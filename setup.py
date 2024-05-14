@@ -5,8 +5,8 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="webscout",
-    version="2.3",
-    description="Search for anything using Google, DuckDuckGo, phind.com. Also contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, and webai (terminal gpt and open interpreter).",
+    version="2.4",
+    description="Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, webai (terminal gpt and open interpreter) and offline LLMs",
     long_description=README,
     long_description_content_type="text/markdown",
     author="OEvortex",
@@ -54,6 +54,7 @@ setup(
         "GoogleBard1>=2.1.4",
         "tls_client",
         "clipman",
+        "Helpingai-T2"
         "playsound",
     ],
     entry_points={
