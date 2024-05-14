@@ -1,5 +1,5 @@
 # These are supported funding model platforms
-github: [OE-LUCIFER]
+github: OE-LUCIFER
 # patreon: [username]
 # open_collective: [username]
 # ko_fi: [username]
@@ -9,5 +9,5 @@ github: [OE-LUCIFER]
 # issuehunt: [username]
 # lfx_crowdfunding: [project-name]
 # polar: [username]
-buy_me_a_coffee: [oevortex]
+buy_me_a_coffee: oevortex
 # custom: ['link1', 'link2']
