@@ -6,7 +6,7 @@ from .transcriber import transcriber
 from .voice import play_audio
 from .tempid import Client as TempMailClient, TemporaryPhoneNumber
 from .LLM import LLM
-from .Local import *
+# from .Local import *
 import g4f
 # Import provider classes for direct access
 from .Provider import (
@@ -81,9 +81,9 @@ __all__ = [
    "TemporaryPhoneNumber",
    "LLM",
    # Localai models and utilities 
-   "Model",
-   "Thread",
-   "formats", 
+   # "Model",
+   # "Thread",
+   # "formats", 
 
    # AI Providers
    "ThinkAnyAI",

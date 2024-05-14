@@ -1,4 +1,4 @@
-# webscout\easy_LLM\__init__.py
+# webscout\Local\__init__.py
 from ._version import __version__, __llama_cpp_version__
 
 

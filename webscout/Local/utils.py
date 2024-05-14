@@ -8,7 +8,7 @@ from time     import strftime
 from enum     import IntEnum
 from struct   import unpack
 from colorama import Fore
-
+from huggingface_hub import hf_hub_url, cached_download
 
 # color codes used in Thread.interact()
 RESET_ALL = Fore.RESET
@@ -24,6 +24,20 @@ class _ArrayLike(Iterable):
 # for typing of Model.stream_print() parameter `file`
 class _SupportsWriteAndFlush(TextIO):
     pass
+
+def download_model(repo_id: str, filename: str, cache_dir: str = ".cache") -> str:
+    """
+    Downloads a GGUF model file from Hugging Face Hub.
+
+    repo_id: The Hugging Face repository ID (e.g., 'facebook/bart-large-cnn').
+    filename: The name of the GGUF file within the repository (e.g., 'model.gguf').
+    cache_dir: The directory where the downloaded file should be stored.
+    
+    Returns: The path to the downloaded file.
+    """
+    url = hf_hub_url(repo_id, filename)
+    filepath = cached_download(url, cache_dir=cache_dir, force_filename=filename)
+    return filepath
 
 class GGUFReader:
     """

@@ -130,7 +130,17 @@ class Thread:
                 elif msg['role'] == 'bot':
                     repr_str += "\nThread.add_message('bot', " + repr(msg['content']) + ')'
             return repr_str
-    
+    def save_conversation(self, filepath: str) -> None:
+        """
+        Saves the conversation history to a JSON file.
+
+        filepath: The path to the file where the conversation should be saved.
+        """
+        import json
+
+        data = [{'role': msg['role'], 'content': msg['content']} for msg in self.messages]
+        with open(filepath, 'w') as f:
+            json.dump(data, f, indent=4)    
     def __str__(self) -> str:
         return self.as_string()
     
@@ -267,7 +277,20 @@ class Thread:
         self.add_message("bot", output)
 
         return output
-    
+    def load_conversation(self, filepath: str) -> None:
+        """
+        Loads a conversation history from a JSON file.
+
+        filepath: The path to the file containing the conversation history.
+        """
+        import json
+
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+
+        self.messages = []
+        for item in data:
+            self.messages.append(self.create_message(item['role'], item['content']))     
 
     def _interactive_update_sampler(self) -> None:
         """Interactively update the sampler settings used in this Thread"""
@@ -397,7 +420,15 @@ class Thread:
                 
                 elif command.lower() in ['str', 'string', 'as_string']:
                     print(f"\n{self.as_string()}\n")
-                
+
+                elif command.lower() in ['save']: 
+                    print()
+                    try:
+                        filepath = input(f'Enter filepath to save conversation: ')
+                        self.save_conversation(filepath)
+                        print(f'[conversation saved to {filepath}]\n')
+                    except Exception as e:
+                        print(f'[error saving conversation: {e}]\n')                
                 elif command.lower() in ['repr', 'save', 'backup']:
                     print(f"\n{repr(self)}\n")
                 
@@ -407,7 +438,14 @@ class Thread:
                     del self.messages[-1]
                     assert len(self.messages) == (old_len - 1)
                     print('[removed last message]\n')
-
+                elif command.lower() in ['load']: 
+                    print()
+                    try:
+                        filepath = input(f'Enter filepath to load conversation: ')
+                        self.load_conversation(filepath)
+                        print(f'[conversation loaded from {filepath}]\n')
+                    except Exception as e:
+                        print(f'[error loading conversation: {e}]\n')
                 elif command.lower() in ['last', 'repeat']:
                     last_msg = self.messages[-1]
                     if last_msg['role'] == 'user':
@@ -447,7 +485,8 @@ class Thread:
                     print("TIP: type < at the prompt and press ENTER to prefix the bot's next message.")
                     print('     for example, type "Sure!" to bypass refusals')
                     print()
-
+                    print('save             -- Save the conversation to a JSON file') 
+                    print('load             -- Load a conversation from a JSON file') 
                 else:
                     print(f'\n[unknown command]\n')
             
