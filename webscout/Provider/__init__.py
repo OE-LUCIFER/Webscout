@@ -27,7 +27,7 @@ from .Youchat import YouChat
 from .Gemini import GEMINI
 from .Berlin4h import Berlin4h
 from .ChatGPTUK import ChatGPTUK
-
+from .Poe import POE
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
@@ -56,4 +56,5 @@ __all__ = [
     'GEMINI',
     'Berlin4h',
     'ChatGPTUK',
+    'POE'
 ]

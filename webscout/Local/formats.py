@@ -45,19 +45,6 @@ alpaca: dict[str, Union[str, list]] = {
     "bot_postfix": "\n\n",
     "stops": ['###', 'Instruction:', '\n\n\n']
 }
-
-# https://docs.mistral.ai/models/
-# As a reference, here is the format used to tokenize instructions during fine-tuning:
-# ```
-# [START_SYMBOL_ID] + 
-# tok("[INST]") + tok(USER_MESSAGE_1) + tok("[/INST]") +
-# tok(BOT_MESSAGE_1) + [END_SYMBOL_ID] +
-# …
-# tok("[INST]") + tok(USER_MESSAGE_N) + tok("[/INST]") +
-# tok(BOT_MESSAGE_N) + [END_SYMBOL_ID]
-# ```
-# In the pseudo-code above, note that the tokenize method should not add a BOS or EOS token automatically, but should add a prefix space.
-
 mistral_instruct: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "",

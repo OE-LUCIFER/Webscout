@@ -570,7 +570,7 @@ class Thread:
         
         while True:
 
-            prompt = f"{RESET_ALL}  > {USER_STYLE}"
+            prompt = f"{RESET_ALL}  >>> {USER_STYLE}"
             
             try:
                 user_prompt, next_message_start = self._interactive_input(

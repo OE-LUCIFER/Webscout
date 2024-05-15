@@ -26,27 +26,27 @@ default_path = appdir.user_cache_dir
 if not os.path.exists(default_path):
     os.makedirs(default_path)
 webai = [
-    "leo",
-    "openai",
-    "opengpt",
-    "koboldai",
-    "gemini",
-    "phind",
-    "blackboxai",
-    "g4fauto",
-    "perplexity",
-    "groq",
-    "reka",
-    "cohere",
-    "yepchat",
-    "you",
-    "xjai",
-    "thinkany",
-    "berlin4h",
-    "chatgptuk",
-    "auto",
+   "leo",
+   "openai",
+   "opengpt",
+   "koboldai",
+   "gemini",
+   "phind",
+   "blackboxai",
+   "g4fauto",
+   "perplexity",
+   "groq",
+   "reka",
+   "cohere",
+   "yepchat",
+   "you",
+   "xjai",
+   "thinkany",
+   "berlin4h",
+   "chatgptuk",
+   "auto",
+   "poe",
 ]
-
 gpt4free_providers = [
     provider.__name__ for provider in g4f.Provider.__providers__  # if provider.working
 ]

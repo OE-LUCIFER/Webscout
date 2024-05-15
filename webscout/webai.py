@@ -413,7 +413,23 @@ class Main(cmd.Cmd):
                         "No working g4f provider found. "
                         "Consider running 'webscout gpt4free test -y' first"
                     )
+            elif provider == "poe":
+                assert auth, (
+                    "Path to poe.com.cookies.json file or 'p-b' cookie-value is required. "
+                    "Use the flag `--key` or `-k`"
+                )
+                from webscout import POE
 
+                self.bot = POE(
+                    cookie=auth,
+                    model=getOr(model, "Assistant"),
+                    proxy=bool(proxies),
+                    timeout=timeout,
+                    filepath=filepath,
+                    update_file=update_file,
+                    intro=intro,
+                    act=awesome_prompt,
+                )
             elif provider == "leo":
                 from webscout import LEO
 

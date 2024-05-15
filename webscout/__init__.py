@@ -9,35 +9,7 @@ from .LLM import LLM
 # from .Local import *
 import g4f
 # Import provider classes for direct access
-from .Provider import (
-   ThinkAnyAI,
-   Xjai,
-   LLAMA2, 
-   AsyncLLAMA2,
-   Cohere,
-   REKA,
-   GROQ,
-   AsyncGROQ,
-   OPENAI,
-   AsyncOPENAI,
-   LEO,
-   AsyncLEO,
-   KOBOLDAI,
-   AsyncKOBOLDAI,
-   OPENGPT,
-   AsyncOPENGPT,
-   PERPLEXITY,
-   BLACKBOXAI,
-   AsyncBLACKBOXAI,
-   PhindSearch,
-   AsyncPhindSearch,
-   YEPCHAT,
-   AsyncYEPCHAT,
-   YouChat,
-   GEMINI,
-   Berlin4h,
-   ChatGPTUK,
-)
+from .Provider import *
 
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 
@@ -61,6 +33,7 @@ webai = [
    "berlin4h",
    "chatgptuk",
    "auto",
+   "poe",
 ]
 
 gpt4free_providers = [
@@ -113,6 +86,7 @@ __all__ = [
    "GEMINI",
    "Berlin4h",
    "ChatGPTUK",
+   "POE"
 ]
 
 import logging

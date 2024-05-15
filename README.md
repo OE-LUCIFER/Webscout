@@ -73,6 +73,7 @@ Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can
     - [13. `ThinkAny` - AI search engine](#13-thinkany---ai-search-engine)
     - [14. `chatgptuk` - Chat with gemini-pro](#14-chatgptuk---chat-with-gemini-pro)
     - [`LLM`](#llm)
+    - [`Local-LLM` webscout can now run GGUF models](#local-llm-webscout-can-now-run-gguf-models)
     - [`LLM` with internet](#llm-with-internet)
     - [LLM with deepwebs](#llm-with-deepwebs)
   - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
@@ -1162,6 +1163,26 @@ while True:
 
     # Print the response
     print("AI: ", response)
+```
+### `Local-LLM` webscout can now run GGUF models
+```python
+from webscout.Local.utils import download_model
+from webscout.Local.model import Model
+from webscout.Local.thread import Thread
+from webscout.Local import formats
+# 1. Download the model
+repo_id = "microsoft/Phi-3-mini-4k-instruct-gguf"  # Replace with the desired Hugging Face repo
+filename = "Phi-3-mini-4k-instruct-q4.gguf" # Replace with the correct filename
+model_path = download_model(repo_id, filename)
+
+# 2. Load the model 
+model = Model(model_path, n_gpu_layers=4)  
+
+# 3. Create a Thread for conversation
+thread = Thread(model, formats.phi3)
+
+# 4. Start interacting with the model
+thread.interact()
 ```
 ### `LLM` with internet
 ```python
