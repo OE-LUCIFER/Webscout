@@ -4,7 +4,7 @@ from .version import __version__
 from .DWEBS import DeepWEBS
 from .transcriber import transcriber
 from .voice import play_audio
-from .tempid import Client as TempMailClient, TemporaryPhoneNumber
+# from .tempid import Client as TempMailClient, TemporaryPhoneNumber
 from .LLM import LLM
 # from .Local import *
 import g4f
