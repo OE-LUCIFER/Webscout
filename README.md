@@ -72,6 +72,8 @@ Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can
     - [12. `Xjai` - chat with free gpt 3.5](#12-xjai---chat-with-free-gpt-35)
     - [13. `ThinkAny` - AI search engine](#13-thinkany---ai-search-engine)
     - [14. `chatgptuk` - Chat with gemini-pro](#14-chatgptuk---chat-with-gemini-pro)
+    - [15. `poe`- chat with poe](#15-poe--chat-with-poe)
+    - [16. `BasedGPT` - chat with GPT](#16-basedgpt---chat-with-gpt)
     - [`LLM`](#llm)
     - [`Local-LLM` webscout can now run GGUF models](#local-llm-webscout-can-now-run-gguf-models)
     - [`LLM` with internet](#llm-with-internet)
@@ -1137,7 +1139,13 @@ ai = ChatGPTUK(
 prompt = "Explain the concept of recursion in simple terms."
 response = ai.chat(prompt)
 print(response)
+
 ```
+### 15. `poe`- chat with poe
+Usage code similar to other proviers
+
+### 16. `BasedGPT` - chat with GPT
+Usage code similar to other providers
 ### `LLM` 
 ```python
 from webscout.LLM import LLM

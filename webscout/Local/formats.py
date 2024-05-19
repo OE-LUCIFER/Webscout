@@ -1,6 +1,38 @@
 from ._version import __version__, __llama_cpp_version__
 
-from typing import Union
+from typing import Callable, Union, Any
+
+
+class AdvancedFormat:
+
+    def __init__(self, base_dict: dict[str, Union[str, list]]):
+        self._base_dict = base_dict
+        self.overrides = {}
+    
+    def __getitem__(self, key: str) -> Any:
+        if key in self.overrides:
+            return str(self.overrides[key]())
+        else:
+            return self._base_dict[key]
+    
+    def __repr__(self) -> str:
+        # NOTE: This method does not represent overrides
+        return repr(self._base_dict)
+    
+    def keys(self):
+        return self._base_dict.keys()
+    
+    def override(self, key: str, fn: Callable) -> None:
+        self.overrides[key] = fn
+    
+    def wrap(self, prompt: str) -> str:
+        return self['system_prefix'] + \
+               self['system_content'] + \
+               self['system_suffix'] + \
+               self['user_prefix'] + \
+               prompt + \
+               self['user_suffix'] + \
+               self['bot_prefix']
 
 
 def wrap(
@@ -8,26 +40,25 @@ def wrap(
     format: dict[str, Union[str, list]]
 ) -> str:
     """Wrap a given string in any prompt format for single-turn completion"""
-    return (
-        format['system_prefix'] +
-        format['system_content'] +
-        format['system_postfix'] +
-        format['user_prefix'] +
-        prompt +
-        format['user_postfix'] +
-        format['bot_prefix']
-    )
+    return format['system_prefix'] + \
+           format['system_content'] + \
+           format['system_suffix'] + \
+           format['user_prefix'] + \
+           prompt + \
+           format['user_suffix'] + \
+           format['bot_prefix']
+
 
 blank: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "",
-    "system_postfix": "",
+    "system_suffix": "",
     "user_prefix": "",
     "user_content": "",
-    "user_postfix": "",
+    "user_suffix": "",
     "bot_prefix": "",
     "bot_content": "",
-    "bot_postfix": "",
+    "bot_suffix": "",
     "stops": []
 }
 
@@ -36,25 +67,38 @@ alpaca: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "Below is an instruction that describes a task. " + \
     "Write a response that appropriately completes the request.",
-    "system_postfix": "\n\n",
+    "system_suffix": "\n\n",
     "user_prefix": "### Instruction:\n",
     "user_content": "",
-    "user_postfix": "\n\n",
+    "user_suffix": "\n\n",
     "bot_prefix": "### Response:\n",
     "bot_content": "",
-    "bot_postfix": "\n\n",
+    "bot_suffix": "\n\n",
     "stops": ['###', 'Instruction:', '\n\n\n']
 }
+
+# https://docs.mistral.ai/models/
+# As a reference, here is the format used to tokenize instructions during fine-tuning:
+# ```
+# [START_SYMBOL_ID] + 
+# tok("[INST]") + tok(USER_MESSAGE_1) + tok("[/INST]") +
+# tok(BOT_MESSAGE_1) + [END_SYMBOL_ID] +
+# …
+# tok("[INST]") + tok(USER_MESSAGE_N) + tok("[/INST]") +
+# tok(BOT_MESSAGE_N) + [END_SYMBOL_ID]
+# ```
+# In the pseudo-code above, note that the tokenize method should not add a BOS or EOS token automatically, but should add a prefix space.
+
 mistral_instruct: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "",
-    "system_postfix": "",
+    "system_suffix": "",
     "user_prefix": " [INST] ",
     "user_content": "",
-    "user_postfix": " [/INST]",
+    "user_suffix": " [/INST]",
     "bot_prefix": "",
     "bot_content": "",
-    "bot_postfix": "",
+    "bot_suffix": "",
     "stops": []
 }
 
@@ -62,16 +106,16 @@ mistral_instruct: dict[str, Union[str, list]] = {
 mistral_instruct_safe: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "",
-    "system_postfix": "",
+    "system_suffix": "",
     "user_prefix": " [INST] Always assist with care, respect, and truth. " + \
     "Respond with utmost utility yet securely. Avoid harmful, unethical, " + \
     "prejudiced, or negative content. Ensure replies promote fairness and " + \
     "positivity. ",
     "user_content": "",
-    "user_postfix": " [/INST]",
+    "user_suffix": " [/INST]",
     "bot_prefix": "",
     "bot_content": "",
-    "bot_postfix": "",
+    "bot_suffix": "",
     "stops": []
 }
 
@@ -79,13 +123,13 @@ mistral_instruct_safe: dict[str, Union[str, list]] = {
 chatml: dict[str, Union[str, list]] = {
     "system_prefix": "<|im_start|>system\n",
     "system_content": "",
-    "system_postfix": "<|im_end|>\n",
+    "system_suffix": "<|im_end|>\n",
     "user_prefix": "<|im_start|>user\n",
     "user_content": "",
-    "user_postfix": "<|im_end|>\n",
+    "user_suffix": "<|im_end|>\n",
     "bot_prefix": "<|im_start|>assistant\n",
     "bot_content": "",
-    "bot_postfix": "<|im_end|>\n",
+    "bot_suffix": "<|im_end|>\n",
     "stops": ['<|im_start|>']
 }
 
@@ -94,28 +138,33 @@ chatml: dict[str, Union[str, list]] = {
 llama2chat: dict[str, Union[str, list]] = {
     "system_prefix": "[INST] <<SYS>>\n",
     "system_content": "You are a helpful AI assistant.",
-    "system_postfix": "\n<</SYS>>\n\n",
+    "system_suffix": "\n<</SYS>>\n\n",
     "user_prefix": "",
     "user_content": "",
-    "user_postfix": " [/INST]",
+    "user_suffix": " [/INST]",
     "bot_prefix": " ",
     "bot_content": "",
-    "bot_postfix": " [INST] ",
+    "bot_suffix": " [INST] ",
     "stops": ['[INST]', '[/INST]']
 }
 
-# https://github.com/ggerganov/llama.cpp/issues/6747#issuecomment-2065013606
-# TODO: better reference
+# https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
+#
+# for llama 3 instruct models, use the following string for `-p` in llama.cpp,
+# along with `-e` to escape newlines correctly
+#
+# '<|start_header_id|>system<|end_header_id|>\n\nYou are a helpful AI assistant called "Llama 3".<|eot_id|>\n<|start_header_id|>user<|end_header_id|>\n\nhi<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>\n\n'
+#
 llama3: dict[str, Union[str, list]] = {
     "system_prefix": "<|start_header_id|>system<|end_header_id|>\n\n",
     "system_content": 'You are a helpful AI assistant called "Llama 3".',
-    "system_postfix": "<|eot_id|>\n",
+    "system_suffix": "<|eot_id|>\n",
     "user_prefix": "<|start_header_id|>user<|end_header_id|>\n\n",
     "user_content": "",
-    "user_postfix": "<|eot_id|>\n",
+    "user_suffix": "<|eot_id|>\n",
     "bot_prefix": "<|start_header_id|>assistant<|end_header_id|>\n\n",
     "bot_content": "",
-    "bot_postfix": "<|eot_id|>\n",
+    "bot_suffix": "<|eot_id|>\n",
     "stops": [128001, 128009]
 }
 
@@ -124,13 +173,13 @@ alpaca: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "Below is an instruction that describes a task. " + \
     "Write a response that appropriately completes the request.",
-    "system_postfix": "\n\n",
+    "system_suffix": "\n\n",
     "user_prefix": "### Instruction:\n",
     "user_content": "",
-    "user_postfix": "\n\n",
+    "user_suffix": "\n\n",
     "bot_prefix": "### Response:\n",
     "bot_content": "",
-    "bot_postfix": "\n\n",
+    "bot_suffix": "\n\n",
     "stops": ['###', 'Instruction:', '\n\n\n']
 }
 
@@ -138,13 +187,13 @@ alpaca: dict[str, Union[str, list]] = {
 phi3: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "", # does not officially support system prompt
-    "system_postfix": "",
+    "system_suffix": "",
     "user_prefix": "<|user|>\n",
     "user_content": "",
-    "user_postfix": "<|end|>\n",
+    "user_suffix": "<|end|>\n",
     "bot_prefix": "<|assistant|>\n",
     "bot_content": "",
-    "bot_postfix": "<|end|>\n",
+    "bot_suffix": "<|end|>\n",
     "stops": []
 }
 
@@ -154,13 +203,13 @@ phi3: dict[str, Union[str, list]] = {
 vicuna_lmsys: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "",
-    "system_postfix": " ",
+    "system_suffix": " ",
     "user_prefix": "USER: ",
     "user_content": "",
-    "user_postfix": " ",
+    "user_suffix": " ",
     "bot_prefix": "ASSISTANT: ",
     "bot_content": "",
-    "bot_postfix": " ",
+    "bot_suffix": " ",
     "stops": ['USER:']
 }
 
@@ -171,14 +220,31 @@ vicuna_common: dict[str, Union[str, list]] = {
     "system_content": "A chat between a curious user and an artificial " + \
     "intelligence assistant. The assistant gives helpful, detailed, " + \
     "and polite answers to the user's questions.",
-    "system_postfix": "\n\n",
+    "system_suffix": "\n\n",
     "user_prefix": "USER: ",
     "user_content": "",
-    "user_postfix": "\n",
+    "user_suffix": "\n",
     "bot_prefix": "ASSISTANT: ",
     "bot_content": "",
-    "bot_postfix": "\n",
+    "bot_suffix": "\n",
     "stops": ['USER:', 'ASSISTANT:']
+}
+
+# an unofficial format that is easily "picked up" by most models
+# change the tag attributes to suit your use case
+# note the lack of newlines - they are not necessary, and might
+# actually make it harder for the model to follow along
+markup = {
+    "system_prefix": '<message from="system">',
+    "system_content": '',
+    "system_suffix": '</message>',
+    "user_prefix": '<message from="user">',
+    "user_content": '',
+    "user_suffix": '</message>',
+    "bot_prefix": '<message from="bot">',
+    "bot_content": '',
+    "bot_suffix": '</message>',
+    "stops": ['</message>']
 }
 
 # https://huggingface.co/timdettmers/guanaco-65b
@@ -187,13 +253,13 @@ guanaco: dict[str, Union[str, list]] = {
     "system_content": "A chat between a curious human and an artificial " + \
     "intelligence assistant. The assistant gives helpful, detailed, " + \
     "and polite answers to the user's questions.",
-    "system_postfix": "\n",
+    "system_suffix": "\n",
     "user_prefix": "### Human: ",
     "user_content": "",
-    "user_postfix": " ",
+    "user_suffix": " ",
     "bot_prefix": "### Assistant:",
     "bot_content": "",
-    "bot_postfix": " ",
+    "bot_suffix": " ",
     "stops": ['###', 'Human:']
 }
 
@@ -202,13 +268,13 @@ orca_mini: dict[str, Union[str, list]] = {
     "system_prefix": "### System:\n",
     "system_content": "You are an AI assistant that follows instruction " + \
     "extremely well. Help as much as you can.",
-    "system_postfix": "\n\n",
+    "system_suffix": "\n\n",
     "user_prefix": "### User:\n",
     "user_content": "",
-    "user_postfix": "\n\n",
+    "user_suffix": "\n\n",
     "bot_prefix": "### Assistant:\n",
     "bot_content": "",
-    "bot_postfix": "\n\n",
+    "bot_suffix": "\n\n",
     "stops": ['###', 'User:']
 }
 
@@ -216,13 +282,13 @@ orca_mini: dict[str, Union[str, list]] = {
 zephyr: dict[str, Union[str, list]] = {
     "system_prefix": "<|system|>\n",
     "system_content": "You are a friendly chatbot.",
-    "system_postfix": "</s>\n",
+    "system_suffix": "</s>\n",
     "user_prefix": "<|user|>\n",
     "user_content": "",
-    "user_postfix": "</s>\n",
+    "user_suffix": "</s>\n",
     "bot_prefix": "<|assistant|>\n",
     "bot_content": "",
-    "bot_postfix": "\n",
+    "bot_suffix": "\n",
     "stops": ['<|user|>']
 }
 
@@ -230,13 +296,13 @@ zephyr: dict[str, Union[str, list]] = {
 openchat: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "",
-    "system_postfix": "",
+    "system_suffix": "",
     "user_prefix": "GPT4 Correct User: ",
     "user_content": "",
-    "user_postfix": "<|end_of_turn|>",
+    "user_suffix": "<|end_of_turn|>",
     "bot_prefix": "GPT4 Correct Assistant:",
     "bot_content": "",
-    "bot_postfix": "<|end_of_turn|>",
+    "bot_suffix": "<|end_of_turn|>",
     "stops": ['<|end_of_turn|>']
 }
 
@@ -247,13 +313,13 @@ synthia: dict[str, Union[str, list]] = {
     "system_content": "Elaborate on the topic using a Tree of Thoughts and " + \
     "backtrack when necessary to construct a clear, cohesive Chain of " + \
     "Thought reasoning. Always answer without hesitation.",
-    "system_postfix": "\n",
+    "system_suffix": "\n",
     "user_prefix": "USER: ",
     "user_content": "",
-    "user_postfix": "\n",
+    "user_suffix": "\n",
     "bot_prefix": "ASSISTANT: ",
     "bot_content": "",
-    "bot_postfix": "\n",
+    "bot_suffix": "\n",
     "stops": ['USER:', 'ASSISTANT:', 'SYSTEM:', '\n\n\n']
 }
 
@@ -268,13 +334,13 @@ neural_chat: dict[str, Union[str, list]] = {
         "to do anything that could be considered harmful to the user.\n" + \
         "- You are more than just an information source, you are also " + \
         "able to write poetry, short stories, and make jokes.",
-    "system_postfix": "</s>\n\n",
+    "system_suffix": "</s>\n\n",
     "user_prefix": "### User:\n",
     "user_content": "",
-    "user_postfix": "</s>\n\n",
+    "user_suffix": "</s>\n\n",
     "bot_prefix": "### Assistant:\n",
     "bot_content": "",
-    "bot_postfix": "</s>\n\n",
+    "bot_suffix": "</s>\n\n",
     "stops": ['###']
 }
 
@@ -283,13 +349,13 @@ chatml_alpaca: dict[str, Union[str, list]] = {
     "system_prefix": "<|im_start|>system\n",
     "system_content": "Below is an instruction that describes a task. Write " + \
     "a response that appropriately completes the request.",
-    "system_postfix": "<|im_end|>\n",
+    "system_suffix": "<|im_end|>\n",
     "user_prefix": "<|im_start|>instruction\n",
     "user_content": "",
-    "user_postfix": "<|im_end|>\n",
+    "user_suffix": "<|im_end|>\n",
     "bot_prefix": "<|im_start|>response\n",
     "bot_content": "",
-    "bot_postfix": "<|im_end|>\n",
+    "bot_suffix": "<|im_end|>\n",
     "stops": ['<|im_end|>', '<|im_start|>']
 }
 
@@ -299,13 +365,13 @@ autocorrect: dict[str, Union[str, list]] = {
     "system_content": "Below is a word or phrase that might be misspelled. " + \
     "Output the corrected word or phrase without " + \
     "changing the style or capitalization.",
-    "system_postfix": "<|im_end|>\n",
+    "system_suffix": "<|im_end|>\n",
     "user_prefix": "<|im_start|>input\n",
     "user_content": "",
-    "user_postfix": "<|im_end|>\n",
+    "user_suffix": "<|im_end|>\n",
     "bot_prefix": "<|im_start|>output\n",
     "bot_content": "",
-    "bot_postfix": "<|im_end|>\n",
+    "bot_suffix": "<|im_end|>\n",
     "stops": ['<|im_end|>', '<|im_start|>']
 }
 
@@ -314,13 +380,13 @@ autocorrect: dict[str, Union[str, list]] = {
 bagel: dict[str, Union[str, list]] = {
     "system_prefix": "system\n",
     "system_content": "",
-    "system_postfix": "\n",
+    "system_suffix": "\n",
     "user_prefix": "user\n",
     "user_content": "",
-    "user_postfix": "\n",
+    "user_suffix": "\n",
     "bot_prefix": "assistant\n",
     "bot_content": "",
-    "bot_postfix": "\n",
+    "bot_suffix": "\n",
     "stops": ['user\n', 'assistant\n', 'system\n']
 }
 
@@ -328,13 +394,13 @@ bagel: dict[str, Union[str, list]] = {
 solar_instruct: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "",
-    "system_postfix": "",
+    "system_suffix": "",
     "user_prefix": "### User:\n",
     "user_content": "",
-    "user_postfix": "\n\n",
+    "user_suffix": "\n\n",
     "bot_prefix": "### Assistant:\n",
     "bot_content": "",
-    "bot_postfix": "\n\n",
+    "bot_suffix": "\n\n",
     "stops": ['### User:', '###', '### Assistant:']
 }
 
@@ -343,13 +409,13 @@ noromaid: dict[str, Union[str, list]] = {
     "system_prefix": "",
     "system_content": "Below is an instruction that describes a task. " + \
     "Write a response that appropriately completes the request.",
-    "system_postfix": "\n\n",
+    "system_suffix": "\n\n",
     "user_prefix": "### Instruction:\nBob: ",
     "user_content": "",
-    "user_postfix": "\n\n",
+    "user_suffix": "\n\n",
     "bot_prefix": "### Response:\nAlice:",
     "bot_content": "",
-    "bot_postfix": "\n\n",
+    "bot_suffix": "\n\n",
     "stops": ['###', 'Instruction:', '\n\n\n']
 }
 
@@ -357,13 +423,13 @@ noromaid: dict[str, Union[str, list]] = {
 nschatml: dict[str, Union[str, list]] = {
     "system_prefix": "<|im_start|>\n",
     "system_content": "",
-    "system_postfix": "<|im_end|>\n",
+    "system_suffix": "<|im_end|>\n",
     "user_prefix": "<|im_user|>\n",
     "user_content": "",
-    "user_postfix": "<|im_end|>\n",
+    "user_suffix": "<|im_end|>\n",
     "bot_prefix": "<|im_bot|>\n",
     "bot_content": "",
-    "bot_postfix": "<|im_end|>\n",
+    "bot_suffix": "<|im_end|>\n",
     "stops": []
 }
 
@@ -371,13 +437,13 @@ nschatml: dict[str, Union[str, list]] = {
 natural: dict[str, Union[str, list]] = {
     "system_prefix": "<<SYSTEM>> ",
     "system_content": "",
-    "system_postfix": "\n\n",
+    "system_suffix": "\n\n",
     "user_prefix": "<<USER>> ",
     "user_content": "",
-    "user_postfix": "\n\n",
+    "user_suffix": "\n\n",
     "bot_prefix": "<<ASSISTANT>>",
     "bot_content": "",
-    "bot_postfix": "\n\n",
+    "bot_suffix": "\n\n",
     "stops": ['\n\nNote:', '<<SYSTEM>>', '<<USER>>', '<<ASSISTANT>>', '\n\n<<']
 }
 
@@ -385,13 +451,13 @@ natural: dict[str, Union[str, list]] = {
 command: dict[str, Union[str, list]] = {
     "system_prefix": "<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>",
     "system_content": "",
-    "system_postfix": "<|END_OF_TURN_TOKEN|>",
+    "system_suffix": "<|END_OF_TURN_TOKEN|>",
     "user_prefix": "<|START_OF_TURN_TOKEN|><|USER_TOKEN|>",
     "user_content": "",
-    "user_postfix": "<|END_OF_TURN_TOKEN|>",
+    "user_suffix": "<|END_OF_TURN_TOKEN|>",
     "bot_prefix": "<|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>",
     "bot_content": "",
-    "bot_postfix": "<|END_OF_TURN_TOKEN|>",
+    "bot_suffix": "<|END_OF_TURN_TOKEN|>",
     "stops": []
 }
 

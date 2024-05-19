@@ -4,12 +4,12 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from urllib.parse import unquote
-
+from pathlib import Path
 import click
 from curl_cffi import requests
 
 from .webscout_search import WEBS
-from .utils import json_dumps
+from .utils import json_dumps, json_loads
 from .version import __version__
 
 logger = logging.getLogger(__name__)
@@ -129,7 +129,43 @@ def safe_entry_point():
 def version():
     print(__version__)
     return __version__
+@cli.command()
+@click.option("-s", "--save", is_flag=True, default=False, help="save the conversation in the json file")
+@click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
+def chat(save, proxy):
+    """CLI function to perform an interactive AI chat using DuckDuckGo API."""
+    cache_file = "WEBS_chat_conversation.json"
+    models = ["gpt-3.5", "claude-3-haiku"]
+    client = WEBS(proxy=proxy)
 
+    print("DuckDuckGo AI chat. Available models:")
+    for idx, model in enumerate(models, start=1):
+        print(f"{idx}. {model}")
+    chosen_model_idx = input("Choose a model by entering its number[1]: ")
+    chosen_model_idx = 0 if not chosen_model_idx.strip() else int(chosen_model_idx) - 1
+    model = models[chosen_model_idx]
+    print(f"Using model: {model}")
+
+    if save and Path(cache_file).exists():
+        with open(cache_file) as f:
+            cache = json_loads(f.read())
+            client._chat_vqd = cache.get("vqd", None)
+            client._chat_messages = cache.get("messages", [])
+
+    while True:
+        user_input = input(f"{'-'*78}\nYou: ")
+        if not user_input.strip():
+            break
+
+        resp_answer = client.chat(keywords=user_input, model=model)
+        text = click.wrap_text(resp_answer, width=78, preserve_paragraphs=True)
+        click.secho(f"AI: {text}", bg="black", fg="green", overline=True)
+
+        cache = {"vqd": client._chat_vqd, "messages": client._chat_messages}
+        _save_json(cache_file, cache)
+
+        if "exit" in user_input.lower() or "quit" in user_input.lower():
+            break
 
 @cli.command()
 @click.option("-k", "--keywords", required=True, help="text search, keywords for query")

@@ -1,5 +1,3 @@
-# thread.py
-# https://github.com/ddh0/easy-llama/
 from ._version import __version__, __llama_cpp_version__
 
 """Submodule containing the Thread class, used for interaction with a Model"""
@@ -10,15 +8,51 @@ from .model    import Model, assert_model_is_loaded, _SupportsWriteAndFlush
 from .utils    import RESET_ALL, cls, print_verbose, truncate
 from .samplers import SamplerSettings, DefaultSampling
 from typing    import Optional, Literal, Union
+from .formats  import AdvancedFormat
 
 from .formats import blank as formats_blank
+
+
+class Message(dict):
+    """
+    A dictionary representing a single message within a Thread
+
+    Works just like a normal `dict`, but a new method:
+    - `.as_string` - Return the full message string
+
+    Generally, messages have these keys:
+    - `role` -  The role of the speaker: 'system', 'user', or 'bot'
+    - `prefix` - The text that prefixes the message content
+    - `content` - The actual content of the message
+    - `suffix` - The text that suffixes the message content
+    """
+
+    def __repr__(self) -> str:
+        return \
+            f"Message([" \
+            f"('role', {repr(self['role'])}), " \
+            f"('prefix', {repr(self['prefix'])}), " \
+            f"('content', {repr(self['content'])}), " \
+            f"('suffix', {repr(self['suffix'])})])"
+
+    def as_string(self):
+        """Return the full message string"""
+        try:
+            return self['prefix'] + self['content'] + self['suffix']
+        except KeyError as e:
+            e.add_note(
+                "as_string: Message is missing one or more of the "
+                "required 'prefix', 'content', 'suffix' attributes - this is "
+                "unexpected"
+            )
+            raise e
 
 
 class Thread:
     """
     Provide functionality to facilitate easy interactions with a Model
 
-    This is just a brief overview of webscout.Local.Thread.
+    This is just a brief overview of m.Thread.
     To see a full description of each method and its parameters,
     call help(Thread), or see the relevant docstring.
 
@@ -36,24 +70,26 @@ class Thread:
     The following attributes are available:
     - `.format` - The format being used for messages in this thread
     - `.messages` - The list of messages in this thread
-    - `.model` - The `webscout.Local.Model` instance used by this thread
+    - `.model` - The `m.Model` instance used by this thread
     - `.sampler` - The SamplerSettings object used in this thread
     """
 
     def __init__(
         self,
         model: Model,
-        format: dict[str, Union[str, list]],
-        sampler: SamplerSettings = DefaultSampling
+        format: Union[dict, AdvancedFormat],
+        sampler: SamplerSettings = DefaultSampling,
+        messages: Optional[list[Message]] = None,
     ):
         """
         Given a Model and a format, construct a Thread instance.
 
         model: The Model to use for text generation
-        format: The format specifying how messages should be structured (see webscout.Local.formats)
+        format: The format specifying how messages should be structured (see m.formats)
 
-        The following parameter is optional:
+        The following parameters are optional:
         - sampler: The SamplerSettings object used to control text generation
+        - messages: A list of m.thread.Message objects to add to the Thread upon construction
         """
         
         assert isinstance(model, Model), \
@@ -62,8 +98,8 @@ class Thread:
         
         assert_model_is_loaded(model)
 
-        assert isinstance(format, dict), \
-            f"Thread: format should be dict, not {type(format)}"
+        assert isinstance(format, (dict, AdvancedFormat)), \
+            f"Thread: format should be dict or AdvancedFormat, not {type(format)}"
         
         if any(k not in format.keys() for k in formats_blank.keys()):
             raise KeyError(
@@ -87,12 +123,23 @@ class Thread:
                 'top_k'
             ]
         ), 'Thread: sampler is missing one or more required attributes'
+
+        self._messages: Optional[list[Message]] = messages
+        if self._messages is not None:
+            if not all(isinstance(msg, Message) for msg in self._messages):
+                raise TypeError(
+                    "Thread: one or more messages provided to __init__() is "
+                    "not an instance of m.thread.Message"
+                )
         
+        # Thread.messages is never empty, unless `messages` param is explicity
+        # set to `[]` during construction
+
         self.model: Model = model
-        self.format: dict[str, Union[str, list]] = format
-        self.messages: list[dict[str, str]] = [
+        self.format: Union[dict, AdvancedFormat] = format
+        self.messages: list[Message] = [
             self.create_message("system", self.format['system_content'])
-        ]
+        ] if self._messages is None else self._messages
         self.sampler: SamplerSettings = sampler
 
         if self.model.verbose:
@@ -100,13 +147,13 @@ class Thread:
             print_verbose(f"model                     == {self.model}")
             print_verbose(f"format['system_prefix']   == {truncate(repr(self.format['system_prefix']))}")
             print_verbose(f"format['system_content']  == {truncate(repr(self.format['system_content']))}")
-            print_verbose(f"format['system_postfix']  == {truncate(repr(self.format['system_postfix']))}")
+            print_verbose(f"format['system_suffix']   == {truncate(repr(self.format['system_suffix']))}")
             print_verbose(f"format['user_prefix']     == {truncate(repr(self.format['user_prefix']))}")
             print_verbose(f"format['user_content']    == {truncate(repr(self.format['user_content']))}")
-            print_verbose(f"format['user_postfix']    == {truncate(repr(self.format['user_postfix']))}")
+            print_verbose(f"format['user_suffix']     == {truncate(repr(self.format['user_suffix']))}")
             print_verbose(f"format['bot_prefix']      == {truncate(repr(self.format['bot_prefix']))}")
             print_verbose(f"format['bot_content']     == {truncate(repr(self.format['bot_content']))}")
-            print_verbose(f"format['bot_postfix']     == {truncate(repr(self.format['bot_postfix']))}")
+            print_verbose(f"format['bot_suffix']      == {truncate(repr(self.format['bot_suffix']))}")
             print_verbose(f"format['stops']           == {truncate(repr(self.format['stops']))}")
             print_verbose(f"sampler.temp              == {self.sampler.temp}")
             print_verbose(f"sampler.top_p             == {self.sampler.top_p}")
@@ -118,29 +165,10 @@ class Thread:
     
 
     def __repr__(self) -> str:
-        repr_str = f"Thread({repr(self.model)}, {repr(self.format)}, "
-        repr_str += f"{repr(self.sampler)})"
-        # system message is created from format, so not represented
-        if len(self.messages) <= 1:
-            return repr_str
-        else:
-            for msg in self.messages:
-                if msg['role'] == 'user':
-                    repr_str += "\nThread.add_message('user', " + repr(msg['content']) + ')'
-                elif msg['role'] == 'bot':
-                    repr_str += "\nThread.add_message('bot', " + repr(msg['content']) + ')'
-            return repr_str
-    def save_conversation(self, filepath: str) -> None:
-        """
-        Saves the conversation history to a JSON file.
-
-        filepath: The path to the file where the conversation should be saved.
-        """
-        import json
-
-        data = [{'role': msg['role'], 'content': msg['content']} for msg in self.messages]
-        with open(filepath, 'w') as f:
-            json.dump(data, f, indent=4)    
+        return \
+            f"Thread({repr(self.model)}, {repr(self.format)}, " + \
+            f"{repr(self.sampler)}, {repr(self.messages)})"
+    
     def __str__(self) -> str:
         return self.as_string()
     
@@ -156,9 +184,9 @@ class Thread:
         self,
         role: Literal['system', 'user', 'bot'],
         content: str
-    ) -> dict[str, str]:
+    ) -> Message:
         """
-        Create a message using the format of this Thread
+        Construct a message using the format of this Thread
         """
 
         assert role.lower() in ['system', 'user', 'bot'], \
@@ -168,34 +196,40 @@ class Thread:
             f"create_message: content should be str, not {type(content)}"
 
         if role.lower() == 'system':
-            return {
-                "role": "system",
-                "prefix": self.format['system_prefix'],
-                "content": content,
-                "postfix": self.format['system_postfix']
-            }
+            return Message(
+                [
+                    ('role', 'system'),
+                    ('prefix', self.format['system_prefix']),
+                    ('content', content),
+                    ('suffix', self.format['system_suffix'])
+                ]
+            )
         
         elif role.lower() == 'user':
-            return {
-                "role": "user",
-                "prefix": self.format['user_prefix'],
-                "content": content,
-                "postfix": self.format['user_postfix']
-            }
+            return Message(
+                [
+                    ('role', 'user'),
+                    ('prefix', self.format['user_prefix']),
+                    ('content', content),
+                    ('suffix', self.format['user_suffix'])
+                ]
+            )
         
         elif role.lower() == 'bot':
-            return {
-                "role": "bot",
-                "prefix": self.format['bot_prefix'],
-                "content": content,
-                "postfix": self.format['bot_postfix']
-            }
+            return Message(
+                [
+                    ('role', 'bot'),
+                    ('prefix', self.format['bot_prefix']),
+                    ('content', content),
+                    ('suffix', self.format['bot_suffix'])
+                ]
+            )
     
     def len_messages(self) -> int:
         """
         Return the total length of all messages in this thread, in tokens.
         
-        Equivalent to `len(Thread)`."""
+        Can also use `len(Thread)`."""
 
         return self.model.get_length(self.as_string())
 
@@ -223,38 +257,35 @@ class Thread:
         respecting the format and context length of this thread.
         """
 
-        messages = self.messages
-
-        context_len_budget = self.model.context_length
-        if len(messages) > 0:
-            sys_msg = messages[0]
-            sys_msg_str = (
-                sys_msg['prefix'] + sys_msg['content'] + sys_msg['postfix']
-            )
-            context_len_budget -= self.model.get_length(sys_msg_str)
-        else:
-            sys_msg_str = ''
-
         inf_str = ''
+        sys_msg_str = ''
+        # whether to treat the first message as necessary to keep
+        sys_msg_flag = False
+        context_len_budget = self.model.context_length
 
-        # Start at most recent message and work backwards up the history
-        # excluding system message. Once we exceed thread
-        # max_context_length, break without including that message
-        for message in reversed(messages[1:]):
-            context_len_budget -= self.model.get_length(
-                message['prefix'] + message['content'] + message['postfix']
-            )
+        # if at least 1 message is history
+        if len(self.messages) >= 1:
+            # if first message has system role
+            if self.messages[0]['role'] == 'system':
+                sys_msg_flag = True
+                sys_msg = self.messages[0]
+                sys_msg_str = sys_msg.as_string()
+                context_len_budget -= self.model.get_length(sys_msg_str)
 
+        if sys_msg_flag:
+            iterator = reversed(self.messages[1:])
+        else:
+            iterator = reversed(self.messages)
+        
+        for message in iterator:
+            msg_str = message.as_string()
+            context_len_budget -= self.model.get_length(msg_str)
             if context_len_budget <= 0:
                 break
-
-            msg_str = (
-                message['prefix'] + message['content'] + message['postfix']
-            )
-            
             inf_str = msg_str + inf_str
 
-        inf_str = sys_msg_str + inf_str
+        if sys_msg_flag:
+            inf_str = sys_msg_str + inf_str
         inf_str += self.format['bot_prefix']
 
         return inf_str
@@ -277,20 +308,7 @@ class Thread:
         self.add_message("bot", output)
 
         return output
-    def load_conversation(self, filepath: str) -> None:
-        """
-        Loads a conversation history from a JSON file.
-
-        filepath: The path to the file containing the conversation history.
-        """
-        import json
-
-        with open(filepath, 'r') as f:
-            data = json.load(f)
-
-        self.messages = []
-        for item in data:
-            self.messages.append(self.create_message(item['role'], item['content']))     
+    
 
     def _interactive_update_sampler(self) -> None:
         """Interactively update the sampler settings used in this Thread"""
@@ -373,7 +391,8 @@ class Thread:
         prompt: str,
         _dim_style: str,
         _user_style: str,
-        _bot_style: str
+        _bot_style: str,
+        _special_style: str
     ) -> tuple:
         """
         Recive input from the user, while handling multi-line input
@@ -420,15 +439,7 @@ class Thread:
                 
                 elif command.lower() in ['str', 'string', 'as_string']:
                     print(f"\n{self.as_string()}\n")
-
-                elif command.lower() in ['save']: 
-                    print()
-                    try:
-                        filepath = input(f'Enter filepath to save conversation: ')
-                        self.save_conversation(filepath)
-                        print(f'[conversation saved to {filepath}]\n')
-                    except Exception as e:
-                        print(f'[error saving conversation: {e}]\n')                
+                
                 elif command.lower() in ['repr', 'save', 'backup']:
                     print(f"\n{repr(self)}\n")
                 
@@ -438,14 +449,7 @@ class Thread:
                     del self.messages[-1]
                     assert len(self.messages) == (old_len - 1)
                     print('[removed last message]\n')
-                elif command.lower() in ['load']: 
-                    print()
-                    try:
-                        filepath = input(f'Enter filepath to load conversation: ')
-                        self.load_conversation(filepath)
-                        print(f'[conversation loaded from {filepath}]\n')
-                    except Exception as e:
-                        print(f'[error loading conversation: {e}]\n')
+
                 elif command.lower() in ['last', 'repeat']:
                     last_msg = self.messages[-1]
                     if last_msg['role'] == 'user':
@@ -468,33 +472,35 @@ class Thread:
                 
                 elif command.lower() in ['help', '/?', '?']:
                     print()
-                    print('reset / restart     -- Reset the thread to its original state')
-                    print('clear / cls         -- Clear the terminal')
-                    print('context / ctx       -- Get the context usage in tokens')
-                    print('print_stats / stats -- Get the context usage stats')
-                    print('sampler / settings  -- Update the sampler settings')
-                    print('string / str        -- Print the message history as a string')
-                    print('repr / save         -- Print the representation of the thread')
-                    print('remove / delete     -- Remove the last message')
-                    print('last / repeat       -- Repeat the last message')
-                    print('inference / inf     -- Print the inference string')
-                    print('reroll / swipe      -- Regenerate the last message')
-                    print('exit / quit         -- Exit the interactive chat (can also use ^C)')
-                    print('help / ?            -- Show this screen')
+                    print('reset | restart     -- Reset the thread to its original state')
+                    print('clear | cls         -- Clear the terminal')
+                    print('context | ctx       -- Get the context usage in tokens')
+                    print('print_stats | stats -- Get the context usage stats')
+                    print('sampler | settings  -- Update the sampler settings')
+                    print('string | str        -- Print the message history as a string')
+                    print('repr | save         -- Print the representation of the thread')
+                    print('remove | delete     -- Remove the last message')
+                    print('last | repeat       -- Repeat the last message')
+                    print('inference | inf     -- Print the inference string')
+                    print('reroll | swipe      -- Regenerate the last message')
+                    print('exit | quit         -- Exit the interactive chat (can also use ^C)')
+                    print('help | ?            -- Show this screen')
                     print()
                     print("TIP: type < at the prompt and press ENTER to prefix the bot's next message.")
                     print('     for example, type "Sure!" to bypass refusals')
                     print()
-                    print('save             -- Save the conversation to a JSON file') 
-                    print('load             -- Load a conversation from a JSON file') 
+                    print("TIP: type !! at the prompt and press ENTER to insert a system message")
+                    print()
+
                 else:
                     print(f'\n[unknown command]\n')
             
-            elif user_input == '<': # the next bot message will start with...
+            # prefix the bot's next message
+            elif user_input == '<':
 
                 print()
                 try:
-                    next_message_start = input(f'{_dim_style}  < ')
+                    next_message_start = input(f'{RESET_ALL}  < {_dim_style}')
 
                 except KeyboardInterrupt:
                     print(f'{RESET_ALL}\n')
@@ -503,25 +509,23 @@ class Thread:
                 else:
                     print()
                     return '', next_message_start
-            
-            elif user_input.endswith('<'):
 
+            # insert a system message
+            elif user_input == '!!':
                 print()
 
-                msg = user_input.removesuffix('<')
-                self.add_message("user", msg)
+                try:
+                    next_sys_msg = input(f'{RESET_ALL} !! {_special_style}')
                 
-                try:
-                    next_message_start = input(f'{_dim_style}  < ')
-
                 except KeyboardInterrupt:
                     print(f'{RESET_ALL}\n')
                     continue
-
+                
                 else:
                     print()
-                    return '', next_message_start
+                    return next_sys_msg, -1
 
+            # concatenate multi-line input
             else:
                 full_user_input += user_input
                 return full_user_input, None
@@ -548,6 +552,8 @@ class Thread:
         Type `<` and press `ENTER` to prefix the bot's next message, for
         example with `Sure!`.
 
+        Type `!!` at the prompt and press `ENTER` to insert a system message.
+
         The following parameters are optional:
         - color: Whether to use colored text to differentiate user / bot
         - header: Header text to print at the start of the interaction
@@ -556,28 +562,29 @@ class Thread:
         print()
 
         # fresh import of color codes in case `color` param has changed
-        from .utils import USER_STYLE, BOT_STYLE, DIM_STYLE, SPECIAL_STYLE
+        from .utils import SPECIAL_STYLE, USER_STYLE, BOT_STYLE, DIM_STYLE
 
         # disable color codes if explicitly disabled by `color` param
         if not color:
+            SPECIAL_STYLE = ''
             USER_STYLE = ''
             BOT_STYLE = ''
             DIM_STYLE = ''
-            SPECIAL_STYLE = ''
         
         if header is not None:
             print(f"{SPECIAL_STYLE}{header}{RESET_ALL}\n")
         
         while True:
 
-            prompt = f"{RESET_ALL}  >>> {USER_STYLE}"
+            prompt = f"{RESET_ALL}  > {USER_STYLE}"
             
             try:
                 user_prompt, next_message_start = self._interactive_input(
                     prompt,
                     DIM_STYLE,
                     USER_STYLE,
-                    BOT_STYLE
+                    BOT_STYLE,
+                    SPECIAL_STYLE
                 )
             except KeyboardInterrupt:
                 print(f"{RESET_ALL}\n")
@@ -586,6 +593,11 @@ class Thread:
             # got 'exit' or 'quit' command
             if user_prompt is None and next_message_start is None:
                 break
+            
+            # insert a system message via `!!` prompt
+            if next_message_start == -1:
+                self.add_message('system', user_prompt)
+                continue
             
             if next_message_start is not None:
                 try:
@@ -648,19 +660,17 @@ class Thread:
         Clear the list of messages, which resets the thread to its original
         state
         """
-        self.messages: list[dict[str, str]] = [
+        self.messages: list[Message] = [
             self.create_message("system", self.format['system_content'])
-        ]
+        ] if self._messages is None else self._messages
     
     
     def as_string(self) -> str:
         """Return this thread's message history as a string"""
-        ret = ''
+        thread_string = ''
         for msg in self.messages:
-            ret += msg['prefix']
-            ret += msg['content']
-            ret += msg['postfix']
-        return ret
+            thread_string += msg.as_string()
+        return thread_string
 
     
     def print_stats(

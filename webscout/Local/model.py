@@ -612,7 +612,7 @@ class Model:
         self,
         prompt: str,
         k: int
-    ) -> list[tuple[str, np.float64]]:
+    ) -> list[tuple[str, np.floating]]:
         """
         Given prompt `str` and k `int`, return a sorted list of the
         top k candidates for most likely next token, along with their
@@ -639,11 +639,11 @@ class Model:
         # must normalize over all tokens in vocab, not just top k
         if self.verbose:
             print_verbose(f'calculating softmax over {len(scores)} values')
-        normalized_scores: list[np.float64] = list(softmax(scores))
+        normalized_scores: list[np.floating] = list(softmax(scores))
 
         # construct the final list
         i = 0
-        token_probs_list: list[tuple[str, np.float64]] = []
+        token_probs_list: list[tuple[str, np.floating]] = []
         for tok_str in self.tokens:
             token_probs_list.append((tok_str, normalized_scores[i]))
             i += 1
@@ -666,7 +666,7 @@ class Model:
 
         for _tuple in self.candidates(prompt, k):
             print(
-                f"token '{_tuple[0]}' has probability {_tuple[1]}",
+                f"token {repr(_tuple[0])} has probability {_tuple[1]}",
                 file=file,
                 flush=flush
             )

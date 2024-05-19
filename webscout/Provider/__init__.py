@@ -28,6 +28,7 @@ from .Gemini import GEMINI
 from .Berlin4h import Berlin4h
 from .ChatGPTUK import ChatGPTUK
 from .Poe import POE
+from .BasedGPT import *
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
