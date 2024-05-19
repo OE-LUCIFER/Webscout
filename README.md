@@ -47,17 +47,18 @@ Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can
     - [Available TTS Voices:](#available-tts-voices)
   - [Exceptions](#exceptions)
   - [usage of webscout](#usage-of-webscout)
-    - [1. `text()` - text search by DuckDuckGo.com and Yep.com](#1-text---text-search-by-duckduckgocom-and-yepcom)
-    - [2. `answers()` - instant answers by DuckDuckGo.com and Yep.com](#2-answers---instant-answers-by-duckduckgocom-and-yepcom)
-    - [3. `images()` - image search by DuckDuckGo.com and Yep.com](#3-images---image-search-by-duckduckgocom-and-yepcom)
+    - [1. `text()` - text search by DuckDuckGo.com](#1-text---text-search-by-duckduckgocom)
+    - [2. `answers()` - instant answers by DuckDuckGo.com](#2-answers---instant-answers-by-duckduckgocom)
+    - [3. `images()` - image search by DuckDuckGo.com](#3-images---image-search-by-duckduckgocom)
     - [4. `videos()` - video search by DuckDuckGo.com](#4-videos---video-search-by-duckduckgocom)
-    - [5. `news()` - news search by DuckDuckGo.com and yep.com](#5-news---news-search-by-duckduckgocom-and-yepcom)
-    - [6. `maps()` - map search by DuckDuckGo.com and](#6-maps---map-search-by-duckduckgocom-and)
-    - [7. `translate()` - translation by DuckDuckGo.com and Yep.com](#7-translate---translation-by-duckduckgocom-and-yepcom)
-    - [8. `suggestions()` - suggestions by DuckDuckGo.com and Yep.com](#8-suggestions---suggestions-by-duckduckgocom-and-yepcom)
+    - [5. `news()` - news search by DuckDuckGo.com](#5-news---news-search-by-duckduckgocom)
+    - [6. `maps()` - map search by DuckDuckGo.com](#6-maps---map-search-by-duckduckgocom)
+    - [7. `translate()` - translation by DuckDuckGo.com](#7-translate---translation-by-duckduckgocom)
+    - [8. `suggestions()` - suggestions by DuckDuckGo.com](#8-suggestions---suggestions-by-duckduckgocom)
   - [ALL acts](#all-acts)
   - [Webscout Supported Acts:](#webscout-supported-acts)
   - [usage of webscout AI](#usage-of-webscout-ai)
+    - [0. `Duckchat` - chat with LLM](#0-duckchat---chat-with-llm)
     - [1. `PhindSearch` - Search using Phind.com](#1-phindsearch---search-using-phindcom)
     - [2. `YepChat` - Chat with mistral 8x7b powered by yepchat](#2-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
     - [3. `You.com` - search/chat with you.com](#3-youcom---searchchat-with-youcom)
@@ -465,12 +466,12 @@ Exceptions:
 
 ## usage of webscout
 
-### 1. `text()` - text search by DuckDuckGo.com and Yep.com
+### 1. `text()` - text search by DuckDuckGo.com 
 
 ```python
 from webscout import WEBS
 
-# Text search for 'live free or die' using DuckDuckGo.com and Yep.com
+# Text search for 'live free or die' using DuckDuckGo.com 
 with WEBS() as WEBS:
     for r in WEBS.text('live free or die', region='wt-wt', safesearch='off', timelimit='y', max_results=10):
         print(r)
@@ -479,23 +480,23 @@ with WEBS() as WEBS:
         print(r)
 ```
 
-### 2. `answers()` - instant answers by DuckDuckGo.com and Yep.com
+### 2. `answers()` - instant answers by DuckDuckGo.com 
 
 ```python
 from webscout import WEBS
 
-# Instant answers for the query "sun" using DuckDuckGo.com and Yep.com
+# Instant answers for the query "sun" using DuckDuckGo.com 
 with WEBS() as WEBS:
     for r in WEBS.answers("sun"):
         print(r)
 ```
 
-### 3. `images()` - image search by DuckDuckGo.com and Yep.com
+### 3. `images()` - image search by DuckDuckGo.com 
 
 ```python
 from webscout import WEBS
 
-# Image search for the keyword 'butterfly' using DuckDuckGo.com and Yep.com
+# Image search for the keyword 'butterfly' using DuckDuckGo.com 
 with WEBS() as WEBS:
     keywords = 'butterfly'
     WEBS_images_gen = WEBS.images(
@@ -533,7 +534,7 @@ with WEBS() as WEBS:
         print(r)
 ```
 
-### 5. `news()` - news search by DuckDuckGo.com and yep.com
+### 5. `news()` - news search by DuckDuckGo.com 
 
 ```python
 from webscout import WEBS
@@ -580,7 +581,7 @@ print(formatted_headlines)
 
 ```
 
-### 6. `maps()` - map search by DuckDuckGo.com and
+### 6. `maps()` - map search by DuckDuckGo.com
 
 ```python
 from webscout import WEBS
@@ -591,24 +592,24 @@ with WEBS() as WEBS:
         print(r)
 ```
 
-### 7. `translate()` - translation by DuckDuckGo.com and Yep.com
+### 7. `translate()` - translation by DuckDuckGo.com
 
 ```python
 from webscout import WEBS
 
-# Translation of the keyword 'school' to German ('hi') using DuckDuckGo.com and Yep.com
+# Translation of the keyword 'school' to German ('hi') using DuckDuckGo.com
 with WEBS() as WEBS:
     keywords = 'school'
     r = WEBS.translate(keywords, to="hi")
     print(r)
 ```
 
-### 8. `suggestions()` - suggestions by DuckDuckGo.com and Yep.com
+### 8. `suggestions()` - suggestions by DuckDuckGo.com
 
 ```python
 from webscout import WEBS
 
-# Suggestions for the keyword 'fly' using DuckDuckGo.com and Yep
+# Suggestions for the keyword 'fly' using DuckDuckGo.com
 with WEBS() as WEBS:
     for r in WEBS.suggestions("fly"):
         print(r)
@@ -871,7 +872,12 @@ ___
 </details>
 
 ## usage of webscout AI
-
+### 0. `Duckchat` - chat with LLM
+```python
+from webscout import WEBS as w
+R = w().chat("hello", model='claude-3-haiku') # GPT-3.5 Turbo
+print(R)
+```
 ### 1. `PhindSearch` - Search using Phind.com 
 
 ```python
