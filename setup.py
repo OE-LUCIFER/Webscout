@@ -56,6 +56,8 @@ setup(
         "clipman",
         "Helpingai-T2",
         "playsound",
+        "poe_api_wrapper",
+        "pyreqwest_impersonate"
     ],
     entry_points={
         "console_scripts": [
