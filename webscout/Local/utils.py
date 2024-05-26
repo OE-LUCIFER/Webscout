@@ -25,18 +25,19 @@ class _ArrayLike(Iterable):
 class _SupportsWriteAndFlush(TextIO):
     pass
 
-def download_model(repo_id: str, filename: str, cache_dir: str = ".cache") -> str:
+def download_model(repo_id: str, filename: str, token: str, cache_dir: str = ".cache") -> str:
     """
     Downloads a GGUF model file from Hugging Face Hub.
 
     repo_id: The Hugging Face repository ID (e.g., 'facebook/bart-large-cnn').
     filename: The name of the GGUF file within the repository (e.g., 'model.gguf').
+    token: The Hugging Face token for authentication.
     cache_dir: The directory where the downloaded file should be stored.
     
     Returns: The path to the downloaded file.
     """
     url = hf_hub_url(repo_id, filename)
-    filepath = cached_download(url, cache_dir=cache_dir, force_filename=filename)
+    filepath = cached_download(url, cache_dir=cache_dir, force_filename=filename, use_auth_token=token)
     return filepath
 
 class GGUFReader:
