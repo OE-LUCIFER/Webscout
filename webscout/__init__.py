@@ -34,6 +34,7 @@ webai = [
    "chatgptuk",
    "auto",
    "poe",
+   "basedgpt",
 ]
 
 gpt4free_providers = [

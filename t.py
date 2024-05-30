@@ -1,123 +1,90 @@
-import uvicorn
-from fastapi import FastAPI, Query
-from pydantic import BaseModel, Field
-from typing import Optional, List
+import requests
+import json
+from webscout.Local import Model, Thread, formats
+from webscout.Local.utils import download_model
+from webscout.Local.model import Model
+from webscout.Local.thread import Thread
+from webscout.Local import formats
+from webscout.Local.samplers import SamplerSettings
 
-from DeepWEBS.utilsdw.logger import logger
-from DeepWEBS.networks.google_searcher import GoogleSearcher
-from DeepWEBS.networks.webpage_fetcher import BatchWebpageFetcher
-from DeepWEBS.documents.query_results_extractor import QueryResultsExtractor
-from DeepWEBS.documents.webpage_content_extractor import BatchWebpageContentExtractor
+from dotenv import load_dotenv; load_dotenv()
+import os
 
-class DeepWEBS:
-    def __init__(self):
-        pass
 
-    class DeepSearch(BaseModel):
-        queries: List[str] = Field(default=[""], description="Queries to search")
-        result_num: int = Field(default=10, description="Number of search results")
-        safe: bool = Field(default=False, description="Enable SafeSearch")
-        types: List[str] = Field(default=["web"], description="Types of search results: `web`, `image`, `videos`, `news`")
-        extract_webpage: bool = Field(default=False, description="Enable extracting main text contents from webpage, will add `text` field in each `query_result` dict")
-        overwrite_query_html: bool = Field(default=False, description="Overwrite HTML file of query results")
-        overwrite_webpage_html: bool = Field(default=False, description="Overwrite HTML files of webpages from query results")
+# 1. Download the model
 
-    def queries_to_search_results(self, item: DeepSearch):
-        google_searcher = GoogleSearcher()
-        queries_search_results = []
+model_path = r'C:\Users\hp\Desktop\Webscout - Copy\jarvis-3b-q2_k.gguf'
 
-        for query in item.queries:
-            query_results_extractor = QueryResultsExtractor()
-            if not query.strip():
-                continue
-            try:
-                query_html_path = google_searcher.search(
-                    query=query,
-                    result_num=item.result_num,
-                    safe=item.safe,
-                    overwrite=item.overwrite_query_html,
-                )
-            except Exception as e:
-                logger.error(f"Failed to search for query '{query}': {e}")
-                continue
+# 2. Load the model 
+# model = Model(model_path, n_gpu_layers=4)  
+# 2. Define and register tools 
 
-            try:
-                query_search_results = query_results_extractor.extract(query_html_path)
-            except Exception as e:
-                logger.error(f"Failed to extract search results for query '{query}': {e}")
-                continue
-
-            queries_search_results.append(query_search_results)
-
-        logger.note(queries_search_results)
-
-        if item.extract_webpage:
-            queries_search_results = self.extract_webpages(
-                queries_search_results,
-                overwrite_webpage_html=item.overwrite_webpage_html,
-            )
-
-        return queries_search_results
-
-    def extract_webpages(self, queries_search_results, overwrite_webpage_html=False):
-        for query_idx, query_search_results in enumerate(queries_search_results):
-            try:
-                batch_webpage_fetcher = BatchWebpageFetcher()
-                urls = [query_result["url"] for query_result in query_search_results["query_results"]]
-                url_and_html_path_list = batch_webpage_fetcher.fetch(urls, overwrite=overwrite_webpage_html, output_parent=query_search_results["query"])
-            except Exception as e:
-                logger.error(f"Failed to fetch webpages for query '{query_search_results['query']}': {e}")
-                continue
-
-            html_paths = [str(url_and_html_path["html_path"]) for url_and_html_path in url_and_html_path_list]
-            batch_webpage_content_extractor = BatchWebpageContentExtractor()
-            try:
-                html_path_and_extracted_content_list = batch_webpage_content_extractor.extract(html_paths)
-            except Exception as e:
-                logger.error(f"Failed to extract webpage contents for query '{query_search_results['query']}': {e}")
-                continue
-
-            html_path_to_url_dict = {str(url_and_html_path["html_path"]): url_and_html_path["url"] for url_and_html_path in url_and_html_path_list}
-            url_to_extracted_content_dict = {
-                html_path_to_url_dict[html_path_and_extracted_content["html_path"]]: html_path_and_extracted_content["extracted_content"]
-                for html_path_and_extracted_content in html_path_and_extracted_content_list
-            }
-
-            for query_result_idx, query_result in enumerate(query_search_results["query_results"]):
-                url = query_result["url"]
-                extracted_content = url_to_extracted_content_dict.get(url, "")
-                queries_search_results[query_idx]["query_results"][query_result_idx]["text"] = extracted_content
-
-        return queries_search_results
-
-app = FastAPI(
-    docs_url="/",
-    title="Web Search API",
-    swagger_ui_parameters={"defaultModelsExpandDepth": -1},
-    version="1.0",
-)
-
-@app.get("/api/deepwebs", summary="Perform a text search using the DeepWEBS API")
-def search(
-    q: str = Query(..., description="The search query string"),
-    max_results: int = Query(10, ge=1, le=100, description="The maximum number of results to return"),
-    safesearch: str = Query("moderate", description="The safe search level ('on', 'moderate', or 'off')"),
-    extract_webpage: bool = Query(False, description="Enable extracting main text contents from webpage"),
-    overwrite_query_html: bool = Query(False, description="Overwrite HTML file of query results"),
-    overwrite_webpage_html: bool = Query(False, description="Overwrite HTML files of webpages from query results")
-):
+# --- Weather API Tool ---from webscout.Local import Model, Thread, formats
+from webscout import DeepWEBS
+from webscout.Local.utils import download_model
+from webscout.Local.model import Model
+from webscout.Local.thread import Thread
+from webscout.Local import formats
+from webscout.Local.samplers import SamplerSettings
+def deepwebs_search(query, max_results=5):
+    """Performs a web search using DeepWEBS and returns results as JSON."""
     deepwebs = DeepWEBS()
-    deep_search = DeepWEBS.DeepSearch(
-        queries=[q],
-        result_num=max_results,
-        safe=(safesearch.lower() == 'on'),
+    search_config = DeepWEBS.DeepSearch(
+        queries=[query],
+        max_results=max_results,
+        extract_webpage=False,
+        safe=False,
         types=["web"],
-        extract_webpage=extract_webpage,
-        overwrite_query_html=overwrite_query_html,
-        overwrite_webpage_html=overwrite_webpage_html,
+        overwrite_query_html=True,
+        overwrite_webpage_html=True,
     )
-    results = deepwebs.queries_to_search_results(deep_search)
-    return results
+    search_results = deepwebs.queries_to_search_results(search_config)
+    formatted_results = []
+    for result in search_results[0]:  # Assuming only one query
+        formatted_results.append(f"Title: {result['title']}\nURL: {result['url']}\n")
+    return "\n".join(formatted_results)
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# Load your model
+# repo_id = "OEvortex/HelpingAI-9B" 
+# filename = "helpingai-9b.Q4_0.gguf"
+# model_path = download_model(repo_id, filename, token='')
+
+# 2. Load the model 
+model = Model(model_path, n_gpu_layers=10)
+
+# Create a Thread
+system_prompt = "You are a helpful AI assistant. Respond to user queries concisely. If a user asks for information that requires a web search, use the `deepwebs_search` tool. Do not call the tool if it is not necessary."
+sampler = SamplerSettings(temp=0.7, top_p=0.9)  # Adjust these values as needed
+# 4. Create a custom chatml format with your system prompt
+custom_chatml = formats.chatml.copy()
+custom_chatml['system_content'] = system_prompt
+thread = Thread(model, custom_chatml, sampler=sampler)
+# Add the deepwebs_search tool
+thread.add_tool({
+    "type": "function",
+    "function": {
+        "name": "deepwebs_search",
+        "description": "Performs a web search using DeepWEBS and returns the title and URLs of the results.",
+        "execute": deepwebs_search,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The query to search on the web",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of search results (default: 5)",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+})
+
+# Start interacting with the model
+while True:
+    user_input = input("You: ")
+    response = thread.send(user_input)
+    print("Bot: ", response)  

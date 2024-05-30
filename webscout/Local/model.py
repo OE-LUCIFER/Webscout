@@ -1,3 +1,4 @@
+import json
 from ._version import __version__, __llama_cpp_version__
 
 """Submodule containing the Model class to work with language models"""
@@ -15,7 +16,7 @@ from .utils import (
 
 from .samplers import SamplerSettings, DefaultSampling
 from llama_cpp import Llama, StoppingCriteriaList
-from typing    import Generator, Optional, Union
+from typing    import Callable, Generator, Optional, Union
 from os.path   import isdir, exists
 from heapq     import nlargest
 
@@ -26,6 +27,8 @@ class ModelUnloadedException(Exception):
     """Exception raised when trying to use a Model that has been unloaded"""
     def __init__(self, message):
         self.message = message
+        self.tool_code_start = "```tool_code\n"  # Define tool code markers
+        self.tool_code_end = "\n```tool_code```"
         super().__init__(self.message)
         self.add_note('Are you trying to use a Model that has been unloaded?')
 
@@ -68,7 +71,7 @@ class Model:
         n_gpu_layers: int = 0,
         offload_kqv: bool = True,
         flash_attn: bool = False,
-        verbose: bool = False
+        verbose: bool = False,
     ):
         """
         Given the path to a GGUF file, construct a Model instance.
@@ -105,7 +108,7 @@ class Model:
         self._offload_kqv = offload_kqv
         self._flash_attn = flash_attn
         self._verbose = self.verbose = verbose
-
+        self.tools = {}
         # if context_length <= 0, use n_ctx_train
         if isinstance(context_length, int) and context_length <= 0:
             context_length = None
@@ -269,7 +272,73 @@ class Model:
             print_verbose(f"param: self.context_length  == {self.context_length}")
             print_verbose(f" gguf: rope_freq_base_train == {rope_freq_base_train}")
             print_verbose(f"param: rope_freq_base       == {rope_freq_base}")
-    
+    def register_tool(self, name: str, function: Callable):
+        """Registers a tool for function calling."""
+        self.tools[name] = function
+
+    def _extract_tool_code(self, text: str) -> dict:
+        """Extracts tool code from the model's output."""
+        try:
+            start = text.find(self.tool_code_start) + len(self.tool_code_start)
+            end = text.find(self.tool_code_end)
+            tool_code_json = text[start:end]
+            tool_code = json.loads(tool_code_json)
+            return tool_code
+        except (ValueError, json.JSONDecodeError):
+            return None
+    def _should_call_tool(self, response_text: str) -> bool:
+        """Determines if the model suggests a tool call."""
+        # Simple check for tool code markers in response
+        return self.tool_code_start in response_text and self.tool_code_end in response_text
+    def generate(
+        self,
+        prompt: Union[str, list[int]],
+        stops: list[Union[str, int]] = [],
+        sampler: SamplerSettings = DefaultSampling,
+        max_iterations: int = 3, # Maximum iterations for tool calls
+    ) -> str:
+        """
+        Generates text and handles tool calls.
+
+        Args:
+            prompt (Union[str, list[int]]): The input prompt.
+            stops (list[Union[str, int]]): Stop sequences.
+            sampler (SamplerSettings): Sampler settings.
+            max_iterations (int): Maximum number of tool call iterations. 
+
+        Returns:
+            str: The generated text.
+        """
+        assert_model_is_loaded(self)
+        response_text = self.llama.create_completion(
+            prompt,
+            max_tokens=sampler.max_len_tokens,
+            temperature=sampler.temp,
+            top_p=sampler.top_p,
+            min_p=sampler.min_p,
+            frequency_penalty=sampler.frequency_penalty,
+            presence_penalty=sampler.presence_penalty,
+            repeat_penalty=sampler.repeat_penalty,
+            top_k=sampler.top_k,
+            stop=stops
+        )['choices'][0]['text']
+
+        iteration = 0
+        while self._should_call_tool(response_text) and iteration < max_iterations:
+            tool_code = self._extract_tool_code(response_text)
+            if tool_code:
+                tool_name = tool_code.get("function", {}).get("name")
+                arguments = tool_code.get("function", {}).get("arguments", "")
+                if tool_name and arguments and tool_name in self.tools:
+                    # Execute the tool and append its output
+                    tool_output = self.tools[tool_name](**json.loads(arguments))
+                    response_text = response_text.replace(
+                        f"{self.tool_code_start}{json.dumps(tool_code)}{self.tool_code_end}", 
+                        tool_output
+                    )
+            iteration += 1
+
+        return response_text
     def __repr__(self) -> str:
         return \
             f"Model({repr(self._model_path)}, " + \

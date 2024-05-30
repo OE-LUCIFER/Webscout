@@ -1,3 +1,4 @@
+import json
 from ._version import __version__, __llama_cpp_version__
 
 """Submodule containing the Thread class, used for interaction with a Model"""
@@ -80,7 +81,9 @@ class Thread:
         format: Union[dict, AdvancedFormat],
         sampler: SamplerSettings = DefaultSampling,
         messages: Optional[list[Message]] = None,
+
     ):
+    
         """
         Given a Model and a format, construct a Thread instance.
 
@@ -141,7 +144,7 @@ class Thread:
             self.create_message("system", self.format['system_content'])
         ] if self._messages is None else self._messages
         self.sampler: SamplerSettings = sampler
-
+        self.tools = [] 
         if self.model.verbose:
             print_verbose("new Thread instance with the following attributes:")
             print_verbose(f"model                     == {self.model}")
@@ -162,8 +165,13 @@ class Thread:
             print_verbose(f"sampler.presence_penalty  == {self.sampler.presence_penalty}")
             print_verbose(f"sampler.repeat_penalty    == {self.sampler.repeat_penalty}")
             print_verbose(f"sampler.top_k             == {self.sampler.top_k}")
-    
+    def add_tool(self, tool: dict):
+        """Adds a tool to the Thread for function calling."""
+        self.tools.append(tool)
+        self.model.register_tool(tool['function']['name'], tool['function']['execute']) # Register the tool
 
+        # Include tool information in the system message (optional, but helpful)
+        self.messages[0]['content'] += f"\nYou have access to the following tool:\n{tool['function']['description']}" 
     def __repr__(self) -> str:
         return \
             f"Thread({repr(self.model)}, {repr(self.format)}, " + \
