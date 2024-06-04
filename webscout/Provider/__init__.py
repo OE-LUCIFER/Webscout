@@ -29,6 +29,7 @@ from .Berlin4h import Berlin4h
 from .ChatGPTUK import ChatGPTUK
 from .Poe import POE
 from .BasedGPT import BasedGPT
+from .Deepseek import DeepSeek
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
@@ -59,4 +60,5 @@ __all__ = [
     'ChatGPTUK',
     'POE',
     'BasedGPT',
+    'DeepSeek',
 ]

@@ -75,6 +75,7 @@ Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can
     - [14. `chatgptuk` - Chat with gemini-pro](#14-chatgptuk---chat-with-gemini-pro)
     - [15. `poe`- chat with poe](#15-poe--chat-with-poe)
     - [16. `BasedGPT` - chat with GPT](#16-basedgpt---chat-with-gpt)
+    - [17. `DeepSeek` -chat with deepseek](#17-deepseek--chat-with-deepseek)
     - [`LLM`](#llm)
     - [`Local-LLM` webscout can now run GGUF models](#local-llm-webscout-can-now-run-gguf-models)
     - [`Function-calling-local-llm`](#function-calling-local-llm)
@@ -1154,6 +1155,39 @@ Usage code similar to other proviers
 
 ### 16. `BasedGPT` - chat with GPT
 Usage code similar to other providers
+
+### 17. `DeepSeek` -chat with deepseek
+```python
+from webscout import DeepSeek
+from rich import print
+
+ai = DeepSeek(
+    is_conversation=True,
+    api_key='', # Watch this video https://youtu.be/Euin6p5Ryks?si=-84JBtyqGwMzvdIq to know from where u can get this key for free 
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+    model="deepseek_chat"
+)
+
+# Start an infinite loop for continuous interaction
+while True:
+    # Define a prompt to send to the AI
+    prompt = input("Enter your prompt: ")
+    
+    # Check if the user wants to exit the loop
+    if prompt.lower() == "exit":
+        break
+    
+    # Use the 'chat' method to send the prompt and receive a response
+    r = ai.chat(prompt)
+    print(r)
+```
 ### `LLM` 
 ```python
 from webscout.LLM import LLM

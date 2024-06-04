@@ -35,6 +35,7 @@ webai = [
    "auto",
    "poe",
    "basedgpt",
+   "deepseek",
 ]
 
 gpt4free_providers = [

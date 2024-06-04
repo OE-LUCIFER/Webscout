@@ -47,6 +47,7 @@ webai = [
    "auto",
    "poe",
    "basedgpt",
+   "deepseek",
 ]
 gpt4free_providers = [
     provider.__name__ for provider in g4f.Provider.__providers__  # if provider.working
@@ -540,6 +541,7 @@ print("The essay is about...")
         """
         if not quiet:
             print(
+                "Rawdog is an experimental tool that generates and auto-executes Python scripts in the cli.\n"
                 "To get the most out of Rawdog. Ensure the following are installed:\n"
                 " 1. Python 3.x\n"
                 " 2. Dependency:\n"
