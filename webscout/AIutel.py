@@ -214,12 +214,12 @@ class Conversation:
         ), f"File '{filepath}' does not exist"
         if not os.path.isfile(filepath):
             logging.debug(f"Creating new chat-history file - '{filepath}'")
-            with open(filepath, "w") as fh:  # Try creating new file
+            with open(filepath, "w", encoding='utf-8') as fh:  # Try creating new file
                 # lets add intro here
                 fh.write(self.intro)
         else:
             logging.debug(f"Loading conversation from '{filepath}'")
-            with open(filepath) as fh:
+            with open(filepath, encoding='utf-8') as fh:
                 file_contents = fh.read()
                 # Presume intro prompt is part of the file content
                 self.chat_history = file_contents
@@ -270,7 +270,7 @@ class Conversation:
             return
         new_history = self.history_format % dict(user=prompt, llm=response)
         if self.file and self.update_file:
-            with open(self.file, "a") as fh:
+            with open(self.file, "a", encoding='utf-8') as fh:
                 fh.write(new_history)
         self.chat_history += new_history
 
