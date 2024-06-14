@@ -7,7 +7,7 @@ from urllib.parse import unquote
 from pathlib import Path
 import click
 from curl_cffi import requests
-
+import pyreqwest_impersonate as pri
 from .webscout_search import WEBS
 from .utils import json_dumps, json_loads
 from .version import __version__
@@ -81,10 +81,10 @@ def _sanitize_keywords(keywords):
 
 def _download_file(url, dir_path, filename, proxy):
     try:
-        resp = requests.get(url, proxies=proxy, impersonate="chrome", timeout=10)
-        resp.raise_for_status()
-        with open(os.path.join(dir_path, filename[:200]), "wb") as file:
-            file.write(resp.content)
+        resp = pri.Client(proxy=proxy, impersonate="chrome_124", timeout=10, verify=False).get(url)
+        if resp.status_code == 200:
+            with open(os.path.join(dir_path, filename[:200]), "wb") as file:
+                file.write(resp.content)
     except Exception as ex:
         logger.debug(f"download_file url={url} {type(ex).__name__} {ex}")
 
@@ -93,7 +93,6 @@ def _download_results(keywords, results, images=False, proxy=None, threads=None)
     path_type = "images" if images else "text"
     path = f"{path_type}_{keywords}_{datetime.now():%Y%m%d_%H%M%S}"
     os.makedirs(path, exist_ok=True)
-    proxy = {"http": proxy, "https": proxy}
 
     threads = 10 if threads is None else threads
     with ThreadPoolExecutor(max_workers=threads) as executor:
@@ -129,13 +128,15 @@ def safe_entry_point():
 def version():
     print(__version__)
     return __version__
+
+
 @cli.command()
 @click.option("-s", "--save", is_flag=True, default=False, help="save the conversation in the json file")
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def chat(save, proxy):
     """CLI function to perform an interactive AI chat using DuckDuckGo API."""
     cache_file = "WEBS_chat_conversation.json"
-    models = ["gpt-3.5", "claude-3-haiku"]
+    models = ["gpt-3.5", "claude-3-haiku", "llama-3-70b", "mixtral-8x7b"]
     client = WEBS(proxy=proxy)
 
     print("DuckDuckGo AI chat. Available models:")
@@ -167,6 +168,7 @@ def chat(save, proxy):
         if "exit" in user_input.lower() or "quit" in user_input.lower():
             break
 
+
 @cli.command()
 @click.option("-k", "--keywords", required=True, help="text search, keywords for query")
 @click.option("-r", "--region", default="wt-wt", help="wt-wt, us-en, ru-ru, etc. -region https://duckduckgo.com/params")
@@ -180,7 +182,7 @@ def chat(save, proxy):
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def text(keywords, region, safesearch, timelimit, backend, output, download, threads, max_results, proxy):
     """CLI function to perform a text search using DuckDuckGo API."""
-    data = WEBS(proxies=proxy).text(
+    data = WEBS(proxy=proxy).text(
         keywords=keywords,
         region=region,
         safesearch=safesearch,
@@ -206,7 +208,7 @@ def text(keywords, region, safesearch, timelimit, backend, output, download, thr
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def answers(keywords, output, proxy):
     """CLI function to perform a answers search using DuckDuckGo API."""
-    data = WEBS(proxies=proxy).answers(keywords=keywords)
+    data = WEBS(proxy=proxy).answers(keywords=keywords)
     filename = f"answers_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)
@@ -277,7 +279,7 @@ def images(
     proxy,
 ):
     """CLI function to perform a images search using DuckDuckGo API."""
-    data = WEBS(proxies=proxy).images(
+    data = WEBS(proxy=proxy).images(
         keywords=keywords,
         region=region,
         safesearch=safesearch,
@@ -314,7 +316,7 @@ def images(
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def videos(keywords, region, safesearch, timelimit, resolution, duration, license_videos, max_results, output, proxy):
     """CLI function to perform a videos search using DuckDuckGo API."""
-    data = WEBS(proxies=proxy).videos(
+    data = WEBS(proxy=proxy).videos(
         keywords=keywords,
         region=region,
         safesearch=safesearch,
@@ -343,7 +345,7 @@ def videos(keywords, region, safesearch, timelimit, resolution, duration, licens
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def news(keywords, region, safesearch, timelimit, max_results, output, proxy):
     """CLI function to perform a news search using DuckDuckGo API."""
-    data = WEBS(proxies=proxy).news(
+    data = WEBS(proxy=proxy).news(
         keywords=keywords, region=region, safesearch=safesearch, timelimit=timelimit, max_results=max_results
     )
     filename = f"news_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
@@ -387,7 +389,7 @@ def maps(
     proxy,
 ):
     """CLI function to perform a maps search using DuckDuckGo API."""
-    data = WEBS(proxies=proxy).maps(
+    data = WEBS(proxy=proxy).maps(
         keywords=keywords,
         place=place,
         street=street,
@@ -418,7 +420,7 @@ def maps(
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def translate(keywords, from_, to, output, proxy):
     """CLI function to perform translate using DuckDuckGo API."""
-    data = WEBS(proxies=proxy).translate(keywords=keywords, from_=from_, to=to)
+    data = WEBS(proxy=proxy).translate(keywords=keywords, from_=from_, to=to)
     filename = f"translate_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)
@@ -435,7 +437,7 @@ def translate(keywords, from_, to, output, proxy):
 @click.option("-p", "--proxy", default=None, help="the proxy to send requests, example: socks5://localhost:9150")
 def suggestions(keywords, region, output, proxy):
     """CLI function to perform a suggestions search using DuckDuckGo API."""
-    data = WEBS(proxies=proxy).suggestions(keywords=keywords, region=region)
+    data = WEBS(proxy=proxy).suggestions(keywords=keywords, region=region)
     filename = f"suggestions_{_sanitize_keywords(keywords)}_{datetime.now():%Y%m%d_%H%M%S}"
     if output == "print":
         _print_data(data)

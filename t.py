@@ -1,6 +1,3 @@
-from webscout import WEBS
-
-# Text search for 'live free or die' using DuckDuckGo.com 
-with WEBS() as WEBS:
-    for r in WEBS.text('live free or die', region='wt-wt', safesearch='off', timelimit='y', max_results=10, backend='lite'):
-        print(r)
+from webscout import WEBS as w
+R = w().chat("hello", model='claude-3-haiku') # GPT-3.5 Turbo, mixtral-8x7b, llama-3-70b, claude-3-haiku
+print(R)

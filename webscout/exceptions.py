@@ -1,5 +1,5 @@
 class WebscoutE(Exception):
-    """Base exception class for duckduckgo_search."""
+    """Base exception class for search."""
 
 
 class RatelimitE(Exception):

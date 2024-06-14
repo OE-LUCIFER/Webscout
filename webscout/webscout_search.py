@@ -30,11 +30,11 @@ from .utils import (
     json_loads,
 )
 
-logger = logging.getLogger("webcout_search.WEBS")
+logger = logging.getLogger("webscout.WEBS")
 
 
 class WEBS:
-    """webcout_search class to get search results from duckduckgo.com."""
+    """webscout class to get search results from duckduckgo.com."""
 
     _executor: ThreadPoolExecutor = ThreadPoolExecutor()
 
@@ -121,16 +121,22 @@ class WEBS:
         return _extract_vqd(resp_content, keywords)
 
     def chat(self, keywords: str, model: str = "gpt-3.5") -> str:
-        """Initiates a chat session with Webscout AI.
+        """Initiates a chat session with DuckDuckGo AI.
 
         Args:
             keywords (str): The initial message or question to send to the AI.
-            model (str): The model to use: "gpt-3.5", "claude-3-haiku". Defaults to "gpt-3.5".
+            model (str): The model to use: "gpt-3.5", "claude-3-haiku", "llama-3-70b", "mixtral-8x7b".
+                Defaults to "gpt-3.5".
 
         Returns:
             str: The response from the AI.
         """
-        models = {"claude-3-haiku": "claude-3-haiku-20240307", "gpt-3.5": "gpt-3.5-turbo-0125"}
+        models = {
+            "claude-3-haiku": "claude-3-haiku-20240307",
+            "gpt-3.5": "gpt-3.5-turbo-0125",
+            "llama-3-70b": "meta-llama/Llama-3-70b-chat-hf",
+            "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+        }
         # vqd
         if not self._chat_vqd:
             resp = self.client.get("https://duckduckgo.com/duckchat/v1/status", headers={"x-vqd-accept": "1"})
@@ -167,7 +173,7 @@ class WEBS:
         backend: str = "api",
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout text search. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -184,7 +190,7 @@ class WEBS:
             List of dictionaries with search results, or None if there was an error.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -195,7 +201,7 @@ class WEBS:
         if backend == "api":
             results = self._text_api(keywords, region, safesearch, timelimit, max_results)
         elif backend == "html":
-            results = self._text_html(keywords, region, safesearch, timelimit, max_results)
+            results = self._text_html(keywords, region, timelimit, max_results)
         elif backend == "lite":
             results = self._text_lite(keywords, region, timelimit, max_results)
         return results
@@ -208,7 +214,7 @@ class WEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout text search. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -221,7 +227,7 @@ class WEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -237,6 +243,7 @@ class WEBS:
             "s": "0",
             "df": "",
             "vqd": vqd,
+            "bing_market": f"{region[3:]}-{region[:2].upper()}",
             "ex": "",
         }
         safesearch = safesearch.lower()
@@ -273,7 +280,7 @@ class WEBS:
 
         slist = [0]
         if max_results:
-            max_results = min(max_results, 500)
+            max_results = min(max_results, 2023)
             slist.extend(range(23, max_results, 50))
         try:
             for r in self._executor.map(_text_api_page, slist):
@@ -287,16 +294,14 @@ class WEBS:
         self,
         keywords: str,
         region: str = "wt-wt",
-        safesearch: str = "moderate",
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout text search. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
             region: wt-wt, us-en, uk-en, ru-ru, etc. Defaults to "wt-wt".
-            safesearch: on, moderate, off. Defaults to "moderate".
             timelimit: d, w, m, y. Defaults to None.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
@@ -304,19 +309,20 @@ class WEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         assert keywords, "keywords is mandatory"
 
-        safesearch_base = {"on": "1", "moderate": "-1", "off": "-2"}
         payload = {
             "q": keywords,
-            "kl": region,
-            "p": safesearch_base[safesearch.lower()],
+            "s": "0",
             "o": "json",
             "api": "d.js",
+            "vqd": "",
+            "kl": region,
+            "bing_market": region,
         }
         if timelimit:
             payload["df"] = timelimit
@@ -364,7 +370,7 @@ class WEBS:
 
         slist = [0]
         if max_results:
-            max_results = min(max_results, 500)
+            max_results = min(max_results, 2023)
             slist.extend(range(23, max_results, 50))
         try:
             for r in self._executor.map(_text_html_page, slist):
@@ -381,7 +387,7 @@ class WEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout text search. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -393,7 +399,7 @@ class WEBS:
             List of dictionaries with search results.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -401,9 +407,12 @@ class WEBS:
 
         payload = {
             "q": keywords,
+            "s": "0",
             "o": "json",
             "api": "d.js",
+            "vqd": "",
             "kl": region,
+            "bing_market": region,
         }
         if timelimit:
             payload["df"] = timelimit
@@ -455,7 +464,7 @@ class WEBS:
 
         slist = [0]
         if max_results:
-            max_results = min(max_results, 500)
+            max_results = min(max_results, 2023)
             slist.extend(range(23, max_results, 50))
         try:
             for r in self._executor.map(_text_lite_page, slist):
@@ -478,7 +487,7 @@ class WEBS:
         license_image: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout images search. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo images search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -501,7 +510,7 @@ class WEBS:
             List of dictionaries with images search results.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -574,7 +583,7 @@ class WEBS:
         license_videos: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout videos search. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo videos search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -590,7 +599,7 @@ class WEBS:
             List of dictionaries with videos search results.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -631,7 +640,7 @@ class WEBS:
         slist = [0]
         if max_results:
             max_results = min(max_results, 400)
-            slist.extend(range(59, max_results, 59))
+            slist.extend(range(60, max_results, 60))
         try:
             for r in self._executor.map(_videos_page, slist):
                 results.extend(r)
@@ -648,7 +657,7 @@ class WEBS:
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout news search. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo news search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -661,7 +670,7 @@ class WEBS:
             List of dictionaries with news search results.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -707,8 +716,8 @@ class WEBS:
 
         slist = [0]
         if max_results:
-            max_results = min(max_results, 200)
-            slist.extend(range(29, max_results, 29))
+            max_results = min(max_results, 120)
+            slist.extend(range(30, max_results, 30))
         try:
             for r in self._executor.map(_news_page, slist):
                 results.extend(r)
@@ -718,7 +727,7 @@ class WEBS:
         return list(islice(results, max_results))
 
     def answers(self, keywords: str) -> List[Dict[str, str]]:
-        """Webscout instant answers. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo instant answers. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query,
@@ -727,7 +736,7 @@ class WEBS:
             List of dictionaries with instant answers results.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -789,7 +798,7 @@ class WEBS:
         return results
 
     def suggestions(self, keywords: str, region: str = "wt-wt") -> List[Dict[str, str]]:
-        """Webscout suggestions. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo suggestions. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -799,7 +808,7 @@ class WEBS:
             List of dictionaries with suggestions results.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -828,7 +837,7 @@ class WEBS:
         radius: int = 0,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """Webscout maps search. Query params: https://duckduckgo.com/params.
+        """DuckDuckGo maps search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query
@@ -849,7 +858,7 @@ class WEBS:
             List of dictionaries with maps search results, or None if there was an error.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
@@ -1005,7 +1014,7 @@ class WEBS:
     def translate(
         self, keywords: Union[List[str], str], from_: Optional[str] = None, to: str = "en"
     ) -> List[Dict[str, str]]:
-        """Webscout translate.
+        """DuckDuckGo translate.
 
         Args:
             keywords: string or list of strings to translate.
@@ -1016,7 +1025,7 @@ class WEBS:
             List od dictionaries with translated keywords.
 
         Raises:
-            WebscoutE: Base exception for webcout_search errors.
+            WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
