@@ -658,6 +658,21 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
+            elif provider == "deepinfra":
+                from webscout import DeepInfra
+
+                self.bot = DeepInfra(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    model=getOr(model, "Qwen/Qwen2-72B-Instruct"),
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
             elif provider == "xjai":
                 from webscout import Xjai
 

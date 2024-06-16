@@ -30,7 +30,7 @@ from .ChatGPTUK import ChatGPTUK
 from .Poe import POE
 from .BasedGPT import BasedGPT
 from .Deepseek import DeepSeek
-
+from .Deepinfra import DeepInfra, VLM, AsyncDeepInfra
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
@@ -62,5 +62,8 @@ __all__ = [
     'POE',
     'BasedGPT',
     'DeepSeek',
+    'DeepInfra',
+    'VLM',
+    'AsyncDeepInfra',
 
 ]

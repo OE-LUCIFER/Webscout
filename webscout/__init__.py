@@ -1,7 +1,7 @@
 from .webscout_search import WEBS
 from .webscout_search_async import AsyncWEBS
 from .version import __version__
-from .DWEBS import DeepWEBS
+from .DWEBS import *
 from .transcriber import transcriber
 from .voice import play_audio
 from .websx_search import WEBSX
@@ -37,6 +37,7 @@ webai = [
    "poe",
    "basedgpt",
    "deepseek",
+   "deepinfra",
 ]
 
 gpt4free_providers = [

@@ -39,9 +39,9 @@ Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can
     - [Temp number](#temp-number)
     - [Tempmail](#tempmail)
   - [Transcriber](#transcriber)
-  - [DeepWEBS: Advanced Web Searches](#deepwebs-advanced-web-searches)
-    - [Activating DeepWEBS](#activating-deepwebs)
-    - [Point to remember before using `DeepWEBS`](#point-to-remember-before-using-deepwebs)
+  - [DWEBS: Advanced Web Searches](#dwebs-advanced-web-searches)
+    - [Activating DWEBS](#activating-dwebs)
+    - [Point to remember before using `DWEBS`](#point-to-remember-before-using-dwebs)
     - [Usage Example](#usage-example)
   - [Text-to-Speech:](#text-to-speech)
     - [Available TTS Voices:](#available-tts-voices)
@@ -77,12 +77,12 @@ Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can
     - [15. `poe`- chat with poe](#15-poe--chat-with-poe)
     - [16. `BasedGPT` - chat with GPT](#16-basedgpt---chat-with-gpt)
     - [17. `DeepSeek` -chat with deepseek](#17-deepseek--chat-with-deepseek)
+    - [18. Deepinfra](#18-deepinfra)
+    - [19. Deepinfra - VLM](#19-deepinfra---vlm)
     - [`LLM`](#llm)
     - [`Local-LLM` webscout can now run GGUF models](#local-llm-webscout-can-now-run-gguf-models)
-    - [`Function-calling-local-llm`](#function-calling-local-llm)
     - [`Local-rawdog`](#local-rawdog)
     - [`LLM` with internet](#llm-with-internet)
-    - [LLM with deepwebs](#llm-with-deepwebs)
   - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
 
 ## Install
@@ -329,68 +329,75 @@ if __name__ == "__main__":
     main()
 ```
 
-## DeepWEBS: Advanced Web Searches
+## DWEBS: Advanced Web Searches
 
-`DeepWEBS` is a standalone feature designed to perform advanced web searches with enhanced capabilities. It is particularly powerful in extracting relevant information directly from webpages and Search engine, focusing exclusively on text (web) searches. Unlike the `WEBS` , which provides a broader range of search functionalities, `DeepWEBS` is specifically tailored for in-depth web searches.
+`DWEBS` is a standalone feature designed to perform advanced web searches with enhanced capabilities. It is particularly powerful in extracting relevant information directly from webpages and Search engine, focusing exclusively on text (web) searches. Unlike the `WEBS` , which provides a broader range of search functionalities, `DWEBS` is specifically tailored for in-depth web searches.
 
-### Activating DeepWEBS
+### Activating DWEBS
 
-To utilize the `DeepWEBS` feature, you must first create an instance of the `DeepWEBS` . This is designed to be used independently of the `WEBS` , offering a focused approach to web searches.
+To utilize the `DWEBS` feature, you must first create an instance of the `DWEBS` . This is designed to be used independently of the `WEBS` , offering a focused approach to web searches.
 
-### Point to remember before using `DeepWEBS`
-As `DeepWEBS` is designed to extract relevant information directly from webpages and Search engine, It extracts html from webpages and saves them to folder named files in `DeepWEBS` that can be found at `C:\Users\Username\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\DeepWEBS`
+### Point to remember before using `DWEBS`
+As `DWEBS` is designed to extract relevant information directly from webpages and Search engine, It extracts html from webpages and saves them to folder named files 
 
 ### Usage Example
 
-Here's a basic example of how to use the `DeepWEBS` :
+Here's a basic example of how to use the `DWEBS` :
 ```python
-from webscout import DeepWEBS
+from webscout import DWEBS
 
-def perform_web_search(query):
-    # Initialize the DeepWEBS class
-    D = DeepWEBS()
-    
-    # Set up the search parameters
-    search_params = D.DeepSearch(
-        queries=[query], # Query to search
-        result_num=5, # Number of search results
-        safe=True, # Enable SafeSearch
-        types=["web"], # Search type: web
-        extract_webpage=True, # True for extracting webpages
-        overwrite_query_html=False,
-        overwrite_webpage_html=False,
+def finalextractor(extract_webpage=True):
+    print('---------------Here Running for GoogleSearch--------------------')
+    # 1. Google Search
+    google_searcher = DWEBS.GoogleSearcher()
+    query_html_path = google_searcher.search(
+        query='HelpingAI-9B',
+        result_num=10,
+        safe=False,
+        overwrite=False,
     )
-    
-    # Execute the search and retrieve results
-    results = D.queries_to_search_results(search_params)
-    
-    return results
 
-def print_search_results(results):
-    """
-    Print the search results.
-    
-    Args:
-    - search_results (list): List of search results to print.
-    """
-    if results:
-        for index, result in enumerate(results, start=1):
-            print(f"Result {index}: {result}")
+    # 2. Search Result Extraction
+    query_results_extractor = DWEBS.QueryResultsExtractor()
+    query_search_results = query_results_extractor.extract(query_html_path)
+
+    if extract_webpage:
+        print('---------------Batch Webpage Fetcher--------------------')
+        # 3. Batch Webpage Fetching
+        batch_webpage_fetcher = DWEBS.BatchWebpageFetcher()
+        urls = [query_extracts['url'] for query_extracts in query_search_results['query_results']]
+        url_and_html_path_list = batch_webpage_fetcher.fetch(
+            urls,
+            overwrite=False,
+            output_parent=query_search_results["query"],
+        )
+
+        print('---------------Batch Webpage Extractor--------------------')
+        # 4. Batch Webpage Content Extraction
+        batch_webpage_content_extractor = DWEBS.BatchWebpageContentExtractor()
+        webpageurls = [url_and_html['html_path'] for url_and_html in url_and_html_path_list]
+        html_path_and_extracted_content_list = batch_webpage_content_extractor.extract(webpageurls)
+
+        # 5. Printing Extracted Content
+        for html_path_and_extracted_content in html_path_and_extracted_content_list:
+            print(html_path_and_extracted_content['extracted_content'])
     else:
-        print("No search results found.")
+        # Print only search results if extract_webpage is False
+        for result in query_search_results['query_results']:
+            DWEBS.logger.mesg(
+                f"{result['title']}\n"
+                f" - {result['site']}\n"
+                f" - {result['url']}\n"
+                f" - {result['abstract']}\n"
+                f"\n"
+            )
 
-def main():
-    # Prompt the user for a search query
-    query = input("Enter your search query: ")
-    
-    # Perform the web search
-    results = perform_web_search(query)
-    
-    # Print the search results
-    print_search_results(results)
+        DWEBS.logger.success(f"- {len(query_search_results['query_results'])} query results")
+        DWEBS.logger.success(f"- {len(query_search_results['related_questions'])} related questions")
 
-if __name__ == "__main__":
-    main()
+# Example usage:
+finalextractor(extract_webpage=True)  # Extract webpage content
+finalextractor(extract_webpage=False) # Skip webpage extraction and print search results only
 
 ```
 ## Text-to-Speech:
@@ -645,7 +652,6 @@ def main():
         print(f"Snippet: {result['snippet']}")
         print(f"Link: {result['link']}\n")
         print(f'Engines: {result["engines"]}')
-
 
 if __name__ == "__main__":
     main()
@@ -1221,6 +1227,57 @@ while True:
     r = ai.chat(prompt)
     print(r)
 ```
+### 18. Deepinfra
+```python
+from webscout import DeepInfra
+
+ai = DeepInfra(
+    is_conversation=True,
+    model= "Qwen/Qwen2-72B-Instruct",
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+)
+
+prompt = "what is meaning of life"
+
+response = ai.ask(prompt)
+
+# Extract and print the message from the response
+message = ai.get_message(response)
+print(message)
+```
+
+### 19. Deepinfra - VLM
+```python
+from webscout import DeepInfra
+
+ai = DeepInfra(
+    is_conversation=True,
+    model= "Qwen/Qwen2-72B-Instruct",
+    max_tokens=800,
+    timeout=30,
+    intro=None,
+    filepath=None,
+    update_file=True,
+    proxies={},
+    history_offset=10250,
+    act=None,
+)
+
+prompt = "what is meaning of life"
+
+response = ai.ask(prompt)
+
+# Extract and print the message from the response
+message = ai.get_message(response)
+print(message)
+```
 ### `LLM` 
 ```python
 from webscout.LLM import LLM
@@ -1268,78 +1325,7 @@ thread = Thread(model, formats.phi3)
 # 4. Start interacting with the model
 thread.interact()
 ```
-### `Function-calling-local-llm`
-```python
-from webscout.Local import Model, Thread, formats
-from webscout import DeepWEBS
-from webscout.Local.utils import download_model
-from webscout.Local.model import Model
-from webscout.Local.thread import Thread
-from webscout.Local import formats
-from webscout.Local.samplers import SamplerSettings
-def deepwebs_search(query, max_results=5):
-    """Performs a web search using DeepWEBS and returns results as JSON."""
-    deepwebs = DeepWEBS()
-    search_config = DeepWEBS.DeepSearch(
-        queries=[query],
-        max_results=max_results,
-        extract_webpage=False,
-        safe=False,
-        types=["web"],
-        overwrite_query_html=True,
-        overwrite_webpage_html=True,
-    )
-    search_results = deepwebs.queries_to_search_results(search_config)
-    formatted_results = []
-    for result in search_results[0]:  # Assuming only one query
-        formatted_results.append(f"Title: {result['title']}\nURL: {result['url']}\n")
-    return "\n".join(formatted_results)
 
-# Load your model
-repo_id = "OEvortex/HelpingAI-9B" 
-filename = "helpingai-9b.Q4_0.gguf"
-model_path = download_model(repo_id, filename, token='')
-
-# 2. Load the model 
-model = Model(model_path, n_gpu_layers=10)
-
-# Create a Thread
-system_prompt = "You are a helpful AI assistant. Respond to user queries concisely. If a user asks for information that requires a web search, use the `deepwebs_search` tool. Do not call the tool if it is not necessary."
-sampler = SamplerSettings(temp=0.7, top_p=0.9)  # Adjust these values as needed
-# 4. Create a custom chatml format with your system prompt
-custom_chatml = formats.chatml.copy()
-custom_chatml['system_content'] = system_prompt
-thread = Thread(model, custom_chatml, sampler=sampler)
-# Add the deepwebs_search tool
-thread.add_tool({
-    "type": "function",
-    "function": {
-        "name": "deepwebs_search",
-        "description": "Performs a web search using DeepWEBS and returns the title and URLs of the results.",
-        "execute": deepwebs_search,
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "The query to search on the web",
-                },
-                "max_results": {
-                    "type": "integer",
-                    "description": "Maximum number of search results (default: 5)",
-                },
-            },
-            "required": ["query"],
-        },
-    },
-})
-
-# Start interacting with the model
-while True:
-    user_input = input("You: ")
-    response = thread.send(user_input)
-    print("Bot: ", response) 
-```
 ### `Local-rawdog`
 ```python
 import webscout.Local as ws
@@ -1500,94 +1486,7 @@ if __name__ == "__main__":
         else:
             print("No response")
 ```
-### LLM with deepwebs
-```python
-from __future__ import annotations
-from typing import List, Optional
-from webscout.LLM import LLM
-from webscout import DeepWEBS
-import warnings
 
-system_message: str = (
-    "As an AI assistant, I have been designed with advanced capabilities, including real-time access to online resources. This enables me to enrich our conversations and provide you with informed and accurate responses, drawing from a vast array of information. With each interaction, my goal is to create a seamless and meaningful connection, offering insights and sharing relevant content."
-    "My directives emphasize the importance of respect, impartiality, and intellectual integrity. I am here to provide unbiased responses, ensuring an ethical and respectful exchange. I will respect your privacy and refrain from sharing any personal information that may be obtained during our conversations or through web searches, only utilizing web search functionality when necessary to provide the most accurate and up-to-date information."
-    "Together, let's explore a diverse range of topics, creating an enjoyable and informative experience, all while maintaining the highest standards of privacy and respect"
-)
-
-# Ignore the specific UserWarning
-warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffio", lineno=205)
-
-LLM = LLM(model="mistralai/Mixtral-8x22B-Instruct-v0.1", system_message=system_message)
-
-def perform_web_search(query):
-    # Initialize the DeepWEBS class
-    D = DeepWEBS()
-
-    # Set up the search parameters
-    search_params = D.DeepSearch(
-        queries=[query],  # Query to search
-        result_num=10,  # Number of search results
-        safe=True,  # Enable SafeSearch
-        types=["web"],  # Search type: web
-        extract_webpage=True,  # True for extracting webpages
-        overwrite_query_html=True,
-        overwrite_webpage_html=True,
-    )
-
-    # Execute the search and retrieve results
-    results = D.queries_to_search_results(search_params)
-    return results
-
-def chat(user_input: str, result_num: int = 10) -> Optional[str]:
-    """
-    Chat function to perform a web search based on the user input and generate a response using the LLM model.
-
-    Parameters
-    ----------
-    user_input : str
-        The user input to be used for the web search
-    max_results : int, optional
-        The maximum number of search results to include in the response, by default 10
-
-    Returns
-    -------
-    Optional[str]
-        The response generated by the LLM model, or None if there is no response
-    """
-    # Perform a web search based on the user input
-    search_results = perform_web_search(user_input)
-
-    # Extract URLs from search results
-    url_results = []
-    for result in search_results[0]['query_results']:
-        url_results.append(f"{result['title']} ({result['site']}): {result['url']}")
-
-    # Format search results
-    formatted_results = "\n".join(url_results)
-
-    # Define the messages to be sent, including the user input, search results, and system message
-    messages = [
-        {"role": "user", "content": f"User question is:\n{user_input}\nwebsearch results are:\n{formatted_results}"},
-    ]
-
-    # Use the chat method to get the response
-    response = LLM.chat(messages)
-    return response
-
-if __name__ == "__main__":
-    while True:
-        # Get the user input
-        user_input = input("User: ")
-
-        # Perform a web search based on the user input
-        response = chat(user_input)
-
-        # Print the response
-        if response:
-            print("AI:", response)
-        else:
-            print("No response")
-```
 ## `Webai` - terminal gpt and a open interpeter
 
 ```python
