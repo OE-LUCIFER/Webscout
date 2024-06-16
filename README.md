@@ -46,7 +46,7 @@ Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can
   - [Text-to-Speech:](#text-to-speech)
     - [Available TTS Voices:](#available-tts-voices)
   - [Exceptions](#exceptions)
-  - [usage of webscout](#usage-of-webscout)
+  - [usage of WEBS](#usage-of-webs)
     - [1. `text()` - text search by DuckDuckGo.com](#1-text---text-search-by-duckduckgocom)
     - [2. `answers()` - instant answers by DuckDuckGo.com](#2-answers---instant-answers-by-duckduckgocom)
     - [3. `images()` - image search by DuckDuckGo.com](#3-images---image-search-by-duckduckgocom)
@@ -55,6 +55,7 @@ Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can
     - [6. `maps()` - map search by DuckDuckGo.com](#6-maps---map-search-by-duckduckgocom)
     - [7. `translate()` - translation by DuckDuckGo.com](#7-translate---translation-by-duckduckgocom)
     - [8. `suggestions()` - suggestions by DuckDuckGo.com](#8-suggestions---suggestions-by-duckduckgocom)
+  - [usage of WEBSX -- Another Websearch thing](#usage-of-websx----another-websearch-thing)
   - [ALL acts](#all-acts)
   - [Webscout Supported Acts:](#webscout-supported-acts)
   - [usage of webscout AI](#usage-of-webscout-ai)
@@ -327,6 +328,7 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
 ## DeepWEBS: Advanced Web Searches
 
 `DeepWEBS` is a standalone feature designed to perform advanced web searches with enhanced capabilities. It is particularly powerful in extracting relevant information directly from webpages and Search engine, focusing exclusively on text (web) searches. Unlike the `WEBS` , which provides a broader range of search functionalities, `DeepWEBS` is specifically tailored for in-depth web searches.
@@ -467,7 +469,7 @@ This ensures proper resource management and cleanup, as the context manager will
 Exceptions:
 - `WebscoutE`: Raised when there is a generic exception during the API request.
 
-## usage of webscout
+## usage of WEBS
 
 ### 1. `text()` - text search by DuckDuckGo.com 
 
@@ -616,6 +618,37 @@ from webscout import WEBS
 with WEBS() as WEBS:
     for r in WEBS.suggestions("fly"):
         print(r)
+```
+
+
+## usage of WEBSX -- Another Websearch thing
+```python
+from webscout import WEBSX
+
+def main():
+    # Initialize the WEBSX client
+    search = WEBSX(
+        k=10,  
+    )
+
+    # Example using `run` method - Get a summary
+    query = "What is the capital of France?"
+    answer = search.run(query)
+    print(f"Answer: {answer}\n")
+
+    # Example using `results` method - Get detailed results with metadata
+    query = "What is the capital of France?"
+    results = search.results(query, num_results=3)
+    print("Search Results:")
+    for result in results:
+        print(f"Title: {result['title']}")
+        print(f"Snippet: {result['snippet']}")
+        print(f"Link: {result['link']}\n")
+        print(f'Engines: {result["engines"]}')
+
+
+if __name__ == "__main__":
+    main()
 ```
 ## ALL acts
 <details>
