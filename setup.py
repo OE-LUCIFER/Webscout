@@ -57,7 +57,8 @@ setup(
         "Helpingai-T2",
         "playsound",
         "poe_api_wrapper",
-        "pyreqwest_impersonate"
+        "pyreqwest_impersonate",
+        "ballyregan"
     ],
     entry_points={
         "console_scripts": [

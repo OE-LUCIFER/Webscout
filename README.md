@@ -938,6 +938,23 @@ response = ph.ask(prompt)
 message = ph.get_message(response)
 print(message)
 ```
+Using phindv2
+```python
+from webscout import Phindv2
+
+# Create an instance of the PHIND class
+ph = Phindv2()
+
+# Define a prompt to send to the AI
+prompt = ""
+
+# Use the 'ask' method to send the prompt and receive a response
+response = ph.ask(prompt)
+
+# Extract and print the message from the response
+message = ph.get_message(response)
+print(message)
+```
 ### 2. `YepChat` - Chat with mistral 8x7b powered by yepchat
 ```python
 from webscout import YEPCHAT
@@ -954,7 +971,7 @@ print(r)
 
 ```
 
-### 3. `You.com` - search/chat with you.com 
+### 3. `You.com` - search/chat with you.com - Not working
 ```python
 
 from webscout import YouChat
@@ -1078,6 +1095,45 @@ while True:
     response_str = opengpt.chat(prompt)
     print(response_str)
 ```
+```python
+from webscout import OPENGPTv2
+
+# Initialize the bot with all specified settings
+bot = OPENGPTv2(
+    generate_new_agents=True,  # Set to True to generate new IDs, False to load from file
+    assistant_name="My Custom Assistant",
+    retrieval_description="Helpful information from my files.",
+    agent_system_message="",
+    enable_action_server=False,  # Assuming you want to disable Action Server by Robocorp
+    enable_ddg_search=False,  # Enable DuckDuckGo search tool
+    enable_arxiv=False,  # Assuming you want to disable Arxiv
+    enable_press_releases=False,  # Assuming you want to disable Press Releases (Kay.ai)
+    enable_pubmed=False,  # Assuming you want to disable PubMed
+    enable_sec_filings=False,  # Assuming you want to disable SEC Filings (Kay.ai)
+    enable_retrieval=False,  # Assuming you want to disable Retrieval
+    enable_search_tavily=False,  # Assuming you want to disable Search (Tavily)
+    enable_search_short_answer_tavily=False,  # Assuming you want to disable Search (short answer, Tavily)
+    enable_you_com_search=True,  # Assuming you want to disable You.com Search
+    enable_wikipedia=False,  # Enable Wikipedia tool
+    is_public=True,
+    is_conversation=True,
+    max_tokens=800,
+    timeout=40,
+    filepath="opengpt_conversation_history.txt",
+    update_file=True,
+    history_offset=10250,
+    act=None,
+)
+
+# Example interaction loop
+while True:
+    prompt = input("You: ")
+    if prompt.strip().lower() == 'exit':
+        break
+    response = bot.chat(prompt)
+    print(response)
+
+```
 ### 9. `KOBOLDAI` - 
 ```python
 from webscout import KOBOLDAI
@@ -1193,8 +1249,26 @@ print(response)
 Usage code similar to other proviers
 
 ### 16. `BasedGPT` - chat with GPT
-Usage code similar to other providers
+```
+from webscout import BasedGPT
 
+# Initialize the BasedGPT provider
+basedgpt = BasedGPT(
+    is_conversation=True,  # Chat conversationally
+    max_tokens=600,  # Maximum tokens to generate
+    timeout=30,  # HTTP request timeout
+    intro="You are a helpful and friendly AI.",  # Introductory prompt
+    filepath="chat_history.txt",  # File to store conversation history
+    update_file=True,  # Update the chat history file
+)
+
+# Send a prompt to the AI
+prompt = "What is the meaning of life?"
+response = basedgpt.chat(prompt)
+
+# Print the AI's response
+print(response)
+```
 ### 17. `DeepSeek` -chat with deepseek
 ```python
 from webscout import DeepSeek
@@ -1227,7 +1301,7 @@ while True:
     r = ai.chat(prompt)
     print(r)
 ```
-### 18. Deepinfra
+### 18. `Deepinfra`
 ```python
 from webscout import DeepInfra
 
@@ -1253,30 +1327,33 @@ message = ai.get_message(response)
 print(message)
 ```
 
-### 19. Deepinfra - VLM
+### 19. `Deepinfra` - VLM
 ```python
-from webscout import DeepInfra
+from webscout.Provider import VLM 
 
-ai = DeepInfra(
-    is_conversation=True,
-    model= "Qwen/Qwen2-72B-Instruct",
-    max_tokens=800,
-    timeout=30,
-    intro=None,
-    filepath=None,
-    update_file=True,
-    proxies={},
-    history_offset=10250,
-    act=None,
-)
+# Load your image
+image_path = r"C:\Users\koula\OneDrive\Desktop\Webscout\photo_2024-03-25_19-23-40.jpg"
 
-prompt = "what is meaning of life"
+vlm_instance = VLM(model="llava-hf/llava-1.5-7b-hf", is_conversation=True, max_tokens=600, timeout=30, system_prompt="You are a Helpful AI.")
+image_base64 = vlm_instance.encode_image_to_base64(image_path)
 
-response = ai.ask(prompt)
+prompt = {
+    "content": "What is in this image?",
+    "image": image_base64
+}
 
-# Extract and print the message from the response
-message = ai.get_message(response)
-print(message)
+# Generate a response
+response = vlm_instance.chat(prompt)
+print(response)
+
+```
+### 20. `VTLchat` - Free gpt3.5
+```python
+from webscout import VTLchat
+
+provider = VTLchat()
+response = provider.chat("Hello, how are you?")
+print(response)
 ```
 ### `LLM` 
 ```python

@@ -1,26 +1,36 @@
-from webscout import VLM
+from webscout import OPENGPTv2
 
-vlm = VLM(model="llava-hf/llava-1.5-7b-hf", system_prompt="You are a helpful and informative AI assistant.")
+# Initialize the bot with all specified settings
+bot = OPENGPTv2(
+    generate_new_agents=True,  # Set to True to generate new IDs, False to load from file
+    assistant_name="My Custom Assistant",
+    retrieval_description="Helpful information from my files.",
+    agent_system_message="",
+    enable_action_server=False,  # Assuming you want to disable Action Server by Robocorp
+    enable_ddg_search=False,  # Enable DuckDuckGo search tool
+    enable_arxiv=False,  # Assuming you want to disable Arxiv
+    enable_press_releases=False,  # Assuming you want to disable Press Releases (Kay.ai)
+    enable_pubmed=False,  # Assuming you want to disable PubMed
+    enable_sec_filings=False,  # Assuming you want to disable SEC Filings (Kay.ai)
+    enable_retrieval=False,  # Assuming you want to disable Retrieval
+    enable_search_tavily=False,  # Assuming you want to disable Search (Tavily)
+    enable_search_short_answer_tavily=False,  # Assuming you want to disable Search (short answer, Tavily)
+    enable_you_com_search=True,  # Assuming you want to disable You.com Search
+    enable_wikipedia=False,  # Enable Wikipedia tool
+    is_public=True,
+    is_conversation=True,
+    max_tokens=800,
+    timeout=40,
+    filepath="opengpt_conversation_history.txt",
+    update_file=True,
+    history_offset=10250,
+    act=None,
+)
 
-# Path to the image and the user message
-image_path = r"C:\Users\hp\Desktop\main\photo_2024-05-15_15-23-52.jpg"
-user_message = "What is shown in this image?"
-
-# Encode the image to base64
-image_base64 = vlm.encode_image_to_base64(image_path)
-
-# Define the prompt with both image and text
-prompt = {
-    "role": "user",
-    "content": [
-        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}},
-        {"type": "text", "text": user_message}
-    ]
-}
-
-# Get the response
-response = vlm.ask(prompt)
-
-# Extract and print the message from the response
-message = vlm.get_message(response)
-print(message)
+# Example interaction loop
+while True:
+    prompt = input("You: ")
+    if prompt.strip().lower() == 'exit':
+        break
+    response = bot.chat(prompt)
+    print(response)
