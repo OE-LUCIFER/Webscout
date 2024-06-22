@@ -648,14 +648,14 @@ Current Datetime : {datetime.datetime.now()}
         else:
             logging.info(message)
 
-    def main(self, response: str) -> None:
+    def main(self, response: str):
         """Exec code in response accordingly
 
         Args:
-            response (str): AI response
+            response: AI response
 
         Returns:
-            None|str: None if script executed successfully else stdout data
+            Optional[str]: None if script executed successfully else stdout data
         """
         code_blocks = re.findall(r"```python.*?```", response, re.DOTALL)
         if len(code_blocks) != 1:
@@ -691,6 +691,7 @@ Current Datetime : {datetime.datetime.now()}
                         self.log("Returning success feedback")
                         return f"LAST SCRIPT OUTPUT:\n{proc.stdout}"
                     else:
+                        
                         self.log("Returning error feedback", "error")
                         return f"PREVIOUS SCRIPT EXCEPTION:\n{proc.stderr}"
                 else:
@@ -701,12 +702,14 @@ Current Datetime : {datetime.datetime.now()}
                     self.log("Executing script internally")
                     exec(raw_code_plus)
                 except Exception as e:
+                    error_message = str(e)
                     self.log(
-                        "Exception occurred while executing script. Responding with error: "
-                        f"{e.args[1] if len(e.args)>1 else str(e)}",
-                        "error",
+                        f"Exception occurred while executing script. Responding with error: {error_message}",
+                        "error" 
                     )
-                    return f"PREVIOUS SCRIPT EXCEPTION:\n{str(e)}"
+                    # Return the exact error message
+                    return f"PREVIOUS SCRIPT EXCEPTION:\n{error_message}"
+
 class Audio:
     # Request headers
     headers: dict[str, str] = {
