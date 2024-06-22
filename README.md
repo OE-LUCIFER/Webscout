@@ -1605,7 +1605,7 @@ class TaskExecutor:
         self._proxy_path: str = None  # Path to proxy configuration
 
         # History Management
-        self._history_filepath: str = None
+        self._history_filepath: str = "history.txt"
         self._update_history_file: bool = True
         self._history_offset: int = 10250
 
@@ -1616,7 +1616,7 @@ class TaskExecutor:
         # Optional Features
         self._web_search_enabled: bool = False  # Enable web search
         self._rawdog_enabled: bool = True
-        self._internal_script_execution_enabled: bool = False
+        self._internal_script_execution_enabled: bool = True
         self._script_confirmation_required: bool = False
         self._selected_interpreter: str = "python"
         self._selected_optimizer: str = "code"
@@ -1644,6 +1644,9 @@ class TaskExecutor:
             "chatgptuk": webscout.ChatGPTUK,
             "poe": webscout.POE,
             "basedgpt": webscout.BasedGPT,
+            "deepseek": webscout.DeepSeek,
+            "deepinfra": webscout.DeepInfra,
+            "opengenptv2": webscout.OPENGPTv2
         }
 
         # Initialize Rawdog if enabled
@@ -1773,13 +1776,26 @@ class TaskExecutor:
         """
         try:
             is_feedback = self._rawdog_instance.main(response)
+            if is_feedback and "PREVIOUS SCRIPT EXCEPTION" in is_feedback:
+                self._console.print(Markdown(f"LLM: {is_feedback}"))
+                error_message = is_feedback.split("PREVIOUS SCRIPT EXCEPTION:\n")[1].strip()
+                # Generate a solution for the error and execute it
+                error_solution_query = (
+                    f"The following code was executed and resulted in an error:\n\n"
+                    f"{response}\n\n"
+                    f"Error: {error_message}\n\n"
+                    f"Please provide a solution to fix this error in the code and execute it."
+                )
+                try:
+                    new_response = self._ai_model.chat(error_solution_query)
+                    self._handle_rawdog_response(new_response)
+                except webscout.exceptions.FailedToGenerateResponseError as e:
+                    self._console.print(Markdown(f"LLM: [red]Error while generating solution: {e}[/red]"))
+            else:
+                self._console.print(Markdown("LLM: (Script executed successfully)"))
         except Exception as e:
             self._console.print(Markdown(f"LLM: [red]Error: {e}[/red]"))
-            return
-        if is_feedback:
-            self._console.print(Markdown(f"LLM: {is_feedback}"))
-        else:
-            self._console.print(Markdown("LLM: (Script executed successfully)"))
+
 
     async def process_async_query(self, query: str) -> None:
         """

@@ -36,7 +36,7 @@ class TaskExecutor:
         self._proxy_path: str = None  # Path to proxy configuration
 
         # History Management
-        self._history_filepath: str = None
+        self._history_filepath: str = "history.txt"
         self._update_history_file: bool = True
         self._history_offset: int = 10250
 
