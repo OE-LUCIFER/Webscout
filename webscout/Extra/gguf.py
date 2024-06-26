@@ -31,11 +31,8 @@ def convert(model_id, username=None, token=None, quantization_methods="q4_k_m,q5
         if method not in valid_methods:
             raise ValueError(f"Invalid method: {method}. Please select from the available methods: {', '.join(valid_methods)}")
     
-    # Get the absolute path to the script directory
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Construct the absolute path to the shell script
-    script_path = os.path.abspath(os.path.join(script_dir, "gguf.sh"))
+   # Construct the absolute path to the shell script
+    script_path = ".\webscout\Extra\gguf.sh"
 
     print(f"Script Path: {script_path}") # Print the path for debugging
 
