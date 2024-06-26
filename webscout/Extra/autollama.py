@@ -3,7 +3,7 @@ import argparse
 
 def autollama(model_path, gguf_file):
     # Initialize command list
-    command = ["bash", ".\autollama.sh", "-m", model_path, "-g", gguf_file]
+    command = ["bash", "./webscout/Extra/autollama.sh", "-m", model_path, "-g", gguf_file]
 
     # Execute the command
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

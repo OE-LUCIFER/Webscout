@@ -17,7 +17,7 @@ def convert(model_id, username=None, token=None, quantization_methods="q4_k_m,q5
             raise ValueError(f"Invalid method: {method}. Please select from the available methods.")
     
     # Construct the command
-    command = ["bash", ".gguf.sh", "-m", model_id]
+    command = ["bash", "/webscout/Extra/gguf.sh", "-m", model_id]
     
     if username:
         command.extend(["-u", username])
