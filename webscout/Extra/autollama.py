@@ -5,54 +5,56 @@ def autollama(model_path, gguf_file):
     # Initialize command list
     command = [
         "bash", "-c",
-        '''
-        function show_art() {
+        f'''
+        #!/bin/bash
+
+        function show_art() {{
             cat << "EOF"
             Made with love in India
             EOF
-        }
+        }}
 
         show_art
 
         # Initialize default values
-        MODEL_PATH=""
-        GGUF_FILE=""
+        MODEL_PATH="{model_path}"
+        GGUF_FILE="{gguf_file}"
 
         # Display help/usage information
-        usage() {
-            echo "Usage: $0 -m <model_path> -g <gguf_file>"
-            echo
-            echo "Options:"
-            echo "  -m <model_path>    Set the path to the model"
-            echo "  -g <gguf_file>     Set the GGUF file name"
-            echo "  -h                 Display this help and exit"
-            echo
-        }
+        usage() {{
+          echo "Usage: $0 -m <model_path> -g <gguf_file>"
+          echo
+          echo "Options:"
+          echo "  -m <model_path>    Set the path to the model"
+          echo "  -g <gguf_file>     Set the GGUF file name"
+          echo "  -h                 Display this help and exit"
+          echo
+        }}
 
         # Parse command-line options
         while getopts ":m:g:h" opt; do
-            case ${opt} in
-                m )
-                    MODEL_PATH=$OPTARG
-                    ;;
-                g )
-                    GGUF_FILE=$OPTARG
-                    ;;
-                h )
-                    usage
-                    exit 0
-                    ;;
-                \? )
-                    echo "Invalid Option: -$OPTARG" 1>&2
-                    usage
-                    exit 1
-                    ;;
-                : )
-                    echo "Invalid Option: -$OPTARG requires an argument" 1>&2
-                    usage
-                    exit 1
-                    ;;
-            esac
+          case ${{opt}} in
+            m )
+              MODEL_PATH=$OPTARG
+              ;;
+            g )
+              GGUF_FILE=$OPTARG
+              ;;
+            h )
+              usage
+              exit 0
+              ;;
+            \? )
+              echo "Invalid Option: -$OPTARG" 1>&2
+              usage
+              exit 1
+              ;;
+            : )
+              echo "Invalid Option: -$OPTARG requires an argument" 1>&2
+              usage
+              exit 1
+              ;;
+          esac
         done
 
         # Check required parameters
@@ -69,30 +71,30 @@ def autollama(model_path, gguf_file):
         DOWNLOAD_LOG="downloaded_models.log"
 
         # Composite logging name
-        LOGGING_NAME="${MODEL_PATH}_${MODEL_NAME}"
+        LOGGING_NAME="${{MODEL_PATH}}_${{MODEL_NAME}}"
 
         # Check if the model has been downloaded
-        function is_model_downloaded {
+        function is_model_downloaded {{
             grep -qxF "$LOGGING_NAME" "$DOWNLOAD_LOG" && return 0 || return 1
-        }
+        }}
 
         # Log the downloaded model
-        function log_downloaded_model {
+        function log_downloaded_model {{
             echo "$LOGGING_NAME" >> "$DOWNLOAD_LOG"
-        }
+        }}
 
         # Function to check if the model has already been created
-        function is_model_created {
+        function is_model_created {{
             # 'ollama list' lists all models
             ollama list | grep -q "$MODEL_NAME" && return 0 || return 1
-        }
+        }}
 
         # Check if huggingface-hub is installed, and install it if not
         if ! pip show huggingface-hub > /dev/null; then
-            echo "Installing huggingface-hub..."
-            pip install -U "huggingface_hub[cli]"
+          echo "Installing huggingface-hub..."
+          pip install -U "huggingface_hub[cli]"
         else
-            echo "huggingface-hub is already installed."
+          echo "huggingface-hub is already installed."
         fi
 
         # Check if the model has already been downloaded
@@ -108,12 +110,13 @@ def autollama(model_path, gguf_file):
             echo "Model $LOGGING_NAME downloaded and logged."
         fi
 
+
         # Check if Ollama is installed, and install it if not
         if ! command -v ollama &> /dev/null; then
-            echo "Installing Ollama..."
-            curl -fsSL https://ollama.com/install.sh | sh
+          echo "Installing Ollama..."
+          curl -fsSL https://ollama.com/install.sh | sh
         else
-            echo "Ollama is already installed."
+          echo "Ollama is already installed."
         fi
 
         # Check if Ollama is already running
@@ -137,6 +140,7 @@ def autollama(model_path, gguf_file):
             done
         fi
 
+
         # Check if the model has already been created
         if is_model_created; then
             echo "Model $MODEL_NAME is already created. Skipping creation."
@@ -155,19 +159,24 @@ def autollama(model_path, gguf_file):
     ]
 
     # Execute the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
     # Print the output and error in real-time
-    for line in process.stdout:
-        print(line.decode('utf-8'), end='')
+    for stdout_line in iter(process.stdout.readline, ""):
+        print(stdout_line, end='')
+    for stderr_line in iter(process.stderr.readline, ""):
+        print(stderr_line, end='')
 
-    for line in process.stderr:
-        print(line.decode('utf-8'), end='')
+    # Wait for the process to complete
+    process.stdout.close()
+    process.stderr.close()
+    return_code = process.wait()
 
-    process.wait()
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, command)
 
 def main():
-    parser = argparse.ArgumentParser(description='Run autollama.sh to manage models with Ollama')
+    parser = argparse.ArgumentParser(description='Run autollama script to manage models with Ollama and Hugging Face')
     parser.add_argument('-m', '--model_path', required=True, help='Set the path to the model')
     parser.add_argument('-g', '--gguf_file', required=True, help='Set the GGUF file name')
     args = parser.parse_args()

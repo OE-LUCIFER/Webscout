@@ -72,6 +72,12 @@ def gguf(model_id, username, token, quantization_methods):
             exit 1
         fi
 
+        # # Echoing the arguments for checking
+        # echo "MODEL_ID: $MODEL_ID"
+        # echo "USERNAME: ${USERNAME:-'Not provided'}"
+        # echo "TOKEN: ${TOKEN:-'Not provided'}"
+        # echo "QUANTIZATION_METHODS: $QUANTIZATION_METHODS"
+
         # Splitting string into an array for quantization methods, if provided
         IFS=',' read -r -a QUANTIZATION_METHOD_ARRAY <<< "$QUANTIZATION_METHODS"
         echo "Quantization Methods: ${QUANTIZATION_METHOD_ARRAY[@]}"
@@ -117,7 +123,6 @@ def gguf(model_id, username, token, quantization_methods):
             QTYPE="${MODEL_NAME}/${MODEL_NAME,,}.${METHOD^^}.gguf"
             ./llama.cpp/llama-quantize "$FP16" "$QTYPE" "$METHOD"
         done
-        echo "Made by HelpingAI team"
 
         # Check if USERNAME and TOKEN are provided
         if [[ -n "$USERNAME" && -n "$TOKEN" ]]; then
@@ -152,16 +157,21 @@ def gguf(model_id, username, token, quantization_methods):
     ]
 
     # Execute the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
     # Print the output and error in real-time
-    for line in process.stdout:
-        print(line.decode('utf-8'), end='')
+    for stdout_line in iter(process.stdout.readline, ""):
+        print(stdout_line, end='')
+    for stderr_line in iter(process.stderr.readline, ""):
+        print(stderr_line, end='')
 
-    for line in process.stderr:
-        print(line.decode('utf-8'), end='')
+    # Wait for the process to complete
+    process.stdout.close()
+    process.stderr.close()
+    return_code = process.wait()
 
-    process.wait()
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, command)
 
 def main():
     parser = argparse.ArgumentParser(description='Run autogguf script to manage models with Hugging Face and LLAMA')
