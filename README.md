@@ -1533,7 +1533,7 @@ Webscout's `autollama` utility download model from huggingface and then automati
 ```python
 from webscout import autollama
 
-autollama.autollama(
+autollama(
     model_path="OEvortex/HelpingAI-Lite-1.5T",  # Hugging Face model ID
     gguf_file="HelpingAI-Lite-1.5T.q4_k_m.gguf" #  GGUF file ID
 )
