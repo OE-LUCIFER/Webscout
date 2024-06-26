@@ -11,7 +11,7 @@ def autollama(model_path, gguf_file):
         gguf_file (str): The name of the GGUF file. 
     """
 
-    script_path = ".\webscout\Extra\autollama.sh"
+    script_path = "webscout\Extra\autollama.sh"
 
     # Initialize command list
     command = ["bash", script_path, "-m", model_path, "-g", gguf_file]
