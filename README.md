@@ -1381,13 +1381,19 @@ while True:
     # Print the response
     print("AI: ", response)
 ```
-### `Local-LLM` webscout can now run GGUF models
-Local LLM's some functions are taken from easy-llama
+
+##  Local-LLM
+
+Webscout can now run GGUF models locally. You can download and run your favorite models with minimal configuration.
+
+**Example:**
+
 ```python
 from webscout.Local.utils import download_model
 from webscout.Local.model import Model
 from webscout.Local.thread import Thread
 from webscout.Local import formats
+
 # 1. Download the model
 repo_id = "microsoft/Phi-3-mini-4k-instruct-gguf"  # Replace with the desired Hugging Face repo
 filename = "Phi-3-mini-4k-instruct-q4.gguf" # Replace with the correct filename
@@ -1403,7 +1409,11 @@ thread = Thread(model, formats.phi3)
 thread.interact()
 ```
 
-### `Local-rawdog`
+## Local-rawdog
+Webscout's local raw-dog feature allows you to run Python scripts within your terminal prompt.
+
+**Example:**
+
 ```python
 import webscout.Local as ws
 from webscout.Local.rawdog import RawDog
@@ -1490,6 +1500,63 @@ while True:
         print(script_output)
 
 ```
+
+##  GGUF 
+
+Webscout provides tools to convert and quantize Hugging Face models into the GGUF format for use with offline LLMs.
+
+**Example:**
+
+```python
+from webscout import gguf
+"""
+Valid quantization methods:
+"q2_k", "q3_k_l", "q3_k_m", "q3_k_s", 
+"q4_0", "q4_1", "q4_k_m", "q4_k_s", 
+"q5_0", "q5_1", "q5_k_m", "q5_k_s", 
+"q6_k", "q8_0"
+"""
+gguf.convert(
+    model_id="OEvortex/HelpingAI-Lite-1.5T",  # Replace with your model ID
+    username="Abhaykoul",  # Replace with your Hugging Face username
+    token="hf_token_write",  # Replace with your Hugging Face token
+    quantization_methods="q4_k_m"  # Optional, adjust quantization methods
+)
+```
+
+## Autollama
+
+Webscout's `autollama` utility download model from huggingface and then automatically makes it ollama ready
+
+**Example:**
+
+```python
+from webscout import autollama
+
+autollama.autollama(
+    model_path="OEvortex/HelpingAI-Lite-1.5T",  # Hugging Face model ID
+    gguf_file="HelpingAI-Lite-1.5T.q4_k_m.gguf" #  GGUF file ID
+)
+```
+
+**Command Line Usage:**
+
+* **GGUF Conversion:**
+   ```bash
+   python -m webscout.Extra.gguf -m "OEvortex/HelpingAI-Lite-1.5T" -u "your_username" -t "your_hf_token" -q "q4_k_m,q5_k_m" 
+   ```
+
+* **Autollama:**
+   ```bash
+   python -m webscout.Extra.autollama -m "OEvortex/HelpingAI-Lite-1.5T" -g "HelpingAI-Lite-1.5T.q4_k_m.gguf" 
+   ```
+
+**Note:** 
+
+* Replace `"your_username"` and `"your_hf_token"` with your actual Hugging Face credentials.
+* The `model_path` in `autollama` is the Hugging Face model ID, and `gguf_file` is the GGUF file ID.
+
+
 ### `LLM` with internet
 ```python
 from __future__ import annotations

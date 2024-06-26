@@ -12,5 +12,13 @@ gguf.convert(
     token="hf_token_write",  # Replace with your Hugging Face token
     quantization_methods="q4_k_m"  # Optional, adjust quantization methods
 )
-#python -m webscout.Extra.gguf -m OEvortex/HelpingAI-Lite-1.5T -u Abhaykoul -t hf_token_write -q q4_k_m,q5_k_m
 
+# ---------------------------------------------------------------------Autollama---------------------------------------------------------------------
+from webscout import autollama
+
+autollama.autollama(
+    model_path="OEvortex/HelpingAI-Lite-1.5T-GGUF",
+    gguf_file="model_name.gguf"
+)
+# python -m webscout.Extra.gguf -m "OEvortex/HelpingAI-Lite-1.5T" -u "your_username" -t "your_hf_token" -q "q4_k_m,q5_k_m" 
+# python -m webscout.Extra.autollama -m "path/to/model" -g "model_name.gguf" 
