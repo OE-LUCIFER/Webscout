@@ -1,3 +1,4 @@
+# webscout/Extra/autollama.py
 import subprocess
 import argparse
 import os
@@ -10,11 +11,11 @@ def autollama(model_path, gguf_file):
         gguf_file (str): The name of the GGUF file. 
     """
 
-    # Get the directory where this script is located
+    # Get the absolute path to the script directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Construct the path to the shell script
-    script_path = os.path.join(script_dir, "autollama.sh") 
+    # Construct the absolute path to the shell script
+    script_path = os.path.abspath(os.path.join(script_dir, "autollama.sh")) 
 
     # Initialize command list
     command = ["bash", script_path, "-m", model_path, "-g", gguf_file]

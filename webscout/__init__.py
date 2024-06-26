@@ -11,7 +11,8 @@ from .LLM import LLM
 import g4f
 # Import provider classes for direct access
 from .Provider import *
-from .Extra import *
+from .Extra import gguf
+from .Extra import autollama
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 
 webai = [
