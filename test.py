@@ -16,7 +16,7 @@ gguf.convert(
 # ---------------------------------------------------------------------Autollama---------------------------------------------------------------------
 from webscout import autollama
 
-autollama.autollama(
+autollama(
     model_path="OEvortex/HelpingAI-Lite-1.5T-GGUF",
     gguf_file="model_name.gguf"
 )
