@@ -19,7 +19,7 @@ from playsound import playsound
 from time import sleep as wait
 import pathlib
 import urllib.parse
-appdir = appdirs.AppDirs("AIWEBS", "vortex")
+appdir = appdirs.AppDirs("AIWEBS", "webscout")
 
 default_path = appdir.user_cache_dir
 
@@ -49,7 +49,11 @@ webai = [
    "basedgpt",
    "deepseek",
    "deepinfra",
+   "vtlchat",
+   "geminiflash",
+   "geminipro",
 ]
+
 gpt4free_providers = [
     provider.__name__ for provider in g4f.Provider.__providers__  # if provider.working
 ]

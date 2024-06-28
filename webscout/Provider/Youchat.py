@@ -219,3 +219,7 @@ class YouChat(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+    
+if __name__ == "__main__":
+    YouChat = YouChat()
+    print(YouChat.chat("hello"))

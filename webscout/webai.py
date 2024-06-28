@@ -689,7 +689,55 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
+            elif provider == "geminiflash":
+                from webscout import GEMINIFLASH
 
+                self.bot = GEMINIFLASH(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
+            elif provider == "geminipro":
+                from webscout import GEMINIPRO
+
+                self.bot = GEMINIPRO(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
+
+            elif provider == "vtlchat":
+                from webscout import VTLchat
+
+                self.bot = VTLchat(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
             elif provider == "gemini":
                 from webscout import GEMINI
 

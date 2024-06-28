@@ -39,6 +39,9 @@ webai = [
    "basedgpt",
    "deepseek",
    "deepinfra",
+   "vtlchat",
+   "geminiflash",
+   "geminipro",
 ]
 
 gpt4free_providers = [

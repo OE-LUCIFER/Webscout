@@ -35,6 +35,9 @@ from .BasedGPT import BasedGPT
 from .Deepseek import DeepSeek
 from .Deepinfra import DeepInfra, VLM, AsyncDeepInfra
 from .VTLchat import VTLchat
+from .Geminipro import GEMINIPRO
+from .Geminiflash import GEMINIFLASH
+
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
@@ -73,5 +76,8 @@ __all__ = [
     'AsyncPhindv2',
     'Phindv2',
     'OPENGPTv2',
+    'GEMINIPRO',
+    'GEMINIFLASH',
+
 
 ]
