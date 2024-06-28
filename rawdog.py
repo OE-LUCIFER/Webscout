@@ -6,6 +6,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.style import Style
 import webscout
+import webscout.AIauto
 import webscout.AIutel
 import g4f
 from webscout.g4f import *
@@ -27,8 +28,8 @@ class TaskExecutor:
         self._local_thread = None
 
         # Session configuration
-        self._selected_provider: str = "phind"
-        self._selected_model: str = "Phind Model"
+        self._selected_provider: str = "auto"
+        self._selected_model: str = None
         self._conversation_enabled: bool = True
         self._max_tokens: int = 600
         self._temperature: float = 0.2
@@ -113,7 +114,7 @@ class TaskExecutor:
                 history_offset=self._history_offset,
                 act=self._awesome_prompt_content,
             ),
-            "auto": lambda: webscout.AUTO(
+            "auto": lambda: webscout.AIauto.AUTO(
                 is_conversation=self._conversation_enabled,
                 max_tokens=self._max_tokens,
                 timeout=self._timeout,
