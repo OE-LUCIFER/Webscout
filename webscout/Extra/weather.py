@@ -1,6 +1,6 @@
 import requests
 
-def get_weather(location):
+def get(location):
     """Fetches weather data for the given location.
 
     Args:
@@ -47,11 +47,3 @@ def print_weather(weather_data):
         min_temp = day['mintempC']
         desc = day['hourly'][4]['weatherDesc'][0]['value'] 
         print(f"{date}: {min_temp}°C to {max_temp}°C, {desc}")
-
-if __name__ == "__main__":
-    # Example usage
-    location = "qazigund"
-
-    print("JSON Data:")
-    weather_data = get_weather(location)
-    print_weather(weather_data)

@@ -13,6 +13,7 @@ import g4f
 from .Provider import *
 from .Extra import gguf
 from .Extra import autollama
+from .Extra import weather_ascii, weather
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 
 webai = [

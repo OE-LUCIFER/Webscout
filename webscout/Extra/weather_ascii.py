@@ -1,6 +1,6 @@
 import requests
 
-def get_ascii_weather(location):
+def get(location):
     """Fetches ASCII art weather data for the given location.
     Args:
         location (str): The location for which to fetch weather data.
@@ -16,9 +16,3 @@ def get_ascii_weather(location):
         return "\n".join(response.text.splitlines()[:-1]) 
     else:
         return f"Error: Unable to fetch weather data. Status code: {response.status_code}"
-
-if __name__ == "__main__":
-    location = "delhi"
-    print("\nASCII Art Weather Report:")
-    ascii_weather = get_ascii_weather(location)
-    print(ascii_weather) 

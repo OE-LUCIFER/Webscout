@@ -695,8 +695,6 @@ class Main(cmd.Cmd):
                 self.bot = GEMINIFLASH(
                     is_conversation=disable_conversation,
                     max_tokens=max_tokens,
-                    temperature=temperature,
-                    top_p=top_p,
                     timeout=timeout,
                     intro=intro,
                     filepath=filepath,
@@ -711,8 +709,6 @@ class Main(cmd.Cmd):
                 self.bot = GEMINIPRO(
                     is_conversation=disable_conversation,
                     max_tokens=max_tokens,
-                    temperature=temperature,
-                    top_p=top_p,
                     timeout=timeout,
                     intro=intro,
                     filepath=filepath,

@@ -26,7 +26,7 @@
 <a href="#"><img alt="Python version" src="https://img.shields.io/pypi/pyversions/webscout"/></a>
 <a href="https://pepy.tech/project/webscout"><img alt="Downloads" src="https://static.pepy.tech/badge/webscout"></a>
 
-Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, webai (terminal gpt and open interpreter) and offline LLMs
+Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, webai (terminal gpt and open interpreter) and offline LLMs and more
 
 
 ## Table of Contents
@@ -183,10 +183,24 @@ python -m webscout --help
     ve-es for Venezuela
     vn-vi for Vietnam
     wt-wt for No region
-___
+zzz
 </details>
-
+zzzzzzzzzzzzzzzz
 [Go To TOP](#TOP)
+
+## Weather - webscout can now forcast weather
+1. weather
+```python
+from webscout import weather as w
+weather = w.get("Qazigund")
+w.print_weather(weather)
+```
+2. weather ascii
+```python
+from webscout import weather_ascii as w
+weather = w.get("Qazigund")
+print(weather)
+```
 
 ## Tempmail and Temp number
 
