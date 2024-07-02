@@ -7,9 +7,10 @@ from .voice import play_audio
 from .websx_search import WEBSX
 
 from .LLM import LLM
+from .YTdownloader import *
 # from .Local import *
 import g4f
-# Import provider classes for direct access
+from .YTdownloader import *
 from .Provider import *
 from .Extra import gguf
 from .Extra import autollama
