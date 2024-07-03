@@ -176,7 +176,6 @@ class first_query:
      ]
 }"""
 
-
     def __enter__(self, *args, **kwargs):
         return self.__call__(*args, **kwargs)
 
@@ -462,7 +461,7 @@ class third_query:
             logging.error(
                 f"Zero media hunted with params : {{quality : {quality}, format : {format}  }}"
             )
-            return {}        
+            return {}       
 class Handler:
     def __init__(
         self,
