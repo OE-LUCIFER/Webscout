@@ -1,29 +1,33 @@
 from webscout.AIbase import Provider, AsyncProvider
-from webscout import OPENGPT, AsyncOPENGPT
-from webscout import KOBOLDAI, AsyncKOBOLDAI
-from webscout import PhindSearch, AsyncPhindSearch
-from webscout import LLAMA2, AsyncLLAMA2
-from webscout import BLACKBOXAI, AsyncBLACKBOXAI
-from webscout import PERPLEXITY
-from webscout import ThinkAnyAI
-from webscout import YouChat
-from webscout import YEPCHAT
-from webscout.AIbase import Provider, AsyncProvider
-from webscout import KOBOLDAI, AsyncKOBOLDAI
-from webscout import PhindSearch, AsyncPhindSearch
-from webscout import LLAMA2, AsyncLLAMA2
-from webscout import BLACKBOXAI, AsyncBLACKBOXAI
-from webscout import PERPLEXITY
-from webscout import ThinkAnyAI
-from webscout import YouChat
-from webscout import YEPCHAT, AsyncYEPCHAT
-from webscout import LEO, AsyncLEO
-from webscout import GROQ, AsyncGROQ
-from webscout import OPENAI, AsyncOPENAI
-from webscout import REKA
-from webscout import Xjai
-from webscout import Berlin4h
-from webscout import ChatGPTUK
+from webscout.Provider.ThinkAnyAI import ThinkAnyAI
+from webscout.Provider.Xjai import Xjai
+from webscout.Provider.Llama2 import LLAMA2
+from webscout.Provider.Llama2 import AsyncLLAMA2
+from webscout.Provider.Leo import LEO
+from webscout.Provider.Leo import AsyncLEO
+from webscout.Provider.Koboldai import KOBOLDAI
+from webscout.Provider.Koboldai import AsyncKOBOLDAI
+from webscout.Provider.OpenGPT import OPENGPT
+from webscout.Provider.OpenGPT import OPENGPTv2
+from webscout.Provider.OpenGPT import AsyncOPENGPT
+from webscout.Provider.Perplexity import PERPLEXITY
+from webscout.Provider.Blackboxai import BLACKBOXAI
+from webscout.Provider.Blackboxai import AsyncBLACKBOXAI
+from webscout.Provider.Phind import PhindSearch
+from webscout.Provider.Phind import AsyncPhindSearch
+from webscout.Provider.Phind import Phindv2
+from webscout.Provider.Phind import AsyncPhindv2
+from webscout.Provider.Yepchat import YEPCHAT
+from webscout.Provider.Yepchat import AsyncYEPCHAT
+from webscout.Provider.Berlin4h import Berlin4h
+from webscout.Provider.ChatGPTUK import ChatGPTUK
+from webscout.Provider.Poe import POE
+from webscout.Provider.BasedGPT import BasedGPT
+from webscout.Provider.Deepseek import DeepSeek
+from webscout.Provider.Deepinfra import DeepInfra, VLM, AsyncDeepInfra
+from webscout.Provider.VTLchat import VTLchat
+from webscout.Provider.Geminipro import GEMINIPRO
+from webscout.Provider.Geminiflash import GEMINIFLASH
 from webscout.g4f import GPT4FREE, AsyncGPT4FREE
 from webscout.g4f import TestProviders
 from webscout.exceptions import AllProvidersFailure
@@ -36,43 +40,56 @@ import logging
 
 
 provider_map: dict[
-    str, Union[    ThinkAnyAI,
-    Xjai,
-    LLAMA2,
-    AsyncLLAMA2,
-    LEO,
-    AsyncLEO,
-    KOBOLDAI,
-    AsyncKOBOLDAI,
-    OPENGPT,
-    AsyncOPENGPT,
-    PERPLEXITY,
-    BLACKBOXAI,
-    AsyncBLACKBOXAI,
-    PhindSearch,
-    AsyncPhindSearch,
-    YEPCHAT,
-    AsyncYEPCHAT,
-    YouChat,
-    Berlin4h,
-    ChatGPTUK,]
+    str,
+    Union[
+        ThinkAnyAI,
+        Xjai,
+        LLAMA2,
+        LEO,
+        KOBOLDAI,
+        OPENGPT,
+        OPENGPTv2,
+        PERPLEXITY,
+        BLACKBOXAI,
+        PhindSearch,
+        Phindv2,
+        YEPCHAT,
+        Berlin4h,
+        ChatGPTUK,
+        POE,
+        BasedGPT,
+        DeepSeek,
+        DeepInfra,
+        VLM,
+        VTLchat,
+        GEMINIPRO,
+        GEMINIFLASH,
+        GPT4FREE,
+    ],
 ] = {
+    "ThinkAnyAI": ThinkAnyAI,
+    "Xjai": Xjai,
+    "LLAMA2": LLAMA2,
+    "LEO": LEO,
+    "KOBOLDAI": KOBOLDAI,
+    "OPENGPT": OPENGPT,
+    "OPENGPTv2": OPENGPTv2,
+    "PERPLEXITY": PERPLEXITY,
+    "BLACKBOXAI": BLACKBOXAI,
     "PhindSearch": PhindSearch,
-    "perplexity": PERPLEXITY,
-    "opengpt": OPENGPT,
-    "koboldai": KOBOLDAI,
-    "llama2": LLAMA2,
-    "blackboxai": BLACKBOXAI,
+    "Phindv2": Phindv2,
+    "YEPCHAT": YEPCHAT,
+    "Berlin4h": Berlin4h,
+    "ChatGPTUK": ChatGPTUK,
+    "POE": POE,
+    "BasedGPT": BasedGPT,
+    "DeepSeek": DeepSeek,
+    "DeepInfra": DeepInfra,
+    "VLM": VLM,
+    "VTLchat": VTLchat,
+    "GEMINIPRO": GEMINIPRO,
+    "GEMINIFLASH": GEMINIFLASH,
     "gpt4free": GPT4FREE,
-    "thinkany": ThinkAnyAI,
-    "yepchat": YEPCHAT,
-    "you": YouChat,
-    "leo": LEO,
-    "xjai": Xjai,
-    "berlin4h": Berlin4h,
-    "chatgptuk": ChatGPTUK,
-    "gpt4free": GPT4FREE,
-    
 }
 
 
@@ -104,7 +121,31 @@ class AUTO(Provider):
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
             exclude(list[str], optional): List of providers to be excluded. Defaults to [].
         """
-        self.provider: Union[OPENGPT, KOBOLDAI, PhindSearch, LLAMA2, BLACKBOXAI, PERPLEXITY, GPT4FREE, ThinkAnyAI, YEPCHAT, YouChat] = None
+        self.provider: Union[
+            ThinkAnyAI,
+            Xjai,
+            LLAMA2,
+            LEO,
+            KOBOLDAI,
+            OPENGPT,
+            OPENGPTv2,
+            PERPLEXITY,
+            BLACKBOXAI,
+            PhindSearch,
+            Phindv2,
+            YEPCHAT,
+            Berlin4h,
+            ChatGPTUK,
+            POE,
+            BasedGPT,
+            DeepSeek,
+            DeepInfra,
+            VLM,
+            VTLchat,
+            GEMINIPRO,
+            GEMINIFLASH,
+            GPT4FREE,
+        ] = None
         self.provider_name: str = None
         self.is_conversation = is_conversation
         self.max_tokens = max_tokens
@@ -315,6 +356,30 @@ class AsyncAUTO(AsyncProvider):
             AsyncLLAMA2,
             AsyncBLACKBOXAI,
             AsyncGPT4FREE,
+            AsyncLEO,
+            ThinkAnyAI,
+            Xjai,
+            LLAMA2,
+            LEO,
+            KOBOLDAI,
+            OPENGPT,
+            OPENGPTv2,
+            PERPLEXITY,
+            BLACKBOXAI,
+            PhindSearch,
+            Phindv2,
+            YEPCHAT,
+            Berlin4h,
+            ChatGPTUK,
+            POE,
+            BasedGPT,
+            DeepSeek,
+            DeepInfra,
+            VLM,
+            VTLchat,
+            GEMINIPRO,
+            GEMINIFLASH,
+            GPT4FREE
         ] = None
         self.provider_name: str = None
         self.is_conversation = is_conversation
