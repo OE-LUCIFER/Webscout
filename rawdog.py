@@ -28,7 +28,7 @@ class TaskExecutor:
         self._local_thread = None
 
         # Session configuration
-        self._selected_provider: str = "auto"
+        self._selected_provider: str = "phind"
         self._selected_model: str = None
         self._conversation_enabled: bool = True
         self._max_tokens: int = 600
@@ -80,6 +80,18 @@ class TaskExecutor:
                 update_file=self._update_history_file,
                 intro=self._initial_prompt,
                 act=self._awesome_prompt_content,
+            ),
+            "ollama": lambda: webscout.OLLAMA(
+                is_conversation=self._conversation_enabled,
+                max_tokens=self._max_tokens,
+                timeout=self._timeout,
+                intro=self._initial_prompt,
+                filepath=self._history_filepath,
+                update_file=self._update_history_file,
+                proxies=self._proxies,
+                history_offset=self._history_offset,
+                act=self._awesome_prompt_content,
+                model=getOr(self._selected_model, "qwen2:0.5b"),
             ),
             "leo": lambda: webscout.LEO(
                 is_conversation=self._conversation_enabled,

@@ -831,7 +831,21 @@ class Main(cmd.Cmd):
                     act=awesome_prompt,
                     quiet=quiet,
                 )
+            elif provider == "ollama":
+                from webscout import OLLAMA
 
+                self.bot = OLLAMA(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                    model=getOr(model, "qwen2:0.5b")
+                )
             else:
                 raise NotImplementedError(
                     f"The provider `{provider}` is not yet implemented."

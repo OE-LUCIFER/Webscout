@@ -44,6 +44,7 @@ webai = [
    "vtlchat",
    "geminiflash",
    "geminipro",
+   "ollama"
 ]
 
 gpt4free_providers = [

@@ -52,6 +52,7 @@ webai = [
    "vtlchat",
    "geminiflash",
    "geminipro",
+   "ollama"
 ]
 
 gpt4free_providers = [
@@ -196,7 +197,7 @@ class Conversation:
         """
         self.status = status
         self.max_tokens_to_sample = max_tokens
-        self.chat_history = ""
+        self.chat_history = self.intro
         self.history_format = "\nUser : %(user)s\nLLM :%(llm)s"
         self.file = filepath
         self.update_file = update_file

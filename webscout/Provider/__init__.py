@@ -37,7 +37,7 @@ from .Deepinfra import DeepInfra, VLM, AsyncDeepInfra
 from .VTLchat import VTLchat
 from .Geminipro import GEMINIPRO
 from .Geminiflash import GEMINIFLASH
-
+from .OLLAMA import OLLAMA
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
@@ -78,6 +78,7 @@ __all__ = [
     'OPENGPTv2',
     'GEMINIPRO',
     'GEMINIFLASH',
+    'OLLAMA'
 
 
 ]
