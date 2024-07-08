@@ -1406,6 +1406,34 @@ response = ollama_provider.chat("What is the meaning of life?")
 print(response)
 ```
 
+### 22. GROQ
+```python
+from webscout import GROQ
+ai = GROQ(api_key="")
+response = ai.chat("What is the meaning of life?")
+print(response)
+
+```
+
+### 23. Freegemini - chat with gemini for free
+```python
+from webscout import FreeGemini
+ai = FreeGemini()
+response = ai.chat("What is the meaning of life?")
+print(response)
+```
+
+### 24. LLama 70b - chat with meta's llama 3 70b
+```python
+
+from webscout import LLAMA
+
+llama = LLAMA()
+
+r = llama.chat("What is the meaning of life?")
+print(r)
+```
+
 ### `LLM` 
 ```python
 from webscout.LLM import LLM

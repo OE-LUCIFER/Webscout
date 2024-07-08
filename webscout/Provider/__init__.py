@@ -2,8 +2,7 @@
 
 from .ThinkAnyAI import ThinkAnyAI
 from .Xjai import Xjai
-from .Llama2 import LLAMA2
-from .Llama2 import AsyncLLAMA2
+from .Llama import LLAMA
 from .Cohere import Cohere
 from .Reka import REKA
 from .Groq import GROQ
@@ -38,11 +37,11 @@ from .VTLchat import VTLchat
 from .Geminipro import GEMINIPRO
 from .Geminiflash import GEMINIFLASH
 from .OLLAMA import OLLAMA
+from .FreeGemini import FreeGemini
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
-    'LLAMA2', 
-    'AsyncLLAMA2',
+    'LLAMA', 
     'Cohere',
     'REKA',
     'GROQ',
@@ -78,7 +77,8 @@ __all__ = [
     'OPENGPTv2',
     'GEMINIPRO',
     'GEMINIFLASH',
-    'OLLAMA'
+    'OLLAMA',
+    'FreeGemini'
 
 
 ]

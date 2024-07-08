@@ -220,17 +220,16 @@ class Conversation:
         ), f"File '{filepath}' does not exist"
         if not os.path.isfile(filepath):
             logging.debug(f"Creating new chat-history file - '{filepath}'")
-            with open(filepath, "w") as fh:  # Try creating new file
-                # lets add intro here
+            with open(filepath, "w", encoding="utf-8") as fh:  # Try creating new file with UTF-8 encoding
                 fh.write(self.intro)
         else:
             logging.debug(f"Loading conversation from '{filepath}'")
-            with open(filepath) as fh:
+            with open(filepath, encoding="utf-8") as fh:  # Open with UTF-8 encoding
                 file_contents = fh.readlines()
                 if file_contents:
                     self.intro = file_contents[0]  # Presume first line is the intro.
                     self.chat_history = "\n".join(file_contents[1:])
-
+    
     def __trim_chat_history(self, chat_history: str, intro: str) -> str:
         """Ensures the len(prompt) and max_tokens_to_sample is not > 4096"""
         len_of_intro = len(intro)
@@ -243,7 +242,6 @@ class Conversation:
             # Remove head of total (n) of chat_history
             trimmed_chat_history = chat_history[truncate_at:]
             return "... " + trimmed_chat_history
-            # print(len(self.chat_history))
         else:
             return chat_history
 
@@ -281,12 +279,12 @@ class Conversation:
         new_history = self.history_format % dict(user=prompt, llm=response)
         if self.file and self.update_file:
             if os.path.exists(self.file):
-                with open(self.file, "w") as fh:
+                with open(self.file, "w", encoding="utf-8") as fh:  # Specify UTF-8 encoding
                     fh.write(self.intro + "\n" + new_history)
             else:
-                with open(self.file, "a") as fh:
+                with open(self.file, "a", encoding="utf-8") as fh:  # Specify UTF-8 encoding
                     fh.write(new_history)
-        self.chat_history += new_history
+            self.chat_history += new_history
 
 
 

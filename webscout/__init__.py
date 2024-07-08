@@ -6,7 +6,7 @@ from .transcriber import transcriber
 from .voice import play_audio
 from .websx_search import WEBSX
 
-from .LLM import LLM
+from .LLM import VLM, LLM
 from .YTdownloader import *
 # from .Local import *
 import g4f

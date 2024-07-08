@@ -1,8 +1,8 @@
 from webscout.AIbase import Provider, AsyncProvider
 from webscout.Provider.ThinkAnyAI import ThinkAnyAI
 from webscout.Provider.Xjai import Xjai
-from webscout.Provider.Llama2 import LLAMA2
-from webscout.Provider.Llama2 import AsyncLLAMA2
+from webscout.Provider.Llama import LLAMA2
+from webscout.Provider.Llama import AsyncLLAMA2
 from webscout.Provider.Leo import LEO
 from webscout.Provider.Leo import AsyncLEO
 from webscout.Provider.Koboldai import KOBOLDAI

@@ -2,7 +2,6 @@ from webscout import AsyncPhindSearch
 from webscout import AsyncYEPCHAT
 from webscout import AsyncOPENGPT
 from webscout import AsyncOPENAI
-from webscout import AsyncLLAMA2
 from webscout import AsyncLEO
 from webscout import AsyncKOBOLDAI
 from webscout import AsyncGROQ
@@ -15,7 +14,6 @@ mapper: dict[str, object] = {
     "koboldai": AsyncKOBOLDAI,
     "blackboxai": AsyncBLACKBOXAI,
     "gpt4free": AsyncGPT4FREE,
-    "llama2": AsyncLLAMA2,
     "yepchat": AsyncYEPCHAT,
     "leo": AsyncLEO,
     "groq": AsyncGROQ,
