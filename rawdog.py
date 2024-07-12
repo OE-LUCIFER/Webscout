@@ -1,17 +1,19 @@
-import time
-import uuid
-from typing import Dict, Any, Optional, Callable, Generator, Union, List
+from rich.console import Console
+from rich.markdown import Markdown
+# import webscout
+import webscout.AIauto
+import webscout.AIutel
+from webscout.g4f import *
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.style import Style
-import webscout
-import webscout.AIauto
-import webscout.AIutel
-import g4f
-from webscout.g4f import *
-from webscout.async_providers import mapper as async_provider_map
-
+import typer
+from yaspin import yaspin
+from pyfiglet import figlet_format
+import inquirer
+from tabulate import tabulate
+from colorama import Fore, Style
 
 class TaskExecutor:
     """
@@ -611,8 +613,41 @@ class TaskExecutor:
             self._console.print(Markdown(f"LLM: [red]Error: {e}[/red]"))
 
 
+# if __name__ == "__main__":
+#     assistant = TaskExecutor()
+#     while True:
+#         input_query = input("Enter your query: ")
+#         assistant.process_query(input_query)
+
 if __name__ == "__main__":
+    console = Console()
+    console.print(f"[bold green]{figlet_format('Rawdog-v7.5')}[/]\n", justify="center")
+
     assistant = TaskExecutor()
+    questions = [
+        inquirer.List(
+            "provider",
+            message="Choose your AI provider:",
+            choices=["phind", "g4fauto", "poe", "ollama", "leo", "openai", "auto", "opengpt", "thinkany", "berlin4h", "chatgptuk", "geminiflash", "geminipro", "yepchat", "groq", "cohere", "reka", "deepseek", "koboldai", "deepinfra", "xjai", "gemini", "blackboxai", "you", "perplexity", "basedgpt", "opengenptv2", "vtlchat", "phindv2", "llama2", "local"],
+        ),
+        inquirer.List(
+            "model",
+            message="Choose your AI model (optional, leave blank for default):",
+            choices=[""] + (assistant._get_provider_mapping().get(assistant._selected_provider, lambda: None)().__class__.available_models() 
+                           if hasattr(assistant._get_provider_mapping().get(assistant._selected_provider, lambda: None)(), "available_models") 
+                           else [""])
+        ),
+        inquirer.Confirm("web_search_enabled", message="Enable web search?", default=False),
+        inquirer.Confirm("rawdog_enabled", message="Enable Rawdog (code execution)?", default=True),
+    ]
+    answers = inquirer.prompt(questions)
+
+    assistant._selected_provider = answers["provider"]
+    assistant._selected_model = answers.get("model")
+    assistant._web_search_enabled = answers["web_search_enabled"]
+    assistant._rawdog_enabled = answers["rawdog_enabled"]
+
     while True:
-        input_query = input("Enter your query: ")
+        input_query = typer.prompt(f"{Fore.GREEN}Enter your query:{Style.RESET_ALL} ")
         assistant.process_query(input_query)
+        
