@@ -1,8 +1,7 @@
 from webscout.AIbase import Provider, AsyncProvider
 from webscout.Provider.ThinkAnyAI import ThinkAnyAI
 from webscout.Provider.Xjai import Xjai
-from webscout.Provider.Llama import LLAMA2
-from webscout.Provider.Llama import AsyncLLAMA2
+from webscout.Provider.Llama import LLAMA
 from webscout.Provider.Leo import LEO
 from webscout.Provider.Leo import AsyncLEO
 from webscout.Provider.Koboldai import KOBOLDAI
@@ -44,7 +43,7 @@ provider_map: dict[
     Union[
         ThinkAnyAI,
         Xjai,
-        LLAMA2,
+        LLAMA,
         LEO,
         KOBOLDAI,
         OPENGPT,
@@ -69,7 +68,7 @@ provider_map: dict[
 ] = {
     "ThinkAnyAI": ThinkAnyAI,
     "Xjai": Xjai,
-    "LLAMA2": LLAMA2,
+    "LLAMA2": LLAMA,
     "LEO": LEO,
     "KOBOLDAI": KOBOLDAI,
     "OPENGPT": OPENGPT,
@@ -124,7 +123,7 @@ class AUTO(Provider):
         self.provider: Union[
             ThinkAnyAI,
             Xjai,
-            LLAMA2,
+            LLAMA,
             LEO,
             KOBOLDAI,
             OPENGPT,
@@ -353,13 +352,12 @@ class AsyncAUTO(AsyncProvider):
             AsyncOPENGPT,
             AsyncKOBOLDAI,
             AsyncPhindSearch,
-            AsyncLLAMA2,
             AsyncBLACKBOXAI,
             AsyncGPT4FREE,
             AsyncLEO,
             ThinkAnyAI,
             Xjai,
-            LLAMA2,
+            LLAMA,
             LEO,
             KOBOLDAI,
             OPENGPT,
