@@ -38,6 +38,7 @@ setup(
         "webdriver-manager",
         "halo>=0.0.31",
         "g4f>=0.2.2.3",
+        "g4f[webdriver]",
         "rich",
         "python-dotenv",
         "beautifulsoup4",
@@ -58,7 +59,12 @@ setup(
         "playsound",
         "poe_api_wrapper",
         "pyreqwest_impersonate",
-        "ballyregan"
+        "ballyregan",
+        "nodriver",
+        "PyExecJS",
+        "ollama",
+        "pyfiglet",
+        "yaspin",
     ],
     entry_points={
         "console_scripts": [
