@@ -613,12 +613,6 @@ class TaskExecutor:
             self._console.print(Markdown(f"LLM: [red]Error: {e}[/red]"))
 
 
-# if __name__ == "__main__":
-#     assistant = TaskExecutor()
-#     while True:
-#         input_query = input("Enter your query: ")
-#         assistant.process_query(input_query)
-
 if __name__ == "__main__":
     console = Console()
     console.print(f"[bold green]{figlet_format('Rawdog-v7.5')}[/]\n", justify="center")
