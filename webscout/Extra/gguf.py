@@ -1,7 +1,10 @@
 # webscout/Extra/gguf.py
 import subprocess
-import argparse
 import os 
+from pyfiglet import figlet_format
+from rich.console import Console
+
+console = Console()
 
 def convert(model_id, username=None, token=None, quantization_methods="q4_k_m,q5_k_m"):
     """Converts and quantizes a Hugging Face model to GGUF format.
@@ -17,6 +20,7 @@ def convert(model_id, username=None, token=None, quantization_methods="q4_k_m,q5
         ValueError: If an invalid quantization method is provided.
     """
 
+    console.print(f"[bold green]{figlet_format('GGUF Converter')}[/]\n", justify="center")
     # List of valid quantization methods
     valid_methods = [
         "q2_k", "q3_k_l", "q3_k_m", "q3_k_s", 
@@ -220,21 +224,3 @@ echo "Script completed."
     process.wait()
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Convert and quantize model using gguf.sh')
-    parser.add_argument('-m', '--model_id', required=True, help='Set the HF model ID (e.g., "google/flan-t5-xl")')
-    parser.add_argument('-u', '--username', help='Set your Hugging Face username (required for uploads)')
-    parser.add_argument('-t', '--token', help='Set your Hugging Face API token (required for uploads)')
-    parser.add_argument('-q', '--quantization_methods', default="q4_k_m,q5_k_m", 
-                        help='Comma-separated quantization methods (default: q4_k_m,q5_k_m). Valid methods: q2_k, q3_k_l, q3_k_m, q3_k_s, q4_0, q4_1, q4_k_m, q4_k_s, q5_0, q5_1, q5_k_m, q5_k_s, q6_k, q8_0')
-    
-    args = parser.parse_args()
-    
-    try:
-        convert(args.model_id, args.username, args.token, args.quantization_methods)
-    except ValueError as e:
-        print(e)
-        exit(1)
-
-if __name__ == "__main__":
-    main()

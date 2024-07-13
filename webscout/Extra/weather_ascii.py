@@ -1,5 +1,8 @@
 import requests
+from rich.console import Console
+from pyfiglet import figlet_format
 
+console = Console()
 def get(location):
     """Fetches ASCII art weather data for the given location.
     Args:
@@ -9,6 +12,7 @@ def get(location):
         str: ASCII art weather report if the request is successful,
              otherwise an error message.
     """
+    console.print(f"[bold green]{figlet_format('Weather')}[/]\n", justify="center")
     url = f"https://wttr.in/{location}"
     response = requests.get(url, headers={'User-Agent': 'curl'}) 
 
@@ -16,3 +20,4 @@ def get(location):
         return "\n".join(response.text.splitlines()[:-1]) 
     else:
         return f"Error: Unable to fetch weather data. Status code: {response.status_code}"
+

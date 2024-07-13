@@ -1,6 +1,14 @@
 import subprocess
 import argparse
 import os
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import track
+from yaspin import yaspin
+from pyfiglet import figlet_format
+import time
+
+console = Console()
 
 def autollama(model_path, gguf_file):
     """Manages models with Ollama using the autollama.sh script.
@@ -9,6 +17,7 @@ def autollama(model_path, gguf_file):
         model_path (str): The path to the Hugging Face model.
         gguf_file (str): The name of the GGUF file. 
     """
+    console.print(f"[bold green]{figlet_format('Autollama')}[/]\n", justify="center")
 
     # Check if autollama.sh exists in the current working directory
     script_path = os.path.join(os.getcwd(), "autollama.sh")
@@ -172,25 +181,27 @@ echo "Use Ollama run $MODEL_NAME"
     # Execute the command
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-    # Print the output and error in real-time
-    for line in process.stdout:
-        print(line, end='')
+    for line in iter(process.stdout.readline, ''): 
+        console.print(Panel(line.strip(), title="Autollama Output", expand=False)) 
 
-    for line in process.stderr:
-        print(line, end='')
-
+    for line in iter(process.stderr.readline, ''): 
+        console.print(Panel(line.strip(), title="Autollama Errors (if any)", expand=False))
+    
     process.wait()
+    console.print("[green]Model is ready![/]")
 
 def main():
     parser = argparse.ArgumentParser(description='Automatically create and run an Ollama model in Ollama')
-    parser.add_argument('-m', '--model_path', required=True, help='Set the hunggingface model id to the Hugging Face model')
+    parser.add_argument('-m', '--model_path', required=True, help='Set the huggingface model id to the Hugging Face model')
     parser.add_argument('-g', '--gguf_file', required=True, help='Set the GGUF file name')
     args = parser.parse_args()
 
     try:
-        autollama(args.model_path, args.gguf_file)
+        with yaspin(text="Processing...") as spinner:
+            autollama(args.model_path, args.gguf_file)
+        spinner.ok("Done!")
     except Exception as e:
-        print(f"Error: {e}")
+        console.print(f"[red]Error: {e}[/]")
         exit(1)
 
 if __name__ == "__main__":
