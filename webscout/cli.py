@@ -20,8 +20,10 @@ from rich.table import Table
 from rich.style import Style
 from rich.text import Text
 from rich.align import Align
-from rich.progress import track
+from rich.progress import track, Progress
 from rich.prompt import Prompt, Confirm
+from rich.columns import Columns
+from pyfiglet import figlet_format
 
 logger = logging.getLogger(__name__)
 
@@ -48,32 +50,35 @@ def _print_data(data):
     """Prints data using rich panels and markdown, asynchronously."""
     console = Console()
     if data:
-        for i, e in enumerate(data, start=1):
-            # Create a table for each result
-            table = Table(title=f"{i}.", show_lines=True)
-            table.add_column("Key", style="cyan", no_wrap=True)
-            table.add_column("Value", style="white")
+        with Progress() as progress:
+            # task = progress.add_task("[cyan]Processing results...", total=len(data))
+            for i, e in enumerate(data, start=1):
+                table = Table(show_header=False, show_lines=True, expand=True, box=None) 
+                table.add_column("Key", style="cyan", no_wrap=True, width=15)
+                table.add_column("Value", style="white")
 
-            for j, (k, v) in enumerate(e.items(), start=1):
-                if v:
-                    width = 300 if k in ("content", "href", "image", "source", "thumbnail", "url") else 78
-                    k = "language" if k == "detected_language" else k
-                    text = click.wrap_text(
-                        f"{v}", width=width, initial_indent="", subsequent_indent=" " * 12, preserve_paragraphs=True
-                    )
-                else:
-                    text = v
-                table.add_row(k, text)
+                for j, (k, v) in enumerate(e.items(), start=1):
+                    if v:
+                        width = 300 if k in ("content", "href", "image", "source", "thumbnail", "url") else 78
+                        k = "language" if k == "detected_language" else k
 
-            # Wrap the table in a panel with a title
-            console.print(Panel(Align(table, align="left"), title=f"Result {i}", expand=False))
-            console.print("\n")
+                        text = click.wrap_text(
+                            f"{v}", width=width, initial_indent="", subsequent_indent=" " * 18, preserve_paragraphs=True
+                        ).replace("\n", "\n\n") 
+                    else:
+                        text = v
+                    table.add_row(k, text)
+
+                console.print(Panel(table, title=f"Result {i}", expand=False, style="green on black"))
+                console.print("\n") 
+                # progress.update(task, advance=1)
+
 
 def _sanitize_keywords(keywords):
     """Sanitizes keywords for file names and paths. Removes invalid characters like ':'. """
     keywords = (
         keywords.replace("filetype", "")
-        .replace(":", "")  # Remove colons
+        .replace(":", "")
         .replace('"', "'")
         .replace("site", "")
         .replace(" ", "_")
@@ -86,8 +91,8 @@ def _sanitize_keywords(keywords):
 @click.group(chain=True)
 def cli():
     """webscout CLI tool - Search the web with a rich UI."""
-    pass
-
+    console = Console()
+    console.print(f"[bold blue]{figlet_format('Webscout')}[/]\n", justify="center")
 
 def safe_entry_point():
     try:
@@ -100,7 +105,7 @@ def safe_entry_point():
 def version():
     """Shows the current version of webscout."""
     console = Console()
-    console.print(Panel(Text(f"webscout v{__version__}", style="cyan"), title="Version"))
+    console.print(Panel(Text(f"webscout v{__version__}", style="cyan"), title="Version", expand=False))
 
 
 @cli.command()
@@ -111,16 +116,15 @@ def chat(proxy):
     client = WEBS(proxy=proxy)
 
     console = Console()
-    console.print(Panel(Text("Available AI Models:", style="cyan"), title="DuckDuckGo AI Chat"))
-    for idx, model in enumerate(models, start=1):
-        console.print(f"{idx}. {model}")
-    chosen_model_idx = Prompt.ask("Choose a model by entering its number [1]", choices=[str(i) for i in range(1, len(models) + 1)], default="1")
+    console.print(Panel(Text("Available AI Models:", style="cyan"), title="DuckDuckGo AI Chat", expand=False))
+    console.print(Columns([Panel(Text(model, justify="center"), expand=True) for model in models]))
+    chosen_model_idx = Prompt.ask("[bold cyan]Choose a model by entering its number[/] [1]", choices=[str(i) for i in range(1, len(models) + 1)], default="1")
     chosen_model_idx = int(chosen_model_idx) - 1
     model = models[chosen_model_idx]
-    console.print(f"Using model: {model}")
+    console.print(f"[bold green]Using model:[/] {model}")
 
     while True:
-        user_input = input(f"{'-'*78}\nYou: ")
+        user_input = Prompt.ask(f"{'-'*78}\n[bold blue]You:[/]")
         if not user_input.strip():
             break
 
@@ -129,7 +133,7 @@ def chat(proxy):
         console.print(Panel(Text(f"AI: {text}", style="green"), title="AI Response"))
 
         if "exit" in user_input.lower() or "quit" in user_input.lower():
-            console.print(Panel(Text("Exiting chat session.", style="cyan"), title="Goodbye"))
+            console.print(Panel(Text("Exiting chat session.", style="cyan"), title="Goodbye", expand=False))
             break
 
 
