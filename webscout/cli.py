@@ -47,32 +47,29 @@ COLORS = {
 }
 
 def _print_data(data):
-    """Prints data using rich panels and markdown, asynchronously."""
+    """Prints data using rich panels and markdown."""
     console = Console()
     if data:
-        with Progress() as progress:
-            # task = progress.add_task("[cyan]Processing results...", total=len(data))
-            for i, e in enumerate(data, start=1):
-                table = Table(show_header=False, show_lines=True, expand=True, box=None) 
-                table.add_column("Key", style="cyan", no_wrap=True, width=15)
-                table.add_column("Value", style="white")
+        for i, e in enumerate(data, start=1):
+            table = Table(show_header=False, show_lines=True, expand=True, box=None)  # Removed duplicate title
+            table.add_column("Key", style="cyan", no_wrap=True, width=15)
+            table.add_column("Value", style="white")
 
-                for j, (k, v) in enumerate(e.items(), start=1):
-                    if v:
-                        width = 300 if k in ("content", "href", "image", "source", "thumbnail", "url") else 78
-                        k = "language" if k == "detected_language" else k
+            for j, (k, v) in enumerate(e.items(), start=1):
+                if v:
+                    width = 300 if k in ("content", "href", "image", "source", "thumbnail", "url") else 78
+                    k = "language" if k == "detected_language" else k
+                    text = click.wrap_text(
+                        f"{v}", width=width, initial_indent="", subsequent_indent=" " * 18, preserve_paragraphs=True
+                    ).replace("\n", "\n\n")
+                else:
+                    text = v
+                table.add_row(k, text)
 
-                        text = click.wrap_text(
-                            f"{v}", width=width, initial_indent="", subsequent_indent=" " * 18, preserve_paragraphs=True
-                        ).replace("\n", "\n\n") 
-                    else:
-                        text = v
-                    table.add_row(k, text)
-
-                console.print(Panel(table, title=f"Result {i}", expand=False, style="green on black"))
-                console.print("\n") 
-                # progress.update(task, advance=1)
-
+            # Only the Panel has the title now
+            console.print(Panel(table, title=f"Result {i}", expand=False, style="green on black"))
+            console.print("\n") 
+            
 
 def _sanitize_keywords(keywords):
     """Sanitizes keywords for file names and paths. Removes invalid characters like ':'. """
