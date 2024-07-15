@@ -37,11 +37,13 @@ from dotenv import load_dotenv
 import g4f
 import webscout
 import webscout.AIutel
+from pyfiglet import figlet_format
 
 init_colorama(autoreset=True)
 
 load_dotenv()  # loads .env variables
 
+console = Console()
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s : %(message)s ",  
     datefmt="%H:%M:%S",
@@ -2606,6 +2608,7 @@ def make_commands():
 # @this.handle_exception
 def main(*args):
     """Fireup console programmically"""
+    console.print(f"[bold green]{figlet_format('WebAI')}[/]\n", justify="center")
     sys.argv += list(args)
     args = sys.argv
     if len(args) == 1:
