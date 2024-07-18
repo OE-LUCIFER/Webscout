@@ -5,11 +5,14 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from functools import cached_property
 from itertools import cycle, islice
+from random import choice
 from threading import Event
 from types import TracebackType
 from typing import Dict, List, Optional, Tuple, Type, Union, cast
 
-import pyreqwest_impersonate as pri  # type: ignore
+import pyreqwest_impersonate as pri
+
+from .utils import _calculate_distance, _extract_vqd, _normalize, _normalize_url, _text_extract_json, json_loads  # type: ignore
 
 try:
     from lxml.etree import _Element
@@ -20,15 +23,8 @@ try:
 except ImportError:
     LXML_AVAILABLE = False
 
-from .exceptions import WebscoutE, RatelimitE, TimeoutE
-from .utils import (
-    _calculate_distance,
-    _extract_vqd,
-    _normalize,
-    _normalize_url,
-    _text_extract_json,
-    json_loads,
-)
+from .exceptions import *
+
 
 logger = logging.getLogger("webscout.WEBS")
 
@@ -37,6 +33,15 @@ class WEBS:
     """webscout class to get search results from duckduckgo.com."""
 
     _executor: ThreadPoolExecutor = ThreadPoolExecutor()
+    _impersonates = (
+        "chrome_99", "chrome_100", "chrome_101", "chrome_104", "chrome_105", "chrome_106", "chrome_108", 
+        "chrome_107", "chrome_109", "chrome_114", "chrome_116", "chrome_117", "chrome_118", "chrome_119", 
+        "chrome_120", #"chrome_123", "chrome_124", "chrome_126",
+        "safari_ios_16.5", "safari_ios_17.2", "safari_ios_17.4.1", "safari_15.3", "safari_15.5", 
+        "safari_15.6.1", "safari_16", "safari_16.5", "safari_17.2.1", "safari_17.4.1", "safari_17.5",
+        #"okhttp_3.9", "okhttp_3.11", "okhttp_3.13", "okhttp_3.14", "okhttp_4.9", "okhttp_4.10", "okhttp_5",
+        "edge_99", "edge_101", "edge_122",
+    )  # fmt: skip
 
     def __init__(
         self,
@@ -66,7 +71,7 @@ class WEBS:
             timeout=timeout,
             cookie_store=True,
             referer=True,
-            impersonate="chrome_124",
+            impersonate=choice(self._impersonates),
             follow_redirects=False,
             verify=False,
         )
@@ -120,13 +125,14 @@ class WEBS:
         resp_content = self._get_url("POST", "https://duckduckgo.com", data={"q": keywords})
         return _extract_vqd(resp_content, keywords)
 
-    def chat(self, keywords: str, model: str = "gpt-3.5") -> str:
+    def chat(self, keywords: str, model: str = "gpt-3.5", timeout: int = 20) -> str:
         """Initiates a chat session with DuckDuckGo AI.
 
         Args:
             keywords (str): The initial message or question to send to the AI.
             model (str): The model to use: "gpt-3.5", "claude-3-haiku", "llama-3-70b", "mixtral-8x7b".
                 Defaults to "gpt-3.5".
+            timeout (int): Timeout value for the HTTP client. Defaults to 20.
 
         Returns:
             str: The response from the AI.
@@ -149,18 +155,16 @@ class WEBS:
             "messages": self._chat_messages,
         }
         resp = self.client.post(
-            "https://duckduckgo.com/duckchat/v1/chat", headers={"x-vqd-4": self._chat_vqd}, json=json_data
+            "https://duckduckgo.com/duckchat/v1/chat",
+            headers={"x-vqd-4": self._chat_vqd},
+            json=json_data,
+            timeout=timeout,
         )
         self._chat_vqd = resp.headers.get("x-vqd-4", "")
 
-        messages = []
-        for line in resp.text.replace("data: ", "").replace("[DONE]", "").split("\n\n"):
-            x = line.strip()
-            if x:
-                j = json_loads(x)
-                message = j.get("message", "")
-                messages.append(message)
-        result = "".join(messages)
+        data = ",".join(x for line in resp.text.rstrip("[DONE]\n").split("data:") if (x := line.strip()))
+        result = "".join(x.get("message", "") for x in json_loads("[" + data + "]"))
+
         self._chat_messages.append({"role": "assistant", "content": result})
         return result
 
@@ -347,7 +351,7 @@ class WEBS:
             for e in elements:
                 if isinstance(e, _Element):
                     hrefxpath = e.xpath("./a/@href")
-                    href = str(hrefxpath[0]) if isinstance(hrefxpath, List) else None
+                    href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, List) else None
                     if (
                         href
                         and href not in cache
@@ -357,9 +361,9 @@ class WEBS:
                     ):
                         cache.add(href)
                         titlexpath = e.xpath("./h2/a/text()")
-                        title = str(titlexpath[0]) if isinstance(titlexpath, List) else ""
+                        title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, List) else ""
                         bodyxpath = e.xpath("./a//text()")
-                        body = "".join(str(x) for x in bodyxpath) if isinstance(bodyxpath, List) else ""
+                        body = "".join(str(x) for x in bodyxpath) if bodyxpath and isinstance(bodyxpath, List) else ""
                         result = {
                             "title": _normalize(title),
                             "href": _normalize_url(href),
@@ -449,10 +453,14 @@ class WEBS:
                         else:
                             cache.add(href)
                             titlexpath = e.xpath(".//a//text()")
-                            title = str(titlexpath[0]) if isinstance(titlexpath, List) else ""
+                            title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, List) else ""
                     elif i == 2:
                         bodyxpath = e.xpath(".//td[@class='result-snippet']//text()")
-                        body = "".join(str(x) for x in bodyxpath) if isinstance(bodyxpath, List) else ""
+                        body = (
+                            "".join(str(x) for x in bodyxpath).strip()
+                            if bodyxpath and isinstance(bodyxpath, List)
+                            else ""
+                        )
                         if href:
                             result = {
                                 "title": _normalize(title),
