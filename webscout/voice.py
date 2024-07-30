@@ -25,3 +25,10 @@ def play_audio(message: str, voice: str = "Brian") -> typing.Union[str, typing.N
         return result.content
     except:
         return None
+
+if __name__ == "__main__":
+    # Example usage of the play_audio function
+    message = "Hello, world!"
+    voice = "Brian"
+    audio_result = play_audio(message, voice)
+    print(audio_result)

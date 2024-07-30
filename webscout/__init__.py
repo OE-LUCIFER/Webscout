@@ -7,14 +7,14 @@ from .voice import play_audio
 from .websx_search import WEBSX
 from .LLM import VLM, LLM
 from .YTdownloader import *
-from .GoogleS import *
+
 import g4f
 from .YTdownloader import *
 from .Provider import *
 from .Extra import gguf
 from .Extra import autollama
 from .Extra import weather_ascii, weather
-
+from .Agents import *
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 
 webai = [
@@ -44,7 +44,8 @@ webai = [
    "vtlchat",
    "geminiflash",
    "geminipro",
-   "ollama"
+   "ollama",
+   "andi",
 ]
 
 gpt4free_providers = [
