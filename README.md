@@ -670,30 +670,11 @@ with WEBS() as WEBS:
 ## usage of WEBSX -- Another Websearch thing
 ```python
 from webscout import WEBSX
+s = "Python development tools"
 
-def main():
-    # Initialize the WEBSX client
-    search = WEBSX(
-        k=10,  
-    )
+result = WEBSX(s)
 
-    # Example using `run` method - Get a summary
-    query = "What is the capital of France?"
-    answer = search.run(query)
-    print(f"Answer: {answer}\n")
-
-    # Example using `results` method - Get detailed results with metadata
-    query = "What is the capital of France?"
-    results = search.results(query, num_results=3)
-    print("Search Results:")
-    for result in results:
-        print(f"Title: {result['title']}")
-        print(f"Snippet: {result['snippet']}")
-        print(f"Link: {result['link']}\n")
-        print(f'Engines: {result["engines"]}')
-
-if __name__ == "__main__":
-    main()
+print(result)
 ```
 ## ALL acts
 <details>
@@ -956,7 +937,7 @@ ___
 ### 0. `Duckchat` - chat with LLM
 ```python
 from webscout import WEBS as w
-R = w().chat("hello", model='claude-3-haiku') # GPT-3.5 Turbo, mixtral-8x7b, llama-3-70b, claude-3-haiku
+R = w().chat("Who are you", model='gpt-4o-mini') # GPT-3.5 Turbo, mixtral-8x7b, llama-3-70b, claude-3-haiku, gpt-4o-mini
 print(R)
 ```
 ### 1. `PhindSearch` - Search using Phind.com 
@@ -1433,7 +1414,12 @@ llama = LLAMA()
 r = llama.chat("What is the meaning of life?")
 print(r)
 ```
-
+### 25. AndiSearch
+```python
+from webscout import AndiSearch
+a = AndiSearch()
+print(a.chat("HelpingAI-9B"))
+```
 ### `LLM` 
 ```python
 from webscout.LLM import LLM

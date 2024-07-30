@@ -55,7 +55,7 @@ class TaskExecutor:
         self._web_search_enabled: bool = False  # Enable web search
         self._rawdog_enabled: bool = True
         self._internal_script_execution_enabled: bool = False
-        self._script_confirmation_required: bool = True
+        self._script_confirmation_required: bool = False
         self._selected_interpreter: str = "python"
         self._selected_optimizer: str = "code"
         self._suppress_output: bool = False  # Suppress verbose output
