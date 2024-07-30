@@ -142,6 +142,7 @@ class WEBS:
             "gpt-3.5": "gpt-3.5-turbo-0125",
             "llama-3-70b": "meta-llama/Llama-3-70b-chat-hf",
             "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+            "gpt-4o-mini": "gpt-4o-mini",
         }
         # vqd
         if not self._chat_vqd:
