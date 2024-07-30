@@ -765,7 +765,20 @@ class Main(cmd.Cmd):
                     model=getOr(model, "Phind Model"),
                     quiet=quiet,
                 )
+            elif provider == "andi":
+                from webscout import AndiSearch
 
+                self.bot = AndiSearch(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                )
             elif provider == "blackboxai":
 
                 from webscout import BLACKBOXAI
