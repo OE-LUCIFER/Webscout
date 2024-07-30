@@ -38,6 +38,7 @@ from .Geminipro import GEMINIPRO
 from .Geminiflash import GEMINIFLASH
 from .OLLAMA import OLLAMA
 from .FreeGemini import FreeGemini
+from .Andi import AndiSearch
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
@@ -78,7 +79,8 @@ __all__ = [
     'GEMINIPRO',
     'GEMINIFLASH',
     'OLLAMA',
-    'FreeGemini'
+    'FreeGemini',
+    'AndiSearch'
 
 
 ]
