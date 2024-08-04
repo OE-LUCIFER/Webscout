@@ -65,7 +65,7 @@ class this:
 
     rich_code_themes = ["monokai", "paraiso-dark", "igor", "vs", "fruity", "xcode"]
 
-    default_provider = "phind"
+    default_provider = "llama3"
 
     getExc = lambda e: e.args[1] if len(e.args) > 1 else str(e)
 
@@ -517,6 +517,20 @@ class Main(cmd.Cmd):
                     proxies=proxies,
                     history_offset=history_offset,
                     act=awesome_prompt,
+                )
+            elif provider == "llama3":
+                from webscout import LLAMA3
+                self.bot = LLAMA3(
+                    is_conversation=disable_conversation,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    intro=intro,
+                    filepath=filepath,
+                    update_file=update_file,
+                    proxies=proxies,
+                    history_offset=history_offset,
+                    act=awesome_prompt,
+                    model=getOr(model, "llama3-8b"),
                 )
             elif provider == "berlin4h":
                 from webscout import Berlin4h

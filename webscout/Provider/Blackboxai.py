@@ -22,14 +22,14 @@ import yaml
 from ..AIutel import Optimizers
 from ..AIutel import Conversation
 from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
+from ..AIbase import Provider, AsyncProvider
 from Helpingai_T2 import Perplexity
 from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
 import logging
 import httpx
 
-#------------------------------------------------------BLACKBOXAI--------------------------------------------------------  
+#------------------------------------------------------BLACKBOXAI--------------------------------------------------------
 class BLACKBOXAI:
     def __init__(
         self,
@@ -234,13 +234,9 @@ class BLACKBOXAI:
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-    @staticmethod
-    def chat_cli(prompt):
-        """Sends a request to the BLACKBOXAI API and processes the response."""
-        blackbox_ai = BLACKBOXAI()  # Initialize a BLACKBOXAI instance
-        response = blackbox_ai.ask(prompt)  # Perform a chat with the given prompt
-        processed_response = blackbox_ai.get_message(response)  # Process the response
-        print(processed_response)
+
+
+
 class AsyncBLACKBOXAI(AsyncProvider):
     def __init__(
         self,
@@ -438,3 +434,11 @@ class AsyncBLACKBOXAI(AsyncProvider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
+# Function to clean the response text
+def clean_response(response_text: str) -> str:
+    # Remove web search results
+    response_text = re.sub(r'\$@\$v=undefined-rv1\$@\$Sources:.*?\$~~~', '', response_text, flags=re.DOTALL)
+    # Remove any remaining special characters or markers
+    response_text = re.sub(r'\$~~~', '', response_text)
+    return response_text

@@ -39,6 +39,11 @@ from .Geminiflash import GEMINIFLASH
 from .OLLAMA import OLLAMA
 from .FreeGemini import FreeGemini
 from .Andi import AndiSearch
+from .PizzaGPT import *
+from .Llama3 import *
+from .DARKAI import *
+from .koala import *
+from .RUBIKSAI import * 
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
@@ -80,7 +85,10 @@ __all__ = [
     'GEMINIFLASH',
     'OLLAMA',
     'FreeGemini',
-    'AndiSearch'
-
-
+    'AndiSearch',
+    'PIZZAGPT',
+    'LLAMA3',
+    'DARKAI',
+    'KOALA',
+    'RUBIKSAI'
 ]

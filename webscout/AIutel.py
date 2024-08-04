@@ -54,6 +54,7 @@ webai = [
    "geminipro",
    "ollama",
    "andi",
+   "llama3"
 ]
 
 gpt4free_providers = [
@@ -532,6 +533,15 @@ Essay 2021-09-01
 LLM:
 ```python
 print("The essay is about...")
+```
+
+3. User: Weather in qazigund
+
+LLM:
+```python
+from webscout import weather as w
+weather = w.get("Qazigund")
+w.print_weather(weather)
 ```
 """
 

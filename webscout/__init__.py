@@ -46,6 +46,7 @@ webai = [
    "geminipro",
    "ollama",
    "andi",
+   "llama3"
 ]
 
 gpt4free_providers = [

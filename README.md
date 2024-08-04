@@ -1296,7 +1296,7 @@ from rich import print
 
 ai = DeepSeek(
     is_conversation=True,
-    api_key='', # Watch this video https://youtu.be/Euin6p5Ryks?si=-84JBtyqGwMzvdIq to know from where u can get this key for free 
+    api_key='23bfff080d38429c9fbbf3c76f88454c', 
     max_tokens=800,
     timeout=30,
     intro=None,
@@ -1308,18 +1308,12 @@ ai = DeepSeek(
     model="deepseek_chat"
 )
 
-# Start an infinite loop for continuous interaction
-while True:
-    # Define a prompt to send to the AI
-    prompt = input("Enter your prompt: ")
-    
-    # Check if the user wants to exit the loop
-    if prompt.lower() == "exit":
-        break
-    
-    # Use the 'chat' method to send the prompt and receive a response
-    r = ai.chat(prompt)
-    print(r)
+
+# Define a prompt to send to the AI
+prompt = "Tell me about india"
+# Use the 'chat' method to send the prompt and receive a response
+r = ai.chat(prompt)
+print(r)
 ```
 ### 18. `Deepinfra`
 ```python
@@ -1420,6 +1414,9 @@ from webscout import AndiSearch
 a = AndiSearch()
 print(a.chat("HelpingAI-9B"))
 ```
+
+### 25. LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai
+code similar to other providers
 ### `LLM` 
 ```python
 from webscout.LLM import LLM

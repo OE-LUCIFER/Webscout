@@ -153,7 +153,7 @@ huggingface-cli download "$MODEL_ID" --local-dir "./${MODEL_NAME}" --local-dir-u
 # Convert to fp16
 FP16="${MODEL_NAME}/${MODEL_NAME,,}.fp16.bin"
 echo "Converting the model to fp16..."
-python3 llama.cpp/convert-hf-to-gguf.py "$MODEL_NAME" --outtype f16 --outfile "$FP16"
+python3 llama.cpp/convert_hf_to_gguf.py "$MODEL_NAME" --outtype f16 --outfile "$FP16"
 
 # Quantize the model
 echo "Quantizing the model..."

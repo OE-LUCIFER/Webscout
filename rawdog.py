@@ -63,7 +63,7 @@ class TaskExecutor:
         self._initialize_rawdog()
         self._initialize_ai_model()
 
-        Console().print(f"[bold green]{figlet_format('Rawdog-v7.5')}[/]\n", justify="center")
+        Console().print(f"[bold green]{figlet_format('Rawdog-v8')}[/]\n", justify="center")
 
     def _get_provider_mapping(self):
         """Returns a dictionary mapping provider names to their initialization functions."""
@@ -94,6 +94,19 @@ class TaskExecutor:
                 history_offset=self._history_offset,
                 act=self._awesome_prompt_content,
                 model=getOr(self._selected_model, "qwen2:0.5b"),
+            ),
+            "llama3": lambda: webscout.LLAMA3(
+                is_conversation=self._conversation_enabled,
+                max_tokens=self._max_tokens,
+                timeout=self._timeout,
+                system=self._initial_prompt,
+                intro=self._initial_prompt,
+                filepath=self._history_filepath,
+                update_file=self._update_history_file,
+                proxies=self._proxies,
+                history_offset=self._history_offset,
+                act=self._awesome_prompt_content,
+                model=getOr(self._selected_model, "llama3-8b"),
             ),
             "leo": lambda: webscout.LEO(
                 is_conversation=self._conversation_enabled,

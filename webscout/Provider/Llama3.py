@@ -1,34 +1,11 @@
-import time
-import uuid
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-import click
 import requests
-from requests import get
-from uuid import uuid4
-from re import findall
-from requests.exceptions import RequestException
-from curl_cffi.requests import get, RequestsError
-import g4f
-from random import randint
-from PIL import Image
-import io
-import re
 import json
-import yaml
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
-from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
-import logging
-import httpx
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 
-class BasedGPT(Provider):
+class LLAMA3(Provider):
     def __init__(
         self,
         is_conversation: bool = True,
@@ -40,9 +17,10 @@ class BasedGPT(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "gpt-3.5-turbo"
+        model: str = "llama3-70b", # model= llama3-70b, llama3-8b, llama3-405b
+        system: str = "Answer as concisely as possible.",
     ):
-        """Instantiates BasedGPT
+        """Instantiates Snova
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -54,33 +32,18 @@ class BasedGPT(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): Model to use for generating text. Defaults to "gpt-3.5-turbo".
+            model (str, optional): Snova model name. Defaults to "llama3-70b".
+            system (str, optional): System prompt for Snova. Defaults to "Answer as concisely as possible.".
         """
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.chat_endpoint = "https://www.basedgpt.chat/api/chat"
         self.timeout = timeout
-        self.last_response = {}
         self.model = model
-        self.headers = {
-            "accept": "*/*",
-            "accept-encoding": "gzip, deflate, br, zstd",
-            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
-            "content-length": "109",
-            "content-type": "application/json",
-            "dnt": "1",
-            "origin": "https://www.basedgpt.chat",
-            "priority": "u=1, i",
-            "referer": "https://www.basedgpt.chat/",
-            "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0"
-        }
+        self.system = system
+        self.last_response = {}
+        self.env_type = "tp16405b" if "405b" in model else "tp16"
+        self.headers = {'content-type': 'application/json'}
 
         self.__available_optimizers = (
             method
@@ -135,40 +98,21 @@ class BasedGPT(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
+        data = {'body': {'messages': [{'role': 'system', 'content': self.system}, {'role': 'user', 'content': conversation_prompt}], 'stream': True, 'model': self.model}, 'env_type': self.env_type}
 
-        self.session.headers.update(self.headers)
-        payload = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": conversation_prompt
-                }
-            ]
-        }
-
-        def for_stream():
-            response = self.session.post(
-                self.chat_endpoint, json=payload, stream=True, timeout=self.timeout
-            )
-            if not response.ok:
-                raise Exception(
-                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                )
-
-            streaming_text = ""
-            for value in response.iter_lines(
-                decode_unicode=True,
-                chunk_size=64,
-                delimiter="\n",
-            ):
-                try:
-                    if bool(value):
-                        streaming_text += value + ("\n" if stream else "")
-                        resp = dict(text=streaming_text)
-                        self.last_response.update(resp)
-                        yield value if raw else resp
-                except json.decoder.JSONDecodeError:
-                    pass
+        def for_stream(data=data):  # Pass data as a default argument
+            response = self.session.post('https://fast.snova.ai/api/completion', headers=self.headers, json=data, stream=True, timeout=self.timeout)
+            output = ''
+            for line in response.iter_lines(decode_unicode=True):
+                if line.startswith('data:'):
+                    try:
+                        data = json.loads(line[len('data: '):])
+                        output += data.get("choices", [{}])[0].get("delta", {}).get("content", '')
+                        self.last_response.update(dict(text=output))
+                        yield data if raw else dict(text=output)
+                    except json.JSONDecodeError:
+                        if line[len('data: '):] == '[DONE]':
+                            break
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -226,3 +170,4 @@ class BasedGPT(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+ 

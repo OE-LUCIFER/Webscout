@@ -65,6 +65,7 @@ setup(
         "ollama",
         "pyfiglet",
         "yaspin",
+        "pillow",
     ],
     entry_points={
         "console_scripts": [
