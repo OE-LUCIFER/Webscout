@@ -44,6 +44,8 @@ from .Llama3 import *
 from .DARKAI import *
 from .koala import *
 from .RUBIKSAI import * 
+from .meta import *
+
 __all__ = [
     'ThinkAnyAI',
     'Xjai',
@@ -90,5 +92,6 @@ __all__ = [
     'LLAMA3',
     'DARKAI',
     'KOALA',
-    'RUBIKSAI'
+    'RUBIKSAI',
+    'Meta',
 ]

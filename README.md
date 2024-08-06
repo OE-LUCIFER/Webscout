@@ -1103,55 +1103,36 @@ prompt = "Explain the concept of recursion in simple terms."
 response = perplexity.chat(prompt)
 print(response)
 ```
-### 8. `OpenGPT` - chat With OPENGPT
+### 8. `meta ai` - chat With meta ai
 ```python
-from webscout import OPENGPT
+from webscout import Meta
+from rich import print
+# **For unauthenticated usage**
+meta_ai = Meta()
 
-opengpt = OPENGPT(is_conversation=True, max_tokens=8000, timeout=30, assistant_id="bca37014-6f97-4f2b-8928-81ea8d478d88")
-while True:
-    # Prompt the user for input
-    prompt = input("Enter your prompt: ")
-    # Send the prompt to the OPENGPT model and print the response
-    response_str = opengpt.chat(prompt)
-    print(response_str)
-```
-```python
-from webscout import OPENGPTv2
+# Simple text prompt
+response = meta_ai.chat("What is the capital of France?")
+print(response)
 
-# Initialize the bot with all specified settings
-bot = OPENGPTv2(
-    generate_new_agents=True,  # Set to True to generate new IDs, False to load from file
-    assistant_name="My Custom Assistant",
-    retrieval_description="Helpful information from my files.",
-    agent_system_message="",
-    enable_action_server=False,  # Assuming you want to disable Action Server by Robocorp
-    enable_ddg_search=False,  # Enable DuckDuckGo search tool
-    enable_arxiv=False,  # Assuming you want to disable Arxiv
-    enable_press_releases=False,  # Assuming you want to disable Press Releases (Kay.ai)
-    enable_pubmed=False,  # Assuming you want to disable PubMed
-    enable_sec_filings=False,  # Assuming you want to disable SEC Filings (Kay.ai)
-    enable_retrieval=False,  # Assuming you want to disable Retrieval
-    enable_search_tavily=False,  # Assuming you want to disable Search (Tavily)
-    enable_search_short_answer_tavily=False,  # Assuming you want to disable Search (short answer, Tavily)
-    enable_you_com_search=True,  # Assuming you want to disable You.com Search
-    enable_wikipedia=False,  # Enable Wikipedia tool
-    is_public=True,
-    is_conversation=True,
-    max_tokens=800,
-    timeout=40,
-    filepath="opengpt_conversation_history.txt",
-    update_file=True,
-    history_offset=10250,
-    act=None,
-)
+# Streaming response
+for chunk in meta_ai.chat("Tell me a story about a cat."):
+    print(chunk, end="", flush=True)
 
-# Example interaction loop
-while True:
-    prompt = input("You: ")
-    if prompt.strip().lower() == 'exit':
-        break
-    response = bot.chat(prompt)
-    print(response)
+# **For authenticated usage (including image generation)**
+fb_email = "abcd@abc.com"
+fb_password = "qwertfdsa"
+meta_ai = Meta(fb_email=fb_email, fb_password=fb_password)
+
+# Text prompt with web search
+response = meta_ai.ask("what is currently happning in bangladesh in aug 2024")
+print(response["message"]) # Access the text message
+print("Sources:", response["sources"]) # Access sources (if any)
+
+# Image generation
+response = meta_ai.ask("Create an image of a cat wearing a hat.") 
+print(response["message"]) # Print the text message from the response
+for media in response["media"]:
+    print(media["url"])  # Access image URLs
 
 ```
 ### 9. `KOBOLDAI` - 

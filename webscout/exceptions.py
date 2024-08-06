@@ -14,5 +14,11 @@ class FailedToGenerateResponseError(Exception):
     """Provider failed to fetch response"""
 class AllProvidersFailure(Exception):
     """None of the providers generated response successfully"""
+    pass
 
+class FacebookInvalidCredentialsException(Exception):
+    pass
+
+
+class FacebookRegionBlocked(Exception):
     pass
