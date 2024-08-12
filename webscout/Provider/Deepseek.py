@@ -2,10 +2,10 @@ import requests
 import json
 from typing import Any, AsyncGenerator, Dict
 
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import  Provider, AsyncProvider
 from webscout import exceptions
 
 class DeepSeek(Provider):
@@ -13,10 +13,15 @@ class DeepSeek(Provider):
     A class to interact with the Deepseek API.
     """
 
+    AVAILABLE_MODELS = [
+        "deepseek_chat",
+        "deepseek_code"
+    ]
+
     def __init__(
         self,
         api_key,
-        model: str = "deepseek_chat", # deepseek_chat, deepseek_code
+        model: str = "deepseek_chat",
         temperature: float = 0,
         is_conversation: bool = True,
         timeout: int = 30,
@@ -32,9 +37,10 @@ class DeepSeek(Provider):
         Initializes the Deepseek API with given parameters.
 
         Args:
-            api_token (str): The API token for authentication.
-            api_endpoint (str): The API endpoint to use for requests.
-            model (str): The AI model to use for text generation.
+            api_key (str): The API token for authentication.
+            model (str, optional): The AI model to use for text generation. 
+                                    Defaults to "deepseek_chat". 
+                                    Options: "deepseek_chat", "deepseek_code".
             temperature (float): The temperature parameter for the model.
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
             timeout (int, optional): Http request timeout. Defaults to 30.
@@ -45,6 +51,9 @@ class DeepSeek(Provider):
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+
         self.api_token = api_key
         self.api_endpoint = "https://chat.deepseek.com/api/v0/chat/completions"
         self.model = model
@@ -210,3 +219,10 @@ class DeepSeek(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
+if __name__ == '__main__':
+    from rich import print
+    ai = DeepSeek(api_key="")
+    response = ai.chat("tell me about india")
+    for chunk in response:
+        print(chunk, end="", flush=True)

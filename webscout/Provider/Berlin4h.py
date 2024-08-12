@@ -2,10 +2,10 @@ import requests
 import json
 import uuid
 from typing import Any, Dict, Optional
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import Provider, AsyncProvider
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 
 class Berlin4h(Provider):
@@ -209,3 +209,9 @@ class Berlin4h(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+if __name__ == '__main__':
+    from rich import print
+    ai = Berlin4h()
+    response = ai.chat("tell me about india")
+    for chunk in response:
+        print(chunk, end="", flush=True)

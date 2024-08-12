@@ -1,35 +1,37 @@
 import time
 import uuid
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-import click
-import requests
-from requests import get
-from uuid import uuid4
-from re import findall
-from requests.exceptions import RequestException
-from curl_cffi.requests import get, RequestsError
-import g4f
-from random import randint
-from PIL import Image
-import io
-import re
-import json
-import yaml
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
-from Helpingai_T2 import Perplexity
-from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
-import logging
+from typing import Any, AsyncGenerator, Dict, Optional, Callable, List
+
 import httpx
+import requests
+import json
+
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import Provider, AsyncProvider
+from webscout import exceptions
 
 class GROQ(Provider):
+    """
+    A class to interact with the GROQ AI API.
+    """
+
+    AVAILABLE_MODELS = [
+        "llama-3.1-405b-reasoning",
+        "llama-3.1-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama3-groq-70b-8192-tool-use-preview",
+        "llama3-groq-8b-8192-tool-use-preview",
+        "llama-guard-3-8b",
+        "llama3-70b-8192",
+        "llama3-8b-8192",
+        "mixtral-8x7b-32768",
+        "gemma-7b-it",
+        "gemma2-9b-it",
+        "whisper-large-v3"
+    ]
+
     def __init__(
         self,
         api_key: str,
@@ -47,6 +49,7 @@ class GROQ(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        system_prompt: Optional[str] = None,
     ):
         """Instantiates GROQ
 
@@ -58,7 +61,7 @@ class GROQ(Provider):
             presence_penalty (int, optional): Chances of topic being repeated. Defaults to 0.
             frequency_penalty (int, optional): Chances of word being repeated. Defaults to 0.
             top_p (float, optional): Sampling threshold during inference time. Defaults to 0.999.
-            model (str, optional): LLM model name. Defaults to "gpt-3.5-turbo".
+            model (str, optional): LLM model name. Defaults to "mixtral-8x7b-32768".
             timeout (int, optional): Http request timeout. Defaults to 30.
             intro (str, optional): Conversation introductory prompt. Defaults to None.
             filepath (str, optional): Path to file containing conversation history. Defaults to None.
@@ -66,7 +69,11 @@ class GROQ(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+            system_prompt (str, optional): System prompt to guide the conversation. Defaults to None.
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -76,10 +83,12 @@ class GROQ(Provider):
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.top_p = top_p
-        self.chat_endpoint = "https://api.groq.com/openai/v1/chat/completions"
+        self.chat_endpoint = "https://api.groq.com/openai/v1/chat/completions" 
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
+        self.system_prompt = system_prompt
+        self.available_functions: Dict[str, Callable] = {}  # Store available functions
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
@@ -104,6 +113,15 @@ class GROQ(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
+    def add_function(self, function_name: str, function: Callable):
+        """Add a function to the available functions dictionary.
+
+        Args:
+            function_name (str): The name of the function to be used in the prompt.
+            function (Callable): The function itself.
+        """
+        self.available_functions[function_name] = function
+
     def ask(
         self,
         prompt: str,
@@ -111,45 +129,20 @@ class GROQ(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
+        tools: Optional[List[Dict[str, Any]]] = None,  # Add tools parameter
     ) -> dict:
         """Chat with AI
 
-                Args:
-                    prompt (str): Prompt to be send.
-                    stream (bool, optional): Flag for streaming response. Defaults to False.
-                    raw (bool, optional): Stream back raw response as received. Defaults to False.
-                    optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-                    conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-                Returns:
-                   dict : {}
-                ```json
-        {
-            "id": "c0c8d139-d2b9-9909-8aa1-14948bc28404",
-            "object": "chat.completion",
-            "created": 1710852779,
-            "model": "mixtral-8x7b-32768",
-            "choices": [
-                {
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": "Hello! How can I assist you today? I'm here to help answer your questions and engage in conversation on a wide variety of topics. Feel free to ask me anything!"
-                    },
-                    "logprobs": null,
-                    "finish_reason": "stop"
-                }
-            ],
-            "usage": {
-                "prompt_tokens": 47,
-                "prompt_time": 0.03,
-                "completion_tokens": 37,
-                "completion_time": 0.069,
-                "total_tokens": 84,
-                "total_time": 0.099
-            },
-            "system_fingerprint": null
-        }
-                ```
+        Args:
+            prompt (str): Prompt to be send.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            raw (bool, optional): Stream back raw response as received. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            tools (List[Dict[str, Any]], optional): List of tool definitions. See example in class docstring. Defaults to None.
+
+        Returns:
+           dict : {}
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -161,15 +154,21 @@ class GROQ(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
+
+        messages = [{"content": conversation_prompt, "role": "user"}]
+        if self.system_prompt:
+            messages.insert(0, {"role": "system", "content": self.system_prompt})
+
         self.session.headers.update(self.headers)
         payload = {
             "frequency_penalty": self.frequency_penalty,
-            "messages": [{"content": conversation_prompt, "role": "user"}],
+            "messages": messages,
             "model": self.model,
             "presence_penalty": self.presence_penalty,
             "stream": stream,
             "temperature": self.temperature,
             "top_p": self.top_p,
+            "tools": tools  # Include tools in the payload
         }
 
         def for_stream():
@@ -177,7 +176,7 @@ class GROQ(Provider):
                 self.chat_endpoint, json=payload, stream=True, timeout=self.timeout
             )
             if not response.ok:
-                raise Exception(
+                raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
 
@@ -199,6 +198,33 @@ class GROQ(Provider):
                         yield value
                 except json.decoder.JSONDecodeError:
                     pass
+
+            # Handle tool calls if any
+            if 'tool_calls' in self.last_response.get('choices', [{}])[0].get('message', {}):
+                tool_calls = self.last_response['choices'][0]['message']['tool_calls']
+                for tool_call in tool_calls:
+                    function_name = tool_call.get('function', {}).get('name')
+                    arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                    if function_name in self.available_functions:
+                        tool_response = self.available_functions[function_name](**arguments)
+                        messages.append({
+                            "tool_call_id": tool_call['id'],
+                            "role": "tool",
+                            "name": function_name,
+                            "content": tool_response
+                        })
+                        payload['messages'] = messages
+                        # Make a second call to get the final response
+                        second_response = self.session.post(
+                            self.chat_endpoint, json=payload, timeout=self.timeout
+                        )
+                        if second_response.ok:
+                            self.last_response = second_response.json()
+                        else:
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"Failed to execute tool - {second_response.text}"
+                            )
+
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -207,11 +233,41 @@ class GROQ(Provider):
             response = self.session.post(
                 self.chat_endpoint, json=payload, stream=False, timeout=self.timeout
             )
-            if not response.ok:
-                raise Exception(
+            if (
+                not response.ok
+                or not response.headers.get("Content-Type", "") == "application/json"
+            ):
+                raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
             resp = response.json()
+
+            # Handle tool calls if any
+            if 'tool_calls' in resp.get('choices', [{}])[0].get('message', {}):
+                tool_calls = resp['choices'][0]['message']['tool_calls']
+                for tool_call in tool_calls:
+                    function_name = tool_call.get('function', {}).get('name')
+                    arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                    if function_name in self.available_functions:
+                        tool_response = self.available_functions[function_name](**arguments)
+                        messages.append({
+                            "tool_call_id": tool_call['id'],
+                            "role": "tool",
+                            "name": function_name,
+                            "content": tool_response
+                        })
+                        payload['messages'] = messages
+                        # Make a second call to get the final response
+                        second_response = self.session.post(
+                            self.chat_endpoint, json=payload, timeout=self.timeout
+                        )
+                        if second_response.ok:
+                            resp = second_response.json()
+                        else:
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"Failed to execute tool - {second_response.text}"
+                            )
+
             self.last_response.update(resp)
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -220,12 +276,14 @@ class GROQ(Provider):
 
         return for_stream() if stream else for_non_stream()
 
+
     def chat(
         self,
         prompt: str,
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
+        tools: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
         """Generate response `str`
         Args:
@@ -233,13 +291,14 @@ class GROQ(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            tools (List[Dict[str, Any]], optional): List of tool definitions. See example in class docstring. Defaults to None.
         Returns:
             str: Response generated
         """
 
         def for_stream():
             for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
+                prompt, True, optimizer=optimizer, conversationally=conversationally, tools=tools
             ):
                 yield self.get_message(response)
 
@@ -250,6 +309,7 @@ class GROQ(Provider):
                     False,
                     optimizer=optimizer,
                     conversationally=conversationally,
+                    tools=tools
                 )
             )
 
@@ -271,7 +331,28 @@ class GROQ(Provider):
             return response["choices"][0]["message"]["content"]
         except KeyError:
             return ""
+
+
 class AsyncGROQ(AsyncProvider):
+    """
+    An asynchronous class to interact with the GROQ AI API.
+    """
+
+    AVAILABLE_MODELS = [
+        "llama-3.1-405b-reasoning",
+        "llama-3.1-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama3-groq-70b-8192-tool-use-preview",
+        "llama3-groq-8b-8192-tool-use-preview",
+        "llama-guard-3-8b",
+        "llama3-70b-8192",
+        "llama3-8b-8192",
+        "mixtral-8x7b-32768",
+        "gemma-7b-it",
+        "gemma2-9b-it",
+        "whisper-large-v3"
+    ]
+
     def __init__(
         self,
         api_key: str,
@@ -289,8 +370,9 @@ class AsyncGROQ(AsyncProvider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        system_prompt: Optional[str] = None,
     ):
-        """Instantiates GROQ
+        """Instantiates AsyncGROQ
 
         Args:
             api_key (key): GROQ's API key.
@@ -308,7 +390,11 @@ class AsyncGROQ(AsyncProvider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+            system_prompt (str, optional): System prompt to guide the conversation. Defaults to None.
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.api_key = api_key
@@ -321,6 +407,8 @@ class AsyncGROQ(AsyncProvider):
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
+        self.system_prompt = system_prompt
+        self.available_functions: Dict[str, Callable] = {}  # Store available functions
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
@@ -344,6 +432,15 @@ class AsyncGROQ(AsyncProvider):
         self.conversation.history_offset = history_offset
         self.session = httpx.AsyncClient(headers=self.headers, proxies=proxies)
 
+    def add_function(self, function_name: str, function: Callable):
+        """Add a function to the available functions dictionary.
+
+        Args:
+            function_name (str): The name of the function to be used in the prompt.
+            function (Callable): The function itself.
+        """
+        self.available_functions[function_name] = function
+
     async def ask(
         self,
         prompt: str,
@@ -351,45 +448,19 @@ class AsyncGROQ(AsyncProvider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
+        tools: Optional[List[Dict[str, Any]]] = None,
     ) -> dict | AsyncGenerator:
         """Chat with AI asynchronously.
 
-                Args:
-                    prompt (str): Prompt to be send.
-                    stream (bool, optional): Flag for streaming response. Defaults to False.
-                    raw (bool, optional): Stream back raw response as received. Defaults to False.
-                    optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-                    conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-                Returns:
-                   dict|AsyncGenerator : ai content
-                ```json
-        {
-            "id": "c0c8d139-d2b9-9909-8aa1-14948bc28404",
-            "object": "chat.completion",
-            "created": 1710852779,
-            "model": "mixtral-8x7b-32768",
-            "choices": [
-                {
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": "Hello! How can I assist you today? I'm here to help answer your questions and engage in conversation on a wide variety of topics. Feel free to ask me anything!"
-                    },
-                    "logprobs": null,
-                    "finish_reason": "stop"
-                }
-            ],
-            "usage": {
-                "prompt_tokens": 47,
-                "prompt_time": 0.03,
-                "completion_tokens": 37,
-                "completion_time": 0.069,
-                "total_tokens": 84,
-                "total_time": 0.099
-            },
-            "system_fingerprint": null
-        }
-                ```
+        Args:
+            prompt (str): Prompt to be send.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            raw (bool, optional): Stream back raw response as received. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            tools (List[Dict[str, Any]], optional): List of tool definitions. See example in class docstring. Defaults to None.
+        Returns:
+           dict|AsyncGenerator : ai content
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -401,14 +472,20 @@ class AsyncGROQ(AsyncProvider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
+
+        messages = [{"content": conversation_prompt, "role": "user"}]
+        if self.system_prompt:
+            messages.insert(0, {"role": "system", "content": self.system_prompt})
+
         payload = {
             "frequency_penalty": self.frequency_penalty,
-            "messages": [{"content": conversation_prompt, "role": "user"}],
+            "messages": messages,
             "model": self.model,
             "presence_penalty": self.presence_penalty,
             "stream": stream,
             "temperature": self.temperature,
             "top_p": self.top_p,
+            "tools": tools
         }
 
         async def for_stream():
@@ -416,7 +493,7 @@ class AsyncGROQ(AsyncProvider):
                 "POST", self.chat_endpoint, json=payload, timeout=self.timeout
             ) as response:
                 if not response.is_success:
-                    raise Exception(
+                    raise exceptions.FailedToGenerateResponseError(
                         f"Failed to generate response - ({response.status_code}, {response.reason_phrase})"
                     )
 
@@ -437,19 +514,73 @@ class AsyncGROQ(AsyncProvider):
                             yield value
                     except json.decoder.JSONDecodeError:
                         pass
+
+                # Handle tool calls if any (in streaming mode)
+                if 'tool_calls' in self.last_response.get('choices', [{}])[0].get('message', {}):
+                    tool_calls = self.last_response['choices'][0]['message']['tool_calls']
+                    for tool_call in tool_calls:
+                        function_name = tool_call.get('function', {}).get('name')
+                        arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                        if function_name in self.available_functions:
+                            tool_response = self.available_functions[function_name](**arguments)
+                            messages.append({
+                                "tool_call_id": tool_call['id'],
+                                "role": "tool",
+                                "name": function_name,
+                                "content": tool_response
+                            })
+                            payload['messages'] = messages
+                            # Make a second call to get the final response
+                            second_response = await self.session.post(
+                                self.chat_endpoint, json=payload, timeout=self.timeout
+                            )
+                            if second_response.is_success:
+                                self.last_response = second_response.json()
+                            else:
+                                raise exceptions.FailedToGenerateResponseError(
+                                    f"Failed to execute tool - {second_response.text}"
+                                )
+
             self.conversation.update_chat_history(
                 prompt, await self.get_message(self.last_response)
             )
 
         async def for_non_stream():
-            response = httpx.post(
+            response = await self.session.post(
                 self.chat_endpoint, json=payload, timeout=self.timeout
             )
             if not response.is_success:
-                raise Exception(
+                raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason_phrase})"
                 )
             resp = response.json()
+
+            # Handle tool calls if any (in non-streaming mode)
+            if 'tool_calls' in resp.get('choices', [{}])[0].get('message', {}):
+                tool_calls = resp['choices'][0]['message']['tool_calls']
+                for tool_call in tool_calls:
+                    function_name = tool_call.get('function', {}).get('name')
+                    arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                    if function_name in self.available_functions:
+                        tool_response = self.available_functions[function_name](**arguments)
+                        messages.append({
+                            "tool_call_id": tool_call['id'],
+                            "role": "tool",
+                            "name": function_name,
+                            "content": tool_response
+                        })
+                        payload['messages'] = messages
+                        # Make a second call to get the final response
+                        second_response = await self.session.post(
+                            self.chat_endpoint, json=payload, timeout=self.timeout
+                        )
+                        if second_response.is_success:
+                            resp = second_response.json()
+                        else:
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"Failed to execute tool - {second_response.text}"
+                            )
+
             self.last_response.update(resp)
             self.conversation.update_chat_history(
                 prompt, await self.get_message(self.last_response)
@@ -464,6 +595,7 @@ class AsyncGROQ(AsyncProvider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
+        tools: Optional[List[Dict[str, Any]]] = None,
     ) -> str | AsyncGenerator:
         """Generate response `str` asynchronously.
         Args:
@@ -471,13 +603,14 @@ class AsyncGROQ(AsyncProvider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            tools (List[Dict[str, Any]], optional): List of tool definitions. See example in class docstring. Defaults to None.
         Returns:
             str|AsyncGenerator: Response generated
         """
 
         async def for_stream():
             async_ask = await self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
+                prompt, True, optimizer=optimizer, conversationally=conversationally, tools=tools
             )
             async for response in async_ask:
                 yield await self.get_message(response)
@@ -489,6 +622,7 @@ class AsyncGROQ(AsyncProvider):
                     False,
                     optimizer=optimizer,
                     conversationally=conversationally,
+                    tools=tools
                 )
             )
 

@@ -28,7 +28,7 @@ from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
 import logging
 import httpx    
-from Bard import Chatbot
+from ..Bard import Chatbot
 import logging
 from os import path
 from json import load

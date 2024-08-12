@@ -775,4 +775,5 @@ class Meta(Provider):
 if __name__ == "__main__":
     Meta = Meta()
     ai = Meta.chat(input(">>> "))
-    print(ai)
+    for chunk in ai:
+        print(chunk, end="", flush=True)

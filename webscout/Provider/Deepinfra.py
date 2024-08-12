@@ -477,3 +477,4 @@ class VLM:
             str: Response generated
         """
         return self.get_message(self.ask(prompt))
+    

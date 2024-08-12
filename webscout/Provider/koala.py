@@ -1,10 +1,10 @@
 import requests
 import json
 from typing import Any, Dict, Optional
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import Provider
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import Provider
 from webscout import exceptions
 
 class KOALA(Provider):
@@ -237,3 +237,9 @@ class KOALA(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+if __name__ == '__main__':
+    from rich import print
+    ai = KOALA()
+    response = ai.chat("tell me about india")
+    for chunk in response:
+        print(chunk, end="", flush=True)

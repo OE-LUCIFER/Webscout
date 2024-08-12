@@ -273,3 +273,9 @@ class AndiSearch(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+if __name__ == '__main__':
+    from rich import print
+    ai = AndiSearch()
+    response = ai.chat("tell me about india")
+    for chunk in response:
+        print(chunk, end="", flush=True)

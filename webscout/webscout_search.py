@@ -140,7 +140,7 @@ class WEBS:
         models = {
             "claude-3-haiku": "claude-3-haiku-20240307",
             "gpt-3.5": "gpt-3.5-turbo-0125",
-            "llama-3-70b": "meta-llama/Llama-3-70b-chat-hf",
+            "llama-3-70b": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
             "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
             "gpt-4o-mini": "gpt-4o-mini",
         }

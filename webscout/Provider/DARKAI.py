@@ -1,16 +1,24 @@
 import time
 import json
 from typing import Any, Dict, Optional
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import Provider
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import Provider
 from webscout import exceptions
 import requests
+
 class DARKAI(Provider):
     """
     A class to interact with the DarkAI API.
     """
+
+    AVAILABLE_MODELS = [
+        "llama-3-70b",  # Uncensored
+        "llama-3-405b",
+        "gpt-3.5-turbo",
+        "gpt-4o"
+    ]
 
     def __init__(
         self,
@@ -23,7 +31,7 @@ class DARKAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "gpt-4o", #llama-3-70b, llama-3-405b, gpt-3.5-turbo, gpt-4o
+        model: str = "gpt-4o",
     ) -> None:
         """
         Initializes the DARKAI API with given parameters.
@@ -40,8 +48,12 @@ class DARKAI(Provider):
             history_offset (int, optional): Limit conversation history to this number of last texts. 
                                             Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): AI model to use. Defaults to "gpt-4o".  #llama-3-70b, llama-3-405b, gpt-3.5-turbo, gpt-4o
+            model (str, optional): AI model to use. Defaults to "gpt-4o". 
+                                    Options: "llama-3-70b" (uncensored), "llama-3-405b", "gpt-3.5-turbo", "gpt-4o"
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -205,3 +217,9 @@ class DARKAI(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+if __name__ == '__main__':
+    from rich import print
+    ai = DARKAI()
+    response = ai.chat("tell me about india")
+    for chunk in response:
+        print(chunk, end="", flush=True)

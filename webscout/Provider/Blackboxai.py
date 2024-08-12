@@ -19,10 +19,10 @@ import io
 import re
 import json
 import yaml
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import Provider, AsyncProvider
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import Provider, AsyncProvider
 from Helpingai_T2 import Perplexity
 from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
@@ -442,3 +442,9 @@ def clean_response(response_text: str) -> str:
     # Remove any remaining special characters or markers
     response_text = re.sub(r'\$~~~', '', response_text)
     return response_text
+if __name__ == '__main__':
+    from rich import print
+    ai = BLACKBOXAI()
+    response = ai.chat("tell me about india")
+    for chunk in response:
+        print(chunk, end="", flush=True)

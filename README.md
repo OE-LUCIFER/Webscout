@@ -29,62 +29,6 @@
 Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, webai (terminal gpt and open interpreter) and offline LLMs and more
 
 
-## Table of Contents
-- [WEBSCOUT](#webscout)
-  - [Table of Contents](#table-of-contents)
-  - [Install](#install)
-  - [CLI version](#cli-version)
-  - [Regions](#regions)
-  - [Tempmail and Temp number](#tempmail-and-temp-number)
-    - [Temp number](#temp-number)
-    - [Tempmail](#tempmail)
-  - [Transcriber](#transcriber)
-  - [DWEBS: Advanced Web Searches](#dwebs-advanced-web-searches)
-    - [Activating DWEBS](#activating-dwebs)
-    - [Point to remember before using `DWEBS`](#point-to-remember-before-using-dwebs)
-    - [Usage Example](#usage-example)
-  - [Text-to-Speech:](#text-to-speech)
-    - [Available TTS Voices:](#available-tts-voices)
-  - [Exceptions](#exceptions)
-  - [usage of WEBS](#usage-of-webs)
-    - [1. `text()` - text search by DuckDuckGo.com](#1-text---text-search-by-duckduckgocom)
-    - [2. `answers()` - instant answers by DuckDuckGo.com](#2-answers---instant-answers-by-duckduckgocom)
-    - [3. `images()` - image search by DuckDuckGo.com](#3-images---image-search-by-duckduckgocom)
-    - [4. `videos()` - video search by DuckDuckGo.com](#4-videos---video-search-by-duckduckgocom)
-    - [5. `news()` - news search by DuckDuckGo.com](#5-news---news-search-by-duckduckgocom)
-    - [6. `maps()` - map search by DuckDuckGo.com](#6-maps---map-search-by-duckduckgocom)
-    - [7. `translate()` - translation by DuckDuckGo.com](#7-translate---translation-by-duckduckgocom)
-    - [8. `suggestions()` - suggestions by DuckDuckGo.com](#8-suggestions---suggestions-by-duckduckgocom)
-  - [usage of WEBSX -- Another Websearch thing](#usage-of-websx----another-websearch-thing)
-  - [ALL acts](#all-acts)
-  - [Webscout Supported Acts:](#webscout-supported-acts)
-  - [usage of webscout AI](#usage-of-webscout-ai)
-    - [0. `Duckchat` - chat with LLM](#0-duckchat---chat-with-llm)
-    - [1. `PhindSearch` - Search using Phind.com](#1-phindsearch---search-using-phindcom)
-    - [2. `YepChat` - Chat with mistral 8x7b powered by yepchat](#2-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
-    - [3. `You.com` - search/chat with you.com](#3-youcom---searchchat-with-youcom)
-    - [4. `Gemini` - search with google gemini](#4-gemini---search-with-google-gemini)
-    - [5. `Berlin4h` - chat with Berlin4h](#5-berlin4h---chat-with-berlin4h)
-    - [6. `BlackBox` - Search/chat With BlackBox](#6-blackbox---searchchat-with-blackbox)
-    - [7. `PERPLEXITY` - Search With PERPLEXITY](#7-perplexity---search-with-perplexity)
-    - [8. `OpenGPT` - chat With OPENGPT](#8-opengpt---chat-with-opengpt)
-    - [9. `KOBOLDAI` -](#9-koboldai--)
-    - [10. `Reka` - chat with reka](#10-reka---chat-with-reka)
-    - [11. `Cohere` - chat with cohere](#11-cohere---chat-with-cohere)
-    - [12. `Xjai` - chat with free gpt 3.5](#12-xjai---chat-with-free-gpt-35)
-    - [13. `ThinkAny` - AI search engine](#13-thinkany---ai-search-engine)
-    - [14. `chatgptuk` - Chat with gemini-pro](#14-chatgptuk---chat-with-gemini-pro)
-    - [15. `poe`- chat with poe](#15-poe--chat-with-poe)
-    - [16. `BasedGPT` - chat with GPT](#16-basedgpt---chat-with-gpt)
-    - [17. `DeepSeek` -chat with deepseek](#17-deepseek--chat-with-deepseek)
-    - [18. Deepinfra](#18-deepinfra)
-    - [19. Deepinfra - VLM](#19-deepinfra---vlm)
-    - [`LLM`](#llm)
-    - [`Local-LLM` webscout can now run GGUF models](#local-llm-webscout-can-now-run-gguf-models)
-    - [`Local-rawdog`](#local-rawdog)
-    - [`LLM` with internet](#llm-with-internet)
-  - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
-
 ## Install
 ```python
 pip install -U webscout
@@ -456,7 +400,7 @@ You can choose from a wide range of voices, including:
 - Standard and WaveNet voices for various languages (e.g., en-US, es-ES, ja-JP, etc.)
 
 
-The WEBS and AsyncWEBS classes are used to retrieve search results from DuckDuckGo.com and yep.com periodically.
+The WEBS and AsyncWEBS classes are used to retrieve search results from DuckDuckGo.com 
 To use the AsyncWEBS class, you can perform asynchronous operations using Python's asyncio library.
 To initialize an instance of the WEBS or AsyncWEBS classes, you can provide the following optional arguments:
 
@@ -975,23 +919,9 @@ response = ph.ask(prompt)
 message = ph.get_message(response)
 print(message)
 ```
-### 2. `YepChat` - Chat with mistral 8x7b powered by yepchat
-```python
-from webscout import YEPCHAT
 
-# Instantiate the YEPCHAT class with default parameters
-YEPCHAT = YEPCHAT()
 
-# Define a prompt to send to the AI
-prompt = "What is the capital of France?"
-
-# Use the 'cha' method to get a response from the AI
-r = YEPCHAT.chat(prompt)
-print(r)
-
-```
-
-### 3. `You.com` - search/chat with you.com - Not working
+### . `You.com` - search/chat with you.com - Not working
 ```python
 
 from webscout import YouChat
@@ -1018,32 +948,28 @@ message = ai.get_message(response)
 print(message)
 ```
 
-### 4. `Gemini` - search with google gemini
+### . `Gemini` - search with google gemini
 
 ```python
 import webscout
 from webscout import GEMINI
-
-# Replace with the path to your bard.google.com.cookies.json file
-COOKIE_FILE = "path/to/bard.google.com.cookies.json"
+from rich import print
+COOKIE_FILE = "cookies.json"
 
 # Optional: Provide proxy details if needed
-PROXIES = {
-    "http": "http://proxy_server:port",
-    "https": "https://proxy_server:port",
-}
+PROXIES = {}
 
 # Initialize GEMINI with cookie file and optional proxies
 gemini = GEMINI(cookie_file=COOKIE_FILE, proxy=PROXIES)
 
 # Ask a question and print the response
-response = gemini.chat("What is the meaning of life?")
+response = gemini.chat("websearch about HelpingAI and who is its developer")
 print(response)
 ```
-### 5. `Berlin4h` - chat with Berlin4h
+### . `Berlin4h` - chat with Berlin4h
 ```python
 from webscout import Berlin4h
-# Create an instance of the PERPLEXITY class
+
 ai = Berlin4h(
     is_conversation=True,
     max_tokens=800,
@@ -1061,7 +987,7 @@ prompt = "Explain the concept of recursion in simple terms."
 response = ai.chat(prompt)
 print(response)
 ```
-### 6. `BlackBox` - Search/chat With BlackBox
+### . `BlackBox` - Search/chat With BlackBox
 ```python
 from webscout import BLACKBOXAI
 from rich import print
@@ -1092,18 +1018,20 @@ while True:
     r = ai.chat(prompt)
     print(r)
 ```
-### 7. `PERPLEXITY` - Search With PERPLEXITY
+### . `PERPLEXITY` - Search With PERPLEXITY
 ```python
-from webscout import PERPLEXITY
-# Create an instance of the PERPLEXITY class
-perplexity = PERPLEXITY()
+from webscout import Perplexity
+from rich import print
 
-# Example usage:
-prompt = "Explain the concept of recursion in simple terms."
-response = perplexity.chat(prompt)
-print(response)
+perplexity = Perplexity() 
+# Stream the response
+response = perplexity.chat(input(">>> "))
+for chunk in response:
+    print(chunk, end="", flush=True)
+
+perplexity.close()
 ```
-### 8. `meta ai` - chat With meta ai
+###  `meta ai` - chat With meta ai
 ```python
 from webscout import Meta
 from rich import print
@@ -1135,7 +1063,7 @@ for media in response["media"]:
     print(media["url"])  # Access image URLs
 
 ```
-### 9. `KOBOLDAI` - 
+###  `KOBOLDAI` - 
 ```python
 from webscout import KOBOLDAI
 
@@ -1154,7 +1082,7 @@ print(message)
 
 ```
 
-### 10. `Reka` - chat with reka
+###  `Reka` - chat with reka
 ```python
 from webscout import REKA
 
@@ -1165,7 +1093,7 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-### 11. `Cohere` - chat with cohere
+###  `Cohere` - chat with cohere
 ```python
 from webscout import Cohere
 
@@ -1176,30 +1104,8 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-### 12. `Xjai` - chat with free gpt 3.5
-Gratitude to [Devs do Code](http://www.youtube.com/@DevsDoCode) for their assistance.
-```python
-from webscout import Xjai
-from rich import print
 
-ai = Xjai(
-    is_conversation=True,
-    max_tokens=800,
-    timeout=30,
-    intro=None,
-    filepath=None,
-    update_file=True,
-    proxies={},
-    history_offset=10250,
-    act=None,
-)
-
-prompt = "Tell me about india"
-
-response = ai.chat(prompt)
-print(response)
-```
-### 13. `ThinkAny` - AI search engine
+###  `ThinkAny` - AI search engine
 ```python
 from webscout import ThinkAnyAI
 
@@ -1224,32 +1130,11 @@ response = ai.ask(prompt)
 message = ai.get_message(response)
 print(message)
 ```
-### 14. `chatgptuk` - Chat with gemini-pro
-```python
-from webscout import ChatGPTUK
-# Create an instance of the PERPLEXITY class
-ai = ChatGPTUK(
-    is_conversation=True,
-    max_tokens=800,
-    timeout=30,
-    intro=None,
-    filepath=None,
-    update_file=True,
-    proxies={},
-    history_offset=10250,
-    act=None,
-)
 
-# Example usage:
-prompt = "Explain the concept of recursion in simple terms."
-response = ai.chat(prompt)
-print(response)
-
-```
-### 15. `poe`- chat with poe
+###  `poe`- chat with poe
 Usage code similar to other proviers
 
-### 16. `BasedGPT` - chat with GPT
+###  `BasedGPT` - chat with GPT
 ```
 from webscout import BasedGPT
 
@@ -1270,14 +1155,14 @@ response = basedgpt.chat(prompt)
 # Print the AI's response
 print(response)
 ```
-### 17. `DeepSeek` -chat with deepseek
+###  `DeepSeek` -chat with deepseek
 ```python
 from webscout import DeepSeek
 from rich import print
 
 ai = DeepSeek(
     is_conversation=True,
-    api_key='23bfff080d38429c9fbbf3c76f88454c', 
+    api_key='cookie, 
     max_tokens=800,
     timeout=30,
     intro=None,
@@ -1296,7 +1181,7 @@ prompt = "Tell me about india"
 r = ai.chat(prompt)
 print(r)
 ```
-### 18. `Deepinfra`
+###  `Deepinfra`
 ```python
 from webscout import DeepInfra
 
@@ -1322,7 +1207,7 @@ message = ai.get_message(response)
 print(message)
 ```
 
-### 19. `Deepinfra` - VLM
+###  `Deepinfra` - VLM
 ```python
 from webscout.Provider import VLM 
 
@@ -1342,44 +1227,95 @@ response = vlm_instance.chat(prompt)
 print(response)
 
 ```
-### 20. `VTLchat` - Free gpt3.5
-```python
-from webscout import VTLchat
 
-provider = VTLchat()
-response = provider.chat("Hello, how are you?")
-print(response)
-```
 
-### 21. GeminiFlash and geminipro
-**Usage similar to other providers**
-
-### 22. `Ollama` - chat will AI models locally
-```python
-from webscout import OLLAMA
-ollama_provider = OLLAMA(model="qwen2:0.5b")
-response = ollama_provider.chat("What is the meaning of life?")
-print(response)
-```
-
-### 22. GROQ
+###  GROQ
 ```python
 from webscout import GROQ
 ai = GROQ(api_key="")
 response = ai.chat("What is the meaning of life?")
 print(response)
+#----------------------TOOL CALL------------------
+from webscout import GROQ  # Adjust import based on your project structure
+from webscout import WEBS
+import json
+
+# Initialize the GROQ client
+client = GROQ(api_key="")
+MODEL = 'llama3-groq-70b-8192-tool-use-preview'
+
+# Function to evaluate a mathematical expression
+def calculate(expression):
+    """Evaluate a mathematical expression"""
+    try:
+        result = eval(expression)
+        return json.dumps({"result": result})
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+# Function to perform a text search using DuckDuckGo.com
+def search(query):
+    """Perform a text search using DuckDuckGo.com"""
+    try:
+        results = WEBS().text(query, max_results=5)
+        return json.dumps({"results": results})
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+# Add the functions to the provider
+client.add_function("calculate", calculate)
+client.add_function("search", search)
+
+# Define the tools
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "calculate",
+            "description": "Evaluate a mathematical expression",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "type": "string",
+                        "description": "The mathematical expression to evaluate",
+                    }
+                },
+                "required": ["expression"],
+            },
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search",
+            "description": "Perform a text search using DuckDuckGo.com and Yep.com",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query to execute",
+                    }
+                },
+                "required": ["query"],
+            },
+        }
+    }
+]
+
+
+user_prompt_calculate = "What is 25 * 4 + 10?"
+response_calculate = client.chat(user_prompt_calculate, tools=tools)
+print(response_calculate)
+
+user_prompt_search = "Find information on HelpingAI and who is its developer"
+response_search = client.chat(user_prompt_search, tools=tools)
+print(response_search)
 
 ```
 
-### 23. Freegemini - chat with gemini for free
-```python
-from webscout import FreeGemini
-ai = FreeGemini()
-response = ai.chat("What is the meaning of life?")
-print(response)
-```
-
-### 24. LLama 70b - chat with meta's llama 3 70b
+###  LLama 70b - chat with meta's llama 3 70b
 ```python
 
 from webscout import LLAMA
@@ -1389,15 +1325,127 @@ llama = LLAMA()
 r = llama.chat("What is the meaning of life?")
 print(r)
 ```
-### 25. AndiSearch
+###  AndiSearch
 ```python
 from webscout import AndiSearch
 a = AndiSearch()
 print(a.chat("HelpingAI-9B"))
 ```
+### Function calling-bete
+```python
+import json
+import logging
+from webscout import LLAMA3, WEBS
+from webscout.Agents.functioncall import FunctionCallingAgent
 
-### 25. LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai
-code similar to other providers
+# Define tools that the agent can use
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "UserDetail",
+            "parameters": {
+                "type": "object",
+                "title": "UserDetail",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "age": {
+                        "title": "Age",
+                        "type": "integer"
+                    }
+                },
+                "required": ["name", "age"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Search query on google",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "web search query"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    {  # New general AI tool
+        "type": "function",
+        "function": {
+            "name": "general_ai",
+            "description": "Use general AI knowledge to answer the question",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": "The question to answer"
+                    }
+                },
+                "required": ["question"]
+            }
+        }
+    }
+]
+
+# Initialize the FunctionCallingAgent with the specified tools
+agent = FunctionCallingAgent(tools=tools)
+llama = LLAMA3()
+from rich import print
+# Input message from the user
+user = input(">>> ")
+message = user
+function_call_data = agent.function_call_handler(message)
+print(f"Function Call Data: {function_call_data}")
+
+# Check for errors in the function call data
+if "error" not in function_call_data:
+    function_name = function_call_data.get("tool_name")  # Use 'tool_name' instead of 'name'
+    if function_name == "web_search":
+        arguments = function_call_data.get("tool_input", {})  # Get tool input arguments
+        query = arguments.get("query")
+        if query:
+            with WEBS() as webs:
+                search_results = webs.text(query, max_results=5) 
+            prompt = (
+                f"Based on the following search results:\n\n{search_results}\n\n"
+                f"Question: {user}\n\n"
+                "Please provide a comprehensive answer to the question based on the search results above. "
+                "Include relevant webpage URLs in your answer when appropriate. "
+                "If the search results don't contain relevant information, please state that and provide the best answer you can based on your general knowledge."
+            )
+            response = llama.chat(prompt)
+            for c in response:
+                print(c, end="", flush=True)
+
+        else:
+            print("Please provide a search query.")
+    elif function_name == "general_ai":  # Handle general AI tool
+        arguments = function_call_data.get("tool_input", {})
+        question = arguments.get("question")
+        if question:
+            response = llama.chat(question)  # Use LLM directly
+            for c in response:
+                print(c, end="", flush=True)
+        else:
+            print("Please provide a question.")
+    else:
+        result = agent.execute_function(function_call_data)
+        print(f"Function Execution Result: {result}") 
+else:
+    print(f"Error: {function_call_data['error']}")
+```
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle
+code similar to other provider
 ### `LLM` 
 ```python
 from webscout.LLM import LLM
@@ -1440,7 +1488,7 @@ from webscout.Local import formats
 # 1. Download the model
 repo_id = "microsoft/Phi-3-mini-4k-instruct-gguf"  # Replace with the desired Hugging Face repo
 filename = "Phi-3-mini-4k-instruct-q4.gguf" # Replace with the correct filename
-model_path = download_model(repo_id, filename)
+model_path = download_model(repo_id, filename, token="")
 
 # 2. Load the model 
 model = Model(model_path, n_gpu_layers=4)  
@@ -1600,82 +1648,8 @@ autollama(
 * The `model_path` in `autollama` is the Hugging Face model ID, and `gguf_file` is the GGUF file ID.
 
 
-### `LLM` with internet
-```python
-from __future__ import annotations
-from typing import List, Optional
-
-from webscout.LLM import LLM
-from webscout import WEBS
-import warnings
-
-system_message: str = (
-    "As an AI assistant, I have been designed with advanced capabilities, including real-time access to online resources. This enables me to enrich our conversations and provide you with informed and accurate responses, drawing from a vast array of information. With each interaction, my goal is to create a seamless and meaningful connection, offering insights and sharing relevant content."
-    "My directives emphasize the importance of respect, impartiality, and intellectual integrity. I am here to provide unbiased responses, ensuring an ethical and respectful exchange. I will respect your privacy and refrain from sharing any personal information that may be obtained during our conversations or through web searches, only utilizing web search functionality when necessary to provide the most accurate and up-to-date information."
-    "Together, let's explore a diverse range of topics, creating an enjoyable and informative experience, all while maintaining the highest standards of privacy and respect"
-)
-
-# Ignore the specific UserWarning
-warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffio", lineno=205)
-LLM = LLM(model="mistralai/Mixtral-8x22B-Instruct-v0.1", system_message=system_message)
-
-
-def chat(
-    user_input: str, webs: WEBS, max_results: int = 10
-) -> Optional[str]:
-    """
-    Chat function to perform a web search based on the user input and generate a response using the LLM model.
-
-    Parameters
-    ----------
-    user_input : str
-        The user input to be used for the web search
-    webs : WEBS
-        The web search instance to be used to perform the search
-    max_results : int, optional
-        The maximum number of search results to include in the response, by default 10
-
-    Returns
-    -------
-    Optional[str]
-        The response generated by the LLM model, or None if there is no response
-    """
-    # Perform a web search based on the user input
-    search_results: List[str] = []
-    for r in webs.text(
-        user_input, region="wt-wt", safesearch="off", timelimit="y", max_results=max_results
-    ):
-        search_results.append(str(r))  # Convert each result to a string
-
-    # Define the messages to be sent, including the user input, search results, and system message
-    messages = [
-        {"role": "user", "content": user_input + "\n" + "websearch results are:" + "\n".join(search_results)},
-    ]
-
-    # Use the chat method to get the response
-    response = LLM.chat(messages)
-
-    return response
-
-
-if __name__ == "__main__":
-    while True:
-        # Get the user input
-        user_input = input("User: ")
-
-        # Perform a web search based on the user input
-        with WEBS() as webs:
-            response = chat(user_input, webs)
-
-        # Print the response
-        if response:
-            print("AI:", response)
-        else:
-            print("No response")
-```
 
 ## `Webai` - terminal gpt and a open interpeter
-Code is in rawdog.py file
 ```
 ```shell
 python -m webscout.webai webai --provider "phind" --rawdog

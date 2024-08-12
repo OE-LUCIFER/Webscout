@@ -432,26 +432,6 @@ class Main(cmd.Cmd):
                     intro=intro,
                     act=awesome_prompt,
                 )
-            elif provider == "leo":
-                from webscout import LEO
-
-                self.bot = LEO(
-                    is_conversation=disable_conversation,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    top_k=top_k,
-                    top_p=top_p,
-                    model=getOr(model, "llama-2-13b-chat"),
-                    brave_key=getOr(auth, "qztbjzBqJueQZLFkwTTJrieu8Vw3789u"),
-                    timeout=timeout,
-                    intro=intro,
-                    filepath=filepath,
-                    update_file=update_file,
-                    proxies=proxies,
-                    history_offset=history_offset,
-                    act=awesome_prompt,
-                )
-
             elif provider == "openai":
                 assert auth, (
                     "OpenAI's API-key is required. " "Use the flag `--key` or `-k`"
@@ -536,20 +516,6 @@ class Main(cmd.Cmd):
                 from webscout import Berlin4h
 
                 self.bot = Berlin4h(
-                    is_conversation=disable_conversation,
-                    max_tokens=max_tokens,
-                    timeout=timeout,
-                    intro=intro,
-                    filepath=filepath,
-                    update_file=update_file,
-                    proxies=proxies,
-                    history_offset=history_offset,
-                    act=awesome_prompt,
-                )
-            elif provider == "chatgptuk":
-                from webscout import ChatGPTUK
-
-                self.bot = ChatGPTUK(
                     is_conversation=disable_conversation,
                     max_tokens=max_tokens,
                     timeout=timeout,
@@ -705,34 +671,6 @@ class Main(cmd.Cmd):
                     history_offset=history_offset,
                     act=awesome_prompt,
                 )
-            elif provider == "geminiflash":
-                from webscout import GEMINIFLASH
-
-                self.bot = GEMINIFLASH(
-                    is_conversation=disable_conversation,
-                    max_tokens=max_tokens,
-                    timeout=timeout,
-                    intro=intro,
-                    filepath=filepath,
-                    update_file=update_file,
-                    proxies=proxies,
-                    history_offset=history_offset,
-                    act=awesome_prompt,
-                )
-            elif provider == "geminipro":
-                from webscout import GEMINIPRO
-
-                self.bot = GEMINIPRO(
-                    is_conversation=disable_conversation,
-                    max_tokens=max_tokens,
-                    timeout=timeout,
-                    intro=intro,
-                    filepath=filepath,
-                    update_file=update_file,
-                    proxies=proxies,
-                    history_offset=history_offset,
-                    act=awesome_prompt,
-                )
 
             elif provider == "vtlchat":
                 from webscout import VTLchat
@@ -846,9 +784,9 @@ class Main(cmd.Cmd):
 
 
             elif provider == "perplexity":
-                from webscout import PERPLEXITY
+                from webscout import Perplexity
 
-                self.bot = PERPLEXITY(
+                self.bot = Perplexity(
                     is_conversation=disable_conversation,
                     max_tokens=max_tokens,
                     timeout=timeout,

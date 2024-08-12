@@ -1,17 +1,17 @@
 import requests
-from typing import Any, AsyncGenerator, Dict, Optional
 import json
+import html
+from re import sub
+from typing import Any, Dict
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import  Provider, AsyncProvider
-from webscout import exceptions
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 
-
-class PIZZAGPT(Provider):
+class AI4Chat(Provider):
     """
-    A class to interact with the PizzaGPT API.
+    A class to interact with the AI4Chat API.
     """
 
     def __init__(
@@ -25,9 +25,10 @@ class PIZZAGPT(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        system_prompt: str = "You are a helpful and informative AI assistant.",
     ) -> None:
         """
-        Initializes the PizzaGPT API with given parameters.
+        Initializes the AI4Chat API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -39,32 +40,35 @@ class PIZZAGPT(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+            system_prompt (str, optional): System prompt to guide the AI's behavior. Defaults to "You are a helpful and informative AI assistant.".
         """
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://www.pizzagpt.it/api/chatx-completion"
-        self.stream_chunk_size = 64
+        self.api_endpoint = "https://www.ai4chat.co/generate-response"
         self.timeout = timeout
         self.last_response = {}
         self.headers = {
-            "accept": "application/json",
+            "authority": "www.ai4chat.co",
+            "method": "POST",
+            "path": "/generate-response",
+            "scheme": "https",
+            "accept": "*/*",
             "accept-encoding": "gzip, deflate, br, zstd",
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
-            "content-length": "17",
             "content-type": "application/json",
+            "cookie": "messageCount=1",
             "dnt": "1",
-            "origin": "https://www.pizzagpt.it",
+            "origin": "https://www.ai4chat.co",
             "priority": "u=1, i",
-            "referer": "https://www.pizzagpt.it/en",
+            "referer": "https://www.ai4chat.co/gpt/talkdirtytome",
             "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
-            "x-secret": "Marinara"
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0"
         }
 
         self.__available_optimizers = (
@@ -85,30 +89,28 @@ class PIZZAGPT(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+        self.system_prompt = system_prompt 
 
     def ask(
         self,
         prompt: str,
-        stream: bool = False,
+        stream: bool = False,  # Streaming is not supported by AI4Chat
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict:
-        """Chat with AI
+    ) -> Dict[str, Any]:
+        """
+        Sends a prompt to the AI4Chat API and returns the response.
 
         Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            prompt: The text prompt to generate text from.
+            stream (bool, optional): Not used (AI4Chat doesn't support streaming).
+            raw (bool, optional): Whether to return the raw response. Defaults to False.
+            optimizer (str, optional): The name of the optimizer to use. Defaults to None.
+            conversationally (bool, optional): Whether to chat conversationally. Defaults to False.
+
         Returns:
-           dict : {}
-        ```json
-        {
-           "text" : "How may I assist you today?"
-        }
-        ```
+            dict: A dictionary containing the AI's response.
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -121,41 +123,47 @@ class PIZZAGPT(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-        self.session.headers.update(self.headers)
-        payload = {"question": conversation_prompt}
+        payload = {
+            "messages": [
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt}
+            ]
+        }
 
-        response = self.session.post(
-            self.api_endpoint, json=payload, timeout=self.timeout
-        )
+        response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout)
         if not response.ok:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-            )
+            raise Exception(f"Failed to generate response: {response.status_code} - {response.reason}")
+        
+        response_data = response.json()
+        message_content = response_data.get('message', 'No message found')
 
-        resp = response.json()
-        self.last_response.update(dict(text=resp['answer']['content']))
-        self.conversation.update_chat_history(
-            prompt, self.get_message(self.last_response)
-        )
-        return self.last_response # Return the updated last_response
+        # Decode HTML entities and remove HTML tags
+        decoded_message = html.unescape(message_content)
+        cleaned_text = sub('<[^<]+?>', '', decoded_message)
+
+        self.last_response.update(dict(text=cleaned_text))
+        self.conversation.update_chat_history(prompt, cleaned_text)
+        return self.last_response
 
     def chat(
         self,
         prompt: str,
-        stream: bool = False,
+        stream: bool = False,  # Streaming is not supported by AI4Chat
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
         """
+        Generates a response from the AI4Chat API.
 
+        Args:
+            prompt (str): The prompt to send to the AI.
+            stream (bool, optional): Not used (AI4Chat doesn't support streaming). 
+            optimizer (str, optional): The name of the optimizer to use. Defaults to None.
+            conversationally (bool, optional): Whether to chat conversationally. Defaults to False.
+
+        Returns:
+            str: The response generated by the AI.
+        """
         return self.get_message(
             self.ask(
                 prompt,
@@ -163,6 +171,7 @@ class PIZZAGPT(Provider):
                 conversationally=conversationally,
             )
         )
+
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response
 
@@ -177,7 +186,7 @@ class PIZZAGPT(Provider):
 if __name__ == "__main__":
     from rich import print
 
-    ai = PIZZAGPT() 
+    ai = AI4Chat() 
     # Stream the response
     response = ai.chat(input(">>> "))
     for chunk in response:

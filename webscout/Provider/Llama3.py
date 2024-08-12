@@ -6,6 +6,9 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 
 class LLAMA3(Provider):
+
+    available_models = ["llama3-70b", "llama3-8b", "llama3-405b"]
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -17,7 +20,7 @@ class LLAMA3(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "llama3-70b", # model= llama3-70b, llama3-8b, llama3-405b
+        model: str = "llama3-8b",  
         system: str = "Answer as concisely as possible.",
     ):
         """Instantiates Snova
@@ -35,6 +38,9 @@ class LLAMA3(Provider):
             model (str, optional): Snova model name. Defaults to "llama3-70b".
             system (str, optional): System prompt for Snova. Defaults to "Answer as concisely as possible.".
         """
+        if model not in self.available_models:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.available_models}")
+
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -170,4 +176,11 @@ class LLAMA3(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
- 
+if __name__ == "__main__":
+    from rich import print
+
+    ai = LLAMA3() 
+    # Stream the response
+    response = ai.chat(input(">>> "))
+    for chunk in response:
+        print(chunk, end="", flush=True)
