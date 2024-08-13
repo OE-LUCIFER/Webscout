@@ -1,7 +1,7 @@
 # webscout/providers/__init__.py
 
 from .ThinkAnyAI import ThinkAnyAI
-
+from .PI import *
 from .Llama import LLAMA
 from .Cohere import Cohere
 from .Reka import REKA
@@ -36,6 +36,7 @@ from .RUBIKSAI import *
 from .meta import *
 from .liaobots import *
 from .DiscordRocks import *
+from .felo_search import *
 __all__ = [
     'ThinkAnyAI',
     'Farfalle',
@@ -53,7 +54,7 @@ __all__ = [
     'AsyncBLACKBOXAI',
     'PhindSearch', 
     'AsyncPhindSearch',
-
+    'Felo',
     'GEMINI',
     'Berlin4h',
     'POE',
@@ -75,4 +76,5 @@ __all__ = [
     'Meta',
     'LiaoBots',
     'DiscordRocks',
+    'PiAI'
 ]
