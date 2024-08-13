@@ -37,6 +37,7 @@ from .meta import *
 from .liaobots import *
 from .DiscordRocks import *
 from .felo_search import *
+from .xdash import *
 __all__ = [
     'ThinkAnyAI',
     'Farfalle',
@@ -76,5 +77,6 @@ __all__ = [
     'Meta',
     'LiaoBots',
     'DiscordRocks',
-    'PiAI'
+    'PiAI',
+    'XDASH',
 ]
