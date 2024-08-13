@@ -14,7 +14,7 @@ class DiscordRocks(Provider):
     A class to interact with the DiscordRocks API.
     """
 
-    available_models = [
+    AVAILABLE_MODELS = [
         "claude-3-haiku-20240307",
         "claude-3-sonnet-20240229",
         "claude-3-5-sonnet-20240620",
@@ -155,8 +155,8 @@ class DiscordRocks(Provider):
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
             system_prompt (str, optional): System prompt to guide the AI's behavior. Defaults to None.
         """
-        if model not in self.available_models:
-            raise ValueError(f"Invalid model name. Available models are: {self.available_models}")
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model name. Available models are: {self.AVAILABLE_MODELS}")
 
 
         self.model = model

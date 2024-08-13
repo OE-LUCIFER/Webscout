@@ -7,7 +7,7 @@ from webscout.AIbase import Provider
 
 class LLAMA3(Provider):
 
-    available_models = ["llama3-70b", "llama3-8b", "llama3-405b"]
+    AVAILABLE_MODELS = ["llama3-70b", "llama3-8b", "llama3-405b"]
 
     def __init__(
         self,
@@ -38,8 +38,8 @@ class LLAMA3(Provider):
             model (str, optional): Snova model name. Defaults to "llama3-70b".
             system (str, optional): System prompt for Snova. Defaults to "Answer as concisely as possible.".
         """
-        if model not in self.available_models:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.available_models}")
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
         self.session = requests.Session()
         self.is_conversation = is_conversation

@@ -1,5 +1,5 @@
-from webscout import XDASH
+from webscout import Julius
 
-ai = XDASH()
+ai = Julius()
 response = ai.chat(input(">>> "))
 print(response)
