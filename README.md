@@ -157,7 +157,7 @@ if __name__ == "__main__":
     download_video("https://www.youtube.com/watch?v=c0tMvzB0OKw")
 ```
 
-## Weather - webscout can now forcast weather
+## Weather - webscout can now forecast weather
 1. weather
 ```python
 from webscout import weather as w
