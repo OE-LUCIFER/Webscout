@@ -68,6 +68,7 @@ setup(
         "pillow",
         "requests_html",
         "bson",
+        "cloudscraper",
     ],
     entry_points={
         "console_scripts": [

@@ -4,7 +4,7 @@ import re
 from os import rename, getcwd
 from dataclasses import dataclass
 from webscout.YTdownloader import Handler
-from webscout import transcriber, DeepInfra
+from webscout import transcriber, DiscordRocks
 import requests
 from textblob import TextBlob
 from fpdf import FPDF
@@ -312,8 +312,8 @@ def main():
                 ]
                 ai_bot_answer = prompt(ai_bot_question)
                 if ai_bot_answer['ai_bot'] == 'Yes':
-                    deepinfra = DeepInfra(is_conversation=True,
-                                          max_tokens=8000, timeout=30, model="microsoft/WizardLM-2-8x22B", )
+                    ai = DiscordRocks(is_conversation=True,
+                                          max_tokens=8000, timeout=30 )
                     while True:
                         prompt_message = "Enter your prompt (type 'exit' to exit): "
                         print(colored(prompt_message, color="green"), end="")
@@ -323,9 +323,9 @@ def main():
                         else:
                             optimized_prompt = f"[YT video]: {video_url}\n [Transcription]: {transcript_t}\n [User]: {user_prompt}"
                             with yaspin(text="Thinking...", color="green") as spinner:
-                                response = deepinfra.ask(optimized_prompt)
+                                response = ai.ask(optimized_prompt)
                                 spinner.ok("✅ ")
-                            message = deepinfra.get_message(response)
+                            message = ai.get_message(response)
                             print(colored(f"AI: {message}", color="blue"))
                 elif ai_bot_answer['ai_bot'] == 'No':
                     pass
@@ -381,8 +381,8 @@ def main():
                 ]
                 ai_bot_answer = prompt(ai_bot_question)
                 if ai_bot_answer['ai_bot'] == 'Yes':
-                    deepinfra = DeepInfra(is_conversation=True,
-                                          max_tokens=8000, timeout=30, model="microsoft/WizardLM-2-8x22B", )
+                    ai = DiscordRocks(is_conversation=True,
+                                          max_tokens=8000, timeout=30 )
                     while True:
                         prompt_message = "Enter your prompt (type 'exit' to exit): "
                         print(colored(prompt_message, color="green"), end="")
@@ -392,9 +392,9 @@ def main():
                         else:
                             optimized_prompt = f"[YT video]: {video_url}\n [Transcription]: {transcript_t}\n [User]: {user_prompt}"
                             with yaspin(text="Thinking...", color="green") as spinner:
-                                response = deepinfra.ask(optimized_prompt)
+                                response = ai.ask(optimized_prompt)
                                 spinner.ok("✅ ")
-                            message = deepinfra.get_message(response)
+                            message = ai.get_message(response)
                             print(colored(f"AI: {message}", color="blue"))
                 elif ai_bot_answer['ai_bot'] == 'No':
                     pass

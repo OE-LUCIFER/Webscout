@@ -133,7 +133,7 @@ python -m webscout --help
 
 
 [Go To TOP](#TOP)
-## YTdownloader -webscout can now download yt videos
+## YTdownloader
 
 ```python
 from os import rename, getcwd
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     download_video("https://www.youtube.com/watch?v=c0tMvzB0OKw")
 ```
 
-## Weather - webscout can now forecast weather
+## Weather
 1. weather
 ```python
 from webscout import weather as w
@@ -1444,7 +1444,7 @@ if "error" not in function_call_data:
 else:
     print(f"Error: {function_call_data['error']}")
 ```
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo
 code similar to other provider
 ### `LLM` 
 ```python
