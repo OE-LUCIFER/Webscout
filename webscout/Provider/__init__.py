@@ -39,6 +39,8 @@ from .DiscordRocks import *
 from .felo_search import *
 from .xdash import *
 from .julius import *
+from .Youchat import *
+from .yep import *
 __all__ = [
     'ThinkAnyAI',
     'Farfalle',
@@ -81,4 +83,6 @@ __all__ = [
     'PiAI',
     'XDASH',
     'Julius',
+    'YouChat',
+    'YEPCHAT',
 ]

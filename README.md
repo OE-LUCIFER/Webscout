@@ -1331,7 +1331,7 @@ from webscout import AndiSearch
 a = AndiSearch()
 print(a.chat("HelpingAI-9B"))
 ```
-### Function calling-bete
+### Function calling-beta
 ```python
 import json
 import logging
@@ -1444,7 +1444,7 @@ if "error" not in function_call_data:
 else:
     print(f"Error: {function_call_data['error']}")
 ```
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT,
 code similar to other provider
 ### `LLM` 
 ```python

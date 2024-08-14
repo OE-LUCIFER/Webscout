@@ -1,5 +1,6 @@
-from webscout import Julius
-
-ai = Julius()
+from rich import print
+from webscout import YEPCHAT
+ai = YEPCHAT()
 response = ai.chat(input(">>> "))
-print(response)
+for chunk in response:
+    print(chunk, end="", flush=True)
