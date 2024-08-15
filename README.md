@@ -256,6 +256,7 @@ async def main() -> None:
 if __name__ == '__main__':
     asyncio.run(main())
 ```
+
 ## Transcriber
 The transcriber function in webscout is a handy tool that transcribes YouTube videos. Here's an example code demonstrating its usage:
 ```python
@@ -312,77 +313,25 @@ if __name__ == "__main__":
     main()
 ```
 
-## DWEBS: Advanced Web Searches
-
-`DWEBS` is a standalone feature designed to perform advanced web searches with enhanced capabilities. It is particularly powerful in extracting relevant information directly from webpages and Search engine, focusing exclusively on text (web) searches. Unlike the `WEBS` , which provides a broader range of search functionalities, `DWEBS` is specifically tailored for in-depth web searches.
-
-### Activating DWEBS
-
-To utilize the `DWEBS` feature, you must first create an instance of the `DWEBS` . This is designed to be used independently of the `WEBS` , offering a focused approach to web searches.
-
-### Point to remember before using `DWEBS`
-As `DWEBS` is designed to extract relevant information directly from webpages and Search engine, It extracts html from webpages and saves them to folder named files 
-
-### Usage Example
-
-Here's a basic example of how to use the `DWEBS` :
+## GoogleS -- formerly DWEBS
 ```python
-from webscout import DWEBS
-
-def finalextractor(extract_webpage=True):
-    print('---------------Here Running for GoogleSearch--------------------')
-    # 1. Google Search
-    google_searcher = DWEBS.GoogleSearcher()
-    query_html_path = google_searcher.search(
-        query='HelpingAI-9B',
-        result_num=10,
-        safe=False,
-        overwrite=False,
-    )
-
-    # 2. Search Result Extraction
-    query_results_extractor = DWEBS.QueryResultsExtractor()
-    query_search_results = query_results_extractor.extract(query_html_path)
-
-    if extract_webpage:
-        print('---------------Batch Webpage Fetcher--------------------')
-        # 3. Batch Webpage Fetching
-        batch_webpage_fetcher = DWEBS.BatchWebpageFetcher()
-        urls = [query_extracts['url'] for query_extracts in query_search_results['query_results']]
-        url_and_html_path_list = batch_webpage_fetcher.fetch(
-            urls,
-            overwrite=False,
-            output_parent=query_search_results["query"],
-        )
-
-        print('---------------Batch Webpage Extractor--------------------')
-        # 4. Batch Webpage Content Extraction
-        batch_webpage_content_extractor = DWEBS.BatchWebpageContentExtractor()
-        webpageurls = [url_and_html['html_path'] for url_and_html in url_and_html_path_list]
-        html_path_and_extracted_content_list = batch_webpage_content_extractor.extract(webpageurls)
-
-        # 5. Printing Extracted Content
-        for html_path_and_extracted_content in html_path_and_extracted_content_list:
-            print(html_path_and_extracted_content['extracted_content'])
-    else:
-        # Print only search results if extract_webpage is False
-        for result in query_search_results['query_results']:
-            DWEBS.logger.mesg(
-                f"{result['title']}\n"
-                f" - {result['site']}\n"
-                f" - {result['url']}\n"
-                f" - {result['abstract']}\n"
-                f"\n"
-            )
-
-        DWEBS.logger.success(f"- {len(query_search_results['query_results'])} query results")
-        DWEBS.logger.success(f"- {len(query_search_results['related_questions'])} related questions")
-
-# Example usage:
-finalextractor(extract_webpage=True)  # Extract webpage content
-finalextractor(extract_webpage=False) # Skip webpage extraction and print search results only
-
+from webscout import GoogleS
+from rich import print
+searcher = GoogleS()
+results = searcher.search("HelpingAI-9B", max_results=20, extract_webpage_text=False, max_extract_characters=100)
+for result in results:
+    print(result)
 ```
+### BingS
+```python
+from webscout import BingS
+from rich import print
+searcher = BingS()
+results = searcher.search("Python development tools", max_results=30)
+for result in results:
+    print(result)
+```
+
 ## Text-to-Speech:
 ```python
 from webscout import play_audio
@@ -1444,7 +1393,7 @@ if "error" not in function_call_data:
 else:
     print(f"Error: {function_call_data['error']}")
 ```
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT,
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek,
 code similar to other provider
 ### `LLM` 
 ```python

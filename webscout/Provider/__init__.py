@@ -41,6 +41,8 @@ from .xdash import *
 from .julius import *
 from .Youchat import *
 from .yep import *
+from .Cloudflare import *
+from .turboseek import *
 __all__ = [
     'ThinkAnyAI',
     'Farfalle',
@@ -85,4 +87,6 @@ __all__ = [
     'Julius',
     'YouChat',
     'YEPCHAT',
+    'Cloudflare',
+    'TurboSeek',
 ]

@@ -1,16 +1,39 @@
-import cloudscraper
-import json
-
+import time
+import uuid
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+import click
 import requests
+from requests import get
+from uuid import uuid4
+from re import findall
+from requests.exceptions import RequestException
+from curl_cffi.requests import get, RequestsError
+import g4f
+from random import randint
+from PIL import Image
+import io
+import re
+import json
+import yaml
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts
-from webscout.AIbase import Provider
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import Provider, AsyncProvider
+from webscout import exceptions
+from typing import Any, AsyncGenerator, Dict
+import logging
+import httpx
 
-class PiAI(Provider):
+class TurboSeek(Provider):
+    """
+    This class provides methods for interacting with the TurboSeek API.
+    """
     def __init__(
         self,
-        conversation_id: str,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
@@ -21,10 +44,9 @@ class PiAI(Provider):
         history_offset: int = 10250,
         act: str = None,
     ):
-        """Instantiates PiAI
+        """Instantiates TurboSeek
 
         Args:
-            conversation_id (str): The conversation ID for the Pi.ai chat.
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
             max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
             timeout (int, optional): Http request timeout. Defaults to 30.
@@ -35,37 +57,35 @@ class PiAI(Provider):
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
         """
-        self.conversation_id = conversation_id
-        self.scraper = cloudscraper.create_scraper()
-        self.url = 'https://pi.ai/api/chat'
-        self.headers = {
-            'Accept': 'text/event-stream',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'DNT': '1',
-            'Origin': 'https://pi.ai',
-            'Referer': 'https://pi.ai/talk',
-            'Sec-CH-UA': '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-            'Sec-CH-UA-Mobile': '?0',
-            'Sec-CH-UA-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
-            'X-Api-Version': '3'
-        }
-        self.cookies = {
-                '__Host-session': 'Ca5SoyAMJEaaB79jj1T69',
-                '__cf_bm': 'g07oaL0jcstNfKDyZv7_YFjN0jnuBZjbMiXOWhy7V7A-1723536536-1.0.1.1-xwukd03L7oIAUqPG.OHbFNatDdHGZ28mRGsbsqfjBlpuy.b8w6UZIk8F3knMhhtNzwo4JQhBVdtYOlG0MvAw8A'
-            }
-
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
+        self.chat_endpoint = "https://www.turboseek.io/api/getAnswer"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
+        self.headers = {
+            "authority": "www.turboseek.io",
+            "method": "POST",
+            "path": "/api/getAnswer",
+            "scheme": "https",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "content-length": "63",
+            "content-type": "application/json",
+            "dnt": "1",
+            "origin": "https://www.turboseek.io",
+            "priority": "u=1, i",
+            "referer": "https://www.turboseek.io/?ref=taaft&utm_source=taaft&utm_medium=referral",
+            "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0"
+        }
 
         self.__available_optimizers = (
             method
@@ -106,7 +126,7 @@ class PiAI(Provider):
            dict : {}
         ```json
         {
-            "text" : "How may I assist you today?"
+           "text" : "How may I assist you today?"
         }
         ```
         """
@@ -121,27 +141,37 @@ class PiAI(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-        data = {
-            'text': conversation_prompt,
-            'conversation': self.conversation_id
+        self.session.headers.update(self.headers)
+        payload = {
+            "question": conversation_prompt,
+            "sources": []
         }
 
         def for_stream():
-            response = self.scraper.post(self.url, headers=self.headers, cookies=self.cookies, json=data, stream=True, timeout=self.timeout)
-            
+            response = self.session.post(
+                self.chat_endpoint, json=payload, stream=True, timeout=self.timeout
+            )
+            if not response.ok:
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                )
+
             streaming_text = ""
-            for line in response.iter_lines(decode_unicode=True):
-                if line.startswith("data: "):
-                    json_data = line[6:]
-                    try:
-                        parsed_data = json.loads(json_data)
-                        if 'text' in parsed_data:
-                            streaming_text += parsed_data['text']
+            for value in response.iter_lines(
+                decode_unicode=True,
+                chunk_size=self.stream_chunk_size,
+                delimiter="\n",
+            ):
+                try:
+                    if bool(value) and value.startswith("data: "):
+                        data = json.loads(value[6:])
+                        if "text" in data:
+                            streaming_text += data["text"]
                             resp = dict(text=streaming_text)
                             self.last_response.update(resp)
-                            yield parsed_data if raw else resp
-                    except json.JSONDecodeError:
-                        continue
+                            yield value if raw else resp
+                except json.decoder.JSONDecodeError:
+                    pass
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -174,7 +204,7 @@ class PiAI(Provider):
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
             ):
-                yield self.get_message(response).encode('utf-8').decode('utf-8')
+                yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
@@ -184,7 +214,7 @@ class PiAI(Provider):
                     optimizer=optimizer,
                     conversationally=conversationally,
                 )
-            ).encode('utf-8').decode('utf-8')
+            )
 
         return for_stream() if stream else for_non_stream()
 
@@ -199,10 +229,9 @@ class PiAI(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-
 if __name__ == '__main__':
     from rich import print
-    ai = PiAI(conversation_id="6kti6HPbUKKWUAEpeD7vQ")  
+    ai = TurboSeek()
     response = ai.chat(input(">>> "))
     for chunk in response:
         print(chunk, end="", flush=True)

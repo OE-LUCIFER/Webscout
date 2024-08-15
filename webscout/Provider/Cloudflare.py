@@ -1,16 +1,81 @@
-import cloudscraper
-import json
-
+import time
+import uuid
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+import click
 import requests
+from requests import get
+from uuid import uuid4
+from re import findall
+from requests.exceptions import RequestException
+from curl_cffi.requests import get, RequestsError
+import g4f
+from random import randint
+from PIL import Image
+import io
+import re
+import json
+import yaml
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts
-from webscout.AIbase import Provider
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import Provider, AsyncProvider
+from webscout import exceptions
+from typing import Any, AsyncGenerator, Dict
+import logging
+import httpx
+import cloudscraper
 
-class PiAI(Provider):
+class Cloudflare(Provider):
+    """
+    This class provides methods for interacting with the Playground AI API 
+    (Cloudflare) in a consistent provider structure for webscout.
+    """
+
+    AVAILABLE_MODELS = [
+        "@cf/llava-hf/llava-1.5-7b-hf",
+        "@cf/unum/uform-gen2-qwen-500m",
+        "@cf/facebook/detr-resnet-50",
+        "@cf/facebook/bart-large-cnn",
+        "@hf/thebloke/deepseek-coder-6.7b-base-awq",
+        "@hf/thebloke/deepseek-coder-6.7b-instruct-awq",
+        "@cf/deepseek-ai/deepseek-math-7b-base",
+        "@cf/deepseek-ai/deepseek-math-7b-instruct",
+        "@cf/thebloke/discolm-german-7b-v1-awq",
+        "@cf/tiiuae/falcon-7b-instruct",
+        "@cf/google/gemma-2b-it-lora",
+        "@hf/google/gemma-7b-it",
+        "@cf/google/gemma-7b-it-lora",
+        "@hf/nousresearch/hermes-2-pro-mistral-7b",
+        "@hf/thebloke/llama-2-13b-chat-awq",
+        "@cf/meta-llama/llama-2-7b-chat-hf-lora",
+        "@cf/meta/llama-3-8b-instruct",
+        "@cf/meta/llama-3-8b-instruct-awq",
+        "@cf/meta/llama-3.1-8b-instruct",
+        "@hf/thebloke/llamaguard-7b-awq",
+        "@hf/thebloke/mistral-7b-instruct-v0.1-awq",
+        "@hf/mistral/mistral-7b-instruct-v0.2",
+        "@cf/mistral/mistral-7b-instruct-v0.2-lora",
+        "@hf/thebloke/neural-chat-7b-v3-1-awq",
+        "@cf/openchat/openchat-3.5-0106",
+        "@hf/thebloke/openhermes-2.5-mistral-7b-awq",
+        "@cf/microsoft/phi-2",
+        "@cf/qwen/qwen1.5-0.5b-chat",
+        "@cf/qwen/qwen1.5-1.8b-chat",
+        "@cf/qwen/qwen1.5-14b-chat-awq",
+        "@cf/qwen/qwen1.5-7b-chat-awq",
+        "@cf/defog/sqlcoder-7b-2",
+        "@hf/nexusflow/starling-lm-7b-beta",
+        "@cf/tinyllama/tinyllama-1.1b-chat-v1.0",
+        "@cf/fblgit/una-cybertron-7b-v2-bf16",
+        "@hf/thebloke/zephyr-7b-beta-awq"
+    ]
+
     def __init__(
         self,
-        conversation_id: str,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
@@ -20,11 +85,12 @@ class PiAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        model: str = "@cf/meta/llama-3.1-8b-instruct",
+        system_prompt: str = "You are a helpful assistant."
     ):
-        """Instantiates PiAI
+        """Instantiates Cloudflare
 
         Args:
-            conversation_id (str): The conversation ID for the Pi.ai chat.
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
             max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
             timeout (int, optional): Http request timeout. Defaults to 30.
@@ -34,18 +100,32 @@ class PiAI(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+            model (str, optional): Model to use for generating text. 
+                                   Defaults to "@cf/meta/llama-3.1-8b-instruct".
+                                   Choose from AVAILABLE_MODELS.
+            system_prompt (str, optional): System prompt for Cloudflare. 
+                                   Defaults to "You are a helpful assistant.".
         """
-        self.conversation_id = conversation_id
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+
         self.scraper = cloudscraper.create_scraper()
-        self.url = 'https://pi.ai/api/chat'
+        self.is_conversation = is_conversation
+        self.max_tokens_to_sample = max_tokens
+        self.chat_endpoint = "https://playground.ai.cloudflare.com/api/inference"
+        self.stream_chunk_size = 64
+        self.timeout = timeout
+        self.last_response = {}
+        self.model = model
+        self.system_prompt = system_prompt
         self.headers = {
             'Accept': 'text/event-stream',
             'Accept-Encoding': 'gzip, deflate, br, zstd',
             'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
             'Content-Type': 'application/json',
             'DNT': '1',
-            'Origin': 'https://pi.ai',
-            'Referer': 'https://pi.ai/talk',
+            'Origin': 'https://playground.ai.cloudflare.com',
+            'Referer': 'https://playground.ai.cloudflare.com/',
             'Sec-CH-UA': '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
             'Sec-CH-UA-Mobile': '?0',
             'Sec-CH-UA-Platform': '"Windows"',
@@ -53,25 +133,21 @@ class PiAI(Provider):
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
-            'X-Api-Version': '3'
         }
-        self.cookies = {
-                '__Host-session': 'Ca5SoyAMJEaaB79jj1T69',
-                '__cf_bm': 'g07oaL0jcstNfKDyZv7_YFjN0jnuBZjbMiXOWhy7V7A-1723536536-1.0.1.1-xwukd03L7oIAUqPG.OHbFNatDdHGZ28mRGsbsqfjBlpuy.b8w6UZIk8F3knMhhtNzwo4JQhBVdtYOlG0MvAw8A'
-            }
 
-        self.session = requests.Session()
-        self.is_conversation = is_conversation
-        self.max_tokens_to_sample = max_tokens
-        self.stream_chunk_size = 64
-        self.timeout = timeout
-        self.last_response = {}
+        self.cookies = {
+            'cfzs_amplitude': uuid4().hex,
+            'cfz_amplitude': uuid4().hex,
+            '__cf_bm': uuid4().hex,
+        }
 
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
+        # FIX: Initialize the session here
+        self.session = cloudscraper.create_scraper() 
         self.session.headers.update(self.headers)
         Conversation.intro = (
             AwesomePrompts().get_act(
@@ -98,17 +174,13 @@ class PiAI(Provider):
 
         Args:
             prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            stream (bool, optional): Whether to stream the response. Defaults to False.
+            raw (bool, optional): Whether to return the raw response. Defaults to False.
+            optimizer (str, optional): The name of the optimizer to use. Defaults to None.
+            conversationally (bool, optional): Whether to chat conversationally. Defaults to False.
+
         Returns:
-           dict : {}
-        ```json
-        {
-            "text" : "How may I assist you today?"
-        }
-        ```
+            The response from the API.
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -120,28 +192,35 @@ class PiAI(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-
-        data = {
-            'text': conversation_prompt,
-            'conversation': self.conversation_id
+        
+        payload = {
+            "messages": [
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt}
+            ],
+            "lora": None,
+            "model": self.model,
+            "max_tokens": 512,
+            "stream": True
         }
 
         def for_stream():
-            response = self.scraper.post(self.url, headers=self.headers, cookies=self.cookies, json=data, stream=True, timeout=self.timeout)
-            
-            streaming_text = ""
+            response = self.scraper.post(
+                self.chat_endpoint, headers=self.headers, cookies=self.cookies, data=json.dumps(payload), stream=True, timeout=self.timeout
+            )
+
+            if not response.ok:
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to generate response - ({response.status_code}, {response.reason})"
+                )
+            streaming_response = ""
             for line in response.iter_lines(decode_unicode=True):
-                if line.startswith("data: "):
-                    json_data = line[6:]
-                    try:
-                        parsed_data = json.loads(json_data)
-                        if 'text' in parsed_data:
-                            streaming_text += parsed_data['text']
-                            resp = dict(text=streaming_text)
-                            self.last_response.update(resp)
-                            yield parsed_data if raw else resp
-                    except json.JSONDecodeError:
-                        continue
+                if line.startswith('data: ') and line != 'data: [DONE]':
+                    data = json.loads(line[6:])
+                    content = data.get('response', '')
+                    streaming_response += content
+                    yield content if raw else dict(text=streaming_response)
+            self.last_response.update(dict(text=streaming_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -174,7 +253,7 @@ class PiAI(Provider):
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
             ):
-                yield self.get_message(response).encode('utf-8').decode('utf-8')
+                yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
@@ -184,7 +263,7 @@ class PiAI(Provider):
                     optimizer=optimizer,
                     conversationally=conversationally,
                 )
-            ).encode('utf-8').decode('utf-8')
+            )
 
         return for_stream() if stream else for_non_stream()
 
@@ -199,10 +278,9 @@ class PiAI(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-
 if __name__ == '__main__':
     from rich import print
-    ai = PiAI(conversation_id="6kti6HPbUKKWUAEpeD7vQ")  
+    ai = Cloudflare()
     response = ai.chat(input(">>> "))
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -7,7 +7,7 @@ from .voice import play_audio
 from .websx_search import WEBSX
 from .LLM import VLM, LLM
 from .YTdownloader import *
-
+from .Bing_search import *
 import g4f
 from .YTdownloader import *
 from .Provider import *
@@ -55,64 +55,6 @@ gpt4free_providers = [
 
 available_providers = webai + gpt4free_providers
 
-# Add all the provider classes, Localai models, Thread, and Model to __all__
-__all__ = [
-   "WEBS",
-   "AsyncWEBS",
-   "__version__",
-   "DWEBS",
-   "transcriber",
-   "play_audio",
-   "TempMailClient", 
-   "TemporaryPhoneNumber",
-   "LLM",
-   "YTdownloader",
-   "WEBSX",
-   "VLM",
-   # Localai models and utilities 
-   # "Model",
-   # "Thread",
-   # "formats", 
-
-   # AI Providers
-    'ThinkAnyAI',
-    'Xjai',
-    'LLAMA2', 
-    'AsyncLLAMA2',
-    'Cohere',
-    'REKA',
-    'GROQ',
-    'AsyncGROQ',
-    'OPENAI',
-    'AsyncOPENAI',
-    'LEO',
-    'AsyncLEO',
-    'KOBOLDAI',
-    'AsyncKOBOLDAI',
-    'OPENGPT', 
-    'AsyncOPENGPT',
-    'PERPLEXITY',
-    'BLACKBOXAI', 
-    'AsyncBLACKBOXAI',
-    'PhindSearch', 
-    'AsyncPhindSearch',
-    'YEPCHAT',
-    'AsyncYEPCHAT',
-    'YouChat',
-    'GEMINI',
-    'Berlin4h',
-    'ChatGPTUK',
-    'POE',
-    'BasedGPT',
-    'DeepSeek',
-    'DeepInfra',
-    'VLM',
-    'AsyncDeepInfra',
-    'VTLchat',
-    'AsyncPhindv2',
-    'Phindv2',
-    'OPENGPTv2',
-]
 
 import logging
 logging.getLogger("webscout").addHandler(logging.NullHandler())
