@@ -122,7 +122,7 @@ class DiscordRocks(Provider):
 
     def __init__(
         self,
-        model: str = "gpt-4o", 
+        model: str = "llama-3.1-405b-turbo", 
         max_tokens: int = 4096,
         temperature: float = 1,
         top_p: float = 1,
@@ -176,6 +176,7 @@ class DiscordRocks(Provider):
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "application/json",
             "dnt": "1",
+            "authorization": "Bearer missing api key",
             "origin": "https://llmplayground.net",
             "priority": "u=1, i",
             "referer": "https://llmplayground.net/",
