@@ -1568,15 +1568,13 @@ gguf.convert(
 
 Webscout's `autollama` utility download model from huggingface and then automatically makes it ollama ready
 
-**Example:**
-
 ```python
 from webscout import autollama
 
-autollama(
-    model_path="OEvortex/HelpingAI-Lite-1.5T",  # Hugging Face model ID
-    gguf_file="HelpingAI-Lite-1.5T.q4_k_m.gguf" #  GGUF file ID
-)
+model_path = "Vortex4ai/Jarvis-0.5B"
+gguf_file = "test2-q4_k_m.gguf"
+
+autollama.main(model_path, gguf_file)  
 ```
 
 **Command Line Usage:**

@@ -21,7 +21,7 @@ class LLAMA3(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "llama3-8b",  
-        system: str = "Answer as concisely as possible.",
+        system: str = "GPT syle",
     ):
         """Instantiates Snova
 

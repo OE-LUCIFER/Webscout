@@ -69,7 +69,9 @@ setup(
         "requests_html",
         "bson",
         "cloudscraper",
-        "emoji"
+        "emoji",
+        "colorlog",
+        "openai",
     ],
     entry_points={
         "console_scripts": [

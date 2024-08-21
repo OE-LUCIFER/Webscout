@@ -36,11 +36,12 @@ class OLLAMA(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        system_prompt: str = "You are a helpful and friendly AI assistant.", 
     ):
         """Instantiates Ollama
 
         Args:
-            model (str, optional): Model name. Defaults to 'llama2'.
+            model (str, optional): Model name. Defaults to 'qwen2:0.5b'.
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
             max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
             timeout (int, optional): Http request timeout. Defaults to 30.
@@ -50,12 +51,14 @@ class OLLAMA(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+            system_prompt (str, optional): System prompt for Ollama. Defaults to "You are a helpful and friendly AI assistant.". 
         """
         self.model = model
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.timeout = timeout
         self.last_response = {}
+        self.system_prompt = system_prompt
 
         self.__available_optimizers = (
             method
@@ -110,21 +113,19 @@ class OLLAMA(Provider):
                 )
 
         def for_stream():
+            # Correctly call ollama.chat with stream=True
             stream = ollama.chat(model=self.model, messages=[
+                {'role': 'system', 'content': self.system_prompt}, 
                 {'role': 'user', 'content': conversation_prompt}
             ], stream=True)
 
-            message_load = ""
+            # Yield each chunk directly
             for chunk in stream:
-                message_load += chunk['message']['content']
-                yield chunk['message']['content'] if raw else dict(text=message_load)
-            self.last_response.update(dict(text=message_load))
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+                yield chunk['message']['content'] if raw else dict(text=chunk['message']['content'])
 
         def for_non_stream():
             response = ollama.chat(model=self.model, messages=[
+                {'role': 'system', 'content': self.system_prompt}, # Add system message
                 {'role': 'user', 'content': conversation_prompt}
             ])
             self.last_response.update(dict(text=response['message']['content']))
@@ -183,6 +184,6 @@ class OLLAMA(Provider):
         return response["text"]
 if __name__ == "__main__":
     ollama_provider = OLLAMA(model="qwen:0.5b")
-    response = ollama_provider.chat("hi")
+    response = ollama_provider.chat("hi", stream=True)
     for r in response:
         print(r, end="", flush=True)

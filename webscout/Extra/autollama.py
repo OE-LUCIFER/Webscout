@@ -1,209 +1,179 @@
-import subprocess
-import argparse
+import warnings
+from datetime import time
 import os
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import track
-from yaspin import yaspin
-from pyfiglet import figlet_format
-import time
+import sys
+import subprocess
+import logging
+import psutil
+from huggingface_hub import hf_hub_url, cached_download
+import colorlog
+import ollama  # Import ollama for interactive chat
+import argparse  # Import argparse for command-line arguments
 
-console = Console()
+# Suppress specific warnings
+warnings.filterwarnings(
+    "ignore", category=FutureWarning, module="huggingface_hub.file_download"
+)
 
-def autollama(model_path, gguf_file):
-    """Manages models with Ollama using the autollama.sh script.
+# Configure logging with colors
+handler = colorlog.StreamHandler()
+handler.setFormatter(
+    colorlog.ColoredFormatter(
+        "%(log_color)s%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        log_colors={
+            "DEBUG": "cyan",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "red,bg_white",
+        },
+    )
+)
 
-    Args:
-        model_path (str): The path to the Hugging Face model.
-        gguf_file (str): The name of the GGUF file. 
-    """
-    console.print(f"[bold green]{figlet_format('Autollama')}[/]\n", justify="center")
+logger = colorlog.getLogger(__name__)
+if not logger.hasHandlers():
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
-    # Check if autollama.sh exists in the current working directory
-    script_path = os.path.join(os.getcwd(), "autollama.sh")
-    if not os.path.exists(script_path):
-        # Create autollama.sh with the content provided
-        with open(script_path, "w") as f:
-            f.write("""
-function show_art() {
-    cat << "EOF"
-    Made with love in India
-EOF
-}
-
-show_art
-
-# Initialize default values
-MODEL_PATH=""
-GGUF_FILE=""
-
-# Display help/usage information
-usage() {
-echo "Usage: $0 -m <model_path> -g <gguf_file>"
-echo
-echo "Options:"
-echo "  -m <model_path>    Set the path to the model"
-echo "  -g <gguf_file>     Set the GGUF file name"
-echo "  -h                 Display this help and exit"
-echo
-}
-
-# Parse command-line options
-while getopts ":m:g:h" opt; do
-case ${opt} in
-    m )
-    MODEL_PATH=$OPTARG
-    ;;
-    g )
-    GGUF_FILE=$OPTARG
-    ;;
-    h )
-    usage
-    exit 0
-    ;;
-    \? )
-    echo "Invalid Option: -$OPTARG" 1>&2
-    usage
-    exit 1
-    ;;
-    : )
-    echo "Invalid Option: -$OPTARG requires an argument" 1>&2
-    usage
-    exit 1
-    ;;
-esac
-done
-
-# Check required parameters
-if [ -z "$MODEL_PATH" ] || [ -z "$GGUF_FILE" ]; then
-    echo "Error: -m (model_path) and -g (gguf_file) are required."
-    usage
-    exit 1
-fi
-
-# Derive MODEL_NAME
-MODEL_NAME=$(echo $GGUF_FILE | sed 's/\(.*\)\.Q4.*/\\1/')
-
-# Log file where downloaded models are recorded
-DOWNLOAD_LOG="downloaded_models.log"
-
-# Composite logging name
-LOGGING_NAME="${MODEL_PATH}_${MODEL_NAME}"
-
-# Check if the model has been downloaded
-function is_model_downloaded {
-    grep -qxF "$LOGGING_NAME" "$DOWNLOAD_LOG" && return 0 || return 1
-}
-
-# Log the downloaded model
-function log_downloaded_model {
-    echo "$LOGGING_NAME" >> "$DOWNLOAD_LOG"
-}
-
-# Function to check if the model has already been created
-function is_model_created {
-    # 'ollama list' lists all models
-    ollama list | grep -q "$MODEL_NAME" && return 0 || return 1
-}
-
-# Check if huggingface-hub is installed, and install it if not
-if ! pip show huggingface-hub > /dev/null; then
-echo "Installing huggingface-hub..."
-pip install -U "huggingface_hub[cli]"
-else
-echo "huggingface-hub is already installed."
-fi
-
-# Check if the model has already been downloaded
-if is_model_downloaded; then
-    echo "Model $LOGGING_NAME has already been downloaded. Skipping download."
-else
-    echo "Downloading model $LOGGING_NAME..."
-    # Download the model
-    huggingface-cli download $MODEL_PATH $GGUF_FILE --local-dir downloads --local-dir-use-symlinks False
-
-    # Log the downloaded model
-    log_downloaded_model
-    echo "Model $LOGGING_NAME downloaded and logged."
-fi
-
-# Check if Ollama is installed, and install it if not
-if ! command -v ollama &> /dev/null; then
-echo "Installing Ollama..."
-curl -fsSL https://ollama.com/install.sh | sh
-else
-echo "Ollama is already installed."
-fi
-
-# Check if Ollama is already running
-if pgrep -f 'ollama serve' > /dev/null; then
-    echo "Ollama is already running. Skipping the start."
-else
-    echo "Starting Ollama..."
-    # Start Ollama in the background
-    ollama serve &
-
-    # Wait for Ollama to start
-    while true; do
-        if pgrep -f 'ollama serve' > /dev/null; then
-            echo "Ollama has started."
-            sleep 60
-            break
-        else
-            echo "Waiting for Ollama to start..."
-            sleep 1 # Wait for 1 second before checking again
-        fi
-    done
-fi
-
-# Check if the model has already been created
-if is_model_created; then
-    echo "Model $MODEL_NAME is already created. Skipping creation."
-else
-    echo "Creating model $MODEL_NAME..."
-    # Create the model in Ollama
-    # Prepare Modelfile with the downloaded path
-    echo "FROM ./downloads/$GGUF_FILE" > Modelfile
-    ollama create $MODEL_NAME -f Modelfile
-    echo "Model $MODEL_NAME created."
-fi
+# Redirect warnings to the logger but avoid duplication
+logging.captureWarnings(True)
+py_warnings_logger = logging.getLogger("py.warnings")
+if not py_warnings_logger.hasHandlers():
+    py_warnings_logger.addHandler(handler)
 
 
-echo "model name is > $MODEL_NAME"
-echo "Use Ollama run $MODEL_NAME"
-            """)
-        # Make autollama.sh executable (using chmod)
-        os.chmod(script_path, 0o755)
+def show_art():
+    logger.info("Made with love in India")
 
-    # Initialize command list
-    command = ["bash", script_path, "-m", model_path, "-g", gguf_file]
 
-    # Execute the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+def usage():
+    logger.info("Usage: python script.py -m <model_path> -g <gguf_file>")
+    logger.info("Options:")
+    logger.info("  -m <model_path>    Set the path to the model")
+    logger.info("  -g <gguf_file>     Set the GGUF file name")
+    logger.info("  -h                 Display this help and exit")
 
-    for line in iter(process.stdout.readline, ''): 
-        console.print(Panel(line.strip(), title="Autollama Output", expand=False)) 
 
-    for line in iter(process.stderr.readline, ''): 
-        console.print(Panel(line.strip(), title="Autollama Errors (if any)", expand=False))
-    
-    process.wait()
-    console.print("[green]Model is ready![/]")
+def is_model_downloaded(logging_name, download_log):
+    if not os.path.exists(download_log):
+        return False
+    with open(download_log, "r") as f:
+        for line in f:
+            if line.strip() == logging_name:
+                return True
+    return False
 
-def main():
-    parser = argparse.ArgumentParser(description='Automatically create and run an Ollama model in Ollama')
-    parser.add_argument('-m', '--model_path', required=True, help='Set the huggingface model id to the Hugging Face model')
-    parser.add_argument('-g', '--gguf_file', required=True, help='Set the GGUF file name')
+
+def log_downloaded_model(logging_name, download_log):
+    with open(download_log, "a") as f:
+        f.write(logging_name + "\n")
+
+
+def is_model_created(model_name):
+    result = subprocess.run(["ollama", "list"], stdout=subprocess.PIPE)
+    return model_name in result.stdout.decode("utf-8")
+
+
+def download_model(repo_id, filename, token, cache_dir="downloads"):
+    url = hf_hub_url(repo_id, filename)
+    filepath = cached_download(
+        url, cache_dir=cache_dir, force_filename=filename, use_auth_token=token
+    )
+    return filepath
+
+
+def is_ollama_running():
+    for proc in psutil.process_iter(["name"]):
+        if proc.info["name"] in ["ollama", "ollama.exe"]:
+            return True
+    return False
+
+
+def main(model_path=None, gguf_file=None):  # Modified to handle both CLI and non-CLI
+    show_art()
+
+    # Parse command-line arguments if provided
+    parser = argparse.ArgumentParser(description="Download and create an Ollama model")
+    parser.add_argument("-m", "--model_path", help="Path to the model on Hugging Face Hub")
+    parser.add_argument("-g", "--gguf_file", help="Name of the GGUF file")
     args = parser.parse_args()
 
+    # Use arguments from command line or function parameters
+    model_path = args.model_path if args.model_path else model_path
+    gguf_file = args.gguf_file if args.gguf_file else gguf_file
+
+    if not model_path or not gguf_file:
+        logger.error("Error: model_path and gguf_file are required.")
+        usage()
+        sys.exit(2)
+
+    model_name = gguf_file.split(".Q4")[0]
+    download_log = "downloaded_models.log"
+    logging_name = f"{model_path}_{model_name}"
+
+    # Ensure the log file exists
+    if not os.path.exists(download_log):
+        with open(download_log, 'w') as f:
+            pass
+
+    # Check if huggingface-hub is installed, and install it if not
     try:
-        with yaspin(text="Processing...") as spinner:
-            autollama(args.model_path, args.gguf_file)
-        spinner.ok("Done!")
-    except Exception as e:
-        console.print(f"[red]Error: {e}[/]")
-        exit(1)
+        subprocess.check_output(['pip', 'show', 'huggingface-hub'])
+    except subprocess.CalledProcessError:
+        logger.info("Installing huggingface-hub...")
+        subprocess.check_call(['pip', 'install', '-U', 'huggingface_hub[cli]'])
+    else:
+        logger.info("huggingface-hub is already installed.")
+
+    # Check if the model has already been downloaded
+    if is_model_downloaded(logging_name, download_log):
+        logger.info(f"Model {logging_name} has already been downloaded. Skipping download.")
+    else:
+        logger.info(f"Downloading model {logging_name}...")
+        token = os.getenv('HUGGINGFACE_TOKEN', None)
+        if not token:
+            logger.warning("Warning: HUGGINGFACE_TOKEN environment variable is not set. Using None.")
+            token = None
+
+        filepath = download_model(model_path, gguf_file, token)
+        log_downloaded_model(logging_name, download_log)
+        logger.info(f"Model {logging_name} downloaded and logged.")
+
+    # Check if Ollama is installed, and install it if not
+    try:
+        subprocess.check_output(['ollama', '--version'])
+    except subprocess.CalledProcessError:
+        logger.info("Installing Ollama...")
+        subprocess.check_call(['curl', '-fsSL', 'https://ollama.com/install.sh', '|', 'sh'])
+    else:
+        logger.info("Ollama is already installed.")
+
+    # Check if Ollama is already running
+    if is_ollama_running():
+        logger.info("Ollama is already running. Skipping the start.")
+    else:
+        logger.info("Starting Ollama...")
+        subprocess.Popen(['ollama', 'serve'])
+
+        while not is_ollama_running():
+            logger.info("Waiting for Ollama to start...")
+            time.sleep(1)
+
+        logger.info("Ollama has started.")
+
+    # Check if the model has already been created
+    if is_model_created(model_name):
+        logger.info(f"Model {model_name} is already created. Skipping creation.")
+    else:
+        logger.info(f"Creating model {model_name}...")
+        with open('Modelfile', 'w') as f:
+            f.write(f"FROM ./downloads/{gguf_file}")
+        subprocess.check_call(['ollama', 'create', model_name, '-f', 'Modelfile'])
+        logger.info(f"Model {model_name} created.")
+
+    logger.info(f"model name is > {model_name}")
+    logger.info(f"Use Ollama run {model_name}")
 
 if __name__ == "__main__":
     main()
-
