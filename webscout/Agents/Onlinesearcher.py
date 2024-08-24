@@ -1,100 +1,81 @@
 import json
+import colorlog
 from webscout import WEBS
+from webscout.Agents.ai import LLAMA3
 import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict
-
-class DeepInfra:
-    def __init__(
-        self,
-        model: str = "meta-llama/Meta-Llama-3.1-70B-Instruct",
-        max_tokens: int = 8000,
-        timeout: int = 120,
-        system_prompt: str = "You are a helpful AI assistant.",
-        proxies: dict = {}
-    ):
-        self.model = model
-        self.max_tokens = max_tokens
-        self.timeout = timeout
-        self.system_prompt = system_prompt
-        self.chat_endpoint = "https://api.deepinfra.com/v1/openai/chat/completions"
-        
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-            'Accept-Language': 'en,fr-FR;q=0.9,fr;q=0.8,es-ES;q=0.7,es;q=0.6,en-US;q=0.5,am;q=0.4,de;q=0.3',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Content-Type': 'application/json',
-            'Origin': 'https://deepinfra.com',
-            'Pragma': 'no-cache',
-            'Referer': 'https://deepinfra.com/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
-            'X-Deepinfra-Source': 'web-embed',
-            'accept': 'text/event-stream',
-            'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"'
-        }
-        
-        self.client = httpx.Client(proxies=proxies, headers=self.headers)
-
-    def ask(self, prompt: str, system_prompt: str = None) -> str:
-        payload = {
-            'model': self.model,
-            'messages': [
-                {"role": "system", "content": system_prompt or self.system_prompt},
-                {"role": "user", "content": prompt},
-            ],
-            'temperature': 0.7,
-            'max_tokens': self.max_tokens,
-            'stop': []
-        }
-
-        response = self.client.post(self.chat_endpoint, json=payload, timeout=self.timeout)
-        if response.status_code != 200:
-            raise Exception(f"Failed to generate response - ({response.status_code}, {response.reason_phrase}) - {response.text}")
-
-        resp = response.json()
-        return resp["choices"][0]["message"]["content"]
+import logging
 
 class WebSearchAgent:
-
-    def __init__(self, model="Qwen/Qwen2-72B-Instruct"):
+    def __init__(self):
         self.webs = WEBS()
-        self.deepinfra = DeepInfra(model=model)
+        self.ai = LLAMA3(system="You are an advanced AI assistant specialized in generating optimal search queries and providing comprehensive answers based on web search results.")
 
-    def generate_search_query(self, information):
+    def generate_search_queries(self, information, num_queries=3):
         prompt = f"""
-        Instructions:
-        You are a smart online searcher for a large language model.
-        Given information, you must create a search query to search the internet for relevant information.
-        Your search query must be in the form of a json response.
-        Exact json response format must be as follows:
-        
-        {{
-            "search_query": "your search query"
-        }}
-        - You must only provide ONE search query
-        - You must provide the BEST search query for the given information
-        - The search query must be normal text.
+        Task: Generate {num_queries} optimal search queries based on the given information.
 
-        Information: {information}
+        Instructions:
+        1. Analyze the provided information carefully.
+        2. Identify key concepts, entities, and relationships.
+        3. Formulate {num_queries} concise and specific search queries that will yield relevant results.
+        4. Each query should focus on a different aspect or angle of the information.
+        5. The queries should be in natural language, not in the form of keywords.
+        6. Avoid unnecessary words or phrases that might limit the search results.
+
+        Your response must be in the following JSON format:
+        {{
+            "search_queries": [
+                "Your first search query here",
+                "Your second search query here",
+                "Your third search query here"
+            ]
+        }}
+
+        Ensure that:
+        - You provide exactly {num_queries} search queries.
+        - Each query is unique and focuses on a different aspect of the information.
+        - The queries are in plain text, suitable for a web search engine.
+
+        Information to base the search queries on:
+        {information}
+
+        Now, generate the optimal search queries:
         """
 
-        response = self.deepinfra.ask(prompt)
-        return json.loads(response)["search_query"]
+        response = ""
+        for chunk in self.ai.chat(prompt):
+            response += chunk
+
+        try:
+            json_response = json.loads(response)
+            return json_response["search_queries"]
+        except json.JSONDecodeError:
+            print(f"Warning: Failed to parse JSON. Raw response: {response}")
+            # Fallback: try to extract queries manually
+            queries = []
+            for line in response.split('\n'):
+                if line.strip().startswith('"') and line.strip().endswith('"'):
+                    queries.append(line.strip(' "'))
+            if queries:
+                return queries[:num_queries]
+            else:
+                print(f"Warning: Using original information as search query.")
+                return [information]
 
     def search(self, information, region='wt-wt', safesearch='off', timelimit='y', max_results=5):
-        search_query = self.generate_search_query(information)
+        search_queries = self.generate_search_queries(information)
+        all_results = []
         
-        results = []
-        with self.webs as webs:
-            for result in webs.text(search_query, region=region, safesearch=safesearch, timelimit=timelimit, max_results=max_results):
-                results.append(result)
+        for query in search_queries:
+            results = []
+            with self.webs as webs:
+                for result in webs.text(query, region=region, safesearch=safesearch, timelimit=timelimit, max_results=max_results):
+                    results.append(result)
+            all_results.extend(results)
         
-        return results
+        return all_results
 
     def extract_urls(self, results):
         urls = []
@@ -102,7 +83,7 @@ class WebSearchAgent:
             url = result.get('href')
             if url:
                 urls.append(url)
-        return list(set(urls))  # Remove duplicates
+        return list(set(urls))
 
     def fetch_webpage(self, url: str) -> str:
         try:
@@ -110,16 +91,11 @@ class WebSearchAgent:
             if response.status_code == 200:
                 html = response.text
                 soup = BeautifulSoup(html, 'html.parser')
-                
-                # Extract text from <p> tags
                 paragraphs = soup.find_all('p')
                 text = ' '.join([p.get_text() for p in paragraphs])
-                
-                # Limit the text to around 4000 words
                 words = text.split()
-                if len(words) > 4000:
-                    text = ' '.join(words[:4000]) + '...'
-                
+                if len(words) > 150:
+                    text = ' '.join(words[:150]) + '...'
                 return text
             else:
                 return f"Failed to fetch {url}: HTTP {response.status}"
@@ -134,34 +110,44 @@ class WebSearchAgent:
         return contents
 
 class OnlineSearcher:
-    def __init__(self, model="meta-llama/Meta-Llama-3.1-405B-Instruct"):
-        self.agent = WebSearchAgent(model)
-        self.deepinfra = DeepInfra(model="model")
+    def __init__(self):
+        self.agent = WebSearchAgent()
+        self.ai = LLAMA3(system="You are an advanced AI assistant specialized in providing comprehensive and accurate answers based on web search results and your general knowledge.")
 
-    def answer_question(self, question: str) -> str:
-        # Perform web search
+    def answer_question(self, question: str):
         search_results = self.agent.search(question)
-
-        # Extract URLs
         urls = self.agent.extract_urls(search_results)
-
-        # Fetch webpage contents
         webpage_contents = self.agent.fetch_all_webpages(urls)
 
-        # Prepare context for AI
-        context = "Based on the following search results and webpage contents:\n\n"
+        context = "Web search results and extracted content:\n\n"
         for i, result in enumerate(search_results, 1):
             context += f"{i}. Title: {result['title']}\n   URL: {result['href']}\n   Snippet: {result['body']}\n\n"
 
         context += "Extracted webpage contents:\n"
         for i, webpage in enumerate(webpage_contents):
-            context += f"{i}. URL: {webpage['url']}\n   Content: {webpage['content'][:4000]}...\n\n"
+            context += f"{i}. URL: {webpage['url']}\n   Content: {webpage['content'][:150]}...\n\n"
 
-        # Generate answer using AI
-        prompt = f"{context}\n\nQuestion: {question}\n\nPlease provide a comprehensive answer to the question based on the search results and webpage contents above. Include relevant webpage URLs in your answer when appropriate. If the search results and webpage contents don't contain relevant information, please state that and provide the best answer you can based on your general knowledge. [YOUR RESPONSE WITH SOURCE LINKS ([➊](URL))"
+        prompt = f"""
+        Task: Provide a comprehensive and accurate answer to the given question based on the provided web search results and your general knowledge.
 
-        answer = self.deepinfra.ask(prompt)
-        return answer
+        Question: {question}
+
+        Context:
+        {context}
+
+        Instructions:
+        1. Carefully analyze the provided web search results and extracted content.
+        2. Synthesize the information to form a coherent and comprehensive answer.
+        3. If the search results contain relevant information, incorporate it into your answer.
+        4. Don't provide irrelevant information, and don't say "according to web page".
+        5. If the search results don't contain sufficient information, clearly state this and provide the best answer based on your general knowledge.
+        6. Ensure your answer is well-structured, factual, and directly addresses the question.
+        7. If appropriate, provide additional context or related information that might be helpful.
+
+        Your response should be informative, accurate, and properly sourced when possible. Begin your answer now:
+        """
+
+        return self.ai.chat(prompt)
 
 # Usage example
 if __name__ == "__main__":
@@ -170,6 +156,7 @@ if __name__ == "__main__":
         question = input(">>> ")
         if question.lower() == 'quit':
             break
-        answer = assistant.answer_question(question)
-        print(answer)
-        print("\n" + "-"*50 + "\n")
+        print("\n" + "="*50)
+        for chunk in assistant.answer_question(question):
+            print(chunk, end="", flush=True)
+        print("\n" + "="*50)

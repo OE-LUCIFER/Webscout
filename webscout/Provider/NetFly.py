@@ -27,48 +27,13 @@ from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
 import logging
 import httpx
-import cloudscraper
 
-class Cloudflare(Provider):
+class NetFly(Provider):
+    """
+    A class to interact with the NetFly API.
+    """
 
-    AVAILABLE_MODELS = [
-        "@cf/llava-hf/llava-1.5-7b-hf",
-        "@cf/unum/uform-gen2-qwen-500m",
-        "@cf/facebook/detr-resnet-50",
-        "@cf/facebook/bart-large-cnn",
-        "@hf/thebloke/deepseek-coder-6.7b-base-awq",
-        "@hf/thebloke/deepseek-coder-6.7b-instruct-awq",
-        "@cf/deepseek-ai/deepseek-math-7b-base",
-        "@cf/deepseek-ai/deepseek-math-7b-instruct",
-        "@cf/thebloke/discolm-german-7b-v1-awq",
-        "@cf/tiiuae/falcon-7b-instruct",
-        "@cf/google/gemma-2b-it-lora",
-        "@hf/google/gemma-7b-it",
-        "@cf/google/gemma-7b-it-lora",
-        "@hf/nousresearch/hermes-2-pro-mistral-7b",
-        "@hf/thebloke/llama-2-13b-chat-awq",
-        "@cf/meta-llama/llama-2-7b-chat-hf-lora",
-        "@cf/meta/llama-3-8b-instruct",
-        "@cf/meta/llama-3-8b-instruct-awq",
-        "@cf/meta/llama-3.1-8b-instruct",
-        "@hf/thebloke/llamaguard-7b-awq",
-        "@hf/thebloke/mistral-7b-instruct-v0.1-awq",
-        "@hf/mistral/mistral-7b-instruct-v0.2",
-        "@cf/mistral/mistral-7b-instruct-v0.2-lora",
-        "@hf/thebloke/neural-chat-7b-v3-1-awq",
-        "@cf/openchat/openchat-3.5-0106",
-        "@hf/thebloke/openhermes-2.5-mistral-7b-awq",
-        "@cf/microsoft/phi-2",
-        "@cf/qwen/qwen1.5-0.5b-chat",
-        "@cf/qwen/qwen1.5-1.8b-chat",
-        "@cf/qwen/qwen1.5-14b-chat-awq",
-        "@cf/qwen/qwen1.5-7b-chat-awq",
-        "@cf/defog/sqlcoder-7b-2",
-        "@hf/nexusflow/starling-lm-7b-beta",
-        "@cf/tinyllama/tinyllama-1.1b-chat-v1.0",
-        "@cf/fblgit/una-cybertron-7b-v2-bf16",
-        "@hf/thebloke/zephyr-7b-beta-awq"
-    ]
+    AVAILABLE_MODELS = ["gpt-3.5-turbo"] 
 
     def __init__(
         self,
@@ -81,10 +46,11 @@ class Cloudflare(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "@cf/meta/llama-3.1-8b-instruct",
-        system_prompt: str = "You are a helpful assistant."
+        model: str = "gpt-3.5-turbo",
+        system_prompt: str = "You are a helpful and friendly AI assistant.",
     ):
-        """Instantiates Cloudflare
+        """
+        Initializes the NetFly API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -96,45 +62,36 @@ class Cloudflare(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): Model to use for generating text. 
-                                   Defaults to "@cf/meta/llama-3.1-8b-instruct".
-                                   Choose from AVAILABLE_MODELS.
-            system_prompt (str, optional): System prompt for Cloudflare. 
-                                   Defaults to "You are a helpful assistant.".
+            model (str, optional): AI model to use for text generation. Defaults to "gpt-3.5-turbo".
+            system_prompt (str, optional): System prompt for NetFly. Defaults to the provided string.
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(f"Invalid model: {model}. Available model is: {self.AVAILABLE_MODELS[0]}")
 
-        self.scraper = cloudscraper.create_scraper()
+        self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.chat_endpoint = "https://playground.ai.cloudflare.com/api/inference"
+        self.api_endpoint = "https://free.netfly.top/api/openai/v1/chat/completions"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
         self.model = model
         self.system_prompt = system_prompt
         self.headers = {
-            'Accept': 'text/event-stream',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'DNT': '1',
-            'Origin': 'https://playground.ai.cloudflare.com',
-            'Referer': 'https://playground.ai.cloudflare.com/',
-            'Sec-CH-UA': '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-            'Sec-CH-UA-Mobile': '?0',
-            'Sec-CH-UA-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
-        }
-
-        self.cookies = {
-            'cfzs_amplitude': uuid4().hex,
-            'cfz_amplitude': uuid4().hex,
-            '__cf_bm': uuid4().hex,
+            "accept": "application/json, text/event-stream",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "content-type": "application/json",
+            "dnt": "1",
+            "origin": "https://free.netfly.top",
+            "referer": "https://free.netfly.top/",
+            "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0"
         }
 
         self.__available_optimizers = (
@@ -142,8 +99,6 @@ class Cloudflare(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        # FIX: Initialize the session here
-        self.session = cloudscraper.create_scraper() 
         self.session.headers.update(self.headers)
         Conversation.intro = (
             AwesomePrompts().get_act(
@@ -188,35 +143,54 @@ class Cloudflare(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
+
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
-            "lora": None,
+            "stream": True,
             "model": self.model,
-            "max_tokens": 512,
-            "stream": True
+            "temperature": 0.5,
+            "presence_penalty": 0,
+            "frequency_penalty": 0,
+            "top_p": 1
         }
 
         def for_stream():
-            response = self.scraper.post(
-                self.chat_endpoint, headers=self.headers, cookies=self.cookies, data=json.dumps(payload), stream=True, timeout=self.timeout
+            response = self.session.post(
+                self.api_endpoint, json=payload, headers=self.headers, stream=True, timeout=self.timeout
             )
 
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason})"
                 )
-            streaming_response = ""
+            buffer = ""
             for line in response.iter_lines(decode_unicode=True):
-                if line.startswith('data: ') and line != 'data: [DONE]':
-                    data = json.loads(line[6:])
-                    content = data.get('response', '')
-                    streaming_response += content
-                    yield content if raw else dict(text=streaming_response)
-            self.last_response.update(dict(text=streaming_response))
+                if line:
+                    if line.startswith("data: "):
+                        json_data = line[6:]
+                        if json_data == "[DONE]":
+                            break
+                        try:
+                            data = json.loads(json_data)
+                            # Check if 'content' key exists in 'delta' dictionary
+                            if 'content' in data["choices"][0]["delta"]:
+                                content = data["choices"][0]["delta"].get("content", "")
+                                buffer += content
+                                # Check for completion marker (period in this case)
+                                if buffer.endswith(".") or buffer.endswith("\n"):
+                                    yield buffer if raw else dict(text=buffer)
+                                    buffer = ""  # Clear the buffer
+                        except json.decoder.JSONDecodeError:
+                            continue
+
+            # Yield any remaining text in the buffer
+            if buffer:
+                yield buffer if raw else dict(text=buffer)
+
+            self.last_response.update(dict(text=buffer))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -276,7 +250,7 @@ class Cloudflare(Provider):
         return response["text"]
 if __name__ == '__main__':
     from rich import print
-    ai = Cloudflare()
-    response = ai.chat(input(">>> "))
+    ai = NetFly()
+    response = ai.chat("tell me about india")
     for chunk in response:
         print(chunk, end="", flush=True)

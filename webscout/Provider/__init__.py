@@ -43,6 +43,9 @@ from .Youchat import *
 from .yep import *
 from .Cloudflare import *
 from .turboseek import *
+from .NetFly import *
+from .EDITEE import *
+from .TeachAnything import *
 __all__ = [
     'ThinkAnyAI',
     'Farfalle',
@@ -89,4 +92,7 @@ __all__ = [
     'YEPCHAT',
     'Cloudflare',
     'TurboSeek',
+    'NetFly',
+    'Editee',
+    'TeachAnything',
 ]

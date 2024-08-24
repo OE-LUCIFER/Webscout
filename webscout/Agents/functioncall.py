@@ -1,6 +1,62 @@
 import json
 import logging
-from webscout import LLAMA3, WEBS
+import time
+from typing import Any, Dict, Optional
+
+import requests
+from webscout import WEBS  # Import only WEBS from webscout
+
+class LLAMA3:
+
+    AVAILABLE_MODELS = ["llama3-70b", "llama3-8b", "llama3-405b"]
+
+    def __init__(
+        self,
+        is_conversation: bool = True,
+        max_tokens: int = 600,
+        timeout: int = 30,
+        model: str = "llama3-8b",  
+        system: str = "GPT syle",
+        proxies: dict = {},  # Add proxies parameter
+    ):
+        """Instantiates Snova
+
+        Args:
+            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
+            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
+            timeout (int, optional): Http request timeout. Defaults to 30.
+            model (str, optional): Snova model name. Defaults to "llama3-70b".
+            system (str, optional): System prompt for Snova. Defaults to "Answer as concisely as possible.".
+            proxies (dict, optional): Proxy settings for requests. Defaults to an empty dictionary.
+        """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+
+        self.session = requests.Session()
+        self.is_conversation = is_conversation
+        self.max_tokens_to_sample = max_tokens
+        self.timeout = timeout
+        self.model = model
+        self.system = system
+        self.last_response = {}
+        self.env_type = "tp16405b" if "405b" in model else "tp16"
+        self.headers = {'content-type': 'application/json'}
+        self.session.headers.update(self.headers)
+        self.session.proxies = proxies
+
+    def chat(self, prompt: str) -> str:
+        data = {'body': {'messages': [{'role': 'system', 'content': self.system}, {'role': 'user', 'content': prompt}], 'stream': True, 'model': self.model}, 'env_type': self.env_type}
+        response = self.session.post('https://fast.snova.ai/api/completion', headers=self.headers, json=data, stream=True, timeout=self.timeout)
+        output = ''
+        for line in response.iter_lines(decode_unicode=True):
+            if line.startswith('data:'):
+                try:
+                    data = json.loads(line[len('data: '):])
+                    output += data.get("choices", [{}])[0].get("delta", {}).get("content", '')
+                except json.JSONDecodeError:
+                    if line[len('data: '):] == '[DONE]':
+                        break
+        return output
 
 class FunctionCallingAgent:
     def __init__(self, model: str = "llama3-8b", 
@@ -66,32 +122,6 @@ class FunctionCallingAgent:
 
         logging.info(f"Executing function: {function_name} with arguments: {arguments}")
 
-    #     if function_name == "web_search":
-    #         return self._handle_web_search(arguments)
-    #     elif function_name == "general_ai":
-    #         return self._handle_general_ai(arguments)
-    #     else:
-    #         return f"Function '{function_name}' is not implemented."
-
-    # def _handle_web_search(self, arguments: dict) -> str:
-    #     query = arguments.get("query")
-    #     if not query:
-    #         return "Please provide a search query."
-
-    #     search_results = self.webs.text(query, max_results=3)
-    #     formatted_results = "\n\n".join(
-    #         f"{i+1}. {result['title']}\n{result['body']}\nURL: {result['href']}"
-    #         for i, result in enumerate(search_results)
-    #     )
-    #     return f"Here's what I found:\n\n{formatted_results}"
-
-    # def _handle_general_ai(self, arguments: dict) -> str:
-    #     question = arguments.get("question")
-    #     if not question:
-    #         return "Please provide a question for the AI to answer."
-
-    #     response = self.LLAMA3.chat(question)
-    #     return response
 
 # Example usage
 if __name__ == "__main__":

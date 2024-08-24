@@ -327,7 +327,7 @@ for result in results:
 from webscout import BingS
 from rich import print
 searcher = BingS()
-results = searcher.search("Python development tools", max_results=30)
+results = searcher.search("HelpingAI-9B", max_results=20, extract_webpage_text=True, max_extract_characters=1000)
 for result in results:
     print(result)
 ```
@@ -826,14 +826,21 @@ print(result)
 ___
 </details>
 
-## usage of webscout AI
-### 0. `Duckchat` - chat with LLM
+###  Text to images - DeepInfraImager, PollinationsAI
+```python
+from webscout import DeepInfraImager
+bot = DeepInfraImager()
+resp = bot.generate("AI-generated image - webscout", 1)
+print(bot.save(resp))
+```
+
+###  `Duckchat` - chat with LLM
 ```python
 from webscout import WEBS as w
 R = w().chat("Who are you", model='gpt-4o-mini') # GPT-3.5 Turbo, mixtral-8x7b, llama-3-70b, claude-3-haiku, gpt-4o-mini
 print(R)
 ```
-### 1. `PhindSearch` - Search using Phind.com 
+###  `PhindSearch` - Search using Phind.com 
 
 ```python
 from webscout import PhindSearch
@@ -870,7 +877,7 @@ print(message)
 ```
 
 
-### . `You.com` - search/chat with you.com - Not working
+### `You.com` - search/chat with you.com - Not working
 ```python
 
 from webscout import YouChat
@@ -897,7 +904,7 @@ message = ai.get_message(response)
 print(message)
 ```
 
-### . `Gemini` - search with google gemini
+### `Gemini` - search with google gemini
 
 ```python
 import webscout
@@ -915,7 +922,7 @@ gemini = GEMINI(cookie_file=COOKIE_FILE, proxy=PROXIES)
 response = gemini.chat("websearch about HelpingAI and who is its developer")
 print(response)
 ```
-### . `Berlin4h` - chat with Berlin4h
+### `Berlin4h` - chat with Berlin4h
 ```python
 from webscout import Berlin4h
 
@@ -936,7 +943,7 @@ prompt = "Explain the concept of recursion in simple terms."
 response = ai.chat(prompt)
 print(response)
 ```
-### . `BlackBox` - Search/chat With BlackBox
+###  `BlackBox` - Search/chat With BlackBox
 ```python
 from webscout import BLACKBOXAI
 from rich import print
@@ -967,7 +974,7 @@ while True:
     r = ai.chat(prompt)
     print(r)
 ```
-### . `PERPLEXITY` - Search With PERPLEXITY
+###  `PERPLEXITY` - Search With PERPLEXITY
 ```python
 from webscout import Perplexity
 from rich import print
@@ -1393,7 +1400,7 @@ if "error" not in function_call_data:
 else:
     print(f"Error: {function_call_data['error']}")
 ```
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek,
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, NetFly, Editee
 code similar to other provider
 ### `LLM` 
 ```python

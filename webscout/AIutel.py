@@ -173,6 +173,23 @@ class Optimizers:
         )
 
 
+class Proxy:
+    def __init__(self, http_proxy=None, https_proxy=None):
+        self.set_proxies(http_proxy, https_proxy)
+
+    def set_proxies(self, http_proxy=None, https_proxy=None):
+        self.proxies = {
+            "http": http_proxy,
+            "https": https_proxy
+        }
+
+    def post(self, url, headers=None, **kwargs):
+        return requests.post(url, headers=headers, proxies=self.proxies, **kwargs)
+
+    def get(self, url, headers=None, **kwargs):
+        return requests.get(url, headers=headers, proxies=self.proxies, **kwargs)
+
+
 class Conversation:
     """Handles prompt generation based on history"""
 
@@ -287,6 +304,20 @@ class Conversation:
                 with open(self.file, "a", encoding="utf-8") as fh:  # Specify UTF-8 encoding
                     fh.write(new_history)
             self.chat_history += new_history
+        else:
+            self.chat_history += new_history
+
+    def add_message(self, role: str, content: str) -> None:
+        """Appends a new message to the conversation history."""
+        if role == "user":
+            self.chat_history += f"\nUser : {content}"
+        elif role == "llm":
+            self.chat_history += f"\nLLM : {content}"
+        elif role == "tool":
+            self.chat_history += f"\nTool : {content}"
+        else:
+            logging.warning(f"Unknown role '{role}' for message: {content}")
+
 
 
 
