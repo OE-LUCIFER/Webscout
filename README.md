@@ -834,6 +834,19 @@ resp = bot.generate("AI-generated image - webscout", 1)
 print(bot.save(resp))
 ```
 
+### Text to Speach - Voicepods, StreamElements
+```python
+from webscout import Voicepods
+voicepods = Voicepods()
+text = "Hello, this is a test of the Voicepods text-to-speech"
+
+print("Generating audio...")
+audio_file = voicepods.tts(text)
+
+print("Playing audio...")
+voicepods.play_audio(audio_file)
+```
+
 ###  `Duckchat` - chat with LLM
 ```python
 from webscout import WEBS as w

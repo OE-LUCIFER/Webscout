@@ -6,7 +6,9 @@ from string import punctuation
 from random import choice
 from requests.exceptions import RequestException
 
-class PollinationsAI:
+from webscout.AIbase import ImageProvider
+
+class PollinationsAI(ImageProvider):
     """Image provider for pollinations.ai"""
 
     def __init__(self, timeout: int = 60, proxies: dict = {}):

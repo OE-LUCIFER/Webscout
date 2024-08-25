@@ -1,9 +1,9 @@
 from abc import ABC
 from abc import abstractmethod
-
+from typing import AsyncGenerator, List, Union, Generator
 
 class Provider(ABC):
-    """Base class for providers"""
+    """Base class for text-based AI providers"""
 
     @abstractmethod
     def ask(
@@ -69,9 +69,8 @@ class Provider(ABC):
         """
         raise NotImplementedError("Method needs to be implemented in subclass")
 
-
 class AsyncProvider(ABC):
-    """Asynchronous base class for providers"""
+    """Asynchronous base class for text-based AI providers"""
 
     @abstractmethod
     async def ask(
@@ -134,5 +133,108 @@ class AsyncProvider(ABC):
 
         Returns:
             str: Message extracted
+        """
+        raise NotImplementedError("Method needs to be implemented in subclass")
+
+class TTSProvider(ABC):
+    """Base class for text-to-speech providers"""
+
+    @abstractmethod
+    def tts(self, text: str) -> Union[bytes, str, Generator[bytes, None, None]]:
+        """
+        Converts text to speech.
+
+        Args:
+            text (str): The text to be converted to speech.
+
+        Returns:
+            Union[bytes, str, Generator[bytes, None, None]]: 
+                - The raw audio bytes if the provider supports returning audio directly.
+                - The filename of the saved audio file if the provider saves the audio to a file.
+                - A generator yielding chunks of audio bytes if the provider supports streaming audio.
+        """
+        raise NotImplementedError("Method needs to be implemented in subclass")
+
+class AsyncTTSProvider(ABC):
+    """Asynchronous base class for text-to-speech providers"""
+
+    @abstractmethod
+    async def tts(self, text: str) -> Union[bytes, str, AsyncGenerator[bytes, None]]:
+        """
+        Asynchronously converts text to speech.
+
+        Args:
+            text (str): The text to be converted to speech.
+
+        Returns:
+            Union[bytes, str, AsyncGenerator[bytes, None]]: 
+                - The raw audio bytes if the provider supports returning audio directly.
+                - The filename of the saved audio file if the provider saves the audio to a file.
+                - An asynchronous generator yielding chunks of audio bytes if the provider supports streaming audio.
+        """
+        raise NotImplementedError("Method needs to be implemented in subclass")
+
+class ImageProvider(ABC):
+    """Base class for text-to-image providers"""
+
+    @abstractmethod
+    def generate(self, prompt: str, amount: int = 1) -> List[bytes]:
+        """Generates images from a text prompt.
+
+        Args:
+            prompt (str): The text prompt describing the desired image.
+            amount (int, optional): The number of images to generate. Defaults to 1.
+
+        Returns:
+            List[bytes]: A list of generated images in bytes format.
+        """
+        raise NotImplementedError("Method needs to be implemented in subclass")
+
+    @abstractmethod
+    def save(self, response: List[bytes], name: str = None, dir: str = None) -> List[str]:
+        """Saves the generated images to files.
+
+        Args:
+            response (List[bytes]): The list of generated images in bytes format.
+            name (str, optional): The base filename for the images. Defaults to None.
+            dir (str, optional): The directory to save the images. Defaults to None.
+
+        Returns:
+            List[str]: A list of the saved filenames.
+        """
+        raise NotImplementedError("Method needs to be implemented in subclass")
+
+class AsyncImageProvider(ABC):
+    """Base class for asynchronous text-to-image providers"""
+
+    @abstractmethod
+    async def generate(self, prompt: str, amount: int = 1) -> Union[AsyncGenerator[bytes, None], List[bytes]]:
+        """Asynchronously generates images from a text prompt.
+
+        Args:
+            prompt (str): The text prompt describing the desired image.
+            amount (int, optional): The number of images to generate. Defaults to 1.
+
+        Returns:
+            Union[AsyncGenerator[bytes, None], List[bytes]]: 
+                - An asynchronous generator yielding image bytes.
+                - A list of image bytes if not streaming.
+        """
+        raise NotImplementedError("Method needs to be implemented in subclass")
+
+    @abstractmethod
+    async def save(self, response: Union[AsyncGenerator[bytes, None], List[bytes]], 
+                   name: str = None, dir: str = None) -> List[str]:
+        """Asynchronously saves the generated images to files.
+
+        Args:
+            response (Union[AsyncGenerator[bytes, None], List[bytes]]): 
+                - The asynchronous generator yielding images in bytes format (if streaming).
+                - The list of generated images in bytes format (if not streaming).
+            name (str, optional): The base filename for the images. Defaults to None.
+            dir (str, optional): The directory to save the images. Defaults to None.
+
+        Returns:
+            List[str]: A list of the saved filenames.
         """
         raise NotImplementedError("Method needs to be implemented in subclass")

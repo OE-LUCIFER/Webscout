@@ -46,6 +46,7 @@ from .turboseek import *
 from .NetFly import *
 from .EDITEE import *
 from .TeachAnything import *
+from .AI21 import *
 __all__ = [
     'ThinkAnyAI',
     'Farfalle',
@@ -95,4 +96,5 @@ __all__ = [
     'NetFly',
     'Editee',
     'TeachAnything',
+    'AI21',
 ]

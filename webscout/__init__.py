@@ -12,6 +12,7 @@ import g4f
 from .YTdownloader import *
 from .Provider import *
 from .Provider.TTI import *
+from .Provider.TTS import *
 from .Extra import gguf
 from .Extra import autollama
 from .Extra import weather_ascii, weather

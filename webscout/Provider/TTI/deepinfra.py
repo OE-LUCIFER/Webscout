@@ -6,7 +6,9 @@ from random import choice
 from random import randint
 import base64
 
-class DeepInfraImager:
+from webscout.AIbase import ImageProvider
+
+class DeepInfraImager(ImageProvider):
     """DeepInfra Image provider"""
 
     def __init__(
