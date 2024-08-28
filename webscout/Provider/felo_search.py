@@ -228,7 +228,7 @@ class Felo(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
 
-        text = re.sub(r'\[\[\d+\]\]', '', response["text"])
+        text = zresponse["text"])
         return text
 if __name__ == '__main__':
     from rich import print

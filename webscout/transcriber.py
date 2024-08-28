@@ -1,144 +1,228 @@
 import requests
 import http.cookiejar as cookiejar
-import sys
 import json
 from xml.etree import ElementTree
 import re
-from requests import HTTPError
 import html.parser
+from typing import List, Dict, Union, Optional
 
 html_parser = html.parser.HTMLParser()
-import html
+
 
 def unescape(string):
     return html.unescape(string)
+
+
 WATCH_URL = 'https://www.youtube.com/watch?v={video_id}'
 
+
 class TranscriptRetrievalError(Exception):
-    """
-    Base class for exceptions raised when a transcript cannot be retrieved.
-    """
-    ERROR_MESSAGE = '\nCould not retrieve a transcript for the video {video_url}!'
-    CAUSE_MESSAGE_INTRO = ' This is most likely caused by:\n\n{cause}'
-    CAUSE_MESSAGE = ''
-    GITHUB_REFERRAL = (
-        '\n\nIf you are sure that the described cause is not responsible for this error '
-        'and that a transcript should be retrievable, please create an issue at '
-        'https://github.com/OE-LUCIFER/Webscout/issues. '
-        'Please add which version of webscout you are using '
-        'and provide the information needed to replicate the error. '
-    )
+    """Base class for transcript retrieval errors."""
 
-    def __init__(self, video_id):
+    def __init__(self, video_id, message):
+        super().__init__(message.format(video_url=WATCH_URL.format(video_id=video_id)))
         self.video_id = video_id
-        super(TranscriptRetrievalError, self).__init__(self._build_error_message())
 
-    def _build_error_message(self):
-        cause = self.cause
-        error_message = self.ERROR_MESSAGE.format(video_url=WATCH_URL.format(video_id=self.video_id))
-
-        if cause:
-            error_message += self.CAUSE_MESSAGE_INTRO.format(cause=cause) + self.GITHUB_REFERRAL
-
-        return error_message
-
-    @property
-    def cause(self):
-        return self.CAUSE_MESSAGE
 
 class YouTubeRequestFailedError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'Request to YouTube failed: {reason}'
+    """Raised when a request to YouTube fails."""
 
     def __init__(self, video_id, http_error):
-        self.reason = str(http_error)
-        super(YouTubeRequestFailedError, self).__init__(video_id)
+        message = 'Request to YouTube failed: {reason}'
+        super().__init__(video_id, message.format(reason=str(http_error)))
 
-    @property
-    def cause(self):
-        return self.CAUSE_MESSAGE.format(reason=self.reason)
 
 class VideoUnavailableError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'The video is no longer available'
+    """Raised when the video is unavailable."""
+
+    def __init__(self, video_id):
+        message = 'The video is no longer available'
+        super().__init__(video_id, message)
+
 
 class InvalidVideoIdError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = (
-        'You provided an invalid video id. Make sure you are using the video id and NOT the url!\n\n'
-        'Do NOT run: `YouTubeTranscriptApi.get_transcript("https://www.youtube.com/watch?v=1234")`\n'
-        'Instead run: `YouTubeTranscriptApi.get_transcript("1234")`'
-    )
+    """Raised when an invalid video ID is provided."""
+
+    def __init__(self, video_id):
+        message = (
+            'You provided an invalid video id. Make sure you are using the video id and NOT the url!\n\n'
+            'Do NOT run: `YTTranscriber.get_transcript("https://www.youtube.com/watch?v=1234")`\n'
+            'Instead run: `YTTranscriber.get_transcript("1234")`'
+        )
+        super().__init__(video_id, message)
+
 
 class TooManyRequestsError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = (
-        'YouTube is receiving too many requests from this IP and now requires solving a captcha to continue. '
-        'One of the following things can be done to work around this:\n\
-        - Manually solve the captcha in a browser and export the cookie. '
-        'Read here how to use that cookie with '
-        'youtube-transcript-api: https://github.com/jdepoix/youtube-transcript-api#cookies\n\
-        - Use a different IP address\n\
-        - Wait until the ban on your IP has been lifted'
-    )
+    """Raised when YouTube rate limits the requests."""
+
+    def __init__(self, video_id):
+        message = (
+            'YouTube is receiving too many requests from this IP and now requires solving a captcha to continue. '
+            'One of the following things can be done to work around this:\n\
+            - Manually solve the captcha in a browser and export the cookie. '
+            '- Use a different IP address\n\
+            - Wait until the ban on your IP has been lifted'
+        )
+        super().__init__(video_id, message)
+
 
 class TranscriptsDisabledError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'Subtitles are disabled for this video'
+    """Raised when transcripts are disabled for the video."""
+
+    def __init__(self, video_id):
+        message = 'Subtitles are disabled for this video'
+        super().__init__(video_id, message)
+
 
 class NoTranscriptAvailableError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'No transcripts are available for this video'
+    """Raised when no transcripts are available for the video."""
+
+    def __init__(self, video_id):
+        message = 'No transcripts are available for this video'
+        super().__init__(video_id, message)
+
 
 class NotTranslatableError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'The requested language is not translatable'
+    """Raised when the transcript is not translatable."""
+
+    def __init__(self, video_id):
+        message = 'The requested language is not translatable'
+        super().__init__(video_id, message)
+
 
 class TranslationLanguageNotAvailableError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'The requested translation language is not available'
+    """Raised when the requested translation language is not available."""
+
+    def __init__(self, video_id):
+        message = 'The requested translation language is not available'
+        super().__init__(video_id, message)
+
 
 class CookiePathInvalidError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'The provided cookie file was unable to be loaded'
+    """Raised when the cookie path is invalid."""
+
+    def __init__(self, video_id):
+        message = 'The provided cookie file was unable to be loaded'
+        super().__init__(video_id, message)
+
 
 class CookiesInvalidError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'The cookies provided are not valid (may have expired)'
+    """Raised when the provided cookies are invalid."""
+
+    def __init__(self, video_id):
+        message = 'The cookies provided are not valid (may have expired)'
+        super().__init__(video_id, message)
+
 
 class FailedToCreateConsentCookieError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = 'Failed to automatically give consent to saving cookies'
+    """Raised when consent cookie creation fails."""
+
+    def __init__(self, video_id):
+        message = 'Failed to automatically give consent to saving cookies'
+        super().__init__(video_id, message)
+
 
 class NoTranscriptFoundError(TranscriptRetrievalError):
-    CAUSE_MESSAGE = (
-        'No transcripts were found for any of the requested language codes: {requested_language_codes}\n\n'
-        '{transcript_data}'
-    )
+    """Raised when no transcript is found for the requested language codes."""
 
     def __init__(self, video_id, requested_language_codes, transcript_data):
-        self._requested_language_codes = requested_language_codes
-        self._transcript_data = transcript_data
-        super(NoTranscriptFoundError, self).__init__(video_id)
-
-    @property
-    def cause(self):
-        return self.CAUSE_MESSAGE.format(
-            requested_language_codes=self._requested_language_codes,
-            transcript_data=str(self._transcript_data),
+        message = (
+            'No transcripts were found for any of the requested language codes: {requested_language_codes}\n\n'
+            '{transcript_data}'
         )
+        super().__init__(video_id, message.format(
+            requested_language_codes=requested_language_codes,
+            transcript_data=str(transcript_data)
+        ))
 
 
+class YTTranscriber:
+    """
+    Main class for retrieving YouTube transcripts.
+    """
 
-def _raise_http_errors(response, video_id):
-    try:
-        response.raise_for_status()
-        return response
-    except HTTPError as error:
-        raise YouTubeRequestFailedError(error, video_id)
+    @staticmethod
+    def get_transcript(video_url: str, languages: Optional[str] = 'en',
+                       proxies: Dict[str, str] = None,
+                       cookies: str = None,
+                       preserve_formatting: bool = False) -> List[Dict[str, Union[str, float]]]:
+        """
+        Retrieves the transcript for a given YouTube video URL.
+
+        Args:
+            video_url (str): YouTube video URL (supports various formats).
+            languages (str, optional): Language code for the transcript.
+                                        If None, fetches the auto-generated transcript.
+                                        Defaults to 'en'.
+            proxies (Dict[str, str], optional): Proxies to use for the request. Defaults to None.
+            cookies (str, optional): Path to the cookie file. Defaults to None.
+            preserve_formatting (bool, optional): Whether to preserve formatting tags. Defaults to False.
+
+        Returns:
+            List[Dict[str, Union[str, float]]]: A list of dictionaries, each containing:
+                - 'text': The transcribed text.
+                - 'start': The start time of the text segment (in seconds).
+                - 'duration': The duration of the text segment (in seconds).
+
+        Raises:
+            TranscriptRetrievalError: If there's an error retrieving the transcript.
+        """
+        video_id = YTTranscriber._extract_video_id(video_url)
+
+        with requests.Session() as http_client:
+            if cookies:
+                http_client.cookies = YTTranscriber._load_cookies(cookies, video_id)
+            http_client.proxies = proxies if proxies else {}
+            transcript_list_fetcher = TranscriptListFetcher(http_client)
+            transcript_list = transcript_list_fetcher.fetch(video_id)
+
+            if languages is None:  # Get auto-generated transcript
+                return transcript_list.find_generated_transcript(['any']).fetch(
+                    preserve_formatting=preserve_formatting)
+            else:
+                return transcript_list.find_transcript([languages]).fetch(preserve_formatting=preserve_formatting)
+
+    @staticmethod
+    def _extract_video_id(video_url: str) -> str:
+        """Extracts the video ID from different YouTube URL formats."""
+        if 'youtube.com/watch?v=' in video_url:
+            video_id = video_url.split('youtube.com/watch?v=')[1].split('&')[0]
+        elif 'youtu.be/' in video_url:
+            video_id = video_url.split('youtu.be/')[1].split('?')[0]
+        else:
+            raise InvalidVideoIdError(video_url)
+        return video_id
+
+    @staticmethod
+    def _load_cookies(cookies: str, video_id: str) -> cookiejar.MozillaCookieJar:
+        """Loads cookies from a file."""
+        try:
+            cookie_jar = cookiejar.MozillaCookieJar()
+            cookie_jar.load(cookies)
+            if not cookie_jar:
+                raise CookiesInvalidError(video_id)
+            return cookie_jar
+        except:
+            raise CookiePathInvalidError(video_id)
 
 
-class TranscriptListFetcher(object):
-    def __init__(self, http_client):
+class TranscriptListFetcher:
+    """Fetches the list of transcripts for a YouTube video."""
+
+    def __init__(self, http_client: requests.Session):
+        """Initializes TranscriptListFetcher."""
         self._http_client = http_client
 
-    def fetch(self, video_id):
+    def fetch(self, video_id: str):
+        """Fetches and returns a TranscriptList."""
         return TranscriptList.build(
             self._http_client,
             video_id,
             self._extract_captions_json(self._fetch_video_html(video_id), video_id),
         )
 
-    def _extract_captions_json(self, html, video_id):
+    def _extract_captions_json(self, html: str, video_id: str) -> dict:
+        """Extracts the captions JSON data from the video's HTML."""
         splitted_html = html.split('"captions":')
 
         if len(splitted_html) <= 1:
@@ -182,11 +266,8 @@ class TranscriptListFetcher(object):
         return unescape(_raise_http_errors(response, video_id).text)
 
 
-class TranscriptList(object):
-    """
-    This object represents a list of transcripts. It can be iterated over to list all transcripts which are available
-    for a given YouTube video. Also it provides functionality to search for a transcript in a given language.
-    """
+class TranscriptList:
+    """Represents a list of available transcripts."""
 
     def __init__(self, video_id, manually_created_transcripts, generated_transcripts, translation_languages):
         """
@@ -258,18 +339,18 @@ class TranscriptList(object):
 
     def find_transcript(self, language_codes):
         """
-        Finds a transcript for a given language code. Manually created transcripts are returned first and only if none
-        are found, generated transcripts are used. If you only want generated transcripts use
-        `find_manually_created_transcript` instead.
+        Finds a transcript for a given language code. If no language is provided, it will
+        return the auto-generated transcript.
 
-        :param language_codes: A list of language codes in a descending priority. For example, if this is set to
-        ['de', 'en'] it will first try to fetch the german transcript (de) and then fetch the english transcript (en) if
-        it fails to do so.
+        :param language_codes: A list of language codes in a descending priority. 
         :type languages: list[str]
         :return: the found Transcript
         :rtype Transcript:
         :raises: NoTranscriptFound
         """
+        if 'any' in language_codes:
+            for transcript in self:
+                return transcript
         return self._find_transcript(language_codes, [self._manually_created_transcripts, self._generated_transcripts])
 
     def find_generated_transcript(self, language_codes):
@@ -284,6 +365,10 @@ class TranscriptList(object):
         :rtype Transcript:
         :raises: NoTranscriptFound
         """
+        if 'any' in language_codes:
+            for transcript in self:
+                if transcript.is_generated:
+                    return transcript
         return self._find_transcript(language_codes, [self._generated_transcripts])
 
     def find_manually_created_transcript(self, language_codes):
@@ -342,7 +427,9 @@ class TranscriptList(object):
         return description if description else 'None'
 
 
-class Transcript(object):
+class Transcript:
+    """Represents a single transcript."""
+
     def __init__(self, http_client, video_id, url, language, language_code, is_generated, translation_languages):
         """
         You probably don't want to initialize this directly. Usually you'll access Transcript objects using a
@@ -379,7 +466,7 @@ class Transcript(object):
         :rtype [{'text': str, 'start': float, 'end': float}]:
         """
         response = self._http_client.get(self._url, headers={'Accept-Language': 'en-US'})
-        return _TranscriptParser(preserve_formatting=preserve_formatting).parse(
+        return TranscriptParser(preserve_formatting=preserve_formatting).parse(
             _raise_http_errors(response, self.video_id).text,
         )
 
@@ -412,7 +499,8 @@ class Transcript(object):
         )
 
 
-class _TranscriptParser(object):
+class TranscriptParser:
+    """Parses the transcript data from XML."""
     _FORMATTING_TAGS = [
         'strong',  # important
         'em',  # emphasized
@@ -449,49 +537,16 @@ class _TranscriptParser(object):
             if xml_element.text is not None
         ]
 
-WATCH_URL = 'https://www.youtube.com/watch?v={video_id}'
 
-class transcriber(object):
-    @classmethod
-    def list_transcripts(cls, video_id, proxies=None, cookies=None):
-        with requests.Session() as http_client:
-            if cookies:
-                http_client.cookies = cls._load_cookies(cookies, video_id)
-            http_client.proxies = proxies if proxies else {}
-            return TranscriptListFetcher(http_client).fetch(video_id)
+def _raise_http_errors(response, video_id):
+    try:
+        response.raise_for_status()
+        return response
+    except requests.exceptions.HTTPError as error:
+        raise YouTubeRequestFailedError(video_id, error) 
 
-    @classmethod
-    def get_transcripts(cls, video_ids, languages=('en',), continue_after_error=False, proxies=None,
-                        cookies=None, preserve_formatting=False):
-
-        assert isinstance(video_ids, list), "`video_ids` must be a list of strings"
-
-        data = {}
-        unretrievable_videos = []
-
-        for video_id in video_ids:
-            try:
-                data[video_id] = cls.get_transcript(video_id, languages, proxies, cookies, preserve_formatting)
-            except Exception as exception:
-                if not continue_after_error:
-                    raise exception
-
-                unretrievable_videos.append(video_id)
-
-        return data, unretrievable_videos
-
-    @classmethod
-    def get_transcript(cls, video_id, languages=('en',), proxies=None, cookies=None, preserve_formatting=False):
-        assert isinstance(video_id, str), "`video_id` must be a string"
-        return cls.list_transcripts(video_id, proxies, cookies).find_transcript(languages).fetch(preserve_formatting=preserve_formatting)
-
-    @classmethod
-    def _load_cookies(cls, cookies, video_id):
-        try:
-            cookie_jar = cookiejar.MozillaCookieJar()
-            cookie_jar.load(cookies)
-            if not cookie_jar:
-                raise CookiesInvalidError(video_id)
-            return cookie_jar
-        except:
-            raise CookiePathInvalidError(video_id)
+if __name__ == "__main__":
+    from rich import print
+    video_url = input("Enter the YouTube video URL: ") 
+    transcript = YTTranscriber.get_transcript(video_url, languages=None) 
+    print(transcript)

@@ -22,3 +22,4 @@ class FacebookInvalidCredentialsException(Exception):
 
 class FacebookRegionBlocked(Exception):
     pass
+

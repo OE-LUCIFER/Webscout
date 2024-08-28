@@ -2,8 +2,8 @@ from .webscout_search import WEBS
 from .webscout_search_async import AsyncWEBS
 from .version import __version__
 from .DWEBS import *
-from .transcriber import transcriber
-from .voice import play_audio
+from .transcriber import *
+from .tempid import *
 from .websx_search import WEBSX
 from .LLM import VLM, LLM
 from .YTdownloader import *

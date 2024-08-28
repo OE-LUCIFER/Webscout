@@ -594,16 +594,16 @@ w.print_weather(weather)
             interpreter (str, optional): Python's interpreter name. Defaults to Python.
             prettify (bool, optional): Prettify the code on stdout. Defaults to True.
         """
-        if not quiet:
-            print(
-                "Rawdog is an experimental tool that generates and auto-executes Python scripts in the cli.\n"
-                "To get the most out of Rawdog. Ensure the following are installed:\n"
-                " 1. Python 3.x\n"
-                " 2. Dependency:\n"
-                "  - Matplotlib\n"
-                "Be alerted on the risk posed! (Experimental)\n"
-                "Use '--quiet' to suppress this message and code/logs stdout.\n"
-            )
+        # if not quiet:
+        #     print(
+        #         "Rawdog is an experimental tool that generates and auto-executes Python scripts in the cli.\n"
+        #         "To get the most out of Rawdog. Ensure the following are installed:\n"
+        #         " 1. Python 3.x\n"
+        #         " 2. Dependency:\n"
+        #         "  - Matplotlib\n"
+        #         "Be alerted on the risk posed! (Experimental)\n"
+        #         "Use '--quiet' to suppress this message and code/logs stdout.\n"
+        #     )
         self.internal_exec = internal_exec
         self.confirm_script = confirm_script
         self.quiet = quiet

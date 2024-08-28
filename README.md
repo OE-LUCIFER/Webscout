@@ -260,57 +260,12 @@ if __name__ == '__main__':
 ## Transcriber
 The transcriber function in webscout is a handy tool that transcribes YouTube videos. Here's an example code demonstrating its usage:
 ```python
-import sys
-from webscout import transcriber
-
-def extract_transcript(video_id):
-    """Extracts the transcript from a YouTube video."""
-    try:
-        transcript_list = transcriber.list_transcripts(video_id)
-        for transcript in transcript_list:
-            transcript_data_list = transcript.fetch()
-            lang = transcript.language
-            transcript_text = ""
-            if transcript.language_code == 'en':
-                for line in transcript_data_list:
-                    start_time = line['start']
-                    end_time = start_time + line['duration']
-                    formatted_line = f"{start_time:.2f} - {end_time:.2f}: {line['text']}\n"
-                    transcript_text += formatted_line
-                return transcript_text
-            elif transcript.is_translatable:
-                english_transcript_list = transcript.translate('en').fetch()
-                for line in english_transcript_list:
-                    start_time = line['start']
-                    end_time = start_time + line['duration']
-                    formatted_line = f"{start_time:.2f} - {end_time:.2f}: {line['text']}\n"
-                    transcript_text += formatted_line
-                return transcript_text
-        print("Transcript extraction failed. Please check the video URL.")
-    except Exception as e:
-        print(f"Error: {e}")
-
-def main():
-    video_url = input("Enter the video link: ")
-
-    if video_url:
-        video_id = video_url.split("=")[1]
-        print("Video URL:", video_url)
-        submit = input("Press 'Enter' to get the transcript or type 'exit' to quit: ")
-        if submit == '':
-            print("Extracting Transcript...")
-            transcript = extract_transcript(video_id)
-            print('Transcript:')
-            print(transcript)
-            print("__________________________________________________________________________________")
-        elif submit.lower() == 'exit':
-            print("Exiting...")
-            sys.exit()
-        else:
-            print("Invalid input. Please try again.")
-
-if __name__ == "__main__":
-    main()
+from webscout import YTTranscriber
+yt = YTTranscriber()
+from rich import print
+video_url = input("Enter the YouTube video URL: ") 
+transcript = yt.get_transcript(video_url, languages=None) 
+print(transcript)
 ```
 
 ## GoogleS -- formerly DWEBS
@@ -318,7 +273,7 @@ if __name__ == "__main__":
 from webscout import GoogleS
 from rich import print
 searcher = GoogleS()
-results = searcher.search("HelpingAI-9B", max_results=20, extract_webpage_text=False, max_extract_characters=100)
+results = searcher.search("HelpingAI-9B", max_results=20, extract_text=False, max_text_length=200)
 for result in results:
     print(result)
 ```
@@ -332,36 +287,20 @@ for result in results:
     print(result)
 ```
 
-## Text-to-Speech:
-```python
-from webscout import play_audio
-
-message = "This is an example of text-to-speech."
-audio_content = play_audio(message, voice="Brian")
-
-# Save the audio to a file
-with open("output.mp3", "wb") as f:
-    f.write(audio_content)
-```
-### Available TTS Voices:
-You can choose from a wide range of voices, including:
-- Filiz, Astrid, Tatyana, Maxim, Carmen, Ines, Cristiano, Vitoria, Ricardo, Maja, Jan, Jacek, Ewa, Ruben, Lotte, Liv, Seoyeon, Takumi, Mizuki, Giorgio, Carla, Bianca, Karl, Dora, Mathieu, Celine, Chantal, Penelope, Miguel, Mia, Enrique, Conchita, Geraint, Salli, Matthew, Kimberly, Kendra, Justin, Joey, Joanna, Ivy, Raveena, Aditi, Emma, Brian, Amy, Russell, Nicole, Vicki, Marlene, Hans, Naja, Mads, Gwyneth, Zhiyu
-- Standard and WaveNet voices for various languages (e.g., en-US, es-ES, ja-JP, etc.)
-
 
 The WEBS and AsyncWEBS classes are used to retrieve search results from DuckDuckGo.com 
 To use the AsyncWEBS class, you can perform asynchronous operations using Python's asyncio library.
 To initialize an instance of the WEBS or AsyncWEBS classes, you can provide the following optional arguments:
 
 Here is an example of initializing the WEBS class:
-```python3
+```python
 from webscout import WEBS
 
 R = WEBS().text("python programming", max_results=5)
 print(R)
 ```
 Here is an example of initializing the AsyncWEBS class:
-```python3
+```python
 import asyncio
 import logging
 import sys
@@ -834,7 +773,7 @@ resp = bot.generate("AI-generated image - webscout", 1)
 print(bot.save(resp))
 ```
 
-### Text to Speach - Voicepods, StreamElements
+### Text to speech  - Voicepods, StreamElements
 ```python
 from webscout import Voicepods
 voicepods = Voicepods()
@@ -1413,7 +1352,7 @@ if "error" not in function_call_data:
 else:
     print(f"Error: {function_call_data['error']}")
 ```
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, NetFly, Editee
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, NetFly, Editee, AI21
 code similar to other provider
 ### `LLM` 
 ```python
