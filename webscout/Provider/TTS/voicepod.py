@@ -4,7 +4,7 @@ import pygame
 import time
 from pathlib import Path
 from typing import Generator
-
+from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
 
@@ -91,13 +91,17 @@ class Voicepods(TTSProvider):
             raise exceptions.FailedToGenerateResponseError(f"Error saving audio: {e}")
 
     def play_audio(self, filename: str):
-        """Plays the audio file using pygame."""
+        """
+        Plays an audio file using playsound.
+
+        Args:
+            filename (str): The path to the audio file.
+
+        Raises:
+            RuntimeError: If there is an error playing the audio.
+        """
         try:
-            pygame.mixer.init()
-            pygame.mixer.music.load(filename)
-            pygame.mixer.music.play()
-            while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
+            playsound(filename)
         except Exception as e:
             raise RuntimeError(f"Error playing audio: {e}")
 
