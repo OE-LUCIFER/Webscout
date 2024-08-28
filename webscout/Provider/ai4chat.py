@@ -1,7 +1,7 @@
 import requests
 import json
 import html
-from re import sub
+import re
 from typing import Any, Dict
 
 from webscout.AIutel import Optimizers
@@ -94,7 +94,7 @@ class AI4Chat(Provider):
     def ask(
         self,
         prompt: str,
-        stream: bool = False,  # Streaming is not supported by AI4Chat
+        stream: bool = False,
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
@@ -137,9 +137,17 @@ class AI4Chat(Provider):
         response_data = response.json()
         message_content = response_data.get('message', 'No message found')
 
-        # Decode HTML entities and remove HTML tags
+        # Decode HTML entities
         decoded_message = html.unescape(message_content)
-        cleaned_text = sub('<[^<]+?>', '', decoded_message)
+
+        # Remove HTML tags while preserving newlines and list structure
+        cleaned_text = re.sub(r'<p>(.*?)</p>', r'\1\n\n', decoded_message)
+        cleaned_text = re.sub(r'<ol>|</ol>', '', cleaned_text)
+        cleaned_text = re.sub(r'<li><p>(.*?)</p></li>', r'• \1\n', cleaned_text)
+        cleaned_text = re.sub(r'</?[^>]+>', '', cleaned_text)
+        
+        # Remove extra newlines
+        cleaned_text = re.sub(r'\n{3,}', '\n\n', cleaned_text.strip())
 
         self.last_response.update(dict(text=cleaned_text))
         self.conversation.update_chat_history(prompt, cleaned_text)
@@ -183,11 +191,9 @@ class AI4Chat(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
 if __name__ == "__main__":
     from rich import print
-
     ai = AI4Chat() 
-    # Stream the response
     response = ai.chat(input(">>> "))
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    print(response)
