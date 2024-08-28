@@ -20,7 +20,6 @@ from .Phind import Phindv2
 from .Phind import AsyncPhindv2
 from .ai4chat import *
 from .Gemini import GEMINI
-from .Berlin4h import Berlin4h
 from .Poe import POE
 from .BasedGPT import BasedGPT
 from .Deepseek import DeepSeek
@@ -34,7 +33,6 @@ from .DARKAI import *
 from .koala import *
 from .RUBIKSAI import * 
 from .meta import *
-from .liaobots import *
 from .DiscordRocks import *
 from .felo_search import *
 from .xdash import *
@@ -47,6 +45,9 @@ from .NetFly import *
 from .EDITEE import *
 from .TeachAnything import *
 from .AI21 import *
+from .Chatify import *
+from .x0gpt import *
+from .cerebras import *
 __all__ = [
     'ThinkAnyAI',
     'Farfalle',
@@ -66,7 +67,6 @@ __all__ = [
     'AsyncPhindSearch',
     'Felo',
     'GEMINI',
-    'Berlin4h',
     'POE',
     'BasedGPT',
     'DeepSeek',
@@ -84,7 +84,6 @@ __all__ = [
     'KOALA',
     'RUBIKSAI',
     'Meta',
-    'LiaoBots',
     'DiscordRocks',
     'PiAI',
     'XDASH',
@@ -97,4 +96,7 @@ __all__ = [
     'Editee',
     'TeachAnything',
     'AI21',
+    'Chatify',
+    'X0GPT',
+    'Cerebras'
 ]
