@@ -1,32 +1,16 @@
-import time
-import uuid
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-import click
 import requests
-from requests import get
-from uuid import uuid4
-from re import findall
-from requests.exceptions import RequestException
-from curl_cffi.requests import get, RequestsError
-import g4f
+
 from random import randint
-from PIL import Image
-import io
-import re
+
 import json
-import yaml
+
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
-import logging
-import httpx
+
 
 class NetFly(Provider):
     """
@@ -121,18 +105,6 @@ class NetFly(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
-        """Chat with AI
-
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Whether to stream the response. Defaults to False.
-            raw (bool, optional): Whether to return the raw response. Defaults to False.
-            optimizer (str, optional): The name of the optimizer to use. Defaults to None.
-            conversationally (bool, optional): Whether to chat conversationally. Defaults to False.
-
-        Returns:
-            The response from the API.
-        """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -166,7 +138,8 @@ class NetFly(Provider):
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason})"
                 )
-            buffer = ""
+
+            full_response = ""
             for line in response.iter_lines(decode_unicode=True):
                 if line:
                     if line.startswith("data: "):
@@ -175,30 +148,25 @@ class NetFly(Provider):
                             break
                         try:
                             data = json.loads(json_data)
-                            # Check if 'content' key exists in 'delta' dictionary
-                            if 'content' in data["choices"][0]["delta"]:
-                                content = data["choices"][0]["delta"].get("content", "")
-                                buffer += content
-                                # Check for completion marker (period in this case)
-                                if buffer.endswith(".") or buffer.endswith("\n"):
-                                    yield buffer if raw else dict(text=buffer)
-                                    buffer = ""  # Clear the buffer
+                            content = data["choices"][0]["delta"].get("content", "")
+                            full_response += content
+                            yield content if raw else dict(text=content)
                         except json.decoder.JSONDecodeError:
                             continue
 
-            # Yield any remaining text in the buffer
-            if buffer:
-                yield buffer if raw else dict(text=buffer)
-
-            self.last_response.update(dict(text=buffer))
+            self.last_response.update(dict(text=full_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
 
         def for_non_stream():
-            for _ in for_stream():
-                pass
-            return self.last_response
+            full_response = ""
+            for chunk in for_stream():
+                if isinstance(chunk, dict):
+                    full_response += chunk['text']
+                else:
+                    full_response += chunk
+            return dict(text=full_response)
 
         return for_stream() if stream else for_non_stream()
 
@@ -209,16 +177,6 @@ class NetFly(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
-        """
-
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
@@ -248,9 +206,11 @@ class NetFly(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
 if __name__ == '__main__':
     from rich import print
     ai = NetFly()
-    response = ai.chat("tell me about india")
+    response = ai.chat("tell me about india", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
+    print()  # Add a newline at the end
