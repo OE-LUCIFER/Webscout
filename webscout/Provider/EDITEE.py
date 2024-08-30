@@ -1,34 +1,11 @@
-import time
-import uuid
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-import click
 import requests
-from requests import get
-from uuid import uuid4
-from re import findall
-from requests.exceptions import RequestException
-from curl_cffi.requests import get, RequestsError
-import g4f
-from random import randint
-from PIL import Image
-import io
-import re
-import json
-import yaml
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation, Proxy
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import  Provider, AsyncProvider
 from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
-import logging
-import httpx
-import random 
-proxy = Proxy()
+
 
 class Editee(Provider):
     """
@@ -116,7 +93,7 @@ class Editee(Provider):
 
     def _get_session(self):
         """Gets the editeecom_session value."""
-        res = proxy.get("https://editee.com/chat-gpt")
+        res = self.session.get("https://editee.com/chat-gpt")
         if res.cookies.get_dict():
             first_cookie_name, session_value = next(iter(res.cookies.get_dict().items()))
         return session_value
@@ -159,7 +136,7 @@ class Editee(Provider):
             "user_input": conversation_prompt
         }
 
-        response = proxy.post(self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout)
+        response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout)
         if not response.ok:
             raise exceptions.FailedToGenerateResponseError(
                 f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"

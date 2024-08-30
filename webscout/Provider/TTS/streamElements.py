@@ -1,5 +1,4 @@
 import time
-import pygame
 import requests
 import pathlib
 import urllib.parse

@@ -11,7 +11,7 @@ from threading import Thread
 from sys import stdout
 from click import launch as launch_media, confirm as confirm_from_user
 import warnings
-
+from webscout.version import __prog__, __version__
 from os import getcwd, remove
 import appdirs
 """
@@ -26,8 +26,7 @@ import appdirs
 - max-video quality
 - path to file containing links
 """
-__version__ = "4.0"
-__prog__ = "webscout"
+
 session = requests.session()
 
 headers = {

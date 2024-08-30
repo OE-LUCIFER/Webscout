@@ -1,7 +1,7 @@
 from typing import Any, Dict
 from uuid import uuid4
 import requests
-import json
+
 import re
 
 from webscout.AIutel import Optimizers
@@ -171,7 +171,8 @@ class X0GPT(Provider):
         Extracts the message from the API response.
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        formatted_text = response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return formatted_text
 
 if __name__ == "__main__":
     from rich import print

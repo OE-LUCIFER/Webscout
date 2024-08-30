@@ -159,10 +159,11 @@ class Chatify(Provider):
 
     def get_message(self, response: dict) -> str:
         """
-        Extracts the message from the API response.
+        Extracts the message from the API response and formats it.
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+
 
 # Example usage
 if __name__ == "__main__":

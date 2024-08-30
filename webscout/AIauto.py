@@ -13,7 +13,6 @@ from webscout.Provider.Phind import AsyncPhindSearch
 from webscout.Provider.Phind import Phindv2
 from webscout.Provider.Phind import AsyncPhindv2
 from webscout.Provider.yep import YEPCHAT
-from webscout.Provider.Berlin4h import Berlin4h
 from webscout.Provider.Poe import POE
 from webscout.Provider.BasedGPT import BasedGPT
 from webscout.Provider.Deepseek import DeepSeek
@@ -25,7 +24,7 @@ from webscout.Provider.DARKAI import DARKAI
 from webscout.Provider.koala import KOALA
 from webscout.Provider.RUBIKSAI import RUBIKSAI
 from webscout.Provider.meta import Meta
-from webscout.Provider.liaobots import LiaoBots
+
 from webscout.Provider.DiscordRocks import DiscordRocks
 from webscout.Provider.felo_search import Felo
 from webscout.Provider.xdash import XDASH
@@ -35,7 +34,7 @@ from webscout.Provider.Cloudflare import Cloudflare
 from webscout.Provider.turboseek import TurboSeek
 from webscout.Provider.NetFly import NetFly
 from webscout.Provider.EDITEE import Editee
-# from webscout.Provider.Chatify import Chatify # TODO: UNFINISHED
+from webscout.Provider.Chatify import Chatify
 from webscout.Provider.PI import PiAI 
 from webscout.g4f import GPT4FREE, AsyncGPT4FREE
 from webscout.g4f import TestProviders
@@ -58,7 +57,6 @@ provider_map: dict[
         PhindSearch,
         Phindv2,
         YEPCHAT,
-        Berlin4h,
         POE,
         BasedGPT,
         DeepSeek,
@@ -72,7 +70,7 @@ provider_map: dict[
         KOALA,
         RUBIKSAI,
         Meta,
-        LiaoBots,
+
         DiscordRocks,
         Felo,
         XDASH,
@@ -82,7 +80,7 @@ provider_map: dict[
         TurboSeek,
         NetFly,
         Editee,
-        # Chatify,
+        Chatify,
         PiAI,
     ],
 ] = {
@@ -94,7 +92,7 @@ provider_map: dict[
     "PhindSearch": PhindSearch,
     "Phindv2": Phindv2,
     "YEPCHAT": YEPCHAT,
-    "Berlin4h": Berlin4h,
+
     "POE": POE,
     "BasedGPT": BasedGPT,
     "DeepSeek": DeepSeek,
@@ -108,7 +106,7 @@ provider_map: dict[
     "koala": KOALA,
     "rubiksai": RUBIKSAI,
     "meta": Meta,
-    "liaobots": LiaoBots,
+
     "discordrocks": DiscordRocks,
     "felo": Felo,
     "xdash": XDASH,
@@ -160,7 +158,7 @@ class AUTO(Provider):
             PhindSearch,
             Phindv2,
             YEPCHAT,
-            Berlin4h,
+
             POE,
             BasedGPT,
             DeepSeek,
@@ -174,7 +172,7 @@ class AUTO(Provider):
             KOALA,
             RUBIKSAI,
             Meta,
-            LiaoBots,
+
             DiscordRocks,
             Felo,
             XDASH,

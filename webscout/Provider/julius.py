@@ -1,32 +1,15 @@
-import time
+
 import uuid
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-import click
+
 import requests
-from requests import get
-from uuid import uuid4
-from re import findall
-from requests.exceptions import RequestException
-from curl_cffi.requests import get, RequestsError
-import g4f
-from random import randint
-from PIL import Image
-import io
-import re
 import json
-import yaml
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
-import logging
-import httpx
+
 
 class Julius(Provider):
     AVAILABLE_MODELS = [

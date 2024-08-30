@@ -236,7 +236,7 @@ class KOALA(Provider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
 if __name__ == '__main__':
     from rich import print
     ai = KOALA()

@@ -1,41 +1,21 @@
-import time
-import uuid
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-import click
+
 import requests
-from requests import get
-from uuid import uuid4
-from re import findall
-from requests.exceptions import RequestException
-from curl_cffi.requests import get, RequestsError
-import g4f
-from random import randint
-from PIL import Image
-import io
-import re
-import json
-import yaml
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
-from Helpingai_T2 import Perplexity
+
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import  Provider, AsyncProvider
 from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
-import logging
-import httpx
+
 #------------------------------------ThinkAnyAI------------
 class ThinkAnyAI(Provider):
     def __init__(
         self,
         model: str = "claude-3-haiku",
         locale: str = "en",
-        web_search: bool = False,
-        chunk_size: int = 1,
+        web_search: bool = True,
+        chunk_size: int = 64,
         streaming: bool = True,
         is_conversation: bool = True,
         max_tokens: int = 600,
@@ -101,54 +81,7 @@ class ThinkAnyAI(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict | AsyncGenerator:
-        """Chat with AI asynchronously.
 
-            Args:
-                prompt (str): Prompt to be send.
-                stream (bool, optional): Flag for streaming response. Defaults to False.
-                raw (bool, optional): Stream back raw response as received. Defaults to False.
-                optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defeaults to None
-                conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            Returns:
-                dict : {}
-            ```json
-            {
-                "content": "General Kenobi! \n\n(I couldn't help but respond with the iconic Star Wars greeting since you used it first. )\n\nIs there anything I can help you with today?\n[Image of Hello there General Kenobi]",
-                "conversation_id": "c_f13f6217f9a997aa",
-                "response_id": "r_d3665f95975c368f",
-                "factualityQueries": null,
-                "textQuery": [
-                    "hello there",
-                    1
-                    ],
-                "choices": [
-                    {
-                        "id": "rc_ea075c9671bfd8cb",
-                        "content": [
-                            "General Kenobi! \n\n(I couldn't help but respond with the iconic Star Wars greeting since you used it first. )\n\nIs there anything I can help you with today?\n[Image of Hello there General Kenobi]"
-                        ]
-                    },
-                    {
-                        "id": "rc_de6dd3fb793a5402",
-                        "content": [
-                            "General Kenobi! (or just a friendly hello, whichever you prefer!). \n\nI see you're a person of culture as well. *Star Wars* references are always appreciated.  \n\nHow can I help you today?\n"
-                            ]
-                    },
-                {
-                    "id": "rc_a672ac089caf32db",
-                    "content": [
-                        "General Kenobi! (or just a friendly hello if you're not a Star Wars fan!). \n\nHow can I help you today? Feel free to ask me anything, or tell me what you'd like to chat about. I'm here to assist in any way I can.\n[Image of Obi-Wan Kenobi saying hello there]"
-                    ]
-                }
-            ],
-
-            "images": [
-                "https://i.pinimg.com/originals/40/74/60/407460925c9e419d82b93313f0b42f71.jpg"
-            ]
-        }
-
-            ```
-        """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -204,7 +137,7 @@ class ThinkAnyAI(Provider):
             conversation_uuid = initiate_conversation(conversation_prompt)
             web_search_result, links = RAG_search(conversation_uuid)
             if not web_search_result:
-                print("Failed to generate WEB response. Making normal Query...")
+                print("Failed to generate WEB response. Making normal Querywebscout..")
 
             url = f"{self.base_url}/chat"
             payload = {
@@ -278,3 +211,9 @@ class ThinkAnyAI(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+if __name__ == "__main__":
+    from rich import print
+    ai = ThinkAnyAI()
+    response = ai.chat(input(">>> "))
+    for chunk in response:
+        print(chunk, end="", flush=True)

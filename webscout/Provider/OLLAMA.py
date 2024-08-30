@@ -1,26 +1,9 @@
-import time
-import uuid
-import requests
-from requests import get
-from uuid import uuid4
-from re import findall
-from requests.exceptions import RequestException
-from curl_cffi.requests import get, RequestsError
-import g4f
-from random import randint
-from PIL import Image
-import io
-import re
-import json
-import yaml
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
-import logging
-import httpx
 import ollama
 
 class OLLAMA(Provider):

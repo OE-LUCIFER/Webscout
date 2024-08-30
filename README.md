@@ -792,7 +792,7 @@ from webscout import WEBS as w
 R = w().chat("Who are you", model='gpt-4o-mini') # GPT-3.5 Turbo, mixtral-8x7b, llama-3-70b, claude-3-haiku, gpt-4o-mini
 print(R)
 ```
-###  `PhindSearch` - Search using Phind.com 
+###  `PhindSearch` - Search using Phind.com
 
 ```python
 from webscout import PhindSearch
@@ -874,26 +874,43 @@ gemini = GEMINI(cookie_file=COOKIE_FILE, proxy=PROXIES)
 response = gemini.chat("websearch about HelpingAI and who is its developer")
 print(response)
 ```
-### `Berlin4h` - chat with Berlin4h
+### `YEPCHAT` - chat with Berlin4h
 ```python
-from webscout import Berlin4h
+from webscout import YEPCHAT
+ai = YEPCHAT(Tools=False)
+response = ai.chat(input(">>> "))
+for chunk in response:
+    print(chunk, end="", flush=True)
+#---------------Tool Call-------------
 
-ai = Berlin4h(
-    is_conversation=True,
-    max_tokens=800,
-    timeout=30,
-    intro=None,
-    filepath=None,
-    update_file=True,
-    proxies={},
-    history_offset=10250,
-    act=None,
+from rich import print
+from webscout import YEPCHAT
+def get_current_time():
+    import datetime
+    return f"The current time is {datetime.datetime.now().strftime('%H:%M:%S')}"
+def get_weather(location: str) -> str:
+    return f"The weather in {location} is sunny."
+
+
+ai = YEPCHAT(Tools=True) # Set Tools=True to use tools in the chat.
+
+ai.tool_registry.register_tool("get_current_time", get_current_time, "Gets the current time.")
+ai.tool_registry.register_tool(
+    "get_weather",
+    get_weather,
+    "Gets the weather for a given location.",
+    parameters={
+        "type": "object",
+        "properties": {
+            "location": {"type": "string", "description": "The city and state, or zip code"}
+        },
+        "required": ["location"],
+    },
 )
 
-# Example usage:
-prompt = "Explain the concept of recursion in simple terms."
-response = ai.chat(prompt)
-print(response)
+response = ai.chat(input(">>> "))
+for chunk in response:
+    print(chunk, end="", flush=True)
 ```
 ###  `BlackBox` - Search/chat With BlackBox
 ```python
@@ -1043,7 +1060,7 @@ print(message)
 Usage code similar to other proviers
 
 ###  `BasedGPT` - chat with GPT
-```
+```py
 from webscout import BasedGPT
 
 # Initialize the BasedGPT provider

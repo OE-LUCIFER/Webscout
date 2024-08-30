@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
-
+from webscout.version import __prog__, __version__
 with open("README.md", encoding="utf-8") as f:
     README = f.read()
 
 setup(
     name="webscout",
-    version="5.3",
+    version=__version__,
     description="Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, webai (terminal gpt and open interpreter) and offline LLMs and more",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -33,29 +33,20 @@ setup(
         "curl_cffi",
         "lxml",
         "nest-asyncio",
-        "selenium",
-        "tqdm",
-        "webdriver-manager",
-        "halo>=0.0.31",
         "g4f>=0.2.2.3",
         "g4f[webdriver]",
         "rich",
-        "python-dotenv",
         "beautifulsoup4",
         "markdownify",
         "pydantic",
         "requests",
         "sse_starlette",
         "termcolor",
-        "tiktoken",
-        "tldextract",
         "orjson",
         "PyYAML",
         "appdirs",
-        "GoogleBard1>=2.1.4",
         "tls_client",
         "clipman",
-        "Helpingai-T2",
         "playsound",
         "poe_api_wrapper",
         "pyreqwest_impersonate",
@@ -70,7 +61,6 @@ setup(
         "bson",
         "cloudscraper",
         "emoji",
-        "colorlog",
         "openai",
     ],
     entry_points={

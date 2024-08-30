@@ -1,6 +1,5 @@
 import json
 import time
-import uuid
 from typing import Iterable, Dict, Any, Generator
 
 from os import listdir
@@ -11,7 +10,7 @@ from json import loads, dumps
 from random import getrandbits
 from websocket import WebSocketApp
 from requests import Session, get, post
-import yaml
+
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation

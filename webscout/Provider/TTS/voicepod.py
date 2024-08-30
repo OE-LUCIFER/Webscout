@@ -1,6 +1,5 @@
 import requests
 import json
-import pygame
 import time
 from pathlib import Path
 from typing import Generator
