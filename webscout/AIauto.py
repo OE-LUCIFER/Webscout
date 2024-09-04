@@ -9,9 +9,7 @@ from webscout.Provider.Perplexity import Perplexity
 from webscout.Provider.Blackboxai import BLACKBOXAI
 from webscout.Provider.Blackboxai import AsyncBLACKBOXAI
 from webscout.Provider.Phind import PhindSearch
-from webscout.Provider.Phind import AsyncPhindSearch
 from webscout.Provider.Phind import Phindv2
-from webscout.Provider.Phind import AsyncPhindv2
 from webscout.Provider.yep import YEPCHAT
 from webscout.Provider.Poe import POE
 from webscout.Provider.BasedGPT import BasedGPT

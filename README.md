@@ -828,34 +828,6 @@ message = ph.get_message(response)
 print(message)
 ```
 
-
-### `You.com` - search/chat with you.com - Not working
-```python
-
-from webscout import YouChat
-from rich import print
-
-ai = YouChat(
-    is_conversation=True,
-    max_tokens=800,
-    timeout=30,
-    intro=None,
-    filepath=None,
-    update_file=True,
-    proxies={},
-    history_offset=10250,
-    act=None,
-)
-
-prompt = "what is meaning of life"
-
-response = ai.ask(prompt)
-
-# Extract and print the message from the response
-message = ai.get_message(response)
-print(message)
-```
-
 ### `Gemini` - search with google gemini
 
 ```python
@@ -874,7 +846,7 @@ gemini = GEMINI(cookie_file=COOKIE_FILE, proxy=PROXIES)
 response = gemini.chat("websearch about HelpingAI and who is its developer")
 print(response)
 ```
-### `YEPCHAT` - chat with Berlin4h
+### `YEPCHAT` 
 ```python
 from webscout import YEPCHAT
 ai = YEPCHAT(Tools=False)
@@ -1369,7 +1341,7 @@ if "error" not in function_call_data:
 else:
     print(f"Error: {function_call_data['error']}")
 ```
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, NetFly, Editee, AI21, Chatify, Cerebras, X0GPT
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, NetFly, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark
 code similar to other provider
 ### `LLM` 
 ```python

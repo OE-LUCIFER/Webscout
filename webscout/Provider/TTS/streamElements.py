@@ -264,20 +264,7 @@ class StreamElements(TTSProvider):
                 f"Failed to perform the operation: {e}"
             )
 
-    def play_audio(self, filename: str):
-        """
-        Plays an audio file using playsound.
 
-        Args:
-            filename (str): The path to the audio file.
-
-        Raises:
-            RuntimeError: If there is an error playing the audio.
-        """
-        try:
-            playsound(filename)
-        except Exception as e:
-            raise RuntimeError(f"Error playing audio: {e}")
 
 # Example usage
 if __name__ == "__main__":
@@ -286,6 +273,3 @@ if __name__ == "__main__":
 
     print("Generating audio...")
     audio_file = streamelements.tts(text, voice="Brian") 
-
-    print("Playing audio...")
-    streamelements.play_audio(audio_file)

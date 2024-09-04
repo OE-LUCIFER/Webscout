@@ -10,7 +10,6 @@ import webscout.AIauto
 import webscout.AIutel
 import g4f
 from webscout.g4f import *
-from webscout.async_providers import mapper as async_provider_map
 from pyfiglet import figlet_format
 
 

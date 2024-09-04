@@ -10,7 +10,7 @@ import logging
 class WebSearchAgent:
     def __init__(self):
         self.webs = WEBS()
-        self.ai = LLAMA3(system="You are an advanced AI assistant specialized in generating optimal search queries and providing comprehensive answers based on web search results.")
+        self.ai = LLAMA3(system="You are an advanced AI assistant specialized in generating optimal search queries and providing comprehensive answers based on web search results.", is_conversation=False)
 
     def generate_search_queries(self, information, num_queries=3):
         prompt = f"""
@@ -94,8 +94,8 @@ class WebSearchAgent:
                 paragraphs = soup.find_all('p')
                 text = ' '.join([p.get_text() for p in paragraphs])
                 words = text.split()
-                if len(words) > 150:
-                    text = ' '.join(words[:150]) + '...'
+                if len(words) > 600:
+                    text = ' '.join(words[:600]) + '...'
                 return text
             else:
                 return f"Failed to fetch {url}: HTTP {response.status}"
@@ -112,7 +112,7 @@ class WebSearchAgent:
 class OnlineSearcher:
     def __init__(self):
         self.agent = WebSearchAgent()
-        self.ai = LLAMA3(system="You are an advanced AI assistant specialized in providing comprehensive and accurate answers based on web search results and your general knowledge.")
+        self.ai = LLAMA3(system="You are an advanced AI assistant specialized in providing comprehensive and accurate answers based on web search results and your general knowledge.", is_conversation=False)
 
     def answer_question(self, question: str):
         search_results = self.agent.search(question)
@@ -125,7 +125,7 @@ class OnlineSearcher:
 
         context += "Extracted webpage contents:\n"
         for i, webpage in enumerate(webpage_contents):
-            context += f"{i}. URL: {webpage['url']}\n   Content: {webpage['content'][:150]}...\n\n"
+            context += f"{i}. URL: {webpage['url']}\n   Content: {webpage['content'][:600]}...\n\n"
 
         prompt = f"""
         Task: Provide a comprehensive and accurate answer to the given question based on the provided web search results and your general knowledge.

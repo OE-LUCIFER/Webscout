@@ -15,9 +15,7 @@ from .Perplexity import *
 from .Blackboxai import BLACKBOXAI 
 from .Blackboxai import AsyncBLACKBOXAI
 from .Phind import PhindSearch 
-from .Phind import AsyncPhindSearch
 from .Phind import Phindv2
-from .Phind import AsyncPhindv2
 from .ai4chat import *
 from .Gemini import GEMINI
 from .Poe import POE
@@ -25,6 +23,7 @@ from .BasedGPT import BasedGPT
 from .Deepseek import DeepSeek
 from .Deepinfra import DeepInfra, VLM, AsyncDeepInfra
 from .Farfalle import *
+from .cleeai import *
 from .OLLAMA import OLLAMA
 from .Andi import AndiSearch
 from .PizzaGPT import *
@@ -48,6 +47,10 @@ from .AI21 import *
 from .Chatify import *
 from .x0gpt import *
 from .cerebras import *
+from .lepton import *
+from .geminiapi import *
+from .elmo import *
+from .genspark import *
 __all__ = [
     'ThinkAnyAI',
     'Farfalle',
@@ -64,7 +67,6 @@ __all__ = [
     'BLACKBOXAI', 
     'AsyncBLACKBOXAI',
     'PhindSearch', 
-    'AsyncPhindSearch',
     'Felo',
     'GEMINI',
     'POE',
@@ -74,7 +76,6 @@ __all__ = [
     'VLM',
     'AsyncDeepInfra',
     'AI4Chat',
-    'AsyncPhindv2',
     'Phindv2',
     'OLLAMA',
     'AndiSearch',
@@ -98,5 +99,11 @@ __all__ = [
     'AI21',
     'Chatify',
     'X0GPT',
-    'Cerebras'
+    'Cerebras',
+    'Lepton',
+    'GEMINIAPI',
+    'Cleeai',
+    'Elmo',
+    'Genspark'
+
 ]
