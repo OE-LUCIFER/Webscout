@@ -7,9 +7,9 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 
-class Sanatanadharma(Provider):
+class AIGameIO(Provider):
     """
-    A class to interact with the Sanatanadharma.xyz API.
+    A class to interact with the AI-Game.io API.
     """
 
     def __init__(
@@ -23,10 +23,10 @@ class Sanatanadharma(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful AI assistant.",
+        system_prompt: str = "You are a Helpful ai"
     ):
         """
-        Initializes the Sanatanadharma.xyz API with given parameters.
+        Initializes the AI-Game.io API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -38,21 +38,26 @@ class Sanatanadharma(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_prompt (str, optional): System prompt for Sanatanadharma.xyz. 
-                                   Defaults to "You are a helpful AI assistant.".
+            system_prompt (str, optional): System prompt for AI-Game.io. 
+                                   Defaults to "You are a Helpful ai".
         """
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = 'https://sanatanadharma.xyz/api/chat'
+        self.api_endpoint = 'https://stream-chat-blmeirpipa-uc.a.run.app/streamChat'
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
         self.system_prompt = system_prompt
         self.headers = {
+            'authority': 'stream-chat-blmeirpipa-uc.a.run.app',
+            'method': 'POST',
+            'path': '/streamChat',
+            'accept': 'text/event-stream',
             'content-type': 'application/json',
-            'origin': 'https://sanatanadharma.xyz',
-            'referer': 'https://sanatanadharma.xyz/?ref=taaft&utm_source=taaft&utm_medium=referral',
+            'origin': 'https://www.ai-game.io',
+            'priority': 'u=1, i',
+            'referer': 'https://www.ai-game.io/',
         }
 
         self.__available_optimizers = (
@@ -108,9 +113,9 @@ class Sanatanadharma(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-
+        
         payload = {
-            "messages": [
+            "history": [
                 {
                     "role": "system",
                     "content": self.system_prompt
@@ -119,8 +124,7 @@ class Sanatanadharma(Provider):
                     "role": "user",
                     "content": conversation_prompt
                 }
-            ],
-            "requestId": str(uuid.uuid4())
+            ]
         }
         def for_stream():
             response = self.session.post(
@@ -133,11 +137,14 @@ class Sanatanadharma(Provider):
 
             full_response = ''
             for line in response.iter_lines(decode_unicode=True):
-                if line:
-                    # Decode the line if it's bytes
-                    line = line.decode('utf-8')
-                    full_response += line
-                    yield line if raw else dict(text=full_response)
+                if line.startswith("data: "):
+                    try:
+                        event_data = json.loads(line[6:])
+                        if event_data['event'] == 'text-chunk':
+                            full_response += event_data['data']['text']
+                            yield event_data['data']['text'] if raw else dict(text=full_response)
+                    except json.JSONDecodeError:
+                        pass
             self.last_response.update(dict(text=full_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -200,7 +207,7 @@ class Sanatanadharma(Provider):
 if __name__ == "__main__":
     from rich import print
 
-    ai = Sanatanadharma()
+    ai = AIGameIO()
     response = ai.chat(input(">>> "))
     for chunk in response:
         print(chunk, end="", flush=True)

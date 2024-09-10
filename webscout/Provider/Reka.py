@@ -8,7 +8,6 @@ from ..AIutel import Optimizers
 from ..AIutel import Conversation
 from ..AIutel import AwesomePrompts, sanitize_stream
 from ..AIbase import  Provider, AsyncProvider
-from Helpingai_T2 import Perplexity
 from webscout import exceptions
 
 #-----------------------------------------------REKA-----------------------------------------------

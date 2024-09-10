@@ -37,7 +37,7 @@ class AsyncWEBS(WEBS):
         pass
 
     async def achat(self, keywords: str, model: str = "gpt-3.5") -> str:
-        """Initiates async chat session with DuckDuckGo AI.
+        """Initiates async chat session with webscout AI.
 
         Args:
             keywords (str): The initial message or question to send to the AI.
@@ -59,7 +59,7 @@ class AsyncWEBS(WEBS):
         backend: str = "api",
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """DuckDuckGo async text search. Query params: https://duckduckgo.com/params.
+        """webscout async text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -98,7 +98,7 @@ class AsyncWEBS(WEBS):
         license_image: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """DuckDuckGo async images search. Query params: https://duckduckgo.com/params.
+        """webscout async images search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -152,7 +152,7 @@ class AsyncWEBS(WEBS):
         license_videos: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """DuckDuckGo async videos search. Query params: https://duckduckgo.com/params.
+        """webscout async videos search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -194,7 +194,7 @@ class AsyncWEBS(WEBS):
         timelimit: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """DuckDuckGo async news search. Query params: https://duckduckgo.com/params.
+        """webscout async news search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -226,7 +226,7 @@ class AsyncWEBS(WEBS):
         self,
         keywords: str,
     ) -> List[Dict[str, str]]:
-        """DuckDuckGo async instant answers. Query params: https://duckduckgo.com/params.
+        """webscout async instant answers. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query,
@@ -251,7 +251,7 @@ class AsyncWEBS(WEBS):
         keywords: str,
         region: str = "wt-wt",
     ) -> List[Dict[str, str]]:
-        """DuckDuckGo async suggestions. Query params: https://duckduckgo.com/params.
+        """webscout async suggestions. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -288,7 +288,7 @@ class AsyncWEBS(WEBS):
         radius: int = 0,
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
-        """DuckDuckGo async maps search. Query params: https://duckduckgo.com/params.
+        """webscout async maps search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query
@@ -337,7 +337,7 @@ class AsyncWEBS(WEBS):
         from_: Optional[str] = None,
         to: str = "en",
     ) -> List[Dict[str, str]]:
-        """DuckDuckGo async translate.
+        """webscout async translate.
 
         Args:
             keywords: string or list of strings to translate.

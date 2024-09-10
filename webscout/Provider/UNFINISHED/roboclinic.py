@@ -7,9 +7,9 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 
-class Sanatanadharma(Provider):
+class Roboclinic(Provider):
     """
-    A class to interact with the Sanatanadharma.xyz API.
+    A class to interact with the Roboclinic.ai API.
     """
 
     def __init__(
@@ -26,7 +26,7 @@ class Sanatanadharma(Provider):
         system_prompt: str = "You are a helpful AI assistant.",
     ):
         """
-        Initializes the Sanatanadharma.xyz API with given parameters.
+        Initializes the Roboclinic.ai API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -38,21 +38,30 @@ class Sanatanadharma(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_prompt (str, optional): System prompt for Sanatanadharma.xyz. 
+            system_prompt (str, optional): System prompt for Roboclinic.ai. 
                                    Defaults to "You are a helpful AI assistant.".
         """
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = 'https://sanatanadharma.xyz/api/chat'
+        self.api_endpoint = "https://api.roboclinic.ai/api"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
         self.system_prompt = system_prompt
         self.headers = {
-            'content-type': 'application/json',
-            'origin': 'https://sanatanadharma.xyz',
-            'referer': 'https://sanatanadharma.xyz/?ref=taaft&utm_source=taaft&utm_medium=referral',
+            "accept": "*/*",
+            "content-type": "application/json",
+            "origin": "https://roboclinic.ai",
+            "referer": "https://roboclinic.ai/",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
+            "dnt": "1",
+            "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site"
         }
 
         self.__available_optimizers = (
@@ -109,39 +118,60 @@ class Sanatanadharma(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-        payload = {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": self.system_prompt
-                },
-                {
-                    "role": "user",
-                    "content": conversation_prompt
-                }
-            ],
-            "requestId": str(uuid.uuid4())
+        conversation_id = str(uuid.uuid4()).replace('-', '')[:20]
+
+        # Step 1: Create a new chat
+        create_chat_url = f"{self.api_endpoint}/without-auth-chat/create-chat/"
+        create_chat_data = {
+            "conversation_id": conversation_id,
+            "name": "New chat"
         }
-        def for_stream():
-            response = self.session.post(
-                self.api_endpoint, headers=self.headers, data=json.dumps(payload), stream=True, timeout=self.timeout
+
+        response = self.session.post(create_chat_url, headers=self.headers, json=create_chat_data)
+        if response.status_code != 201:
+            raise Exception(
+                f"Failed to create chat: {response.status_code} - {response.text}"
             )
-            if not response.ok:
-                raise Exception(
-                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+
+        # Step 2: Send a message to the chat
+        send_message_url = f"{self.api_endpoint}/without-auth-chat/send-message/"
+        send_message_data = {
+            "conversation_id": conversation_id,
+            "message": conversation_prompt,
+            "model": "gpt-4o",
+            "chat": None
+        }
+
+        response = self.session.post(send_message_url, headers=self.headers, json=send_message_data)
+        if response.status_code != 201:
+            raise Exception(
+                f"Failed to send message: {response.status_code} - {response.text}"
+            )
+
+        # Step 3: Retrieve and stream the GPT-4 response
+        get_gpt_answer_url = f"{self.api_endpoint}/chats/get-gpt-answer/{conversation_id}/"
+
+        def for_stream():
+            with requests.get(get_gpt_answer_url, headers=self.headers, stream=True) as response:
+                if response.status_code != 200:
+                    raise Exception(
+                        f"Failed to retrieve GPT-4 response: {response.status_code} - {response.text}"
+                    )
+                full_response = ""
+                for line in response.iter_lines(decode_unicode=True):
+                    if line:
+                        if line.startswith("data:"):
+                            start = line.find('"value": "') + 10
+                            end = line.find('"', start)
+                            if start != -1 and end != -1:
+                                chunk = line[start:end]
+                                full_response += chunk
+                                yield chunk if raw else dict(text=full_response)
+                self.last_response.update(dict(text=full_response))
+                self.conversation.update_chat_history(
+                    prompt, self.get_message(self.last_response)
                 )
 
-            full_response = ''
-            for line in response.iter_lines(decode_unicode=True):
-                if line:
-                    # Decode the line if it's bytes
-                    line = line.decode('utf-8')
-                    full_response += line
-                    yield line if raw else dict(text=full_response)
-            self.last_response.update(dict(text=full_response))
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
         def for_non_stream():
             for _ in for_stream():
                 pass
@@ -194,13 +224,13 @@ class Sanatanadharma(Provider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
 
 
 if __name__ == "__main__":
     from rich import print
 
-    ai = Sanatanadharma()
+    ai = Roboclinic()
     response = ai.chat(input(">>> "))
     for chunk in response:
         print(chunk, end="", flush=True)
