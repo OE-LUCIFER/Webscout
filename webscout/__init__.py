@@ -3,6 +3,7 @@ from .webscout_search_async import AsyncWEBS
 from .version import __version__
 from .DWEBS import *
 from .transcriber import *
+from .requestsHTMLfix import *
 from .tempid import *
 from .websx_search import WEBSX
 from .LLM import VLM, LLM

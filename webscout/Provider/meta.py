@@ -8,7 +8,7 @@ from typing import Dict, Generator, Iterator, List, Union
 import random
 
 
-from requests_html import HTMLSession
+from webscout.requestsHTMLfix import HTMLSession
 import requests
 from bs4 import BeautifulSoup
 
