@@ -179,6 +179,6 @@ if __name__ == "__main__":
 
     ai = PIZZAGPT() 
     # Stream the response
-    response = ai.chat(input(">>> "))
+    response = ai.chat("hi")
     for chunk in response:
         print(chunk, end="", flush=True)

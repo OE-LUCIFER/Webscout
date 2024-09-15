@@ -1,18 +1,30 @@
+import os
+import openai
 import requests
-import json
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 
 class LLAMA3(Provider):
+    """
+    A class to interact with the Sambanova API using the openai library.
+    """
 
-    AVAILABLE_MODELS = ["llama3-70b", "llama3-8b", "llama3-405b"]
+    AVAILABLE_MODELS = [
+        "Meta-Llama-3.1-8B-Instruct",
+        "Meta-Llama-3.1-70B-Instruct",
+        "Meta-Llama-3.1-405B-Instruct"
+    ]
 
     def __init__(
         self,
+        api_key: str = None,
         is_conversation: bool = True,
         max_tokens: int = 600,
+        temperature: float = 1,
+        top_p: float = 0.95,
+        model: str = "Meta-Llama-3.1-8B-Instruct",
         timeout: int = 30,
         intro: str = None,
         filepath: str = None,
@@ -20,14 +32,18 @@ class LLAMA3(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "llama3-8b",  
-        system: str = "GPT syle",
+        system_prompt: str = "You are a helpful AI assistant.",
     ):
-        """Instantiates Snova
+        """
+        Initializes the Sambanova API with the given parameters.
 
         Args:
+            api_key (str, optional): Your Sambanova API key. If None, it will use the environment variable "SAMBANOVA_API_KEY". Defaults to None.
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
             max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
+            temperature (float, optional): The temperature parameter for the model. Defaults to 1.
+            top_p (float, optional): The top_p parameter for the model. Defaults to 0.95.
+            model (str, optional): The name of the Sambanova model to use. Defaults to "Meta-Llama-3.1-8B-Instruct".
             timeout (int, optional): Http request timeout. Defaults to 30.
             intro (str, optional): Conversation introductory prompt. Defaults to None.
             filepath (str, optional): Path to file containing conversation history. Defaults to None.
@@ -35,28 +51,29 @@ class LLAMA3(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): Snova model name. Defaults to "llama3-70b".
-            system (str, optional): System prompt for Snova. Defaults to "Answer as concisely as possible.".
+            system_prompt (str, optional): System instruction to guide the AI's behavior.
+                                           Defaults to "You are a helpful and informative AI assistant.".
         """
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.session = requests.Session()
+        self.api_key = api_key or os.environ["SAMBANOVA_API_KEY"]
+        self.model = model
+        self.temperature = temperature
+        self.top_p = top_p
+        self.system_prompt = system_prompt  # Add this line to set the system_prompt attribute
+
+        self.session = requests.Session()  # Not directly used for Gemini API calls, but can be used for other requests
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.timeout = timeout
-        self.model = model
-        self.system = system
         self.last_response = {}
-        self.env_type = "tp16405b" if "405b" in model else "tp16"
-        self.headers = {'content-type': 'application/json'}
 
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        self.session.headers.update(self.headers)
         Conversation.intro = (
             AwesomePrompts().get_act(
                 act, raise_not_found=True, default=None, case_insensitive=True
@@ -70,6 +87,12 @@ class LLAMA3(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
+        # Configure the Sambanova API
+        self.client = openai.OpenAI(
+            api_key=self.api_key,
+            base_url="https://api.sambanova.ai/v1",
+        )
+
     def ask(
         self,
         prompt: str,
@@ -82,8 +105,8 @@ class LLAMA3(Provider):
 
         Args:
             prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
+            stream (bool, optional): Not used for Sambanova API. Defaults to False.
+            raw (bool, optional): Not used for Sambanova API. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
         Returns:
@@ -104,66 +127,47 @@ class LLAMA3(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        data = {'body': {'messages': [{'role': 'system', 'content': self.system}, {'role': 'user', 'content': conversation_prompt}], 'stream': True, 'model': self.model}, 'env_type': self.env_type}
 
-        def for_stream(data=data):  # Pass data as a default argument
-            response = self.session.post('https://fast.snova.ai/api/completion', headers=self.headers, json=data, stream=True, timeout=self.timeout)
-            output = ''
-            for line in response.iter_lines(decode_unicode=True):
-                if line.startswith('data:'):
-                    try:
-                        data = json.loads(line[len('data: '):])
-                        output += data.get("choices", [{}])[0].get("delta", {}).get("content", '')
-                        self.last_response.update(dict(text=output))
-                        yield data if raw else dict(text=output)
-                    except json.JSONDecodeError:
-                        if line[len('data: '):] == '[DONE]':
-                            break
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt},
+            ],
+            temperature=self.temperature,
+            top_p=self.top_p
+        )
 
-        def for_non_stream():
-            for _ in for_stream():
-                pass
-            return self.last_response
-
-        return for_stream() if stream else for_non_stream()
+        self.last_response.update(dict(text=response.choices[0].message.content))
+        self.conversation.update_chat_history(
+            prompt, self.get_message(self.last_response)
+        )
+        return self.last_response
 
     def chat(
         self,
         prompt: str,
-        stream: bool = False,
+        stream: bool = False,  # Streaming not supported by the current google-generativeai library
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
         """Generate response `str`
+
         Args:
             prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
+            stream (bool, optional): Not used for Sambanova API. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
         Returns:
             str: Response generated
         """
-
-        def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                )
+        return self.get_message(
+            self.ask(
+                prompt,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
-
-        return for_stream() if stream else for_non_stream()
+        )
 
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response
@@ -176,11 +180,10 @@ class LLAMA3(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
 if __name__ == "__main__":
     from rich import print
-
-    ai = LLAMA3() 
-    # Stream the response
+    ai = LLAMA3(api_key='7979b01c-c5ea-40df-9198-f45733fa2208')
     response = ai.chat(input(">>> "))
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    for chunks in response:
+        print(chunks, end="", flush=True)

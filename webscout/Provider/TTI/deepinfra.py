@@ -13,7 +13,7 @@ class DeepInfraImager(ImageProvider):
 
     def __init__(
         self,
-        model: str = "black-forest-labs/FLUX-1-dev",
+        model: str = "black-forest-labs/FLUX-1-schnell",
         timeout: int = 60,
         proxies: dict = {},
     ):
@@ -21,7 +21,7 @@ class DeepInfraImager(ImageProvider):
 
         Args:
             model (str, optional): The name of the DeepInfra model to use. 
-                                        Defaults to "black-forest-labs/FLUX-1-dev".
+                                        Defaults to "black-forest-labs/FLUX-1-schnell".
             timeout (int, optional): Http request timeout. Defaults to 60 seconds.
             proxies (dict, optional): Http request proxies (socks). Defaults to {}.
         """

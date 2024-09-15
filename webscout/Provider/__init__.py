@@ -1,6 +1,4 @@
 # webscout/providers/__init__.py
-
-from .ThinkAnyAI import ThinkAnyAI
 from .PI import *
 from .Llama import LLAMA
 from .Cohere import Cohere
@@ -40,7 +38,7 @@ from .Youchat import *
 from .yep import *
 from .Cloudflare import *
 from .turboseek import *
-from .NetFly import *
+from .Free2GPT import *
 from .EDITEE import *
 from .TeachAnything import *
 from .AI21 import *
@@ -51,8 +49,11 @@ from .lepton import *
 from .geminiapi import *
 from .elmo import *
 from .genspark import *
+from .upstage import *
+from .Bing import *
+from .GPTWeb import *
+from .aigames import *
 __all__ = [
-    'ThinkAnyAI',
     'Farfalle',
     'LLAMA', 
     'Cohere',
@@ -93,7 +94,6 @@ __all__ = [
     'YEPCHAT',
     'Cloudflare',
     'TurboSeek',
-    'NetFly',
     'Editee',
     'TeachAnything',
     'AI21',
@@ -104,6 +104,11 @@ __all__ = [
     'GEMINIAPI',
     'Cleeai',
     'Elmo',
-    'Genspark'
+    'Genspark',
+    'Upstage',
+    'Free2GPT',
+    'Bing',
+    'GPTWeb',
+    'AIGameIO',
 
 ]

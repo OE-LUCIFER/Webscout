@@ -189,6 +189,6 @@ class Lepton(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = Lepton()
-    response = ai.chat("tell me about india")
+    response = ai.chat("hi")
     for chunk in response:
         print(chunk, end="", flush=True)

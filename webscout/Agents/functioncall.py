@@ -4,12 +4,12 @@ import json
 import time
 from typing import Any, Dict, Optional
 import requests
-from webscout import WEBS, Julius
+from webscout import WEBS, DeepInfra
 
 class FunctionCallingAgent:
-    def __init__(self, model: str = "GPT-4o", 
+    def __init__(self, 
                  tools: list = None):
-        self.ai = Julius(model=model, timeout=300, intro=None)
+        self.ai = DeepInfra(timeout=300, intro=None)
         self.tools = tools if tools is not None else []
         self.knowledge_cutoff = "September 2022" 
 

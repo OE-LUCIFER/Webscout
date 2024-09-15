@@ -232,6 +232,6 @@ class Elmo(Provider):
 if __name__ == "__main__":
     from rich import print
     ai = Elmo()
-    response = ai.chat(input(">>> "))
+    response = ai.chat("hi")
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -765,7 +765,8 @@ print(result)
 ___
 </details>
 
-###  Text to images - DeepInfraImager, PollinationsAI
+###  Text to images - DeepInfraImager, PollinationsAI, BlackboxAIImager, AiForceimagger, NexraImager
+**Every TTI provider have same usage code just u need to change import **
 ```python
 from webscout import DeepInfraImager
 bot = DeepInfraImager()
@@ -1001,32 +1002,6 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-
-###  `ThinkAny` - AI search engine
-```python
-from webscout import ThinkAnyAI
-
-ai = ThinkAnyAI(
-    is_conversation=True,
-    max_tokens=800,
-    timeout=30,
-    intro=None,
-    filepath=None,
-    update_file=True,
-    proxies={},
-    history_offset=10250,
-    act=None,
-    web_search=False,
-)
-
-prompt = "what is meaning of life"
-
-response = ai.ask(prompt)
-
-# Extract and print the message from the response
-message = ai.get_message(response)
-print(message)
-```
 
 ###  `poe`- chat with poe
 Usage code similar to other proviers
@@ -1341,7 +1316,7 @@ if "error" not in function_call_data:
 else:
     print(f"Error: {function_call_data['error']}")
 ```
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, NetFly, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks
 code similar to other provider
 ### `LLM` 
 ```python

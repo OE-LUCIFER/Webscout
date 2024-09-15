@@ -19,6 +19,12 @@ class Julius(Provider):
         "Command R",
         "Gemini Flash",
         "Gemini 1.5",
+        "Claude Sonnet",
+        "Claude Opus",
+        "Claude Haiku",
+        "GPT-4",
+        "GPT-4o mini",
+        "Command R+",
     ]
     def __init__(
         self,
@@ -241,6 +247,6 @@ class Julius(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = Julius()
-    response = ai.chat(input(">>> "))
+    response = ai.chat("hi")
     for chunk in response:
         print(chunk, end="", flush=True)

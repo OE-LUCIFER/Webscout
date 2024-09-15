@@ -58,7 +58,7 @@ setup(
         "cloudscraper",
         "emoji",
         "openai",
-        "prompt_toolkit",
+        "prompt-toolkit",
     ],
     entry_points={
         "console_scripts": [

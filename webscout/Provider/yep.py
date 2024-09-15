@@ -467,7 +467,7 @@ if __name__ == "__main__":
         else:
             return "No results found for your query."
 
-    ai = YEPCHAT(Tools=True)
+    ai = YEPCHAT(Tools=False)
 
     ai.tool_registry.register_tool("get_current_time", get_current_time, "Gets the current time.")
     ai.tool_registry.register_tool(
@@ -495,6 +495,6 @@ if __name__ == "__main__":
         },
     )
 
-    response = ai.chat(input(">>> "))
+    response = ai.chat("hi")
     for chunk in response:
         print(chunk, end="", flush=True)

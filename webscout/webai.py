@@ -65,7 +65,7 @@ class this:
 
     rich_code_themes = ["monokai", "paraiso-dark", "igor", "vs", "fruity", "xcode"]
 
-    default_provider = "llama3"
+    default_provider = "phind"
 
     getExc = lambda e: e.args[1] if len(e.args) > 1 else str(e)
 

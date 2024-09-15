@@ -1,13 +1,23 @@
 import requests
 import json
+from typing import Any, Dict, Optional
+
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts
+from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider
+from webscout import exceptions
 
-class LLAMA3(Provider):
+class Upstage(Provider):
+    """
+    A class to interact with the Upstage API.
+    """
 
-    AVAILABLE_MODELS = ["llama3-70b", "llama3-8b", "llama3-405b"]
+    AVAILABLE_MODELS = [
+        "upstage/solar-1-mini-chat",
+        "upstage/solar-1-mini-chat-ja",
+        "solar-pro"
+    ]
 
     def __init__(
         self,
@@ -20,23 +30,27 @@ class LLAMA3(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "llama3-8b",  
-        system: str = "GPT syle",
-    ):
-        """Instantiates Snova
+        model: str = "upstage/solar-1-mini-chat",
+    ) -> None:
+        """
+        Initializes the Upstage API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
+            max_tokens (int, optional): Maximum number of tokens to be generated upon completion.
+                                        Defaults to 600.
             timeout (int, optional): Http request timeout. Defaults to 30.
             intro (str, optional): Conversation introductory prompt. Defaults to None.
             filepath (str, optional): Path to file containing conversation history. Defaults to None.
             update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
             proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
+            history_offset (int, optional): Limit conversation history to this number of last texts.
+                                            Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): Snova model name. Defaults to "llama3-70b".
-            system (str, optional): System prompt for Snova. Defaults to "Answer as concisely as possible.".
+            model (str, optional): AI model to use. Defaults to "upstage/solar-1-mini-chat". 
+                                    Available models: "upstage/solar-1-mini-chat",
+                                                     "upstage/solar-1-mini-chat-ja",
+                                                     "solar-pro"
         """
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
@@ -44,12 +58,17 @@ class LLAMA3(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
+        self.api_endpoint = "https://ap-northeast-2.apistage.ai/v1/web/demo/chat/completions"
+        self.stream_chunk_size = 64
         self.timeout = timeout
-        self.model = model
-        self.system = system
         self.last_response = {}
-        self.env_type = "tp16405b" if "405b" in model else "tp16"
-        self.headers = {'content-type': 'application/json'}
+        self.model = model
+        self.headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
+            "Origin": "https://console.upstage.ai",
+            "Referer": "https://console.upstage.ai/"
+        }
 
         self.__available_optimizers = (
             method
@@ -77,22 +96,19 @@ class LLAMA3(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict:
-        """Chat with AI
+    ) -> Dict[str, Any]:
+        """
+        Sends a prompt to the Upstage API and returns the response.
 
         Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            prompt: The text prompt to generate text from.
+            stream (bool, optional): Whether to stream the response. Defaults to False.
+            raw (bool, optional): Whether to return the raw response. Defaults to False.
+            optimizer (str, optional): The name of the optimizer to use. Defaults to None.
+            conversationally (bool, optional): Whether to chat conversationally. Defaults to False.
+
         Returns:
-           dict : {}
-        ```json
-        {
-           "text" : "How may I assist you today?"
-        }
-        ```
+            The response from the API.
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -104,21 +120,51 @@ class LLAMA3(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        data = {'body': {'messages': [{'role': 'system', 'content': self.system}, {'role': 'user', 'content': conversation_prompt}], 'stream': True, 'model': self.model}, 'env_type': self.env_type}
 
-        def for_stream(data=data):  # Pass data as a default argument
-            response = self.session.post('https://fast.snova.ai/api/completion', headers=self.headers, json=data, stream=True, timeout=self.timeout)
-            output = ''
+        payload = {
+            "stream": True,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": conversation_prompt
+                }
+            ],
+            "model": self.model
+        }
+
+        def for_stream():
+            response = self.session.post(
+                self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout
+            )
+
+            if not response.ok:
+                # If 'solar-pro' fails, try mini-chat model
+                if self.model == "solar-pro":
+                    print("solar-pro failed. Trying 'upstage/solar-1-mini-chat'...")
+                    self.model = "upstage/solar-1-mini-chat"
+                    return self.ask(prompt, stream, raw, optimizer, conversationally)  # Retry with mini-chat
+
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to generate response - ({response.status_code}, {response.reason})"
+                )
+
+            streaming_response = ""
             for line in response.iter_lines(decode_unicode=True):
-                if line.startswith('data:'):
-                    try:
-                        data = json.loads(line[len('data: '):])
-                        output += data.get("choices", [{}])[0].get("delta", {}).get("content", '')
-                        self.last_response.update(dict(text=output))
-                        yield data if raw else dict(text=output)
-                    except json.JSONDecodeError:
-                        if line[len('data: '):] == '[DONE]':
-                            break
+                if line:
+                    if line.startswith("data: "):
+                        data = line[6:]  # Remove 'data: ' prefix
+                        if data != "[DONE]":
+                            try:
+                                json_data = json.loads(data)
+                                content = json_data['choices'][0]['delta'].get('content', '')
+                                if content:
+                                    streaming_response += content
+                                    yield content if raw else dict(text=streaming_response)
+                            except json.JSONDecodeError:
+                                print(f"Error decoding JSON: {data}")
+
+
+            self.last_response.update(dict(text=streaming_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -176,11 +222,9 @@ class LLAMA3(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-if __name__ == "__main__":
+if __name__ == '__main__':
     from rich import print
-
-    ai = LLAMA3() 
-    # Stream the response
-    response = ai.chat(input(">>> "))
+    ai = Upstage()
+    response = ai.chat("hi")
     for chunk in response:
         print(chunk, end="", flush=True)

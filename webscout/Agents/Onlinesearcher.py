@@ -1,7 +1,7 @@
 import json
 import colorlog
 from webscout import WEBS
-from webscout.Agents.ai import LLAMA3
+from webscout import DeepInfra
 import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict
@@ -10,7 +10,7 @@ import logging
 class WebSearchAgent:
     def __init__(self):
         self.webs = WEBS()
-        self.ai = LLAMA3(system="You are an advanced AI assistant specialized in generating optimal search queries and providing comprehensive answers based on web search results.", is_conversation=False)
+        self.ai = DeepInfra(is_conversation=False)
 
     def generate_search_queries(self, information, num_queries=3):
         prompt = f"""
@@ -112,7 +112,7 @@ class WebSearchAgent:
 class OnlineSearcher:
     def __init__(self):
         self.agent = WebSearchAgent()
-        self.ai = LLAMA3(system="You are an advanced AI assistant specialized in providing comprehensive and accurate answers based on web search results and your general knowledge.", is_conversation=False)
+        self.ai = DeepInfra(is_conversation=False)
 
     def answer_question(self, question: str):
         search_results = self.agent.search(question)

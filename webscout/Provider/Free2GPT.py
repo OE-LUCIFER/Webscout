@@ -1,15 +1,19 @@
 import requests
 import uuid
 import json
+import time
+from hashlib import sha256
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
+from webscout import exceptions
 
-class AIGameIO(Provider):
+
+class Free2GPT(Provider):
     """
-    A class to interact with the AI-Game.io API.
+    A class to interact with the Free2GPT API.
     """
 
     def __init__(
@@ -23,10 +27,10 @@ class AIGameIO(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a Helpful ai"
+        system_prompt: str = "You are a helpful AI assistant.",
     ):
         """
-        Initializes the AI-Game.io API with given parameters.
+        Initializes the Free2GPT API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -38,26 +42,32 @@ class AIGameIO(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_prompt (str, optional): System prompt for AI-Game.io. 
-                                   Defaults to "You are a Helpful ai".
+            system_prompt (str, optional): System prompt for Free2GPT. 
+                                   Defaults to "You are a helpful AI assistant.".
         """
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = 'https://stream-chat-blmeirpipa-uc.a.run.app/streamChat'
+        self.api_endpoint = "https://chat10.free2gpt.xyz/api/generate"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
         self.system_prompt = system_prompt
         self.headers = {
-            'authority': 'stream-chat-blmeirpipa-uc.a.run.app',
-            'method': 'POST',
-            'path': '/streamChat',
-            'accept': 'text/event-stream',
-            'content-type': 'application/json',
-            'origin': 'https://www.ai-game.io',
-            'priority': 'u=1, i',
-            'referer': 'https://www.ai-game.io/',
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "content-type": "text/plain;charset=UTF-8",
+            "dnt": "1",
+            "origin": "https://chat10.free2gpt.xyz",
+            "referer": "https://chat10.free2gpt.xyz/",
+            "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0"
         }
 
         self.__available_optimizers = (
@@ -78,6 +88,10 @@ class AIGameIO(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+
+    def generate_signature(self, time: int, text: str, secret: str = ""):
+        message = f"{time}:{text}:{secret}"
+        return sha256(message.encode()).hexdigest()
 
     def ask(
         self,
@@ -113,9 +127,15 @@ class AIGameIO(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
+
+        # Generate timestamp
+        timestamp = int(time.time() * 1e3)
+
+        # Generate signature
+        signature = self.generate_signature(timestamp, conversation_prompt)
+
         payload = {
-            "history": [
+            "messages": [
                 {
                     "role": "system",
                     "content": self.system_prompt
@@ -124,31 +144,32 @@ class AIGameIO(Provider):
                     "role": "user",
                     "content": conversation_prompt
                 }
-            ]
+            ],
+            "time": timestamp,
+            "pass": None,
+            "sign": signature
         }
-        def for_stream():
-            response = self.session.post(
-                self.api_endpoint, headers=self.headers, data=json.dumps(payload), stream=True, timeout=self.timeout
-            )
-            if not response.ok:
-                raise Exception(
-                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                )
 
-            full_response = ''
-            for line in response.iter_lines(decode_unicode=True):
-                if line.startswith("data: "):
-                    try:
-                        event_data = json.loads(line[6:])
-                        if event_data['event'] == 'text-chunk':
-                            full_response += event_data['data']['text']
-                            yield event_data['data']['text'] if raw else dict(text=full_response)
-                    except json.JSONDecodeError:
-                        pass
-            self.last_response.update(dict(text=full_response))
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+        def for_stream():
+            try:
+                # Send the POST request with streaming enabled
+                with requests.post(self.api_endpoint, headers=self.headers, data=json.dumps(payload), stream=True) as response:
+                    response.raise_for_status()
+                    
+                    full_response = ""
+                    for chunk in response.iter_content(chunk_size=self.stream_chunk_size):
+                        if chunk:
+                            full_response += chunk.decode('utf-8')
+                            yield chunk.decode('utf-8') if raw else dict(text=full_response)
+
+                    self.last_response.update(dict(text=full_response))
+                    self.conversation.update_chat_history(
+                        prompt, self.get_message(self.last_response)
+                    )
+
+            except requests.exceptions.RequestException as e:
+                raise exceptions.FailedToGenerateResponseError(f"An error occurred: {e}") 
+        
         def for_non_stream():
             for _ in for_stream():
                 pass
@@ -201,13 +222,13 @@ class AIGameIO(Provider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
 
 
 if __name__ == "__main__":
     from rich import print
 
-    ai = AIGameIO()
-    response = ai.chat(input(">>> "))
+    ai = Free2GPT()
+    response = ai.chat('hi')
     for chunk in response:
         print(chunk, end="", flush=True)

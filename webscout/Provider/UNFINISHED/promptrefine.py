@@ -1,23 +1,17 @@
 import requests
-
-from random import randint
-
+import uuid
 import json
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
-from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
+from fake_useragent import UserAgent
 
-
-class NetFly(Provider):
+class PromptRefine(Provider):
     """
-    A class to interact with the NetFly API.
+    A class to interact with the PromptRefine API.
     """
-
-    AVAILABLE_MODELS = ["gpt-3.5-turbo"] 
 
     def __init__(
         self,
@@ -30,11 +24,11 @@ class NetFly(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "gpt-3.5-turbo",
-        system_prompt: str = "You are a helpful and friendly AI assistant.",
+        system_prompt: str = "You are a helpful AI assistant.",
+        model: str = "openai/gpt-4o",  # Default model
     ):
         """
-        Initializes the NetFly API with given parameters.
+        Initializes the PromptRefine API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -46,36 +40,22 @@ class NetFly(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): AI model to use for text generation. Defaults to "gpt-3.5-turbo".
-            system_prompt (str, optional): System prompt for NetFly. Defaults to the provided string.
+            system_prompt (str, optional): System prompt for PromptRefine. Defaults to "You are a helpful AI assistant.".
+            model (str, optional): Model to use for generation. Defaults to "openai/gpt-4o".
         """
-        if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Available model is: {self.AVAILABLE_MODELS[0]}")
-
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://free.netfly.top/api/openai/v1/chat/completions"
+        self.api_endpoint = 'https://www.promptrefine.com/api/completion'
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
-        self.model = model
         self.system_prompt = system_prompt
+        self.model = model
         self.headers = {
-            "accept": "application/json, text/event-stream",
-            "accept-encoding": "gzip, deflate, br, zstd",
-            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
-            "content-type": "application/json",
-            "dnt": "1",
-            "origin": "https://free.netfly.top",
-            "referer": "https://free.netfly.top/",
-            "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0"
+            'origin': 'https://www.promptrefine.com',
+            'referer': 'https://www.promptrefine.com/prompt/new',
+            'user-agent': UserAgent().random
         }
 
         self.__available_optimizers = (
@@ -105,6 +85,22 @@ class NetFly(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
+        """Chat with PromptRefine
+
+        Args:
+            prompt (str): Prompt to be send.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            raw (bool, optional): Stream back raw response as received. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+        Returns:
+            dict : {}
+        ```json
+        {
+            "text" : "How may I assist you today?"
+        }
+        ```
+        """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -119,54 +115,35 @@ class NetFly(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt},
+                {"role": "user", "content": conversation_prompt}
             ],
-            "stream": True,
+            "variables": {},
+            "parameters": {},
             "model": self.model,
-            "temperature": 0.5,
-            "presence_penalty": 0,
-            "frequency_penalty": 0,
-            "top_p": 1
+            "userId": str(uuid.uuid4()),
         }
 
         def for_stream():
-            response = self.session.post(
-                self.api_endpoint, json=payload, headers=self.headers, stream=True, timeout=self.timeout
-            )
-
+            response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
             if not response.ok:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Failed to generate response - ({response.status_code}, {response.reason})"
+                raise Exception(
+                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
 
             full_response = ""
             for line in response.iter_lines(decode_unicode=True):
                 if line:
-                    if line.startswith("data: "):
-                        json_data = line[6:]
-                        if json_data == "[DONE]":
-                            break
-                        try:
-                            data = json.loads(json_data)
-                            content = data["choices"][0]["delta"].get("content", "")
-                            full_response += content
-                            yield content if raw else dict(text=content)
-                        except json.decoder.JSONDecodeError:
-                            continue
-
+                    full_response += line  # No need to decode here
+                    yield full_response if raw else dict(text=full_response)
             self.last_response.update(dict(text=full_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
 
         def for_non_stream():
-            full_response = ""
-            for chunk in for_stream():
-                if isinstance(chunk, dict):
-                    full_response += chunk['text']
-                else:
-                    full_response += chunk
-            return dict(text=full_response)
+            for _ in for_stream():
+                pass
+            return self.last_response
 
         return for_stream() if stream else for_non_stream()
 
@@ -177,23 +154,22 @@ class NetFly(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                )
+        """Generate response `str`
+        Args:
+            prompt (str): Prompt to be send.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+        Returns:
+            str: Response generated
+        """
+        return self.get_message(
+            self.ask(
+                prompt,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
-
-        return for_stream() if stream else for_non_stream()
+        )
 
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response
@@ -209,8 +185,7 @@ class NetFly(Provider):
 
 if __name__ == '__main__':
     from rich import print
-    ai = NetFly()
-    response = ai.chat("tell me about india", stream=True)
+    ai = PromptRefine()
+    response = ai.chat(input(">>> "))
     for chunk in response:
         print(chunk, end="", flush=True)
-    print()  # Add a newline at the end

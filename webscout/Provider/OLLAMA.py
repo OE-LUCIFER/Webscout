@@ -166,7 +166,7 @@ class OLLAMA(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 if __name__ == "__main__":
-    ollama_provider = OLLAMA(model="qwen:0.5b")
+    ollama_provider = OLLAMA(model="qwen2:0.5b")
     response = ollama_provider.chat("hi", stream=True)
     for r in response:
         print(r, end="", flush=True)

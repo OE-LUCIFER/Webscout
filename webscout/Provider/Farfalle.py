@@ -222,6 +222,6 @@ if __name__ == "__main__":
 
     ai = Farfalle() 
     # Stream the response
-    response = ai.chat(input(">>> "))
+    response = ai.chat("who is pm of india")
     for chunk in response:
         print(chunk, end="", flush=True)
