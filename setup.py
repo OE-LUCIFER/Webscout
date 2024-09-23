@@ -59,6 +59,7 @@ setup(
         "emoji",
         "openai",
         "prompt-toolkit",
+        "fake_useragent",
     ],
     entry_points={
         "console_scripts": [

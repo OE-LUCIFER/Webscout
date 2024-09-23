@@ -3,6 +3,8 @@ import json
 import platform
 import subprocess
 import logging
+import threading
+import time
 import appdirs
 import datetime
 import re
@@ -11,7 +13,7 @@ import click
 from rich.markdown import Markdown
 from rich.console import Console
 import g4f
-from typing import Union
+from typing import List, Tuple, Union
 from typing import NoReturn
 import requests
 from pathlib import Path
@@ -1054,3 +1056,75 @@ class Audio:
         if not Path(path_to_audio_file).is_file():
             raise FileNotFoundError(f"File does not exist - '{path_to_audio_file}'")
         playsound(path_to_audio_file)
+class ProxyManager:
+    def __init__(self, refresh_interval=60):
+        self.proxies: List[Tuple[str, float]] = []  # Store proxy and its latency
+        self.last_refresh: float = 0
+        self.refresh_interval = refresh_interval
+        self.lock = threading.Lock()  # Add a lock for thread safety
+        # Start auto-refresh in a separate thread
+        threading.Thread(target=self.auto_refresh_proxies, daemon=True).start()
+
+    def fetch_proxies(self, max_proxies=50) -> List[str]:
+        try:
+            url = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all"
+            response = requests.get(url)
+            proxies = response.text.split('\r\n')[:max_proxies]  # Extract up to max_proxies
+            return [proxy for proxy in proxies if proxy]
+        except requests.RequestException as e:
+            print(f"Error fetching proxies: {e}")
+            return []
+
+    def test_proxy(self, proxy: str) -> Tuple[str, float] | None:
+        # Test both HTTP and HTTPS
+        for protocol in ['http', 'https']:
+            try:
+                start_time = time.time()
+                response = requests.get('http://httpbin.org/ip', proxies={protocol: f"{protocol}://{proxy}"}, timeout=5)
+                if response.status_code == 200:
+                    end_time = time.time()
+                    return proxy, end_time - start_time
+            except requests.RequestException:
+                pass
+        return None
+
+    def refresh_proxies(self) -> int:
+        new_proxies = self.fetch_proxies()
+        threads = []
+        working_proxies = []
+
+        # Use threading for faster proxy testing
+        for proxy in new_proxies:
+            thread = threading.Thread(target=self.test_proxy_and_append, args=(proxy, working_proxies))
+            threads.append(thread)
+            thread.start()
+
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join()
+
+        with self.lock:  # Acquire lock before updating proxies list
+            self.proxies = working_proxies
+            self.last_refresh = time.time()
+
+        # print(f"Refreshed proxies at {datetime.now()}. Total working proxies: {len(self.proxies)}")
+        return len(self.proxies)
+
+    def test_proxy_and_append(self, proxy: str, working_proxies: list):
+        result = self.test_proxy(proxy)
+        if result:
+            with self.lock:  # Acquire lock before appending to shared list
+                working_proxies.append(result)  # Append the proxy and its latency
+
+    def auto_refresh_proxies(self):
+        while True:
+            time.sleep(self.refresh_interval)
+            self.refresh_proxies()
+
+    def get_fastest_proxy(self) -> str | None:
+        with self.lock:  # Acquire lock before accessing proxies list
+            if self.proxies:
+                # Sort proxies by latency and return the fastest
+                self.proxies.sort(key=lambda x: x[1])  # Sort by latency
+                return self.proxies[0][0]  # Return the fastest proxy
+        return None

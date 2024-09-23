@@ -21,7 +21,7 @@ class DeepInfra(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "Qwen/Qwen2-72B-Instruct",
+        model: str = "Qwen/Qwen2.5-72B-Instruct",
         system_prompt: str = "You are a Helpful AI."
     ):
         """Instantiates DeepInfra

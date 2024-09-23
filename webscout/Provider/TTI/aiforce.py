@@ -1,7 +1,7 @@
 import requests
 import os
 import time
-from typing import List
+from typing import List, Optional
 from string import punctuation
 from random import choice
 from requests.exceptions import RequestException
@@ -9,16 +9,29 @@ from requests.exceptions import RequestException
 from webscout.AIbase import ImageProvider
 
 class AiForceimagger(ImageProvider):
-    """Image provider for pollinations.ai"""
+    """Image provider for Airforce API"""
+
+    AVAILABLE_MODELS = [
+        "flux",
+        "flux-realism",
+        "flux-anime",
+        "flux-3d",
+        "flux-disney",
+        "flux-pixel",
+        "flux-4o",
+        "any-dark"
+]
 
     def __init__(self, timeout: int = 60, proxies: dict = {}):
-        """Initializes the PollinationsAI class.
+        """Initializes the AiForceimagger class.
 
         Args:
+            api_token (str, optional): Your Airforce API token. If None, it will use the environment variable "AIRFORCE_API_TOKEN". 
+                                      Defaults to None.
             timeout (int, optional): HTTP request timeout in seconds. Defaults to 60.
             proxies (dict, optional): HTTP request proxies (socks). Defaults to {}.
         """
-        self.image_gen_endpoint = "https://api.airforce/v1/imagine2?prompt={prompt}"
+        self.api_endpoint = "https://api.airforce/imagine2"
         self.headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
@@ -33,18 +46,28 @@ class AiForceimagger(ImageProvider):
         self.image_extension: str = "png"
 
     def generate(
-        self, prompt: str, amount: int = 1, additives: bool = True,
-        max_retries: int = 3, retry_delay: int = 5
+        self, 
+        prompt: str, 
+        amount: int = 1, 
+        additives: bool = True,
+        model: str = "flux-realism", 
+        width: int = 768, 
+        height: int = 768, 
+        seed: Optional[int] = None,
+        max_retries: int = 3, 
+        retry_delay: int = 5
     ) -> List[bytes]:
         """Generate image from prompt
 
         Args:
             prompt (str): Image description.
-            amount (int): Total images to be generated. Defaults to 1.
+            amount (int, optional): Total images to be generated. Defaults to 1.
             additives (bool, optional): Try to make each prompt unique. Defaults to True.
+            model (str, optional): The model to use for image generation. 
+                                    Defaults to "flux". Available options: "flux", "flux-realism".
             width (int, optional): Width of the generated image. Defaults to 768.
             height (int, optional): Height of the generated image. Defaults to 768.
-            model (str, optional): The model to use for image generation. Defaults to "flux".
+            seed (int, optional): Seed for the random number generator. Defaults to None.
             max_retries (int, optional): Maximum number of retry attempts. Defaults to 3.
             retry_delay (int, optional): Delay between retries in seconds. Defaults to 5.
 
@@ -54,6 +77,7 @@ class AiForceimagger(ImageProvider):
         assert bool(prompt), "Prompt cannot be null"
         assert isinstance(amount, int), f"Amount should be an integer only not {type(amount)}"
         assert amount > 0, "Amount should be greater than 0"
+        assert model in self.AVAILABLE_MODELS, f"Model should be one of {self.AVAILABLE_MODELS}"
 
         ads = lambda: (
             ""
@@ -68,9 +92,9 @@ class AiForceimagger(ImageProvider):
         self.prompt = prompt
         response = []
         for _ in range(amount):
-            url = self.image_gen_endpoint.format(
-                prompt=prompt
-            )
+            url = f"{self.api_endpoint}?model={model}&prompt={prompt}&size={width}:{height}"
+            if seed:
+                url += f"&seed={seed}"
             
             for attempt in range(max_retries):
                 try:
@@ -127,11 +151,10 @@ class AiForceimagger(ImageProvider):
 
         return filenames
 
-
 if __name__ == "__main__":
     bot = AiForceimagger()
     try:
-        resp = bot.generate("AI-generated image - webscout", 1)
+        resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1, model="flux-realism")
         print(bot.save(resp))
     except Exception as e:
         print(f"An error occurred: {e}")

@@ -53,6 +53,12 @@ from .upstage import *
 from .Bing import *
 from .GPTWeb import *
 from .aigames import *
+from .llamatutor import *
+from .promptrefine import *
+from .twitterclone import *
+from .tutorai import *
+from .bixin import *
+from .ChatGPTES import *
 __all__ = [
     'Farfalle',
     'LLAMA', 
@@ -110,5 +116,12 @@ __all__ = [
     'Bing',
     'GPTWeb',
     'AIGameIO',
+    'LlamaTutor',
+    'PromptRefine',
+    'AIUncensored',
+    'TutorAI',
+    'Bixin',
+    'ChatGPTES',
+
 
 ]

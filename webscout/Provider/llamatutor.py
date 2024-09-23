@@ -1,15 +1,15 @@
-import cloudscraper
-from uuid import uuid4
+import requests
 import json
-import re
+
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
+from webscout import exceptions
 
-class Genspark(Provider):
+class LlamaTutor(Provider):
     """
-    A class to interact with the Genspark.ai API.
+    A class to interact with the LlamaTutor API (Together.ai).
     """
 
     def __init__(
@@ -23,9 +23,10 @@ class Genspark(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-    ) -> None:
+        system_prompt: str = "You are a helpful AI assistant.",
+    ):
         """
-        Instantiates Genspark
+        Initializes the LlamaTutor API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -37,41 +38,39 @@ class Genspark(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+            system_prompt (str, optional): System prompt for LlamaTutor. 
+                                   Defaults to "You are a helpful AI assistant.".
         """
-        self.session = cloudscraper.create_scraper()
+        self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.chat_endpoint = "https://www.genspark.ai/api/search/stream"
+        self.api_endpoint = "https://llamatutor.together.ai/api/getChat"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
+        self.system_prompt = system_prompt
         self.headers = {
+            "Content-Type": "application/json",
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
-            "Content-Type": "application/json",
             "DNT": "1",
-            "Origin": "https://www.genspark.ai",
-            "Priority": "u=1, i",
-            "Sec-CH-UA": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-            "Sec-CH-UA-Mobile": "?0",
-            "Sec-CH-UA-Platform": '"Windows"',
+            "Origin": "https://llamatutor.together.ai",
+            "Referer": "https://llamatutor.together.ai/",
+            "Sec-Ch-Ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
-        }
-        self.cookies = {
-            "i18n_redirected": "en-US",
-            "agree_terms": "0",
-            "session_id": uuid4().hex,
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0"
         }
 
-        self.__available_optimizers = [
+        self.__available_optimizers = (
             method
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
-        ]
+        )
         self.session.headers.update(self.headers)
         Conversation.intro = (
             AwesomePrompts().get_act(
@@ -94,8 +93,7 @@ class Genspark(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
-        """
-        Chat with AI
+        """Chat with LlamaTutor
 
         Args:
             prompt (str): Prompt to be send.
@@ -103,12 +101,11 @@ class Genspark(Provider):
             raw (bool, optional): Stream back raw response as received. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-
         Returns:
-            dict : {}
+           dict : {}
         ```json
         {
-            "text" : "How may I assist you today?"
+           "text" : "How may I assist you today?"
         }
         ```
         """
@@ -122,41 +119,45 @@ class Genspark(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-
-        self.url = f"https://www.genspark.ai/api/search/stream?query={conversation_prompt}"
-
-        payload = {}
+        
+        payload = {
+            "messages": [
+                {
+                    "role": "system",
+                    "content": self.system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": conversation_prompt
+                }
+            ]
+        }
 
         def for_stream():
-            response = self.session.post(
-                self.url,
-                headers=self.headers,
-                cookies=self.cookies,
-                json=payload,
-                stream=True,
-                timeout=self.timeout,
-            )
-            if not response.ok:
-                raise Exception(
-                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+            try:
+                response = requests.post(self.api_endpoint, headers=self.headers, data=json.dumps(payload), stream=True, timeout=self.timeout)
+                response.raise_for_status()
+                
+                # Stream and process the response line by line
+                full_response = ''
+                for line in response.iter_lines(decode_unicode=True):
+                    if line:
+                        decoded_line = line.decode('utf-8')
+                        if decoded_line.startswith("data: "):
+                            json_data = json.loads(decoded_line[6:])
+                            if "text" in json_data:
+                                full_response += json_data["text"]
+                                yield json_data["text"] if raw else dict(text=full_response)
+
+                self.last_response.update(dict(text=full_response))
+                self.conversation.update_chat_history(
+                    prompt, self.get_message(self.last_response)
                 )
 
-            full_response = ""
-            for line in response.iter_lines(decode_unicode=True):
-                if line:
-                    if line.startswith("data: "):
-                        try:
-                            data = json.loads(line[6:])
-                            if data.get("type") == "result_field" and data["field_name"] == "streaming_summary":
-                                full_response = data.get("field_value", "")
-                                yield full_response if raw else {"text": full_response}
-                        except json.JSONDecodeError as e:
-                            print(f"Error decoding JSON: {line} - {e}")
-
-            self.last_response.update({"text": full_response})
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+            except requests.exceptions.HTTPError as http_err:
+                raise exceptions.FailedToGenerateResponseError(f"HTTP error occurred: {http_err}")
+            except requests.exceptions.RequestException as err:
+                raise exceptions.FailedToGenerateResponseError(f"An error occurred: {err}")
 
         def for_non_stream():
             for _ in for_stream():
@@ -172,8 +173,7 @@ class Genspark(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        """
-        Generate response `str`
+        """Generate response `str`
         Args:
             prompt (str): Prompt to be send.
             stream (bool, optional): Flag for streaming response. Defaults to False.
@@ -190,14 +190,19 @@ class Genspark(Provider):
                 yield self.get_message(response)
 
         def for_non_stream():
-            response = self.ask(prompt, False, optimizer=optimizer, conversationally=conversationally)
-            return self.get_message(response)
+            return self.get_message(
+                self.ask(
+                    prompt,
+                    False,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
+                )
+            )
 
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
-        """
-        Retrieves message only from response
+        """Retrieves message only from response
 
         Args:
             response (dict): Response generated by `self.ask`
@@ -206,20 +211,12 @@ class Genspark(Provider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        text = response.get('text', '')
-        # Remove footnote references from the text
-        text = re.sub(r"\[.*?\]\(.*?\)", "", text)
-        try:
-            # Attempt to parse the text as JSON
-            text_json = json.loads(text)
-            return text_json.get('detailAnswer', text)
-        except json.JSONDecodeError:
-            # If text is not JSON, return it as is
-            return text
+        return response["text"]
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from rich import print
-    ai = Genspark()
+
+    ai = LlamaTutor()
     response = ai.chat(input(">>> "))
     for chunk in response:
         print(chunk, end="", flush=True)

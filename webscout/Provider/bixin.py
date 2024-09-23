@@ -1,16 +1,23 @@
 import requests
-import uuid
 import json
+import random
+from typing import Any, Dict, Optional, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
+from webscout import exceptions
 
-class Roboclinic(Provider):
+
+class Bixin(Provider):
     """
-    A class to interact with the Roboclinic.ai API.
+    A class to interact with the Bixin API.
     """
+
+    AVAILABLE_MODELS = [
+        'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-16k-0613', 'gpt-4-turbo', 'qwen-turbo'
+    ]
 
     def __init__(
         self,
@@ -23,10 +30,11 @@ class Roboclinic(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful AI assistant.",
+        model: str = 'gpt-4-turbo',  # Default model
+        system_prompt: str = "You are a helpful assistant.",
     ):
         """
-        Initializes the Roboclinic.ai API with given parameters.
+        Initializes the Bixin API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
@@ -38,30 +46,40 @@ class Roboclinic(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_prompt (str, optional): System prompt for Roboclinic.ai. 
-                                   Defaults to "You are a helpful AI assistant.".
+            model (str, optional): AI model to use. Defaults to "gpt-4-turbo".
+            system_prompt (str, optional): System prompt for Bixin.
+                                   Defaults to "You are a helpful assistant.".
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://api.roboclinic.ai/api"
-        self.stream_chunk_size = 64
+        self.api_endpoint = "https://chat.bixin123.com/api/chatgpt/chat-process"
+        self.stream_chunk_size = 1024
         self.timeout = timeout
         self.last_response = {}
+        self.model = model
         self.system_prompt = system_prompt
         self.headers = {
-            "accept": "*/*",
-            "content-type": "application/json",
-            "origin": "https://roboclinic.ai",
-            "referer": "https://roboclinic.ai/",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
-            "dnt": "1",
-            "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site"
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json",
+            "Fingerprint": self.generate_fingerprint(),
+            "Origin": "https://chat.bixin123.com",
+            "Pragma": "no-cache",
+            "Priority": "u=1, i",
+            "Referer": "https://chat.bixin123.com/chat",
+            "Sec-CH-UA": '"Chromium";v="127", "Not)A;Brand";v="99"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": '"Linux"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+            "X-Website-Domain": "chat.bixin123.com",
         }
 
         self.__available_optimizers = (
@@ -83,6 +101,12 @@ class Roboclinic(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
+    def generate_fingerprint(self) -> str:
+        """
+        Generates a random fingerprint number as a string.
+        """
+        return str(random.randint(100000000, 999999999))
+
     def ask(
         self,
         prompt: str,
@@ -91,7 +115,7 @@ class Roboclinic(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
-        """Chat with AI
+        """Chat with Bixin
 
         Args:
             prompt (str): Prompt to be send.
@@ -118,59 +142,53 @@ class Roboclinic(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-        conversation_id = str(uuid.uuid4()).replace('-', '')[:20]
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": conversation_prompt},
+        ]
 
-        # Step 1: Create a new chat
-        create_chat_url = f"{self.api_endpoint}/without-auth-chat/create-chat/"
-        create_chat_data = {
-            "conversation_id": conversation_id,
-            "name": "New chat"
+        data = {
+            "prompt": self.format_prompt(messages),
+            "options": {
+                "usingNetwork": False,
+                "file": ""
+            }
         }
-
-        response = self.session.post(create_chat_url, headers=self.headers, json=create_chat_data)
-        if response.status_code != 201:
-            raise Exception(
-                f"Failed to create chat: {response.status_code} - {response.text}"
-            )
-
-        # Step 2: Send a message to the chat
-        send_message_url = f"{self.api_endpoint}/without-auth-chat/send-message/"
-        send_message_data = {
-            "conversation_id": conversation_id,
-            "message": conversation_prompt,
-            "model": "gpt-4o",
-            "chat": None
-        }
-
-        response = self.session.post(send_message_url, headers=self.headers, json=send_message_data)
-        if response.status_code != 201:
-            raise Exception(
-                f"Failed to send message: {response.status_code} - {response.text}"
-            )
-
-        # Step 3: Retrieve and stream the GPT-4 response
-        get_gpt_answer_url = f"{self.api_endpoint}/chats/get-gpt-answer/{conversation_id}/"
 
         def for_stream():
-            with requests.get(get_gpt_answer_url, headers=self.headers, stream=True) as response:
-                if response.status_code != 200:
-                    raise Exception(
-                        f"Failed to retrieve GPT-4 response: {response.status_code} - {response.text}"
+            try:
+                with requests.post(self.api_endpoint, headers=self.headers, json=data, stream=True, timeout=self.timeout) as response:
+                    response.raise_for_status()
+
+                    # Initialize variable to keep track of the last printed text
+                    previous_text = ""
+
+                    full_response = ''
+                    for chunk in response.iter_content(chunk_size=self.stream_chunk_size, decode_unicode=True):
+                        if chunk:
+                            try:
+                                json_chunk = json.loads(chunk)
+                                text = json_chunk.get("text", "")
+
+                                # Determine the new text to print
+                                if text.startswith(previous_text):
+                                    new_text = text[len(previous_text):]
+                                    full_response += new_text
+                                    yield new_text if raw else dict(text=full_response)
+                                    previous_text = text
+                                else:
+                                    full_response += text
+                                    yield text if raw else dict(text=full_response)
+                                    previous_text = text
+                            except json.JSONDecodeError:
+                                # If the chunk isn't a complete JSON object, skip it
+                                continue
+                    self.last_response.update(dict(text=full_response))
+                    self.conversation.update_chat_history(
+                        prompt, self.get_message(self.last_response)
                     )
-                full_response = ""
-                for line in response.iter_lines(decode_unicode=True):
-                    if line:
-                        if line.startswith("data:"):
-                            start = line.find('"value": "') + 10
-                            end = line.find('"', start)
-                            if start != -1 and end != -1:
-                                chunk = line[start:end]
-                                full_response += chunk
-                                yield chunk if raw else dict(text=full_response)
-                self.last_response.update(dict(text=full_response))
-                self.conversation.update_chat_history(
-                    prompt, self.get_message(self.last_response)
-                )
+            except requests.RequestException as e:
+                raise exceptions.FailedToGenerateResponseError(f"\nRequest failed: {e}")
 
         def for_non_stream():
             for _ in for_stream():
@@ -178,6 +196,17 @@ class Roboclinic(Provider):
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
+
+    def format_prompt(self, messages: list) -> str:
+        """
+        Formats the list of messages into a single prompt string.
+        """
+        formatted_messages = []
+        for message in messages:
+            role = message.get("role", "")
+            content = message.get("content", "")
+            formatted_messages.append(f"{role}: {content}")
+        return "\n".join(formatted_messages)
 
     def chat(
         self,
@@ -224,13 +253,12 @@ class Roboclinic(Provider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
-
+        return response["text"]
 
 if __name__ == "__main__":
     from rich import print
 
-    ai = Roboclinic()
+    ai = Bixin()
     response = ai.chat(input(">>> "))
     for chunk in response:
         print(chunk, end="", flush=True)
