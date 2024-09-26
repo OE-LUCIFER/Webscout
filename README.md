@@ -13,6 +13,9 @@
 <div align="center">
   <a href="https://youtube.com/@devsdocode">&#10148; Devs Do Code's YouTube Channel</a>
 </div>
+<div align="center">
+  <a href="https://t.me/ANONYMOUS_56788">&#10148; Anonymous Coder's Telegram</a>
+</div>
 
 
 
