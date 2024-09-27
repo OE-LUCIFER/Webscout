@@ -126,7 +126,7 @@ __all__ = [
     'ChatGPTES',
     'AmigoChat',
     'PrefindAI',
-    'LearnFast',
+    # 'LearnFast',
 
 
 ]
