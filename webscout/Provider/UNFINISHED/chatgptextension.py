@@ -67,4 +67,4 @@ if response.status_code == 200:
                     pass  # Ignore lines that are not valid JSON
     print()  # Print a newline after all content is received
 else:
-    print(f"Request failed with status code: {response.status_code}")zz
+    print(f"Request failed with status code: {response.status_code}")

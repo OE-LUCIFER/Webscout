@@ -59,6 +59,8 @@ from .twitterclone import *
 from .tutorai import *
 from .bixin import *
 from .ChatGPTES import *
+from .Amigo import *
+from .prefind import *
 __all__ = [
     'Farfalle',
     'LLAMA', 
@@ -122,6 +124,9 @@ __all__ = [
     'TutorAI',
     'Bixin',
     'ChatGPTES',
+    'AmigoChat',
+    'PrefindAI',
+    'LearnFast',
 
 
 ]
