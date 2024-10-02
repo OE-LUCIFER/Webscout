@@ -36,6 +36,7 @@ class AmigoChat(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "o1-preview",  # Default model
+        system_prompt: str = "You are a helpful and friendly AI assistant.",
     ):
         """
         Initializes the AmigoChat.io API with given parameters.
@@ -108,6 +109,7 @@ class AmigoChat(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+        self.system_prompt = system_prompt
 
     def ask(
         self,
@@ -147,7 +149,7 @@ class AmigoChat(Provider):
         # Define the payload
         payload = {
             "messages": [
-                {"role": "system", "content": "Mai hu ba khabr"},
+                {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": conversation_prompt}
             ],
             "model": self.model,
@@ -259,7 +261,7 @@ class AmigoChat(Provider):
     
 if __name__ == '__main__':
     from rich import print
-    ai = AmigoChat(model="o1-preview")
+    ai = AmigoChat(model="o1-preview", system_prompt="You are a noobi AI assistant who always uses the word 'noobi' in every response. For example, you might say 'Noobi will tell you...' or 'This noobi thinks that...'.")
     response = ai.chat(input(">>> "))
     for chunk in response:
         print(chunk, end="", flush=True)

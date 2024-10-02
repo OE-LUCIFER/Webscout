@@ -138,7 +138,7 @@ class TurboSeek(Provider):
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
-
+            print(response.text)
             streaming_text = ""
             for value in response.iter_lines(
                 decode_unicode=True,

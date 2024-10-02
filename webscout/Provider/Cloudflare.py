@@ -194,7 +194,7 @@ class Cloudflare(Provider):
                     data = json.loads(line[6:])
                     content = data.get('response', '')
                     streaming_response += content
-                    yield content if raw else dict(text=streaming_response)
+                    yield content if raw else dict(text=content)
             self.last_response.update(dict(text=streaming_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -255,7 +255,7 @@ class Cloudflare(Provider):
         return response["text"]
 if __name__ == '__main__':
     from rich import print
-    ai = Cloudflare()
-    response = ai.chat("hi")
+    ai = Cloudflare(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

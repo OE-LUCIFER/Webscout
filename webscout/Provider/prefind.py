@@ -161,8 +161,8 @@ class PrefindAI(Provider):
                                    (self.model == "claude" and model == 'OPENROUTER_CLAUDE'):
                                     content = data['chunk']['content']
                                     if content:
-                                        streaming_text += content + ("\n" if stream else "")
-                                        resp = dict(text=streaming_text)
+                                        streaming_text += content #+ ("\n" if stream else "")
+                                        resp = dict(text=content)
                                         self.last_response.update(resp)
                                         yield resp if raw else resp
             self.conversation.update_chat_history(
@@ -227,6 +227,6 @@ class PrefindAI(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = PrefindAI(model="claude")
-    response = ai.chat(input(">>> "))
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

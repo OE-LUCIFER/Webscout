@@ -160,7 +160,7 @@ class Free2GPT(Provider):
                     for chunk in response.iter_content(chunk_size=self.stream_chunk_size):
                         if chunk:
                             full_response += chunk.decode('utf-8')
-                            yield chunk.decode('utf-8') if raw else dict(text=full_response)
+                            yield chunk.decode('utf-8') if raw else dict(text=chunk.decode('utf-8'))
 
                     self.last_response.update(dict(text=full_response))
                     self.conversation.update_chat_history(
@@ -228,7 +228,7 @@ class Free2GPT(Provider):
 if __name__ == "__main__":
     from rich import print
 
-    ai = Free2GPT()
-    response = ai.chat('hi')
+    ai = Free2GPT(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -146,7 +146,7 @@ class RUBIKSAI(Provider):
                             if "choices" in data and len(data["choices"]) > 0:
                                 content = data["choices"][0]["delta"].get("content", "")
                                 streaming_response += content
-                                yield content if raw else dict(text=streaming_response) 
+                                yield content if raw else dict(text=content) 
                         except json.decoder.JSONDecodeError:
                             continue
 
@@ -211,7 +211,7 @@ class RUBIKSAI(Provider):
 if __name__ == '__main__':
     
     from rich import print
-    ai = RUBIKSAI()
-    response = ai.chat("hi")
+    ai = RUBIKSAI(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

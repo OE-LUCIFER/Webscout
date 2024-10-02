@@ -115,7 +115,7 @@ class Chatify(Provider):
                     if len(parts) > 1:
                         content = parts[1].strip().strip('"')
                         streaming_text += content
-                        yield content if raw else dict(text=streaming_text)
+                        yield content if raw else dict(text=content)
             self.last_response.update(dict(text=streaming_text))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -169,7 +169,7 @@ class Chatify(Provider):
 if __name__ == "__main__":
     from rich import print
 
-    ai = Chatify() 
-    response = ai.chat("hi")
+    ai = Chatify(timeout=5000) 
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

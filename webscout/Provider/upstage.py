@@ -159,7 +159,7 @@ class Upstage(Provider):
                                 content = json_data['choices'][0]['delta'].get('content', '')
                                 if content:
                                     streaming_response += content
-                                    yield content if raw else dict(text=streaming_response)
+                                    yield content if raw else dict(text=content)
                             except json.JSONDecodeError:
                                 print(f"Error decoding JSON: {data}")
 
@@ -224,7 +224,7 @@ class Upstage(Provider):
         return response["text"]
 if __name__ == '__main__':
     from rich import print
-    ai = Upstage()
-    response = ai.chat("hi")
+    ai = Upstage(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

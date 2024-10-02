@@ -16,10 +16,9 @@ from .Phind import PhindSearch
 from .Phind import Phindv2
 from .ai4chat import *
 from .Gemini import GEMINI
-from .Poe import POE
 from .BasedGPT import BasedGPT
 from .Deepseek import DeepSeek
-from .Deepinfra import DeepInfra, VLM, AsyncDeepInfra
+from .Deepinfra import DeepInfra
 from .Farfalle import *
 from .cleeai import *
 from .OLLAMA import OLLAMA
@@ -61,6 +60,8 @@ from .bixin import *
 from .ChatGPTES import *
 from .Amigo import *
 from .prefind import *
+from .bagoodex import *
+from .ChatHub import *
 __all__ = [
     'Farfalle',
     'LLAMA', 
@@ -78,12 +79,9 @@ __all__ = [
     'PhindSearch', 
     'Felo',
     'GEMINI',
-    'POE',
     'BasedGPT',
     'DeepSeek',
     'DeepInfra',
-    'VLM',
-    'AsyncDeepInfra',
     'AI4Chat',
     'Phindv2',
     'OLLAMA',
@@ -126,6 +124,8 @@ __all__ = [
     'ChatGPTES',
     'AmigoChat',
     'PrefindAI',
+    'Bagoodex',
+    'ChatHub',
     # 'LearnFast',
 
 

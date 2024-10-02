@@ -1,7 +1,4 @@
 import requests
-import json
-import textwrap
-
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
@@ -169,7 +166,7 @@ class Elmo(Provider):
                         )
                         full_response += formatted_output
                         self.last_response.update(dict(text=full_response))
-                        yield formatted_output if raw else dict(text=full_response)
+                        yield formatted_output if raw else dict(text=formatted_output)
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -232,6 +229,6 @@ class Elmo(Provider):
 if __name__ == "__main__":
     from rich import print
     ai = Elmo()
-    response = ai.chat("hi")
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

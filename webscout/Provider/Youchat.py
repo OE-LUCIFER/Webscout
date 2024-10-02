@@ -160,11 +160,10 @@ class YouChat(Provider):
                         token = data.get('youChatToken', '')
                         if token:
                             streaming_text += token
-                            resp = dict(text=streaming_text)
-                            self.last_response.update(resp)
-                            yield value if raw else resp
+                            yield token if raw else dict(text=token)
                 except json.decoder.JSONDecodeError:
                     pass
+            self.last_response.update(dict(text=streaming_text))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -224,7 +223,7 @@ class YouChat(Provider):
         return response["text"]
 if __name__ == '__main__':
     from rich import print
-    ai = YouChat()
-    response = ai.chat("hi")
+    ai = YouChat(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -134,7 +134,7 @@ class PromptRefine(Provider):
             for line in response.iter_lines(decode_unicode=True):
                 if line:
                     full_response += line  # No need to decode here
-                    yield full_response if raw else dict(text=full_response)
+                    yield full_response if raw else dict(text=line)
             self.last_response.update(dict(text=full_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -185,7 +185,7 @@ class PromptRefine(Provider):
 
 if __name__ == '__main__':
     from rich import print
-    ai = PromptRefine()
-    response = ai.chat(input(">>> "))
+    ai = PromptRefine(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

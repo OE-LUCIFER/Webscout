@@ -167,7 +167,7 @@ class DiscordRocks(Provider):
                                 content = json_data['choices'][0]['delta'].get('content', '')
                                 if content:
                                     full_content += content
-                                    yield content if raw else dict(text=full_content)
+                                    yield content if raw else dict(text=content)
                             except json.JSONDecodeError:
                                 print(f'Error decoding JSON: {decoded_line}')
                             except KeyError:
@@ -247,7 +247,7 @@ class DiscordRocks(Provider):
 
 if __name__ == '__main__':
     from rich import print
-    ai = DiscordRocks()
-    response = ai.chat(input(">>> "))
+    ai = DiscordRocks(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -156,7 +156,7 @@ class DARKAI(Provider):
                                 if event.get("event") == "final-response":
                                     message = event['data'].get('message', '')
                                     streaming_response += message
-                                    yield message if raw else dict(text=streaming_response)
+                                    yield message if raw else dict(text=message)
                             except json.decoder.JSONDecodeError:
                                 continue
             self.last_response.update(dict(text=streaming_response))

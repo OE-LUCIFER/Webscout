@@ -149,45 +149,31 @@ class AIUncensored(Provider):
 
 
         def for_stream():
+            with requests.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
 
-            try:
-                with requests.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
+                if response.status_code == 200:
+                    full_content = ''
+                    for line in response.iter_lines():
+                        decoded_line = line.decode('utf-8').strip()
+                        if decoded_line:
 
-                    if response.status_code == 200:
-                        full_content = ''
-                        for line in response.iter_lines():
-                            decoded_line = line.decode('utf-8').strip()
-                            if decoded_line:
+                            if decoded_line == "data: [DONE]":
 
-                                if decoded_line == "data: [DONE]":
-
-                                    break
-                                if decoded_line.startswith("data: "):
-                                    data_str = decoded_line[len("data: "):]  
-                                    try:
-                                        data_json = json.loads(data_str)
-                                        content = data_json.get("data", "")
-                                        if content:
-                                            full_content += content
-
-                                            yield content if raw else {"text": full_content}
-                                    except json.JSONDecodeError:
-                                        if data_str != "[DONE]":
-                                            return None
-                    else:
-
-                        raise exceptions.FailedToGenerateResponseError(
-                            f"Request failed with status code: {response.status_code}"
-                        )
-                self.last_response = {"text": full_content}
-
+                                break
+                            if decoded_line.startswith("data: "):
+                                data_str = decoded_line[len("data: "):]  
+                                try:
+                                    data_json = json.loads(data_str)
+                                    content = data_json.get("data", "")
+                                    if content:
+                                        full_content += content
+                                        yield content if raw else dict(text=content)
+                                except json.JSONDecodeError:
+                                    raise Exception
+                self.last_response.update(dict(text=full_content))
                 self.conversation.update_chat_history(
                     prompt, self.get_message(self.last_response)
                 )
-            except requests.exceptions.RequestException as e:
-
-                raise exceptions.FailedToGenerateResponseError(f"An error occurred: {e}")
-
         def for_non_stream():
 
             for _ in for_stream():
@@ -252,9 +238,7 @@ class AIUncensored(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    ai = AIUncensored()
-    user_input = 'hi'
-    response = ai.chat(user_input)
+    ai = AIUncensored(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
-    print()  # For a newline after streaming completes

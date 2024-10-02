@@ -151,16 +151,14 @@ class DeepSeek(Provider):
                     f"Failed to generate response - ({response.status_code}, {response.reason})"
                 )
             streaming_response = ""
-            collected_messages = []
             for line in response.iter_lines():
                 if line:
                     json_line = json.loads(line.decode('utf-8').split('data: ')[1])
                     if 'choices' in json_line and len(json_line['choices']) > 0:
                         delta_content = json_line['choices'][0].get('delta', {}).get('content')
                         if delta_content:
-                            collected_messages.append(delta_content)
-                            streaming_response = ''.join(collected_messages) 
-                            yield delta_content if raw else dict(text=streaming_response)
+                            streaming_response += delta_content
+                            yield delta_content if raw else dict(text=delta_content)
             self.last_response.update(dict(text=streaming_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -222,7 +220,7 @@ class DeepSeek(Provider):
 
 if __name__ == '__main__':
     from rich import print
-    ai = DeepSeek(api_key="")
-    response = ai.chat("tell me about india")
+    ai = DeepSeek(api_key="", timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

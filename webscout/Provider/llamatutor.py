@@ -147,7 +147,7 @@ class LlamaTutor(Provider):
                             json_data = json.loads(decoded_line[6:])
                             if "text" in json_data:
                                 full_response += json_data["text"]
-                                yield json_data["text"] if raw else dict(text=full_response)
+                                yield json_data["text"] if raw else dict(text=json_data["text"])
 
                 self.last_response.update(dict(text=full_response))
                 self.conversation.update_chat_history(
@@ -217,6 +217,6 @@ if __name__ == "__main__":
     from rich import print
 
     ai = LlamaTutor()
-    response = ai.chat(input(">>> "))
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

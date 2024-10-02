@@ -195,5 +195,6 @@ class AI4Chat(Provider):
 if __name__ == "__main__":
     from rich import print
     ai = AI4Chat() 
-    response = ai.chat(input(">>> "))
-    print(response)
+    response = ai.chat("write me poem about AI", stream=True)
+    for chunk in response:
+        print(chunk, end="", flush=True)

@@ -41,7 +41,7 @@
 * **Text-to-Speech (TTS):** Convert text into natural-sounding speech using various TTS providers.
 * **WebAI:** Experience the power of terminal-based GPT and an open interpreter for code execution and more.
 * **Offline LLMs:** Utilize powerful language models offline with GGUF support.
-* **Extensive Provider Ecosystem:** Explore a vast collection of providers, including Poe, BasedGPT, DeepSeek, and many others.
+* **Extensive Provider Ecosystem:** Explore a vast collection of providers, including BasedGPT, DeepSeek, and many others.
 * **Local LLM Execution:** Run GGUF models locally with minimal configuration.
 * **Rawdog Scripting:** Execute Python scripts directly within your terminal using the `rawdog` feature.
 * **GGUF Conversion & Quantization:** Convert and quantize Hugging Face models to GGUF format.
@@ -1061,10 +1061,6 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-###  `Poe` - Chat with Poe
-
-Usage code is similar to other providers.
-
 ###  `BasedGPT` - Chat with GPT
 
 ```python
@@ -1143,27 +1139,6 @@ message = ai.get_message(response)
 print(message)
 ```
 
-###  `Deepinfra` - VLM
-
-```python
-from webscout.Provider import VLM 
-
-# Load your image
-image_path = r"C:\Users\koula\OneDrive\Desktop\Webscout\photo_2024-03-25_19-23-40.jpg"
-
-vlm_instance = VLM(model="llava-hf/llava-1.5-7b-hf", is_conversation=True, max_tokens=600, timeout=30, system_prompt="You are a Helpful AI.")
-image_base64 = vlm_instance.encode_image_to_base64(image_path)
-
-prompt = {
-    "content": "What is in this image?",
-    "image": image_base64
-}
-
-# Generate a response
-response = vlm_instance.chat(prompt)
-print(response)
-
-```
 
 ###  `GROQ`
 
@@ -1387,7 +1362,7 @@ else:
     print(f"Error: {function_call_data['error']}")
 ```
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, AIGameIO, LlamaTutor, PromptRefine, AIUncensored, TutorAI, Bixin, ChatGPTES
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, AIGameIO, LlamaTutor, PromptRefine, AIUncensored, TutorAI, Bixin, ChatGPTES, Bagoodex, ChatHub, AmigoChat
 
 Code is similar to other providers.
 

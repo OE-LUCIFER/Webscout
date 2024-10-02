@@ -142,7 +142,7 @@ class Cleeai(Provider):
             full_response = ''
             for chunk in response.iter_content(chunk_size=self.stream_chunk_size):
                 full_response += chunk.decode('utf-8')
-                yield chunk.decode('utf-8') if raw else dict(text=full_response)
+                yield chunk.decode('utf-8') if raw else dict(text=chunk.decode('utf-8'))
 
             self.last_response.update(dict(text=full_response))
             self.conversation.update_chat_history(
@@ -206,7 +206,7 @@ class Cleeai(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    ai = Cleeai()
-    response = ai.chat("hi")
+    ai = Cleeai(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

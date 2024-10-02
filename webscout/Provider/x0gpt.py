@@ -118,13 +118,13 @@ class X0GPT(Provider):
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
             streaming_response = ""
-            for line in response.iter_lines(decode_unicode=True, chunk_size=64):
+            for line in response.iter_lines(decode_unicode=True):
                 if line:
                     match = re.search(r'0:"(.*?)"', line)
                     if match:
                         content = match.group(1)
                         streaming_response += content
-                        yield content if raw else dict(text=streaming_response)
+                        yield content if raw else dict(text=content)
             self.last_response.update(dict(text=streaming_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -152,7 +152,7 @@ class X0GPT(Provider):
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
             ):
-                yield self.get_message(response).replace("\n", "\n\n")
+                yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
@@ -162,7 +162,7 @@ class X0GPT(Provider):
                     optimizer=optimizer,
                     conversationally=conversationally,
                 )
-            ).replace("\n", "\n\n")
+            )
 
         return for_stream() if stream else for_non_stream()
 
@@ -176,7 +176,7 @@ class X0GPT(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    ai = X0GPT()
-    response = ai.chat("hi")
+    ai = X0GPT(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

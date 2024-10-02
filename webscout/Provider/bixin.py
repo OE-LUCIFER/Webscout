@@ -174,7 +174,7 @@ class Bixin(Provider):
                                 if text.startswith(previous_text):
                                     new_text = text[len(previous_text):]
                                     full_response += new_text
-                                    yield new_text if raw else dict(text=full_response)
+                                    yield new_text if raw else dict(text=new_text)
                                     previous_text = text
                                 else:
                                     full_response += text
@@ -258,7 +258,7 @@ class Bixin(Provider):
 if __name__ == "__main__":
     from rich import print
 
-    ai = Bixin()
-    response = ai.chat(input(">>> "))
+    ai = Bixin(timeout=5000)
+    response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
