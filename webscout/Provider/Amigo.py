@@ -262,6 +262,6 @@ class AmigoChat(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = AmigoChat(model="o1-preview", system_prompt="You are a noobi AI assistant who always uses the word 'noobi' in every response. For example, you might say 'Noobi will tell you...' or 'This noobi thinks that...'.")
-    response = ai.chat(input(">>> "))
+    response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

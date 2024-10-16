@@ -25,6 +25,10 @@ class Julius(Provider):
         "GPT-4",
         "GPT-4o mini",
         "Command R+",
+        "o1-mini",
+        "o1-preview",
+
+
     ]
     def __init__(
         self,

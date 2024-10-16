@@ -1,0 +1,307 @@
+:root {
+    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    --text-color: #333;
+    --primary-color: #4a90e2;
+    --secondary-color: #e0e0e0;
+    --accent-color: #ff6b6b;
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --error-color: #f44336;
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --input-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --code-bg: #f4f4f4;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+.dark-mode {
+    --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    --text-color: #e0e0e0;
+    --primary-color: #4a90e2;
+    --secondary-color: #2a2a3c;
+    --accent-color: #e94560;
+    --card-bg: rgba(22, 33, 62, 0.9);
+    --input-bg: #0f3460;
+    --border-color: #2a2a3c;
+    --code-bg: #2a2a3c;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-color);
+    transition: var(--transition);
+    height: 100%;
+    overflow: hidden;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: var(--card-bg);
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+h1 {
+    font-size: 28px;
+    font-weight: 500;
+    background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -text-fill-color: transparent;
+}
+
+#conversationContainer {
+    flex: 1;
+    overflow-y: auto;
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+#conversationWindow {
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.message {
+    max-width: 80%;
+    margin: 10px 0;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 16px;
+    line-height: 1.4;
+    animation: fadeIn 0.3s ease-out;
+    box-shadow: var(--shadow);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user-message {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--primary-color), #6ab0ff);
+    color: #ffffff;
+}
+
+.bot-message {
+    align-self: flex-start;
+    background: linear-gradient(135deg, var(--secondary-color), #f0f0f0);
+    color: var(--text-color);
+}
+
+.message pre {
+    background-color: var(--code-bg);
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px 0;
+    position: relative;
+    overflow-x: auto;
+}
+
+.message pre code {
+    display: block;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.copy-code-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: var(--transition);
+}
+
+.copy-code-btn:hover {
+    opacity: 1;
+}
+
+#inputArea {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+#inputBox {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    resize: none;
+    transition: var(--transition);
+}
+
+#inputBox:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+}
+
+#buttonContainer {
+    display: flex;
+    margin-left: 10px;
+}
+
+.primary-button, .secondary-button {
+    padding: 0 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.primary-button {
+    background: linear-gradient(135deg, var(--primary-color), #6ab0ff);
+    color: #ffffff;
+}
+
+.secondary-button {
+    background: linear-gradient(135deg, var(--secondary-color), #f0f0f0);
+    color: var(--text-color);
+    margin-left: 10px;
+}
+
+.primary-button:hover, .secondary-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+#actionPanel {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.action-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--secondary-color), #f0f0f0);
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 10px;
+}
+
+.action-button:hover {
+    background: linear-gradient(135deg, var(--primary-color), #6ab0ff);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.icon-button:hover {
+    color: var(--primary-color);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-gradient);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #app {
+        padding: 10px;
+    }
+
+    .message {
+        max-width: 90%;
+    }
+
+    #actionPanel {
+        flex-direction: column;
+    }
+
+    .action-button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* Loading animation */
+@keyframes thinking {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    font-style: italic;
+}
+
+.loading::after {
+    content: '...';
+    animation: thinking 1.5s infinite;
+    width: 20px;
+    display: inline-block;
+    text-align: left;
+}
+
+/* Emoji styling */
+.emoji {
+    font-size: 1.2em;
+    margin-right: 8px;
+}

@@ -57,6 +57,13 @@ setup(
         "openai",
         "prompt-toolkit",
         "fake_useragent",
+        "primp",
+        "pyreqwest_impersonate",
+        "lxml_html_clean",
+        "gradio_client",
+        "psutil",
+        "colorlog",
+        "yaspin"
     ],
     entry_points={
         "console_scripts": [
@@ -74,6 +81,7 @@ setup(
             'colorama',
             'numpy',
             'huggingface_hub[cli]',
+            'unicorn',
         ],
     },
     license="HelpingAI",

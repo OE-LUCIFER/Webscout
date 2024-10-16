@@ -6,8 +6,7 @@ import random
 import re
 import string
 import sys
-from typing import Dict
-from typing import List
+from typing import Dict, List, Tuple
 
 import httpx
 from prompt_toolkit import prompt
@@ -48,6 +47,22 @@ def __get_input(
     )
 
 
+def load_cookies(cookie_path: str) -> Tuple[str, str]:
+    """Loads cookies from the provided JSON file."""
+    try:
+        with open(cookie_path, 'r') as file:
+            cookies = json.load(file)
+        session_auth1 = next(item['value'] for item in cookies if item['name'] == '__Secure-1PSID')
+        session_auth2 = next(item['value'] for item in cookies if item['name'] == '__Secure-1PSIDTS')
+        return session_auth1, session_auth2
+    except FileNotFoundError:
+        raise Exception(f"Cookie file not found at path: {cookie_path}")
+    except json.JSONDecodeError:
+        raise Exception("Invalid JSON format in the cookie file.")
+    except StopIteration:
+        raise Exception("Required cookies not found in the cookie file.")
+
+
 class Chatbot:
     """
     Synchronous wrapper for the AsyncChatbot class.
@@ -55,14 +70,14 @@ class Chatbot:
 
     def __init__(
         self,
-        secure_1psid: str,
-        secure_1psidts: str,
+        cookie_path: str,
         proxy: dict = None,
         timeout: int = 20,
     ):
         self.loop = asyncio.get_event_loop()
+        self.secure_1psid, self.secure_1psidts = load_cookies(cookie_path)
         self.async_chatbot = self.loop.run_until_complete(
-            AsyncChatbot.create(secure_1psid, secure_1psidts, proxy, timeout),
+            AsyncChatbot.create(self.secure_1psid, self.secure_1psidts, proxy, timeout),
         )
 
     def save_conversation(self, file_path: str, conversation_name: str):
@@ -309,22 +324,7 @@ class AsyncChatbot:
 
 if __name__ == "__main__":
     import sys
-    console = Console()
-    if os.getenv("Gemini_QUICK"):
-        Secure_1PSID = os.getenv("Gemini__Secure_1PSID")
-        secure_1psidts = os.getenv("Gemini__secure_1psidts")
-        if not (Secure_1PSID and secure_1psidts):
-            print(
-                "Gemini__Secure_1PSID or Gemini__secure_1psidts environment variable not set.",
-            )
-            sys.exit(1)
-        chatbot = Chatbot(Secure_1PSID, secure_1psidts)
-        # Join arguments into a single string
-        MESSAGE = " ".join(sys.argv[1:])
-        response = chatbot.ask(MESSAGE)
-        console.print(Markdown(response["content"]))
-        console.print(response["images"] if response.get("images") else "")
-        sys.exit(0)
+    sys.exit(0)
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--session",

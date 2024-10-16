@@ -1,86 +1,271 @@
-from ._version import __version__, __llama_cpp_version__
-
+import os
 import sys
+import struct
+from enum import IntEnum
+from io import BufferedReader
+from typing import Dict, Iterable, TextIO, Optional, Union, Tuple, Generator, Any
+
+from huggingface_hub import hf_hub_url, cached_download
 import numpy as np
 
-from typing   import Any, Iterable, TextIO
-from time     import strftime
-from enum     import IntEnum
-from struct   import unpack
-from colorama import Fore
-from huggingface_hub import hf_hub_url, cached_download
+from ._version import __version__, __llama_cpp_version__
 
-# color codes used in Thread.interact()
-RESET_ALL = Fore.RESET
-USER_STYLE = RESET_ALL + Fore.GREEN
-BOT_STYLE = RESET_ALL + Fore.CYAN
-DIM_STYLE = RESET_ALL + Fore.LIGHTBLACK_EX
-SPECIAL_STYLE = RESET_ALL + Fore.YELLOW
 
-# for typing of softmax parameter `z`
+# Color codes for Thread.interact()
+RESET_ALL = "\x1b[39m"
+USER_STYLE = "\x1b[39m\x1b[32m"
+BOT_STYLE = "\x1b[39m\x1b[36m"
+DIM_STYLE = "\x1b[39m\x1b[90m"
+SPECIAL_STYLE = "\x1b[39m\x1b[33m"
+ERROR_STYLE = "\x1b[39m\x1b[91m"
+
+NoneType: type = type(None)
+
+class TypeAssertionError(Exception):
+    """Raised when a type assertion fails."""
+    pass
+
 class _ArrayLike(Iterable):
+    """Represents any object that can be treated as a NumPy array."""
     pass
 
-# for typing of Model.stream_print() parameter `file`
 class _SupportsWriteAndFlush(TextIO):
+    """Represents a file-like object supporting write and flush operations."""
     pass
+
+class UnreachableException(Exception):
+    """Raised when code reaches a theoretically unreachable state."""
+
+    def __init__(self):
+        super().__init__(
+            "Unreachable code reached. Please report this issue at: "
+            "https://github.com/ddh0/easy-llama/issues/new/choose"
+        )
 
 def download_model(repo_id: str, filename: str, token: str, cache_dir: str = ".cache") -> str:
     """
-    Downloads a GGUF model file from Hugging Face Hub.
+    Downloads a GGUF model file from the Hugging Face Hub.
 
-    repo_id: The Hugging Face repository ID (e.g., 'facebook/bart-large-cnn').
-    filename: The name of the GGUF file within the repository (e.g., 'model.gguf').
-    token: The Hugging Face token for authentication.
-    cache_dir: The directory where the downloaded file should be stored.
-    
-    Returns: The path to the downloaded file.
+    Args:
+        repo_id (str): Hugging Face repository ID (e.g., 'facebook/bart-large-cnn').
+        filename (str): Name of the GGUF file (e.g., 'model.gguf').
+        token (str): Hugging Face API token.
+        cache_dir (str, optional): Local directory for storing downloaded files. 
+                                   Defaults to ".cache".
+
+    Returns:
+        str: Path to the downloaded file.
     """
     url = hf_hub_url(repo_id, filename)
-    filepath = cached_download(url, cache_dir=cache_dir, force_filename=filename, use_auth_token=token)
+    filepath = cached_download(
+        url, cache_dir=cache_dir, force_filename=filename, use_auth_token=token
+    )
     return filepath
 
-class GGUFReader:
+def softmax(z: _ArrayLike, T: Optional[float] = None, dtype: Optional[np.dtype] = None) -> np.ndarray:
     """
-    Peek at file header for GGUF metadata
+    Computes the softmax of an array-like input.
 
-    Raise ValueError if file is not GGUF or is outdated
+    Args:
+        z (_ArrayLike): Input array.
+        T (Optional[float], optional): Temperature parameter (scales input before softmax). 
+                                       Defaults to None.
+        dtype (Optional[np.dtype], optional): Data type for calculations. Defaults to None 
+                                             (highest precision available).
 
-    Credit to oobabooga for the parts of the code in this class
+    Returns:
+        np.ndarray: Softmax output.
+    """
+    if dtype is None:
+        _dtype = next(
+            (getattr(np, f'float{bits}') for bits in [128, 96, 80, 64, 32, 16] 
+             if hasattr(np, f'float{bits}')),
+            float  # Default to Python float if no NumPy float types are available
+        )
+    else:
+        assert_type(
+            dtype,
+            type,
+            'dtype',
+            'softmax',
+            'dtype should be a floating type, such as `np.float32`'
+        )
+        _dtype = dtype
 
-    Format spec: https://github.com/philpax/ggml/blob/gguf-spec/docs/gguf.md
+    _z = np.asarray(z, dtype=_dtype)
+    if T is None or T == 1.0:
+        exp_z = np.exp(_z - np.max(_z), dtype=_dtype)
+        return exp_z / np.sum(exp_z, axis=0, dtype=_dtype)
+
+    assert_type(T, float, "temperature value 'T'", 'softmax')
+
+    if T == 0.0:
+        result = np.zeros_like(_z, dtype=_dtype)
+        result[np.argmax(_z)] = 1.0
+        return result
+
+    exp_z = np.exp(np.divide(_z, T, dtype=_dtype), dtype=_dtype)
+    return exp_z / np.sum(exp_z, axis=0, dtype=_dtype)
+
+def cls() -> None:
+    """Clears the terminal screen."""
+    os.system('cls' if os.name == 'nt' else 'clear')
+    if os.name != 'nt':
+        print("\033c\033[3J", end="", flush=True)
+
+def truncate(text: str, max_length: int = 72) -> str:
+    """Truncates a string to a given length and adds ellipsis if truncated."""
+    return text if len(text) <= max_length else f"{text[:max_length - 3]}..."
+
+def print_version_info(file: _SupportsWriteAndFlush) -> None:
+    """Prints easy-llama and llama_cpp package versions."""
+    print(f"webscout.Local package version: {__version__}", file=file)
+    print(f"llama_cpp package version: {__llama_cpp_version__}", file=file)
+
+def print_verbose(text: str) -> None:
+    """Prints verbose messages to stderr."""
+    print("webscout.Local:", text, file=sys.stderr, flush=True)
+
+def print_info(text: str) -> None:
+    """Prints informational messages to stderr."""
+    print("webscout.Local: info:", text, file=sys.stderr, flush=True)
+
+def print_warning(text: str) -> None:
+    """Prints warning messages to stderr."""
+    print("webscout.Local: WARNING:", text, file=sys.stderr, flush=True)
+
+def assert_type(
+    obj: object,
+    expected_type: Union[type, Tuple[type, ...]],
+    obj_name: str,
+    code_location: str,
+    hint: Optional[str] = None
+) -> None:
+    """
+    Asserts that an object is of an expected type.
+
+    Args:
+        obj (object): The object to check.
+        expected_type (Union[type, Tuple[type, ...]]): The expected type(s).
+        obj_name (str): Name of the object in the code.
+        code_location (str): Location of the assertion in the code.
+        hint (Optional[str], optional): Additional hint for the error message.
+                                        Defaults to None.
+
+    Raises:
+        TypeAssertionError: If the object is not of the expected type.
+    """
+    if isinstance(obj, expected_type):
+        return
+
+    if isinstance(expected_type, tuple):
+        expected_types_str = ", ".join(t.__name__ for t in expected_type)
+        error_msg = (
+            f"{code_location}: {obj_name} should be one of "
+            f"{expected_types_str}, not {type(obj).__name__}"
+        )
+    else:
+        error_msg = (
+            f"{code_location}: {obj_name} should be an instance of "
+            f"{expected_type.__name__}, not {type(obj).__name__}"
+        )
+
+    if hint:
+        error_msg += f" ({hint})"
+
+    raise TypeAssertionError(error_msg)
+
+class InferenceLock:
+    """
+    Context manager to prevent concurrent model inferences.
+
+    This is primarily useful in asynchronous or multi-threaded contexts where
+    concurrent calls to the model can lead to issues.
     """
 
-    class GGUFValueType(IntEnum):
-        UINT8 = 0
-        INT8 = 1
-        UINT16 = 2
-        INT16 = 3
-        UINT32 = 4
-        INT32 = 5
-        FLOAT32 = 6
-        BOOL = 7
-        STRING = 8
-        ARRAY = 9
-        UINT64 = 10
-        INT64 = 11
-        FLOAT64 = 12
+    class LockFailure(Exception):
+        """Raised when acquiring or releasing the lock fails."""
+        pass
 
-    _simple_value_packing = {
-        GGUFValueType.UINT8: "<B",
-        GGUFValueType.INT8: "<b",
-        GGUFValueType.UINT16: "<H",
-        GGUFValueType.INT16: "<h",
-        GGUFValueType.UINT32: "<I",
-        GGUFValueType.INT32: "<i",
-        GGUFValueType.FLOAT32: "<f",
-        GGUFValueType.UINT64: "<Q",
-        GGUFValueType.INT64: "<q",
-        GGUFValueType.FLOAT64: "<d",
+    def __init__(self):
+        """Initializes the InferenceLock."""
+        self.locked = False
+
+    def __enter__(self):
+        """Acquires the lock when entering the context."""
+        return self.acquire()
+
+    def __exit__(self, *exc_info):
+        """Releases the lock when exiting the context."""
+        self.release()
+
+    async def __aenter__(self):
+        """Acquires the lock asynchronously."""
+        return self.__enter__()
+
+    async def __aexit__(self, *exc_info):
+        """Releases the lock asynchronously."""
+        self.__exit__()
+
+    def acquire(self):
+        """Acquires the lock."""
+        if self.locked:
+            raise self.LockFailure("InferenceLock is already locked.")
+        self.locked = True
+        return self
+
+    def release(self):
+        """Releases the lock."""
+        if not self.locked:
+            raise self.LockFailure("InferenceLock is not acquired.")
+        self.locked = False
+
+
+class GGUFValueType(IntEnum):
+    """
+    Represents data types supported by the GGUF format.
+
+    This enum should be kept consistent with the GGUF specification.
+    """
+    UINT8 = 0
+    INT8 = 1
+    UINT16 = 2
+    INT16 = 3
+    UINT32 = 4
+    INT32 = 5
+    FLOAT32 = 6
+    BOOL = 7
+    STRING = 8
+    ARRAY = 9
+    UINT64 = 10
+    INT64 = 11
+    FLOAT64 = 12
+
+
+class QuickGGUFReader:
+    """
+    Provides methods for quickly reading metadata from GGUF files.
+
+    Supports GGUF versions 2 and 3. Assumes little or big endian
+    architecture.
+    """
+
+    SUPPORTED_GGUF_VERSIONS = [2, 3]
+    VALUE_PACKING = {
+        GGUFValueType.UINT8: "=B",
+        GGUFValueType.INT8: "=b",
+        GGUFValueType.UINT16: "=H",
+        GGUFValueType.INT16: "=h",
+        GGUFValueType.UINT32: "=I",
+        GGUFValueType.INT32: "=i",
+        GGUFValueType.FLOAT32: "=f",
+        GGUFValueType.UINT64: "=Q",
+        GGUFValueType.INT64: "=q",
+        GGUFValueType.FLOAT64: "=d",
         GGUFValueType.BOOL: "?",
     }
 
-    value_type_info = {
+    VALUE_LENGTHS = {
         GGUFValueType.UINT8: 1,
         GGUFValueType.INT8: 1,
         GGUFValueType.UINT16: 2,
@@ -94,93 +279,85 @@ class GGUFReader:
         GGUFValueType.BOOL: 1,
     }
 
-    def get_single(self, value_type, file) -> Any:
-        if value_type == GGUFReader.GGUFValueType.STRING:
-            value_length = unpack("<Q", file.read(8))[0]
-            value = file.read(value_length)
-            value = value.decode("utf-8")
-        else:
-            type_str = GGUFReader._simple_value_packing.get(value_type)
-            bytes_length = GGUFReader.value_type_info.get(value_type)
-            value = unpack(type_str, file.read(bytes_length))[0]
+    @staticmethod
+    def unpack(value_type: GGUFValueType, file: BufferedReader) -> Any:
+        """Unpacks a single value from the file based on its type."""
+        return struct.unpack(
+            QuickGGUFReader.VALUE_PACKING.get(value_type),
+            file.read(QuickGGUFReader.VALUE_LENGTHS.get(value_type))
+        )[0]
 
-        return value
+    @staticmethod
+    def get_single(
+        value_type: GGUFValueType,
+        file: BufferedReader
+    ) -> Union[str, int, float, bool]:
+        """Reads a single value from the file."""
+        if value_type == GGUFValueType.STRING:
+            string_length = QuickGGUFReader.unpack(GGUFValueType.UINT64, file)
+            return file.read(string_length).decode("utf-8")
+        return QuickGGUFReader.unpack(value_type, file)
 
-    def load_metadata(self, fname) -> dict:
-        metadata = {}
-        with open(fname, "rb") as file:
-            GGUF_MAGIC = file.read(4)
+    @staticmethod
+    def load_metadata(
+        fn: os.PathLike[str] | str
+    ) -> Dict[str, Union[str, int, float, bool, list]]:
+        """
+        Loads metadata from a GGUF file.
 
-            if GGUF_MAGIC != b"GGUF":
+        Args:
+            fn (Union[os.PathLike[str], str]): Path to the GGUF file.
+
+        Returns:
+            Dict[str, Union[str, int, float, bool, list]]: A dictionary
+                containing the metadata.
+        """
+
+        metadata: Dict[str, Union[str, int, float, bool, list]] = {}
+        with open(fn, "rb") as file:
+            magic = file.read(4)
+            if magic != b'GGUF':
                 raise ValueError(
-                    "your model file is not a valid GGUF file "
-                    f"(magic number mismatch, got {GGUF_MAGIC}, "
+                    f"Invalid GGUF file (magic number mismatch: got {magic}, "
                     "expected b'GGUF')"
                 )
 
-            GGUF_VERSION = unpack("<I", file.read(4))[0]
-
-            if GGUF_VERSION == 1:
+            version = QuickGGUFReader.unpack(GGUFValueType.UINT32, file=file)
+            if version not in QuickGGUFReader.SUPPORTED_GGUF_VERSIONS:
                 raise ValueError(
-                    "your model file reports GGUF version 1, "
-                    "but only versions 2 and above are supported. "
-                    "re-convert your model or download a newer version"
+                    f"Unsupported GGUF version: {version}. Supported versions are: "
+                    f"{QuickGGUFReader.SUPPORTED_GGUF_VERSIONS}"
                 )
 
-            # ti_data_count = struct.unpack("<Q", file.read(8))[0]
-            file.read(8)
-            kv_data_count = unpack("<Q", file.read(8))[0]
+            QuickGGUFReader.unpack(GGUFValueType.UINT64, file=file)  # tensor_count, not needed
+            metadata_kv_count = QuickGGUFReader.unpack(
+                GGUFValueType.UINT64 if version == 3 else GGUFValueType.UINT32, file
+            )
 
-            for _ in range(kv_data_count):
-                key_length = unpack("<Q", file.read(8))[0]
-                key = file.read(key_length)
+            for _ in range(metadata_kv_count):
+                if version == 3:
+                    key_length = QuickGGUFReader.unpack(GGUFValueType.UINT64, file=file)
+                elif version == 2:
+                    key_length = 0
+                    while key_length == 0:
+                        key_length = QuickGGUFReader.unpack(GGUFValueType.UINT32, file=file)
+                    file.read(4)  # 4 byte offset for GGUFv2
 
-                value_type = GGUFReader.GGUFValueType(
-                    unpack("<I", file.read(4))[0]
-                )
-                if value_type == GGUFReader.GGUFValueType.ARRAY:
-                    ltype = GGUFReader.GGUFValueType(
-                        unpack("<I", file.read(4))[0]
+                key = file.read(key_length).decode()
+                value_type = GGUFValueType(QuickGGUFReader.unpack(GGUFValueType.UINT32, file))
+
+                if value_type == GGUFValueType.ARRAY:
+                    array_value_type = GGUFValueType(QuickGGUFReader.unpack(GGUFValueType.UINT32, file))
+                    array_length = QuickGGUFReader.unpack(
+                        GGUFValueType.UINT64 if version == 3 else GGUFValueType.UINT32, file
                     )
-                    length = unpack("<Q", file.read(8))[0]
-                    arr = [
-                        GGUFReader.get_single(
-                            self,
-                            ltype,
-                            file
-                        ) for _ in range(length)
+                    if version == 2:
+                        file.read(4)  # 4 byte offset for GGUFv2
+
+                    metadata[key] = [
+                        QuickGGUFReader.get_single(array_value_type, file) for _ in range(array_length)
                     ]
-                    metadata[key.decode()] = arr
                 else:
-                    value = GGUFReader.get_single(self, value_type, file)
-                    metadata[key.decode()] = value
+                    metadata[key] = QuickGGUFReader.get_single(value_type, file)
 
         return metadata
-
-def softmax(z: _ArrayLike) -> np.ndarray:
-    """
-    Compute softmax over values in z, where z is array-like
-    """
-    e_z = np.exp(z - np.max(z))
-    return e_z / e_z.sum()
-
-def cls() -> None:
-    """Clear the terminal"""
-    print("\033c\033[3J", end='', flush=True)
-
-# no longer used in this module, but left for others to use
-def get_timestamp_prefix_str() -> str:
-    # helpful: https://strftime.net
-    return strftime("[%Y, %b %e, %a %l:%M %p] ")
-
-def truncate(text: str) -> str:
-    return text if len(text) < 63 else f"{text[:60]}..."
-
-def print_verbose(text: str) -> None:
-    print("webscout.Local: verbose:", text, file=sys.stderr, flush=True)
-
-def print_info(text: str) -> None:
-    print("webscout.Local: info:", text, file=sys.stderr, flush=True)
-
-def print_warning(text: str) -> None:
-    print("webscout.Local: warning:", text, file=sys.stderr, flush=True)

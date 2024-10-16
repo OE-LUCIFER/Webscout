@@ -11,7 +11,7 @@ class NexraImager(ImageProvider):
     """Image provider for Nexra API"""
 
     AVAILABLE_MODELS = {
-        "standard": ["emi", "stablediffusion-1.5", "stablediffusion-2.1", "sdxl-lora", "dalle", "dalle2", "dalle-mini"],
+        "standard": ["emi", "stablediffusion-1.5", "stablediffusion-2.1", "sdxl-lora", "dalle", "dalle2", "dalle-mini", "flux", "midjourney"],
         "prodia": [
             "dreamshaperXL10_alpha2.safetensors [c8afe2ef]",
             "dynavisionXL_0411.safetensors [c39cc051]",
@@ -37,7 +37,7 @@ class NexraImager(ImageProvider):
         self.image_extension: str = "png"
 
     def generate(
-        self, prompt: str, model: str = "emi", amount: int = 1,
+        self, prompt: str, model: str = "flux", amount: int = 1,
         max_retries: int = 3, retry_delay: int = 5,
         additional_params: Optional[dict] = None
     ) -> List[bytes]:
@@ -116,5 +116,5 @@ class NexraImager(ImageProvider):
 
 if __name__ == "__main__":
     bot = NexraImager()
-    resp_standard = bot.generate("AI-generated image - webscout", "emi", 1)
+    resp_standard = bot.generate("AI-generated image - webscout", "midjourney", 1)
     print(bot.save(resp_standard))

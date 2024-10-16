@@ -16,6 +16,9 @@ except ImportError:
 
 REGEX_STRIP_TAGS = re.compile("<.*?>")
 
+def _expand_proxy_tb_alias(proxy: str | None) -> str | None:
+    """Expand "tb" to a full proxy URL if applicable."""
+    return "socks5://127.0.0.1:9150" if proxy == "tb" else proxy
 
 def json_dumps(obj: Any) -> str:
     try:

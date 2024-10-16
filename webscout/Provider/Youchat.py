@@ -224,6 +224,6 @@ class YouChat(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = YouChat(timeout=5000)
-    response = ai.chat("write a poem about AI", stream=True)
+    response = ai.chat("Who is Abhay Koul in AI?", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

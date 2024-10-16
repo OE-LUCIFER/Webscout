@@ -2,14 +2,14 @@ import json
 import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict
-from webscout import WEBS, GEMINIAPI
+from webscout import GoogleS, GEMINIAPI
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class WebSearchAgent:
     def __init__(self):
-        self.webs = WEBS()
+        self.webs = GoogleS()
         self.ai = GEMINIAPI(is_conversation=False, api_key='AIzaSyAYlT5-V0MXZwaLYpXCF1Z-Yvy_tx1jylA')
 
     def generate_search_queries(self, information: str, num_queries: int = 10) -> List[str]:
@@ -62,16 +62,16 @@ Now, generate the optimal search queries: """
         else:
             return [information]
 
-    def search(self, information: str, region: str = 'wt-wt', safesearch: str = 'off',
-               timelimit: str = 'y', max_results: int = 10) -> List[Dict]:
+    def search(self, information: str, region: str = 'wt-wt', safe: str = 'off',
+               max_results: int = 10) -> List[Dict]:
         search_queries = self.generate_search_queries(information, num_queries=10)
         all_results = []
 
         for query in search_queries:
             results = []
             with self.webs as webs:
-                for result in webs.text(query, region=region, safesearch=safesearch,
-                                       timelimit=timelimit, max_results=max_results):
+                for result in webs.search(query, region=region, safe=safe,
+                                       max_results=max_results):
                     results.append(result)
             all_results.extend(results)
 
@@ -113,7 +113,7 @@ Now, generate the optimal search queries: """
 class OnlineSearcher:
     def __init__(self):
         self.agent = WebSearchAgent()
-        self.ai = GEMINIAPI(is_conversation=False, api_key='AIzaSyAYlT5-V0MXZwaLYpXCF1Z-Yvy_tx1jylA')
+        self.ai = GEMINIAPI(is_conversation=False, api_key='GOOGLE GEMINI API')
 
     def answer_question(self, question: str) -> None:
         search_results = self.agent.search(question, max_results=10)
@@ -148,7 +148,7 @@ Instructions:
 Your response should be informative, accurate, and properly sourced when possible. Begin your answer now: """
 
         for chunk in self.ai.chat(prompt, stream=True):
-            print(chunk, end='', flush=True)  # Print each chunk in real-time
+            print(chunk, end='', flush=True)
 
 
 
@@ -161,10 +161,22 @@ if __name__ == "__main__":
             if question.lower() == 'quit':
                 break
             print("=" * 50)
-            assistant.answer_question(question)  # The answer is printed in real-time
+            assistant.answer_question(question) 
             print("=" * 50)
         except KeyboardInterrupt:
             print("\nExiting.")
             break
         except Exception as e:
             print(f"An error occurred: {e}")
+
+"""
+def format_prompt(messages: Messages, add_special_tokens=False) -> str:
+
+    if not add_special_tokens and len(messages) <= 1:
+        return messages[0]["content"]
+    formatted = "\n".join([
+        f'{message["role"].capitalize()}: {message["content"]}'
+        for message in messages
+    ])
+    return f"{formatted}\nAssistant:
+"""

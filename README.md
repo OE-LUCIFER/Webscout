@@ -804,7 +804,7 @@ print(result)
 ___
 </details>
 
-### 🖼️ Text to Images - DeepInfraImager, PollinationsAI, BlackboxAIImager, AiForceimagger, NexraImager, HFimager, ArtbitImager
+### 🖼️ Text to Images - DeepInfraImager, PollinationsAI, BlackboxAIImager, AiForceimager, NexraImager, HFimager, ArtbitImager, NinjaImager, WebSimAI, AmigoImager
 
 **Every TTI provider has the same usage code, you just need to change the import.**
 
@@ -833,7 +833,7 @@ voicepods.play_audio(audio_file)
 
 ```python
 from webscout import WEBS as w
-R = w().chat("Who are you", model='gpt-4o-mini') # GPT-3.5 Turbo, mixtral-8x7b, llama-3-70b, claude-3-haiku, gpt-4o-mini
+R = w().chat("Who are you", model='gpt-4o-mini') # mixtral-8x7b, llama-3.1-70b, claude-3-haiku, gpt-4o-mini
 print(R)
 ```
 
@@ -1252,117 +1252,120 @@ print(a.chat("HelpingAI-9B"))
 ```python
 import json
 import logging
-from webscout import LLAMA3, WEBS
+from webscout import Julius, WEBS
 from webscout.Agents.functioncall import FunctionCallingAgent
-
-# Define tools that the agent can use
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "UserDetail",
-            "parameters": {
-                "type": "object",
-                "title": "UserDetail",
-                "properties": {
-                    "name": {
-                        "title": "Name",
-                        "type": "string"
-                    },
-                    "age": {
-                        "title": "Age",
-                        "type": "integer"
-                    }
-                },
-                "required": ["name", "age"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "web_search",
-            "description": "Search query on google",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "web search query"
-                    }
-                },
-                "required": ["query"]
-            }
-        }
-    },
-    {  # New general AI tool
-        "type": "function",
-        "function": {
-            "name": "general_ai",
-            "description": "Use general AI knowledge to answer the question",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "question": {
-                        "type": "string",
-                        "description": "The question to answer"
-                    }
-                },
-                "required": ["question"]
-            }
-        }
-    }
-]
-
-# Initialize the FunctionCallingAgent with the specified tools
-agent = FunctionCallingAgent(tools=tools)
-llama = LLAMA3()
 from rich import print
-# Input message from the user
-user = input(">>> ")
-message = user
-function_call_data = agent.function_call_handler(message)
-print(f"Function Call Data: {function_call_data}")
 
-# Check for errors in the function call data
-if "error" not in function_call_data:
-    function_name = function_call_data.get("tool_name")  # Use 'tool_name' instead of 'name'
-    if function_name == "web_search":
-        arguments = function_call_data.get("tool_input", {})  # Get tool input arguments
+class FunctionExecutor:
+    def __init__(self, llama):
+        self.llama = llama
+
+    def execute_web_search(self, arguments):
         query = arguments.get("query")
-        if query:
-            with WEBS() as webs:
-                search_results = webs.text(query, max_results=5) 
-            prompt = (
-                f"Based on the following search results:\n\n{search_results}\n\n"
-                f"Question: {user}\n\n"
-                "Please provide a comprehensive answer to the question based on the search results above. "
-                "Include relevant webpage URLs in your answer when appropriate. "
-                "If the search results don't contain relevant information, please state that and provide the best answer you can based on your general knowledge."
-            )
-            response = llama.chat(prompt)
-            for c in response:
-                print(c, end="", flush=True)
+        if not query:
+            return "Please provide a search query."
+        with WEBS() as webs:
+            search_results = webs.text(query, max_results=5)
+        prompt = (
+            f"Based on the following search results:\n\n{search_results}\n\n"
+            f"Question: {query}\n\n"
+            "Please provide a comprehensive answer to the question based on the search results above. "
+            "Include relevant webpage URLs in your answer when appropriate. "
+            "If the search results don't contain relevant information, please state that and provide the best answer you can based on your general knowledge."
+        )
+        return self.llama.chat(prompt)
 
-        else:
-            print("Please provide a search query.")
-    elif function_name == "general_ai":  # Handle general AI tool
-        arguments = function_call_data.get("tool_input", {})
+    def execute_general_ai(self, arguments):
         question = arguments.get("question")
-        if question:
-            response = llama.chat(question)  # Use LLM directly
-            for c in response:
-                print(c, end="", flush=True)
+        if not question:
+            return "Please provide a question."
+        return self.llama.chat(question)
+
+    def execute_UserDetail(self, arguments):
+        name = arguments.get("name")
+        age = arguments.get("age")
+        return f"User details - Name: {name}, Age: {age}"
+
+def main():
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "UserDetail",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"title": "Name", "type": "string"},
+                        "age": {"title": "Age", "type": "integer"}
+                    },
+                    "required": ["name", "age"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "web_search",
+                "description": "Search the web for information using Google Search.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query to be executed."
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "general_ai",
+                "description": "Use general AI knowledge to answer the question",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "question": {"type": "string", "description": "The question to answer"}
+                    },
+                    "required": ["question"]
+                }
+            }
+        }
+    ]
+
+    agent = FunctionCallingAgent(tools=tools)
+    llama = Julius()
+    function_executor = FunctionExecutor(llama)
+
+    user_input = input(">>> ")
+    function_call_data = agent.function_call_handler(user_input)
+    print(f"Function Call Data: {function_call_data}")
+
+    try:
+        if "error" not in function_call_data:
+            function_name = function_call_data.get("tool_name")
+            arguments = function_call_data.get("tool_input", {})
+
+            execute_function = getattr(function_executor, f"execute_{function_name}", None)
+            if execute_function:
+                result = execute_function(arguments)
+                print("Function Execution Result:")
+                for c in result:
+                    print(c, end="", flush=True)
+            else:
+                print(f"Unknown function: {function_name}")
         else:
-            print("Please provide a question.")
-    else:
-        result = agent.execute_function(function_call_data)
-        print(f"Function Execution Result: {result}") 
-else:
-    print(f"Error: {function_call_data['error']}")
+            print(f"Error: {function_call_data['error']}")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+if __name__ == "__main__":
+    main()
 ```
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, AIGameIO, LlamaTutor, PromptRefine, AIUncensored, TutorAI, Bixin, ChatGPTES, Bagoodex, ChatHub, AmigoChat
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, AIGameIO, LlamaTutor, PromptRefine, AIUncensored, TutorAI, Bixin, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro
 
 Code is similar to other providers.
 
@@ -1401,24 +1404,16 @@ Webscout can now run GGUF models locally. You can download and run your favorite
 **Example:**
 
 ```python
-from webscout.Local.utils import download_model
-from webscout.Local.model import Model
-from webscout.Local.thread import Thread
-from webscout.Local import formats
+from webscout.Local import *
+model_path = download_model("Qwen/Qwen2.5-0.5B-Instruct-GGUF", "qwen2.5-0.5b-instruct-q2_k.gguf", token=None)
+model = Model(model_path, n_gpu_layers=0, context_length=2048)
+thread = Thread(model, format=chatml)
+# print(thread.send("hi")) #send a single msg to ai
 
-# 1. Download the model
-repo_id = "microsoft/Phi-3-mini-4k-instruct-gguf"  # Replace with the desired Hugging Face repo
-filename = "Phi-3-mini-4k-instruct-q4.gguf" # Replace with the correct filename
-model_path = download_model(repo_id, filename, token="")
-
-# 2. Load the model 
-model = Model(model_path, n_gpu_layers=4)  
-
-# 3. Create a Thread for conversation
-thread = Thread(model, formats.phi3)
-
-# 4. Start interacting with the model
-thread.interact()
+# thread.interact() # interact with the model in terminal
+# start webui
+# webui = WebUI(thread)
+# webui.start(host="0.0.0.0", port=8080, ssl=True) #Use ssl=True and make cert and key for https
 ```
 
 ## 🐶 Local-rawdog

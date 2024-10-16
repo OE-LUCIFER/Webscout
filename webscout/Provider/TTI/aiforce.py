@@ -8,7 +8,7 @@ from requests.exceptions import RequestException
 
 from webscout.AIbase import ImageProvider
 
-class AiForceimagger(ImageProvider):
+class AiForceimager(ImageProvider):
     """Image provider for Airforce API"""
 
     AVAILABLE_MODELS = [
@@ -152,7 +152,7 @@ class AiForceimagger(ImageProvider):
         return filenames
 
 if __name__ == "__main__":
-    bot = AiForceimagger()
+    bot = AiForceimager()
     try:
         resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1, model="flux-realism")
         print(bot.save(resp))

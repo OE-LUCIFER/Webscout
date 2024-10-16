@@ -62,6 +62,10 @@ from .Amigo import *
 from .prefind import *
 from .bagoodex import *
 from .ChatHub import *
+from .aimathgpt import *
+from .gaurish import *
+from .geminiprorealtime import *
+from .NinjaChat import *
 __all__ = [
     'Farfalle',
     'LLAMA', 
@@ -126,7 +130,10 @@ __all__ = [
     'PrefindAI',
     'Bagoodex',
     'ChatHub',
-    # 'LearnFast',
+    'AIMathGPT',
+    'GaurishCerebras',
+    'GeminiPro',
+    'NinjaChat',
 
 
 ]

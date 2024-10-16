@@ -1,4 +1,6 @@
-import logging
+from __future__ import annotations
+
+# import logging
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -8,11 +10,9 @@ from itertools import cycle, islice
 from random import choice
 from threading import Event
 from types import TracebackType
-from typing import Dict, List, Optional, Tuple, Type, Union, cast
+from typing import cast
 
-import pyreqwest_impersonate as pri
-
-from .utils import _calculate_distance, _extract_vqd, _normalize, _normalize_url, _text_extract_json, json_loads  # type: ignore
+import primp  # type: ignore
 
 try:
     from lxml.etree import _Element
@@ -23,10 +23,18 @@ try:
 except ImportError:
     LXML_AVAILABLE = False
 
-from .exceptions import *
+from .exceptions import ConversationLimitException, WebscoutE, RatelimitE, TimeoutE
+from .utils import (
+    _calculate_distance,
+    _expand_proxy_tb_alias,
+    _extract_vqd,
+    _normalize,
+    _normalize_url,
+    _text_extract_json,
+    json_loads,
+)
 
-
-logger = logging.getLogger("webscout.WEBS")
+# logger = logging.getLogger("webscout.WEBS")
 
 
 class WEBS:
@@ -34,21 +42,22 @@ class WEBS:
 
     _executor: ThreadPoolExecutor = ThreadPoolExecutor()
     _impersonates = (
-        "chrome_99", "chrome_100", "chrome_101", "chrome_104", "chrome_105", "chrome_106", "chrome_108", 
-        "chrome_107", "chrome_109", "chrome_114", "chrome_116", "chrome_117", "chrome_118", "chrome_119", 
-        "chrome_120", #"chrome_123", "chrome_124", "chrome_126",
-        "safari_ios_16.5", "safari_ios_17.2", "safari_ios_17.4.1", "safari_15.3", "safari_15.5", 
-        "safari_15.6.1", "safari_16", "safari_16.5", "safari_17.2.1", "safari_17.4.1", "safari_17.5",
-        #"okhttp_3.9", "okhttp_3.11", "okhttp_3.13", "okhttp_3.14", "okhttp_4.9", "okhttp_4.10", "okhttp_5",
-        "edge_99", "edge_101", "edge_122",
+        "chrome_100", "chrome_101", "chrome_104", "chrome_105", "chrome_106", "chrome_107", "chrome_108", 
+        "chrome_109", "chrome_114", "chrome_116", "chrome_117", "chrome_118", "chrome_119", "chrome_120", 
+        #"chrome_123", "chrome_124", "chrome_126",
+        "chrome_127", "chrome_128", "chrome_129",
+        "safari_ios_16.5", "safari_ios_17.2", "safari_ios_17.4.1", "safari_15.3", "safari_15.5", "safari_15.6.1", 
+        "safari_16", "safari_16.5", "safari_17.0", "safari_17.2.1", "safari_17.4.1", "safari_17.5", "safari_18", 
+        "safari_ipad_18",
+        "edge_101", "edge_122", "edge_127",
     )  # fmt: skip
 
     def __init__(
         self,
-        headers: Optional[Dict[str, str]] = None,
-        proxy: Optional[str] = None,
-        proxies: Union[Dict[str, str], str, None] = None,  # deprecated
-        timeout: Optional[int] = 10,
+        headers: dict[str, str] | None = None,
+        proxy: str | None = None,
+        proxies: dict[str, str] | str | None = None,  # deprecated
+        timeout: int | None = 10,
     ) -> None:
         """Initialize the WEBS object.
 
@@ -58,14 +67,14 @@ class WEBS:
                 example: "http://user:pass@example.com:3128". Defaults to None.
             timeout (int, optional): Timeout value for the HTTP client. Defaults to 10.
         """
-        self.proxy: Optional[str] = proxy
+        self.proxy: str | None = _expand_proxy_tb_alias(proxy)  # replaces "tb" with "socks5://127.0.0.1:9150"
         assert self.proxy is None or isinstance(self.proxy, str), "proxy must be a str"
         if not proxy and proxies:
             warnings.warn("'proxies' is deprecated, use 'proxy' instead.", stacklevel=1)
             self.proxy = proxies.get("http") or proxies.get("https") if isinstance(proxies, dict) else proxies
         self.headers = headers if headers else {}
         self.headers["Referer"] = "https://duckduckgo.com/"
-        self.client = pri.Client(
+        self.client = primp.Client(
             headers=self.headers,
             proxy=self.proxy,
             timeout=timeout,
@@ -76,22 +85,23 @@ class WEBS:
             verify=False,
         )
         self._exception_event = Event()
-        self._chat_messages: List[Dict[str, str]] = []
+        self._chat_messages: list[dict[str, str]] = []
+        self._chat_tokens_count = 0
         self._chat_vqd: str = ""
 
-    def __enter__(self) -> "WEBS":
+    def __enter__(self) -> WEBS:
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]] = None,
-        exc_val: Optional[BaseException] = None,
-        exc_tb: Optional[TracebackType] = None,
+        exc_type: type[BaseException] | None = None,
+        exc_val: BaseException | None = None,
+        exc_tb: TracebackType | None = None,
     ) -> None:
         pass
 
     @cached_property
-    def parser(self) -> "LHTMLParser":
+    def parser(self) -> LHTMLParser:
         """Get HTML parser."""
         return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
 
@@ -99,9 +109,9 @@ class WEBS:
         self,
         method: str,
         url: str,
-        params: Optional[Dict[str, str]] = None,
-        content: Optional[bytes] = None,
-        data: Optional[Union[Dict[str, str], bytes]] = None,
+        params: dict[str, str] | None = None,
+        content: bytes | None = None,
+        data: dict[str, str] | bytes | None = None,
     ) -> bytes:
         if self._exception_event.is_set():
             raise WebscoutE("Exception occurred in previous call.")
@@ -112,7 +122,7 @@ class WEBS:
             if "time" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
             raise WebscoutE(f"{url} {type(ex).__name__}: {ex}") from ex
-        logger.debug(f"_get_url() {resp.url} {resp.status_code} {len(resp.content)}")
+        # logger.debug(f"_get_url() {resp.url} {resp.status_code} {len(resp.content)}")
         if resp.status_code == 200:
             return cast(bytes, resp.content)
         self._exception_event.set()
@@ -122,27 +132,33 @@ class WEBS:
 
     def _get_vqd(self, keywords: str) -> str:
         """Get vqd value for a search query."""
-        resp_content = self._get_url("POST", "https://duckduckgo.com", data={"q": keywords})
+        resp_content = self._get_url("GET", "https://duckduckgo.com", params={"q": keywords})
         return _extract_vqd(resp_content, keywords)
 
-    def chat(self, keywords: str, model: str = "gpt-3.5", timeout: int = 20) -> str:
-        """Initiates a chat session with DuckDuckGo AI.
+    def chat(self, keywords: str, model: str = "gpt-4o-mini", timeout: int = 30) -> str:
+        """Initiates a chat session with webscout AI.
 
         Args:
             keywords (str): The initial message or question to send to the AI.
-            model (str): The model to use: "gpt-3.5", "claude-3-haiku", "llama-3-70b", "mixtral-8x7b".
-                Defaults to "gpt-3.5".
+            model (str): The model to use: "gpt-4o-mini", "claude-3-haiku", "llama-3.1-70b", "mixtral-8x7b".
+                Defaults to "gpt-4o-mini".
             timeout (int): Timeout value for the HTTP client. Defaults to 20.
 
         Returns:
             str: The response from the AI.
         """
+        models_deprecated = {
+            "gpt-3.5": "gpt-4o-mini",
+            "llama-3-70b": "llama-3.1-70b",
+        }
+        if model in models_deprecated:
+            # logger.info(f"{model=} is deprecated, using {models_deprecated[model]}")
+            model = models_deprecated[model]
         models = {
             "claude-3-haiku": "claude-3-haiku-20240307",
-            "gpt-3.5": "gpt-3.5-turbo-0125",
-            "llama-3-70b": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-            "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
             "gpt-4o-mini": "gpt-4o-mini",
+            "llama-3.1-70b": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+            "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
         }
         # vqd
         if not self._chat_vqd:
@@ -150,6 +166,7 @@ class WEBS:
             self._chat_vqd = resp.headers.get("x-vqd-4", "")
 
         self._chat_messages.append({"role": "user", "content": keywords})
+        self._chat_tokens_count += len(keywords) // 4 if len(keywords) >= 4 else 1  # approximate number of tokens
 
         json_data = {
             "model": models[model],
@@ -163,10 +180,26 @@ class WEBS:
         )
         self._chat_vqd = resp.headers.get("x-vqd-4", "")
 
-        data = ",".join(x for line in resp.text.rstrip("[DONE]\n").split("data:") if (x := line.strip()))
-        result = "".join(x.get("message", "") for x in json_loads("[" + data + "]"))
+        data = ",".join(x for line in resp.text.rstrip("[DONE]LIMT_CVRSA\n").split("data:") if (x := line.strip()))
+        data = json_loads("[" + data + "]")
+
+        results = []
+        for x in data:
+            if x.get("action") == "error":
+                err_message = x.get("type", "")
+                if x.get("status") == 429:
+                    raise (
+                        ConversationLimitException(err_message)
+                        if err_message == "ERR_CONVERSATION_LIMIT"
+                        else RatelimitE(err_message)
+                    )
+                raise WebscoutE(err_message)
+            elif message := x.get("message"):
+                results.append(message)
+        result = "".join(results)
 
         self._chat_messages.append({"role": "assistant", "content": result})
+        self._chat_tokens_count += len(results)
         return result
 
     def text(
@@ -174,11 +207,11 @@ class WEBS:
         keywords: str,
         region: str = "wt-wt",
         safesearch: str = "moderate",
-        timelimit: Optional[str] = None,
+        timelimit: str | None = None,
         backend: str = "api",
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo text search. Query params: https://duckduckgo.com/params.
+        max_results: int | None = None,
+    ) -> list[dict[str, str]]:
+        """webscout text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -216,10 +249,10 @@ class WEBS:
         keywords: str,
         region: str = "wt-wt",
         safesearch: str = "moderate",
-        timelimit: Optional[str] = None,
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo text search. Query params: https://duckduckgo.com/params.
+        timelimit: str | None = None,
+        max_results: int | None = None,
+    ) -> list[dict[str, str]]:
+        """webscout text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -262,9 +295,9 @@ class WEBS:
             payload["df"] = timelimit
 
         cache = set()
-        results: List[Dict[str, str]] = []
+        results: list[dict[str, str]] = []
 
-        def _text_api_page(s: int) -> List[Dict[str, str]]:
+        def _text_api_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
             resp_content = self._get_url("GET", "https://links.duckduckgo.com/d.js", params=payload)
             page_data = _text_extract_json(resp_content, keywords)
@@ -299,10 +332,10 @@ class WEBS:
         self,
         keywords: str,
         region: str = "wt-wt",
-        timelimit: Optional[str] = None,
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo text search. Query params: https://duckduckgo.com/params.
+        timelimit: str | None = None,
+        max_results: int | None = None,
+    ) -> list[dict[str, str]]:
+        """webscout text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -336,9 +369,9 @@ class WEBS:
             payload["vqd"] = vqd
 
         cache = set()
-        results: List[Dict[str, str]] = []
+        results: list[dict[str, str]] = []
 
-        def _text_html_page(s: int) -> List[Dict[str, str]]:
+        def _text_html_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
             resp_content = self._get_url("POST", "https://html.duckduckgo.com/html", data=payload)
             if b"No  results." in resp_content:
@@ -347,12 +380,12 @@ class WEBS:
             page_results = []
             tree = document_fromstring(resp_content, self.parser)
             elements = tree.xpath("//div[h2]")
-            if not isinstance(elements, List):
+            if not isinstance(elements, list):
                 return []
             for e in elements:
                 if isinstance(e, _Element):
                     hrefxpath = e.xpath("./a/@href")
-                    href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, List) else None
+                    href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
                     if (
                         href
                         and href not in cache
@@ -362,9 +395,9 @@ class WEBS:
                     ):
                         cache.add(href)
                         titlexpath = e.xpath("./h2/a/text()")
-                        title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, List) else ""
+                        title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
                         bodyxpath = e.xpath("./a//text()")
-                        body = "".join(str(x) for x in bodyxpath) if bodyxpath and isinstance(bodyxpath, List) else ""
+                        body = "".join(str(x) for x in bodyxpath) if bodyxpath and isinstance(bodyxpath, list) else ""
                         result = {
                             "title": _normalize(title),
                             "href": _normalize_url(href),
@@ -389,10 +422,10 @@ class WEBS:
         self,
         keywords: str,
         region: str = "wt-wt",
-        timelimit: Optional[str] = None,
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo text search. Query params: https://duckduckgo.com/params.
+        timelimit: str | None = None,
+        max_results: int | None = None,
+    ) -> list[dict[str, str]]:
+        """webscout text search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -423,9 +456,9 @@ class WEBS:
             payload["df"] = timelimit
 
         cache = set()
-        results: List[Dict[str, str]] = []
+        results: list[dict[str, str]] = []
 
-        def _text_lite_page(s: int) -> List[Dict[str, str]]:
+        def _text_lite_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
             resp_content = self._get_url("POST", "https://lite.duckduckgo.com/lite/", data=payload)
             if b"No more results." in resp_content:
@@ -434,7 +467,7 @@ class WEBS:
             page_results = []
             tree = document_fromstring(resp_content, self.parser)
             elements = tree.xpath("//table[last()]//tr")
-            if not isinstance(elements, List):
+            if not isinstance(elements, list):
                 return []
 
             data = zip(cycle(range(1, 5)), elements)
@@ -442,7 +475,7 @@ class WEBS:
                 if isinstance(e, _Element):
                     if i == 1:
                         hrefxpath = e.xpath(".//a//@href")
-                        href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, List) else None
+                        href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
                         if (
                             href is None
                             or href in cache
@@ -454,12 +487,12 @@ class WEBS:
                         else:
                             cache.add(href)
                             titlexpath = e.xpath(".//a//text()")
-                            title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, List) else ""
+                            title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
                     elif i == 2:
                         bodyxpath = e.xpath(".//td[@class='result-snippet']//text()")
                         body = (
                             "".join(str(x) for x in bodyxpath).strip()
-                            if bodyxpath and isinstance(bodyxpath, List)
+                            if bodyxpath and isinstance(bodyxpath, list)
                             else ""
                         )
                         if href:
@@ -488,15 +521,15 @@ class WEBS:
         keywords: str,
         region: str = "wt-wt",
         safesearch: str = "moderate",
-        timelimit: Optional[str] = None,
-        size: Optional[str] = None,
-        color: Optional[str] = None,
-        type_image: Optional[str] = None,
-        layout: Optional[str] = None,
-        license_image: Optional[str] = None,
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo images search. Query params: https://duckduckgo.com/params.
+        timelimit: str | None = None,
+        size: str | None = None,
+        color: str | None = None,
+        type_image: str | None = None,
+        layout: str | None = None,
+        license_image: str | None = None,
+        max_results: int | None = None,
+    ) -> list[dict[str, str]]:
+        """webscout images search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -544,9 +577,9 @@ class WEBS:
         }
 
         cache = set()
-        results: List[Dict[str, str]] = []
+        results: list[dict[str, str]] = []
 
-        def _images_page(s: int) -> List[Dict[str, str]]:
+        def _images_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
             resp_content = self._get_url("GET", "https://duckduckgo.com/i.js", params=payload)
             resp_json = json_loads(resp_content)
@@ -586,13 +619,13 @@ class WEBS:
         keywords: str,
         region: str = "wt-wt",
         safesearch: str = "moderate",
-        timelimit: Optional[str] = None,
-        resolution: Optional[str] = None,
-        duration: Optional[str] = None,
-        license_videos: Optional[str] = None,
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo videos search. Query params: https://duckduckgo.com/params.
+        timelimit: str | None = None,
+        resolution: str | None = None,
+        duration: str | None = None,
+        license_videos: str | None = None,
+        max_results: int | None = None,
+    ) -> list[dict[str, str]]:
+        """webscout videos search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -631,9 +664,9 @@ class WEBS:
         }
 
         cache = set()
-        results: List[Dict[str, str]] = []
+        results: list[dict[str, str]] = []
 
-        def _videos_page(s: int) -> List[Dict[str, str]]:
+        def _videos_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
             resp_content = self._get_url("GET", "https://duckduckgo.com/v.js", params=payload)
             resp_json = json_loads(resp_content)
@@ -663,10 +696,10 @@ class WEBS:
         keywords: str,
         region: str = "wt-wt",
         safesearch: str = "moderate",
-        timelimit: Optional[str] = None,
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo news search. Query params: https://duckduckgo.com/params.
+        timelimit: str | None = None,
+        max_results: int | None = None,
+    ) -> list[dict[str, str]]:
+        """webscout news search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -700,9 +733,9 @@ class WEBS:
             payload["df"] = timelimit
 
         cache = set()
-        results: List[Dict[str, str]] = []
+        results: list[dict[str, str]] = []
 
-        def _news_page(s: int) -> List[Dict[str, str]]:
+        def _news_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
             resp_content = self._get_url("GET", "https://duckduckgo.com/news.js", params=payload)
             resp_json = json_loads(resp_content)
@@ -735,8 +768,8 @@ class WEBS:
 
         return list(islice(results, max_results))
 
-    def answers(self, keywords: str) -> List[Dict[str, str]]:
-        """DuckDuckGo instant answers. Query params: https://duckduckgo.com/params.
+    def answers(self, keywords: str) -> list[dict[str, str]]:
+        """webscout instant answers. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query,
@@ -806,8 +839,8 @@ class WEBS:
 
         return results
 
-    def suggestions(self, keywords: str, region: str = "wt-wt") -> List[Dict[str, str]]:
-        """DuckDuckGo suggestions. Query params: https://duckduckgo.com/params.
+    def suggestions(self, keywords: str, region: str = "wt-wt") -> list[dict[str, str]]:
+        """webscout suggestions. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query.
@@ -834,19 +867,19 @@ class WEBS:
     def maps(
         self,
         keywords: str,
-        place: Optional[str] = None,
-        street: Optional[str] = None,
-        city: Optional[str] = None,
-        county: Optional[str] = None,
-        state: Optional[str] = None,
-        country: Optional[str] = None,
-        postalcode: Optional[str] = None,
-        latitude: Optional[str] = None,
-        longitude: Optional[str] = None,
+        place: str | None = None,
+        street: str | None = None,
+        city: str | None = None,
+        county: str | None = None,
+        state: str | None = None,
+        country: str | None = None,
+        postalcode: str | None = None,
+        latitude: str | None = None,
+        longitude: str | None = None,
         radius: int = 0,
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo maps search. Query params: https://duckduckgo.com/params.
+        max_results: int | None = None,
+    ) -> list[dict[str, str]]:
+        """webscout maps search. Query params: https://duckduckgo.com/params.
 
         Args:
             keywords: keywords for query
@@ -926,14 +959,14 @@ class WEBS:
         lat_b -= Decimal(radius) * Decimal(0.008983)
         lon_l -= Decimal(radius) * Decimal(0.008983)
         lon_r += Decimal(radius) * Decimal(0.008983)
-        logger.debug(f"bbox coordinates\n{lat_t} {lon_l}\n{lat_b} {lon_r}")
+        # logger.debug(f"bbox coordinates\n{lat_t} {lon_l}\n{lat_b} {lon_r}")
 
         cache = set()
-        results: List[Dict[str, str]] = []
+        results: list[dict[str, str]] = []
 
         def _maps_page(
-            bbox: Tuple[Decimal, Decimal, Decimal, Decimal],
-        ) -> Optional[List[Dict[str, str]]]:
+            bbox: tuple[Decimal, Decimal, Decimal, Decimal],
+        ) -> list[dict[str, str]] | None:
             if max_results and len(results) >= max_results:
                 return None
             lat_t, lon_l, lat_b, lon_r = bbox
@@ -1020,10 +1053,8 @@ class WEBS:
 
         return list(islice(results, max_results))
 
-    def translate(
-        self, keywords: Union[List[str], str], from_: Optional[str] = None, to: str = "en"
-    ) -> List[Dict[str, str]]:
-        """DuckDuckGo translate.
+    def translate(self, keywords: list[str] | str, from_: str | None = None, to: str = "en") -> list[dict[str, str]]:
+        """webscout translate.
 
         Args:
             keywords: string or list of strings to translate.
@@ -1050,14 +1081,14 @@ class WEBS:
         if from_:
             payload["from"] = from_
 
-        def _translate_keyword(keyword: str) -> Dict[str, str]:
+        def _translate_keyword(keyword: str) -> dict[str, str]:
             resp_content = self._get_url(
                 "POST",
                 "https://duckduckgo.com/translation.js",
                 params=payload,
                 content=keyword.encode(),
             )
-            page_data: Dict[str, str] = json_loads(resp_content)
+            page_data: dict[str, str] = json_loads(resp_content)
             page_data["original"] = keyword
             return page_data
 
