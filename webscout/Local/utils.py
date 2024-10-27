@@ -5,7 +5,7 @@ from enum import IntEnum
 from io import BufferedReader
 from typing import Dict, Iterable, TextIO, Optional, Union, Tuple, Generator, Any
 
-from huggingface_hub import hf_hub_url, cached_download
+from huggingface_hub import hf_hub_download
 import numpy as np
 
 from ._version import __version__, __llama_cpp_version__
@@ -42,25 +42,50 @@ class UnreachableException(Exception):
             "https://github.com/ddh0/easy-llama/issues/new/choose"
         )
 
-def download_model(repo_id: str, filename: str, token: str, cache_dir: str = ".cache") -> str:
+def download_model(
+    repo_id: str, 
+    filename: str, 
+    token: Optional[str] = None, 
+    cache_dir: str = ".cache",
+    revision: str = "main"
+) -> str:
     """
-    Downloads a GGUF model file from the Hugging Face Hub.
+    Downloads a model file from the Hugging Face Hub.
 
     Args:
-        repo_id (str): Hugging Face repository ID (e.g., 'facebook/bart-large-cnn').
-        filename (str): Name of the GGUF file (e.g., 'model.gguf').
-        token (str): Hugging Face API token.
+        repo_id (str): Hugging Face repository ID (e.g., 'facebook/bart-large-cnn')
+        filename (str): Name of the file to download (e.g., 'model.bin', 'tokenizer.json')
+        token (str, optional): Hugging Face API token for private repos. Defaults to None.
         cache_dir (str, optional): Local directory for storing downloaded files. 
-                                   Defaults to ".cache".
+                                 Defaults to ".cache".
+        revision (str, optional): The specific model version to use. Defaults to "main".
 
     Returns:
         str: Path to the downloaded file.
+
+    Raises:
+        ValueError: If the repository or file is not found
+        Exception: For other download-related errors
     """
-    url = hf_hub_url(repo_id, filename)
-    filepath = cached_download(
-        url, cache_dir=cache_dir, force_filename=filename, use_auth_token=token
-    )
-    return filepath
+    try:
+        # Create cache directory if it doesn't exist
+        os.makedirs(cache_dir, exist_ok=True)
+
+        # Download the file
+        downloaded_path = hf_hub_download(
+            repo_id=repo_id,
+            filename=filename,
+            token=token,
+            cache_dir=cache_dir,
+            revision=revision,
+            resume_download=True,    # Resume interrupted downloads
+            force_download=False     # Use cached version if available
+        )
+        
+        return downloaded_path
+
+    except Exception as e:
+        raise Exception(f"Error downloading model from {repo_id}: {str(e)}")
 
 def softmax(z: _ArrayLike, T: Optional[float] = None, dtype: Optional[np.dtype] = None) -> np.ndarray:
     """

@@ -16,7 +16,6 @@ from .Phind import PhindSearch
 from .Phind import Phindv2
 from .ai4chat import *
 from .Gemini import GEMINI
-from .BasedGPT import BasedGPT
 from .Deepseek import DeepSeek
 from .Deepinfra import DeepInfra
 from .Farfalle import *
@@ -31,7 +30,6 @@ from .RUBIKSAI import *
 from .meta import *
 from .DiscordRocks import *
 from .felo_search import *
-from .xdash import *
 from .julius import *
 from .Youchat import *
 from .yep import *
@@ -51,17 +49,16 @@ from .genspark import *
 from .upstage import *
 from .Bing import *
 from .GPTWeb import *
-from .aigames import *
+# from .UNFINISHED.aigames import *
 from .llamatutor import *
 from .promptrefine import *
 from .twitterclone import *
 from .tutorai import *
-from .bixin import *
 from .ChatGPTES import *
 from .Amigo import *
 from .prefind import *
 from .bagoodex import *
-from .ChatHub import *
+# from .UNFINISHED.ChatHub import *
 from .aimathgpt import *
 from .gaurish import *
 from .geminiprorealtime import *
@@ -83,7 +80,6 @@ __all__ = [
     'PhindSearch', 
     'Felo',
     'GEMINI',
-    'BasedGPT',
     'DeepSeek',
     'DeepInfra',
     'AI4Chat',
@@ -98,7 +94,6 @@ __all__ = [
     'Meta',
     'DiscordRocks',
     'PiAI',
-    'XDASH',
     'Julius',
     'YouChat',
     'YEPCHAT',
@@ -119,17 +114,16 @@ __all__ = [
     'Free2GPT',
     'Bing',
     'GPTWeb',
-    'AIGameIO',
+    # 'AIGameIO',
     'LlamaTutor',
     'PromptRefine',
     'AIUncensored',
     'TutorAI',
-    'Bixin',
     'ChatGPTES',
     'AmigoChat',
     'PrefindAI',
     'Bagoodex',
-    'ChatHub',
+    # 'ChatHub',
     'AIMathGPT',
     'GaurishCerebras',
     'GeminiPro',

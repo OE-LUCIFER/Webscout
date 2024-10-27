@@ -349,6 +349,6 @@ if __name__ == "__main__":
     from rich import print
 
     ai = TutorAI()
-    response = ai.chat(input(">>> "), attachment_path='photo_2024-07-06_22-19-42.jpg')
+    response = ai.chat(input(">>> "), attachment_path=None)
     for chunk in response:
         print(chunk, end="", flush=True)

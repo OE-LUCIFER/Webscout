@@ -1,123 +1,34 @@
-from webscout.AIbase import Provider, AsyncProvider
-from webscout.Provider.ThinkAnyAI import ThinkAnyAI
-from webscout.Provider.Llama import LLAMA
-
-from webscout.Provider.Koboldai import KOBOLDAI
-from webscout.Provider.Koboldai import AsyncKOBOLDAI
-
-from webscout.Provider.Perplexity import Perplexity
-from webscout.Provider.Blackboxai import BLACKBOXAI
-from webscout.Provider.Blackboxai import AsyncBLACKBOXAI
-from webscout.Provider.Phind import PhindSearch
-from webscout.Provider.Phind import Phindv2
-from webscout.Provider.yep import YEPCHAT
-from webscout.Provider.Poe import POE
-from webscout.Provider.BasedGPT import BasedGPT
-from webscout.Provider.Deepseek import DeepSeek
-from webscout.Provider.Deepinfra import DeepInfra, VLM, AsyncDeepInfra
-from webscout.Provider.OLLAMA import OLLAMA
-from webscout.Provider.Andi import AndiSearch
-from webscout.Provider.Llama3 import LLAMA3
-from webscout.Provider.DARKAI import DARKAI
-from webscout.Provider.koala import KOALA
-from webscout.Provider.RUBIKSAI import RUBIKSAI
-from webscout.Provider.meta import Meta
-
-from webscout.Provider.DiscordRocks import DiscordRocks
-from webscout.Provider.felo_search import Felo
-from webscout.Provider.xdash import XDASH
-from webscout.Provider.julius import Julius
-from webscout.Provider.Youchat import YouChat
-from webscout.Provider.Cloudflare import Cloudflare
-from webscout.Provider.turboseek import TurboSeek
-from webscout.Provider.NetFly import NetFly
-from webscout.Provider.EDITEE import Editee
-from webscout.Provider.Chatify import Chatify
-from webscout.Provider.PI import PiAI 
-from webscout.g4f import GPT4FREE, AsyncGPT4FREE
-from webscout.g4f import TestProviders
+from webscout.AIbase import Provider
+from webscout.g4f import GPT4FREE, TestProviders
 from webscout.exceptions import AllProvidersFailure
-from typing import AsyncGenerator
-
-from typing import Union
-from typing import Any
+from typing import Union, Any, Dict, Generator
+import importlib
+import pkgutil
 import logging
+import random
+import inspect
 
+def load_providers():
+    provider_map = {}
+    api_key_providers = set()
+    provider_package = importlib.import_module("webscout.Provider")
+    
+    for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
+        try:
+            module = importlib.import_module(f"webscout.Provider.{module_name}")
+            for attr_name in dir(module):
+                attr = getattr(module, attr_name)
+                if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
+                    provider_map[attr_name.upper()] = attr
+                    # Check if the provider needs an API key
+                    if 'api_key' in inspect.signature(attr.__init__).parameters:
+                        api_key_providers.add(attr_name.upper())
+        except Exception as e:
+            logging.warning(f"Failed to load provider {module_name}: {e}")
+    
+    return provider_map, api_key_providers
 
-provider_map: dict[
-    str,
-    Union[
-        ThinkAnyAI,
-        LLAMA,
-        KOBOLDAI,
-        Perplexity,
-        BLACKBOXAI,
-        PhindSearch,
-        Phindv2,
-        YEPCHAT,
-        POE,
-        BasedGPT,
-        DeepSeek,
-        DeepInfra,
-        VLM,
-        GPT4FREE,
-        OLLAMA,
-        AndiSearch,
-        LLAMA3,
-        DARKAI,
-        KOALA,
-        RUBIKSAI,
-        Meta,
-
-        DiscordRocks,
-        Felo,
-        XDASH,
-        Julius,
-        YouChat,
-        Cloudflare,
-        TurboSeek,
-        NetFly,
-        Editee,
-        Chatify,
-        PiAI,
-    ],
-] = {
-    "ThinkAnyAI": ThinkAnyAI,
-    "LLAMA2": LLAMA,
-    "KOBOLDAI": KOBOLDAI,
-    "PERPLEXITY": Perplexity,
-    "BLACKBOXAI": BLACKBOXAI,
-    "PhindSearch": PhindSearch,
-    "Phindv2": Phindv2,
-    "YEPCHAT": YEPCHAT,
-
-    "POE": POE,
-    "BasedGPT": BasedGPT,
-    "DeepSeek": DeepSeek,
-    "DeepInfra": DeepInfra,
-    "VLM": VLM,
-    "gpt4free": GPT4FREE,
-    "ollama": OLLAMA,
-    "andi": AndiSearch,
-    "llama3": LLAMA3,
-    "darkai": DARKAI,
-    "koala": KOALA,
-    "rubiksai": RUBIKSAI,
-    "meta": Meta,
-
-    "discordrocks": DiscordRocks,
-    "felo": Felo,
-    "xdash": XDASH,
-    "julius": Julius,
-    "you": YouChat,
-    "cloudflare": Cloudflare,
-    "turboseek": TurboSeek,
-    "netfly": NetFly,
-    "editee": Editee,
-    # "chatify": Chatify,
-    "pi": PiAI,
-}
-
+provider_map, api_key_providers = load_providers()
 
 class AUTO(Provider):
     def __init__(
@@ -133,57 +44,8 @@ class AUTO(Provider):
         act: str = None,
         exclude: list[str] = [],
     ):
-        """Instantiates AUTO
-
-        Args:
-            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
-            timeout (int, optional): Http request timeout. Defaults to 30.
-            intro (str, optional): Conversation introductory prompt. Defaults to None.
-            filepath (str, optional): Path to file containing conversation history. Defaults to None.
-            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
-            proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
-            act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            exclude(list[str], optional): List of providers to be excluded. Defaults to [].
-        """
-        self.provider: Union[
-            ThinkAnyAI,
-            LLAMA,
-            KOBOLDAI,
-            Perplexity,
-            BLACKBOXAI,
-            PhindSearch,
-            Phindv2,
-            YEPCHAT,
-
-            POE,
-            BasedGPT,
-            DeepSeek,
-            DeepInfra,
-            VLM,
-            GPT4FREE,
-            OLLAMA,
-            AndiSearch,
-            LLAMA3,
-            DARKAI,
-            KOALA,
-            RUBIKSAI,
-            Meta,
-
-            DiscordRocks,
-            Felo,
-            XDASH,
-            Julius,
-            YouChat,
-            Cloudflare,
-            TurboSeek,
-            NetFly,
-            Editee,
-            # Chatify,
-            PiAI,
-        ] = None
-        self.provider_name: str = None
+        self.provider = None
+        self.provider_name = None
         self.is_conversation = is_conversation
         self.max_tokens = max_tokens
         self.timeout = timeout
@@ -193,15 +55,15 @@ class AUTO(Provider):
         self.proxies = proxies
         self.history_offset = history_offset
         self.act = act
-        self.exclude = exclude
+        self.exclude = [e.upper() for e in exclude]
 
     @property
     def last_response(self) -> dict[str, Any]:
-        return self.provider.last_response
+        return self.provider.last_response if self.provider else {}
 
     @property
     def conversation(self) -> object:
-        return self.provider.conversation
+        return self.provider.conversation if self.provider else None
 
     def ask(
         self,
@@ -211,20 +73,8 @@ class AUTO(Provider):
         optimizer: str = None,
         conversationally: bool = False,
         run_new_test: bool = False,
-    ) -> dict:
-        """Chat with AI
-
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            run_new_test (bool, optional): Perform new test on g4f-based providers. Defaults to False.
-        Returns:
-           dict : {}
-        """
-        ask_kwargs: dict[str, Union[str, bool]] = {
+    ) -> Union[Dict, Generator]:
+        ask_kwargs = {
             "prompt": prompt,
             "stream": stream,
             "raw": raw,
@@ -232,14 +82,20 @@ class AUTO(Provider):
             "conversationally": conversationally,
         }
 
-        # webscout-based providers
-        for provider_name, provider_obj in provider_map.items():
-            # continue
-            if provider_name in self.exclude:
-                continue
+        # Filter out API key required providers and excluded providers
+        available_providers = [
+            (name, cls) for name, cls in provider_map.items()
+            if name not in api_key_providers and name not in self.exclude
+        ]
+
+        # Shuffle the list of available providers
+        random.shuffle(available_providers)
+
+        # Try webscout-based providers
+        for provider_name, provider_class in available_providers:
             try:
                 self.provider_name = f"webscout-{provider_name}"
-                self.provider = provider_obj(
+                self.provider = provider_class(
                     is_conversation=self.is_conversation,
                     max_tokens=self.max_tokens,
                     timeout=self.timeout,
@@ -251,26 +107,19 @@ class AUTO(Provider):
                     act=self.act,
                 )
 
-                def for_stream():
-                    for chunk in self.provider.ask(**ask_kwargs):
-                        yield chunk
-
-                def for_non_stream():
-                    return self.provider.ask(**ask_kwargs)
-
-                return for_stream() if stream else for_non_stream()
+                return self.provider.ask(**ask_kwargs)
 
             except Exception as e:
                 logging.debug(
                     f"Failed to generate response using provider {provider_name} - {e}"
                 )
 
-        # g4f-based providers
-
-        for provider_info in TestProviders(timeout=self.timeout).get_results(
-            run=run_new_test
-        ):
-            if provider_info["name"] in self.exclude:
+        # Try GPT4FREE providers
+        gpt4free_providers = TestProviders(timeout=self.timeout).get_results(run=run_new_test)
+        random.shuffle(gpt4free_providers)
+        
+        for provider_info in gpt4free_providers:
+            if provider_info["name"].upper() in self.exclude:
                 continue
             try:
                 self.provider_name = f"g4f-{provider_info['name']}"
@@ -286,23 +135,15 @@ class AUTO(Provider):
                     act=self.act,
                 )
 
-                def for_stream():
-                    for chunk in self.provider.ask(**ask_kwargs):
-                        yield chunk
-
-                def for_non_stream():
-                    return self.provider.ask(**ask_kwargs)
-
-                return for_stream() if stream else for_non_stream()
+                print(f"Using provider: {self.provider_name}")
+                return self.provider.ask(**ask_kwargs)
 
             except Exception as e:
                 logging.debug(
-                    f"Failed to generate response using GPT4FREE-base provider {provider_name} - {e}"
+                    f"Failed to generate response using GPT4FREE-based provider {provider_info['name']} - {e}"
                 )
 
-        raise AllProvidersFailure(
-            "None of the providers generated response successfully."
-        )
+        raise AllProvidersFailure("None of the providers generated response successfully.")
 
     def chat(
         self,
@@ -311,48 +152,25 @@ class AUTO(Provider):
         optimizer: str = None,
         conversationally: bool = False,
         run_new_test: bool = False,
-    ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            run_new_test (bool, optional): Perform new test on g4f-based providers. Defaults to False.
-        Returns:
-            str: Response generated
-        """
-
-        def for_stream():
-            for response in self.ask(
-                prompt,
-                True,
-                optimizer=optimizer,
-                conversationally=conversationally,
-                run_new_test=run_new_test,
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            ask_response = self.ask(
-                prompt,
-                False,
-                optimizer=optimizer,
-                conversationally=conversationally,
-                run_new_test=run_new_test,
-            )
-            return self.get_message(ask_response)
-
-        return for_stream() if stream else for_non_stream()
+    ) -> Union[str, Generator[str, None, None]]:
+        response = self.ask(
+            prompt,
+            stream,
+            optimizer=optimizer,
+            conversationally=conversationally,
+            run_new_test=run_new_test,
+        )
+        
+        if stream:
+            return (self.get_message(chunk) for chunk in response)
+        else:
+            return self.get_message(response)
 
     def get_message(self, response: dict) -> str:
-        """Retrieves message only from response
-
-        Args:
-            response (dict): Response generated by `self.ask`
-
-        Returns:
-            str: Message extracted
-        """
         assert self.provider is not None, "Chat with AI first"
         return self.provider.get_message(response)
+if __name__ == "__main__":
+    auto = AUTO()
+
+    response = auto.chat("Hello, how are you?")
+    print(response)

@@ -153,7 +153,7 @@ if __name__ == "__main__":
     from rich import print
     bot = GeminiPro()
     try:
-        response = bot.chat("tell me about Gpt canvas", stream=True)
+        response = bot.chat("hi", stream=True)
         for chunk in response:
             print(chunk, end="", flush=True)
     except Exception as e:

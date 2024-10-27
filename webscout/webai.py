@@ -30,7 +30,7 @@ from .AIutel import default_path
 from .AIutel import AwesomePrompts
 from .AIutel import RawDog
 from .AIutel import Audio
-from webscout import available_providers
+from .AIutel import available_providers
 from colorama import Fore
 from colorama import init as init_colorama
 from dotenv import load_dotenv

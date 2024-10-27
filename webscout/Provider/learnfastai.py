@@ -248,6 +248,6 @@ class LearnFast(Provider):
 if __name__ == "__main__":
     from rich import print
     ai = LearnFast()
-    response = ai.chat(input(">>> "), image_path="photo_2024-07-06_22-19-42.jpg")
+    response = ai.chat(input(">>> "), image_path=None)
     for chunk in response:
         print(chunk, end="", flush=True)

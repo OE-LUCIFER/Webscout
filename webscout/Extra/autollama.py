@@ -5,10 +5,10 @@ import sys
 import subprocess
 import logging
 import psutil
-from huggingface_hub import hf_hub_url, cached_download
+from huggingface_hub import hf_hub_download  # Updated import
 import colorlog
-import ollama  # Import ollama for interactive chat
-import argparse  # Import argparse for command-line arguments
+import ollama
+import argparse
 
 # Suppress specific warnings
 warnings.filterwarnings(
@@ -36,7 +36,6 @@ if not logger.hasHandlers():
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-# Redirect warnings to the logger but avoid duplication
 logging.captureWarnings(True)
 py_warnings_logger = logging.getLogger("py.warnings")
 if not py_warnings_logger.hasHandlers():
@@ -76,11 +75,37 @@ def is_model_created(model_name):
 
 
 def download_model(repo_id, filename, token, cache_dir="downloads"):
-    url = hf_hub_url(repo_id, filename)
-    filepath = cached_download(
-        url, cache_dir=cache_dir, force_filename=filename, use_auth_token=token
-    )
-    return filepath
+    """
+    Downloads a model file from the Hugging Face Hub using hf_hub_download.
+    """
+    try:
+        os.makedirs(cache_dir, exist_ok=True)
+        
+        # Download using hf_hub_download
+        filepath = hf_hub_download(
+            repo_id=repo_id,
+            filename=filename,
+            token=token,
+            cache_dir=cache_dir,
+            resume_download=True,
+            force_download=False,
+            local_files_only=False
+        )
+        
+        # Ensure file is in the expected location
+        expected_path = os.path.join(cache_dir, filename)
+        if filepath != expected_path:
+            os.makedirs(os.path.dirname(expected_path), exist_ok=True)
+            if not os.path.exists(expected_path):
+                import shutil
+                shutil.copy2(filepath, expected_path)
+            filepath = expected_path
+            
+        return filepath
+    
+    except Exception as e:
+        logger.error(f"Error downloading model: {str(e)}")
+        raise
 
 
 def is_ollama_running():
@@ -90,16 +115,14 @@ def is_ollama_running():
     return False
 
 
-def main(model_path=None, gguf_file=None):  # Modified to handle both CLI and non-CLI
+def main(model_path=None, gguf_file=None):
     show_art()
 
-    # Parse command-line arguments if provided
     parser = argparse.ArgumentParser(description="Download and create an Ollama model")
     parser.add_argument("-m", "--model_path", help="Path to the model on Hugging Face Hub")
     parser.add_argument("-g", "--gguf_file", help="Name of the GGUF file")
     args = parser.parse_args()
 
-    # Use arguments from command line or function parameters
     model_path = args.model_path if args.model_path else model_path
     gguf_file = args.gguf_file if args.gguf_file else gguf_file
 
@@ -112,12 +135,10 @@ def main(model_path=None, gguf_file=None):  # Modified to handle both CLI and no
     download_log = "downloaded_models.log"
     logging_name = f"{model_path}_{model_name}"
 
-    # Ensure the log file exists
     if not os.path.exists(download_log):
         with open(download_log, 'w') as f:
             pass
 
-    # Check if huggingface-hub is installed, and install it if not
     try:
         subprocess.check_output(['pip', 'show', 'huggingface-hub'])
     except subprocess.CalledProcessError:
@@ -126,7 +147,6 @@ def main(model_path=None, gguf_file=None):  # Modified to handle both CLI and no
     else:
         logger.info("huggingface-hub is already installed.")
 
-    # Check if the model has already been downloaded
     if is_model_downloaded(logging_name, download_log):
         logger.info(f"Model {logging_name} has already been downloaded. Skipping download.")
     else:
@@ -134,13 +154,11 @@ def main(model_path=None, gguf_file=None):  # Modified to handle both CLI and no
         token = os.getenv('HUGGINGFACE_TOKEN', None)
         if not token:
             logger.warning("Warning: HUGGINGFACE_TOKEN environment variable is not set. Using None.")
-            token = None
-
+        
         filepath = download_model(model_path, gguf_file, token)
         log_downloaded_model(logging_name, download_log)
         logger.info(f"Model {logging_name} downloaded and logged.")
 
-    # Check if Ollama is installed, and install it if not
     try:
         subprocess.check_output(['ollama', '--version'])
     except subprocess.CalledProcessError:
@@ -149,7 +167,6 @@ def main(model_path=None, gguf_file=None):  # Modified to handle both CLI and no
     else:
         logger.info("Ollama is already installed.")
 
-    # Check if Ollama is already running
     if is_ollama_running():
         logger.info("Ollama is already running. Skipping the start.")
     else:
@@ -162,7 +179,6 @@ def main(model_path=None, gguf_file=None):  # Modified to handle both CLI and no
 
         logger.info("Ollama has started.")
 
-    # Check if the model has already been created
     if is_model_created(model_name):
         logger.info(f"Model {model_name} is already created. Skipping creation.")
     else:
@@ -174,6 +190,7 @@ def main(model_path=None, gguf_file=None):  # Modified to handle both CLI and no
 
     logger.info(f"model name is > {model_name}")
     logger.info(f"Use Ollama run {model_name}")
+
 
 if __name__ == "__main__":
     main()

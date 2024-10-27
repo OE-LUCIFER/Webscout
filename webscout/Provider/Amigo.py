@@ -1,4 +1,4 @@
-import requests
+import cloudscraper
 import json
 import uuid
 import os
@@ -12,7 +12,7 @@ from webscout import exceptions
 
 class AmigoChat(Provider):
     """
-    A class to interact with the AmigoChat.io API.
+    A class to interact with the AmigoChat.io API using cloudscraper.
     """
 
     AVAILABLE_MODELS = [
@@ -51,14 +51,18 @@ class AmigoChat(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): The AI model to use for text generation. Defaults to "o1-preview". 
-                                    Options: "llama-three-point-one", "openai-o-one-mini", "claude", 
-                                             "gemini-1.5-pro", "gemini-1.5-flash", "openai-o-one".
+            model (str, optional): The AI model to use for text generation. Defaults to "o1-preview".
         """
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.session = requests.Session()
+        self.session = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'windows',
+                'mobile': False
+            }
+        )
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.api_endpoint = "https://api.amigochat.io/v1/chat/completions"
@@ -156,7 +160,7 @@ class AmigoChat(Provider):
             "frequency_penalty": 0,
             "max_tokens": 4000,
             "presence_penalty": 0,
-            "stream": stream,  # Enable streaming
+            "stream": stream,
             "temperature": 0.5,
             "top_p": 0.95
         }
@@ -164,37 +168,46 @@ class AmigoChat(Provider):
         def for_stream():
             try:
                 # Make the POST request with streaming enabled
-                with requests.post(self.api_endpoint, headers=self.headers, json=payload, stream=True) as response:
-                    # Check if the request was successful
-                    if response.status_code == 201:
-                        # Iterate over the streamed response line by line
-                        for line in response.iter_lines():
-                            if line:
-                                # Decode the line from bytes to string
-                                decoded_line = line.decode('utf-8').strip()
-                                if decoded_line.startswith("data: "):
-                                    data_str = decoded_line[6:]
-                                    if data_str == "[DONE]":
-                                        break
-                                    try:
-                                        # Load the JSON data
-                                        data_json = json.loads(data_str)
-                                        
-                                        # Extract the content from the response
-                                        choices = data_json.get("choices", [])
-                                        if choices:
-                                            delta = choices[0].get("delta", {})
-                                            content = delta.get("content", "")
-                                            if content:
-                                                yield content if raw else dict(text=content)
-                                    except json.JSONDecodeError:
-                                        print(f"Received non-JSON data: {data_str}")
-                    else:
-                        print(f"Request failed with status code {response.status_code}")
-                        print("Response:", response.text)
+                response = self.session.post(
+                    self.api_endpoint,
+                    json=payload,
+                    stream=True,
+                    timeout=self.timeout
+                )
+                
+                # Check if the request was successful
+                if response.status_code == 201:
+                    # Iterate over the streamed response line by line
+                    for line in response.iter_lines():
+                        if line:
+                            # Decode the line from bytes to string
+                            decoded_line = line.decode('utf-8').strip()
+                            if decoded_line.startswith("data: "):
+                                data_str = decoded_line[6:]
+                                if data_str == "[DONE]":
+                                    break
+                                try:
+                                    # Load the JSON data
+                                    data_json = json.loads(data_str)
+                                    
+                                    # Extract the content from the response
+                                    choices = data_json.get("choices", [])
+                                    if choices:
+                                        delta = choices[0].get("delta", {})
+                                        content = delta.get("content", "")
+                                        if content:
+                                            yield content if raw else dict(text=content)
+                                except json.JSONDecodeError:
+                                    print(f"Received non-JSON data: {data_str}")
+                else:
+                    print(f"Request failed with status code {response.status_code}")
+                    print("Response:", response.text)
 
-            except requests.exceptions.RequestException as e:
-                print("An error occurred while making the request:", e)
+            except (cloudscraper.exceptions.CloudflareChallengeError,
+                    cloudscraper.exceptions.CloudflareCode1020) as e:
+                print("Cloudflare protection error:", str(e))
+            except Exception as e:
+                print("An error occurred while making the request:", str(e))
 
         def for_non_stream():
             # Accumulate the streaming response

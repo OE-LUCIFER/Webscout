@@ -5,6 +5,6 @@ from .blackboximage import *
 from .Nexra import *
 from .huggingface import *
 from .artbit import *
-from .amigo import *
 from .WebSimAI import *
 from .imgninza import *
+from .AIuncensored import *

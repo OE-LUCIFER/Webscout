@@ -2,6 +2,7 @@ import requests
 import json
 import os
 from typing import Any, Dict, Optional, Generator, List, Union
+import uuid
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -31,9 +32,47 @@ class GaurishCerebras(Provider):
         """Initializes the Gaurish Cerebras API client."""
         self.url = "https://proxy.gaurish.xyz/api/cerebras/v1/chat/completions"
         self.headers = {
-            "Authorization": "Bearer 123",  
             "Content-Type": "application/json",
             "Accept": "text/event-stream",
+            "access-control-allow-credentials": "true",
+            "access-control-allow-headers": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-origin": "*",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "referrer-policy": "strict-origin-when-cross-origin",
+            "content-type": "text/event-stream; charset=utf-8",
+            "strict-transport-security": "max-age=3600; includeSubDomains",
+            "x-content-type-options": "nosniff",
+            "x-matched-path": "/api/cerebras/[...path]",
+            "x-ratelimit-limit-requests-day": "30000",
+            "x-ratelimit-limit-tokens-minute": "60000",
+            "x-ratelimit-remaining-requests-day": "29984",
+            "x-ratelimit-remaining-tokens-minute": "60000",
+            "x-ratelimit-reset-requests-day": "24092.23299384117",
+            "x-ratelimit-reset-tokens-minute": "32.232993841171265",
+            "x-request-id": "0vWYzSEvd9Ytk5Zvl8NGRfT_Ekjm0ErInwwxlihBPyqUBAjJpyXwCg==",
+            "x-vercel-id": "bom1::nsbfd-1729703907288-16e74bb1db50",
+            "accept": "application/json",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "dnt": "1",
+            "origin": "https://chat.gaurish.xyz",
+            "priority": "u=1, i",
+            "referer": "https://chat.gaurish.xyz/",
+            "sec-ch-ua": "\"Chromium\";v=\"130\", \"Microsoft Edge\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
+            "x-stainless-arch": "unknown",
+            "x-stainless-lang": "js",
+            "x-stainless-os": "Unknown",
+            "x-stainless-package-version": "4.67.3",
+            "x-stainless-retry-count": "0",
+            "x-stainless-runtime": "browser:chrome",
+            "x-stainless-runtime-version": "130.0.0",
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)

@@ -202,7 +202,7 @@ if __name__ == "__main__":
     from rich import print
     bot = ChatHub()
     try:
-        response = bot.chat("who is Abhay koul in AI", stream=True)
+        response = bot.chat("tell me about Abhay koul, HelpingAI", stream=True)
         for chunk in response:
             print(chunk, end="", flush=True)
     except Exception as e:

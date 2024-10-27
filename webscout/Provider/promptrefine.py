@@ -12,7 +12,7 @@ class PromptRefine(Provider):
     """
     A class to interact with the PromptRefine API.
     """
-
+    AVAILABLE_MODELS = ["openai/gpt-4", "openai/gpt-4o", "openai/gpt-4-1106-preview"]
     def __init__(
         self,
         is_conversation: bool = True,
@@ -76,6 +76,8 @@ class PromptRefine(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+        if self.model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {self.model}. Available models: {', '.join(self.AVAILABLE_MODELS)}")
 
     def ask(
         self,

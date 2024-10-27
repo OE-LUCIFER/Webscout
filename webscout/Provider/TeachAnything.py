@@ -1,9 +1,6 @@
 import requests
 from requests.exceptions import RequestException
 from typing import Any, Dict
-import logging
-import random
-
 from webscout.AIutel import Conversation, Optimizers
 
 class TeachAnything:

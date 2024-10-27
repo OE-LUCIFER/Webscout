@@ -592,7 +592,7 @@ class Perplexity(Provider):
 if __name__ == "__main__":
     perplexity = Perplexity() 
     # Stream the response
-    response = perplexity.chat("What is the meaning of life?")
+    response = perplexity.chat("tell me about Abhay koul, HelpingAI ")
     for chunk in response:
         print(chunk, end="", flush=True)
 

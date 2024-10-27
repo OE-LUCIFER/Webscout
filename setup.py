@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 from webscout.version import __prog__, __version__
+
 with open("README.md", encoding="utf-8") as f:
     README = f.read()
 
@@ -12,6 +13,7 @@ setup(
     author="OEvortex",
     author_email="helpingai5@gmail.com",
     packages=find_packages(),
+    python_requires=">=3.7",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -63,7 +65,8 @@ setup(
         "gradio_client",
         "psutil",
         "colorlog",
-        "yaspin"
+        "yaspin",
+        "cerebras-cloud-sdk",
     ],
     entry_points={
         "console_scripts": [

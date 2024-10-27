@@ -64,23 +64,24 @@ class DeepSeek(Provider):
         self.timeout = timeout
         self.last_response = {}
         self.headers = {
-            "authority": "chat.deepseek.com",
             "accept": "*/*",
             "accept-encoding": "gzip, deflate, br, zstd",
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "authorization": f"Bearer {self.api_token}",
+            "content-length": "128",
             "content-type": "application/json",
             "dnt": "1",
             "origin": "https://chat.deepseek.com",
-            "referer": "https://chat.deepseek.com",
-            "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "priority": "u=1, i",
+            "referer": "https://chat.deepseek.com/",
+            "sec-ch-ua": '"Chromium";v="130", "Microsoft Edge";v="130", "Not?A_Brand";v="99"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
-            "x-app-version": "20240126.0"
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
+            "x-app-version": "20241018.0"
         }
         self.__available_optimizers = (
             method

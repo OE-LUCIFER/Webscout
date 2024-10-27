@@ -4,12 +4,12 @@ import json
 import time
 from typing import Any, Dict, Optional
 import requests
-from webscout import WEBS, Julius
+from webscout import WEBS, GEMINIAPI
 
 class FunctionCallingAgent:
     def __init__(self, 
                  tools: list = None):
-        self.ai = Julius(timeout=300, intro=None)
+        self.ai = GEMINIAPI(api_key="Gemini api key", timeout=300, intro=None)
         self.tools = tools if tools is not None else []
         self.knowledge_cutoff = "September 2022" 
 

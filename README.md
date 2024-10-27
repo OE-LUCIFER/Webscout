@@ -193,90 +193,41 @@ weather = w.get("Qazigund")
 print(weather)
 ```
 
-## ✉️ Tempmail and 📞 Temp Number
+## ✉️ TempMail and VNEngine
 
-### Temp Number
 ```python
-from rich.console import Console
-from webscout import tempid
+import json
+import asyncio
+from webscout import VNEngine
+from webscout import TempMail
 
-def main():
-    console = Console()
-    phone = tempid.TemporaryPhoneNumber()
-
-    try:
-        # Get a temporary phone number for a specific country (or random)
-        number = phone.get_number(country="Finland")
-        console.print(f"Your temporary phone number: [bold cyan]{number}[/bold cyan]")
-
-        # Pause execution briefly (replace with your actual logic)
-        # import time module
-        import time
-        time.sleep(30)  # Adjust the waiting time as needed
-
-        # Retrieve and print messages
-        messages = phone.get_messages(number)
-        if messages:
-            # Access individual messages using indexing:
-            console.print(f"[bold green]{messages[0].frm}:[/] {messages[0].content}")
-            # (Add more lines if you expect multiple messages)
-        else:
-            console.print("No messages received.")
-
-    except Exception as e:
-        console.print(f"[bold red]An error occurred: {e}")
+async def main():
+    vn = VNEngine()
+    countries = vn.get_online_countries()
+    if countries:
+        country = countries[0]['country']
+        numbers = vn.get_country_numbers(country)
+        if numbers:
+            number = numbers[0]['full_number']
+            inbox = vn.get_number_inbox(country, number)
+            
+            # Serialize inbox data to JSON string
+            json_data = json.dumps(inbox, ensure_ascii=False, indent=4)
+            
+            # Print with UTF-8 encoding
+            print(json_data)
+    
+    async with TempMail() as client:
+        domains = await client.get_domains()
+        print("Available Domains:", domains)
+        email_response = await client.create_email(alias="testuser")
+        print("Created Email:", email_response)
+        messages = await client.get_messages(email_response.email)
+        print("Messages:", messages)
+        await client.delete_email(email_response.email, email_response.token)
+        print("Email Deleted")
 
 if __name__ == "__main__":
-    main()
-
-```
-
-### Tempmail
-```python
-import asyncio
-from rich.console import Console
-from rich.table import Table
-from rich.text import Text
-from webscout import tempid
-
-async def main() -> None:
-    console = Console()
-    client = tempid.Client()
-    
-    try:
-        domains = await client.get_domains()
-        if not domains:
-            console.print("[bold red]No domains available. Please try again later.")
-            return
-
-        email = await client.create_email(domain=domains[0].name)
-        console.print(f"Your temporary email: [bold cyan]{email.email}[/bold cyan]")
-        console.print(f"Token for accessing the email: [bold cyan]{email.token}[/bold cyan]")
-
-        while True:
-            messages = await client.get_messages(email.email)
-            if messages is not None:
-                break
-
-        if messages:
-            table = Table(show_header=True, header_style="bold magenta")
-            table.add_column("From", style="bold cyan")
-            table.add_column("Subject", style="bold yellow")
-            table.add_column("Body", style="bold green")
-            for message in messages:
-                body_preview = Text(message.body_text if message.body_text else "No body")
-                table.add_row(message.email_from or "Unknown", message.subject or "No Subject", body_preview)
-            console.print(table)
-        else:
-            console.print("No messages found.")
-    
-    except Exception as e:
-        console.print(f"[bold red]An error occurred: {e}")
-    
-    finally:
-        await client.close()
-
-if __name__ == '__main__':
     asyncio.run(main())
 ```
 
@@ -535,16 +486,6 @@ with WEBS() as WEBS:
         print(r)
 ```
 
-## 🌐 WEBSX - Another Web Search Tool
-
-```python
-from webscout import WEBSX
-s = "Python development tools"
-
-result = WEBSX(s)
-
-print(result)
-```
 
 ## 🎭 ALL Acts
 
@@ -804,7 +745,7 @@ print(result)
 ___
 </details>
 
-### 🖼️ Text to Images - DeepInfraImager, PollinationsAI, BlackboxAIImager, AiForceimager, NexraImager, HFimager, ArtbitImager, NinjaImager, WebSimAI, AmigoImager
+### 🖼️ Text to Images - DeepInfraImager, PollinationsAI, BlackboxAIImager, AiForceimager, NexraImager, HFimager, ArtbitImager, NinjaImager, WebSimAI, AIUncensoredImager
 
 **Every TTI provider has the same usage code, you just need to change the import.**
 
@@ -1059,29 +1000,6 @@ a = Cohere(is_conversation=True, max_tokens=8000, timeout=30,api_key="")
 prompt = "tell me about india"
 response_str = a.chat(prompt)
 print(response_str)
-```
-
-###  `BasedGPT` - Chat with GPT
-
-```python
-from webscout import BasedGPT
-
-# Initialize the BasedGPT provider
-basedgpt = BasedGPT(
-    is_conversation=True,  # Chat conversationally
-    max_tokens=600,  # Maximum tokens to generate
-    timeout=30,  # HTTP request timeout
-    intro="You are a helpful and friendly AI.",  # Introductory prompt
-    filepath="chat_history.txt",  # File to store conversation history
-    update_file=True,  # Update the chat history file
-)
-
-# Send a prompt to the AI
-prompt = "What is the meaning of life?"
-response = basedgpt.chat(prompt)
-
-# Print the AI's response
-print(response)
 ```
 
 ###  `DeepSeek` - Chat with DeepSeek
@@ -1365,7 +1283,7 @@ if __name__ == "__main__":
     main()
 ```
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, XDASH, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, AIGameIO, LlamaTutor, PromptRefine, AIUncensored, TutorAI, Bixin, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro
 
 Code is similar to other providers.
 
@@ -1516,7 +1434,7 @@ Webscout provides tools to convert and quantize Hugging Face models into the GGU
 **Example:**
 
 ```python
-from webscout import gguf
+from webscout.Extra import gguf
 """
 Valid quantization methods:
 "q2_k", "q3_k_l", "q3_k_m", "q3_k_s", 
@@ -1537,7 +1455,7 @@ gguf.convert(
 Webscout's `autollama` utility downloads a model from Hugging Face and then automatically makes it Ollama-ready.
 
 ```python
-from webscout import autollama
+from webscout.Extra import autollama
 
 model_path = "Vortex4ai/Jarvis-0.5B"
 gguf_file = "test2-q4_k_m.gguf"
@@ -1598,9 +1516,6 @@ Contributions are welcome! If you'd like to contribute to Webscout, please follo
 4. Push your branch to your forked repository.
 5. Submit a pull request to the main repository.
 
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 

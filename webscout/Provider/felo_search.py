@@ -175,6 +175,6 @@ class Felo(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = Felo()
-    response = ai.chat("tell me about HelpingAI-9B", stream=True)
+    response = ai.chat("tell me about Abhay koul, HelpingAI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

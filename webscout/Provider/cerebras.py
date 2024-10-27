@@ -1,22 +1,27 @@
-import json
+import re
 import requests
-from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
-from webscout.AIbase import Provider
+import json
+import os
+from typing import Any, Dict, Optional, Generator, List, Union
+
+from webscout.AIutel import Optimizers
+from webscout.AIutel import Conversation
+from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
-from typing import Dict, Any
+from fake_useragent import UserAgent
+from cerebras.cloud.sdk import Cerebras
+
 
 class Cerebras(Provider):
     """
-    A class to interact with the Cerebras AI API.
+    A class to interact with the Cerebras API using a cookie for authentication.
     """
-
-    AVAILABLE_MODELS = ["llama3.1-8b", "llama3.1-70b"]
 
     def __init__(
         self,
-        api_key: str,
         is_conversation: bool = True,
-        max_tokens: int = 4096,
+        max_tokens: int = 2049,
         timeout: int = 30,
         intro: str = None,
         filepath: str = None,
@@ -24,47 +29,39 @@ class Cerebras(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "llama3.1-8b",
-        system_prompt: str = "Please try to provide useful, helpful and actionable answers.",
+        cookie_path: str = "cookie.json",  # Path to cookie file
+        model: str = "llama3.1-8b",  # Default model
+        system_prompt: str = "You are a helpful assistant.",
     ):
         """
-        Initializes the Cerebras AI API with given parameters.
-        """
-        if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Available models are: {', '.join(self.AVAILABLE_MODELS)}")
+        Initializes the Cerebras client with the provided cookie.
 
-        self.session = requests.Session()
-        self.is_conversation = is_conversation
-        self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://api.cerebras.ai/v1/chat/completions"
-        self.timeout = timeout
-        self.last_response = {}
+        Args:
+            cookie_path (str): Path to the cookie JSON file.
+            model (str, optional): Model name to use. Defaults to 'llama3.1-8b'.
+            system_prompt (str, optional): The system prompt to send with every request. Defaults to "You are a helpful assistant.".
+
+        Raises:
+            FileNotFoundError: If the cookie file is not found.
+            json.JSONDecodeError: If the cookie file has an invalid JSON format.
+            requests.exceptions.RequestException: If there's an error retrieving the API key.
+        """
+        self.api_key = self.get_demo_api_key(cookie_path)
+        self.client = Cerebras(api_key=self.api_key)
         self.model = model
         self.system_prompt = system_prompt
-        self.headers = {
-            "accept": "application/json",
-            "accept-encoding": "gzip, deflate, br, zstd",
-            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
-            "authorization": f"Bearer {api_key}",
-            "content-type": "application/json",
-            "dnt": "1",
-            "origin": "https://inference.cerebras.ai",
-            "referer": "https://inference.cerebras.ai/",
-            "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
-        }
+
+        self.is_conversation = is_conversation
+        self.max_tokens_to_sample = max_tokens
+        self.timeout = timeout
+        self.last_response = {}
 
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        self.session.headers.update(self.headers)
+
         Conversation.intro = (
             AwesomePrompts().get_act(
                 act, raise_not_found=True, default=None, case_insensitive=True
@@ -76,7 +73,63 @@ class Cerebras(Provider):
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+
+
+    @staticmethod
+    def extract_query(text: str) -> str:
+        """
+        Extracts the first code block from the given text.
+        """
+        pattern = r"```(.*?)```"
+        matches = re.findall(pattern, text, re.DOTALL)
+        return matches[0].strip() if matches else text.strip()
+
+    @staticmethod
+    def refiner(text: str) -> str:
+        """Refines the input text by removing surrounding quotes."""
+        return text.strip('"')
+
+    def get_demo_api_key(self, cookie_path: str) -> str:
+        """Retrieves the demo API key using the provided cookie."""
+        try:
+            with open(cookie_path, "r") as file:
+                cookies = {item["name"]: item["value"] for item in json.load(file)}
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Cookie file not found at path: {cookie_path}")
+        except json.JSONDecodeError:
+            raise json.JSONDecodeError("Invalid JSON format in the cookie file.")
+
+        headers = {
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Content-Type": "application/json",
+            "Origin": "https://inference.cerebras.ai",
+            "Referer": "https://inference.cerebras.ai/",
+            "user-agent": UserAgent().random,
+        }
+
+        json_data = {
+            "operationName": "GetMyDemoApiKey",
+            "variables": {},
+            "query": "query GetMyDemoApiKey {\n  GetMyDemoApiKey\n}",
+        }
+
+        try:
+            response = requests.post(
+                "https://inference.cerebras.ai/api/graphql",
+                cookies=cookies,
+                headers=headers,
+                json=json_data,
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            api_key = response.json()["data"]["GetMyDemoApiKey"]
+            return api_key
+        except requests.exceptions.RequestException as e:
+            raise exceptions.APIConnectionError(f"Failed to retrieve API key: {e}")
+        except KeyError:
+            raise exceptions.InvalidResponseError("API key not found in response.")
+
 
     def ask(
         self,
@@ -85,7 +138,8 @@ class Cerebras(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> Union[Dict, Generator]:
+
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -93,60 +147,35 @@ class Cerebras(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
-        payload = {
-            "messages": [
-                {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt},
-            ],
-            "model": self.model,
-            "stream": True,
-            "temperature": 0.2,
-            "top_p": 1,
-            "max_tokens": self.max_tokens_to_sample
-        }
+        messages = [
+            {"content": self.system_prompt, "role": "system"},
+            {"content": conversation_prompt, "role": "user"},
+        ]
 
         def for_stream():
-            response = self.session.post(
-                self.api_endpoint, json=payload, stream=True, timeout=self.timeout
-            )
-
-            if not response.ok:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Failed to generate response - ({response.status_code}, {response.reason})"
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model, messages=messages, stream=True
                 )
+                for choice in response.choices:
+                    if choice.delta.content:
+                        yield dict(text=choice.delta.content)
+                self.last_response.update({"text": response.choices[0].message.content})
 
-            full_response = ""
-            for line in response.iter_lines():
-                if line:
-                    line_data = line.decode('utf-8').strip()
-                    if line_data.startswith("data: "):
-                        json_str = line_data[6:]
-                        if json_str != "[DONE]":
-                            chunk = json.loads(json_str)
-                            if 'choices' in chunk and 'delta' in chunk['choices'][0]:
-                                content = chunk['choices'][0]['delta'].get('content', '')
-                                full_response += content
-                                yield content if raw else dict(text=content)
-                        else:
-                            break
-
-            self.last_response.update(dict(text=full_response))
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+            except Exception as e:
+                raise exceptions.FailedToGenerateResponseError(f"Error during stream: {e}")
 
         def for_non_stream():
-            full_response = ""
-            for chunk in for_stream():
-                if isinstance(chunk, dict):
-                    full_response += chunk['text']
-                else:
-                    full_response += chunk
-            return dict(text=full_response)
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model, messages=messages
+                )
+                self.last_response.update({"text": response.choices[0].message.content})
+                return self.last_response
+            except Exception as e:
+                raise exceptions.FailedToGenerateResponseError(f"Error during non-stream: {e}")
 
         return for_stream() if stream else for_non_stream()
 
@@ -156,44 +185,22 @@ class Cerebras(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str:
-        def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                )
+    ) -> Union[str, Generator]:
+        return self.get_message(
+            self.ask(
+                prompt, stream, optimizer=optimizer, conversationally=conversationally
             )
-
-        return for_stream() if stream else for_non_stream()
+        )
 
     def get_message(self, response: dict) -> str:
-        """Retrieves message only from response
-
-        Args:
-            response (dict): Response generated by `self.ask`
-
-        Returns:
-            str: Message extracted
-        """
+        """Retrieves message only from response"""
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich import print
-    
-    # You can replace this with your actual API key
-    api_key = "YOUR_API_KEY_HERE"
-    
-    ai = Cerebras(api_key=api_key)
-    response = ai.chat(input(">>> "), stream=True)
+    cerebras = Cerebras(cookie_path='cookie.json', model='llama3.1-8b', system_prompt="You are a helpful AI assistant.")
+    response = cerebras.chat("What is the meaning of life?", sys_prompt='', stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

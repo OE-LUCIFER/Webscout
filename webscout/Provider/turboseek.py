@@ -1,6 +1,4 @@
 import requests
-
-
 import json
 
 from webscout.AIutel import Optimizers
@@ -138,16 +136,13 @@ class TurboSeek(Provider):
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
-            print(response.text)
             streaming_text = ""
             for value in response.iter_lines(
-                decode_unicode=True,
                 chunk_size=self.stream_chunk_size,
-                delimiter="\n",
             ):
                 try:
-                    if bool(value) and value.startswith("data: "):
-                        data = json.loads(value[6:])
+                    if value and value.startswith(b"data: "): #Check for bytes and decode
+                        data = json.loads(value[6:].decode('utf-8')) # Decode manually
                         if "text" in data:
                             streaming_text += data["text"]
                             resp = dict(text=streaming_text)

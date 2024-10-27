@@ -192,9 +192,9 @@ class NinjaChat(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    bot = NinjaChat(model="gemini-1.5-pro", system_message="You are a creative writer.")
+    bot = NinjaChat(model="perplexity", system_message="You are a creative writer.")
 
-    response = bot.chat("write a poem about a robot learning to love", stream=True)
+    response = bot.chat("tell me about Abhay koul, HelpingAI ", stream=True)
 
     for chunk in response:
         print(chunk, end="", flush=True)

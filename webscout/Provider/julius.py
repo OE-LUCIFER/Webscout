@@ -32,6 +32,7 @@ class Julius(Provider):
     ]
     def __init__(
         self,
+        api_key: str,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
@@ -69,12 +70,12 @@ class Julius(Provider):
         self.timeout = timeout
         self.last_response = {}
         self.model = model
+        self.api_key = api_key
         self.headers = {
-            "authorization": "Bearer",
+            "authorization": f"Bearer {self.api_key}",
             "content-type": "application/json",
             "conversation-id": str(uuid.uuid4()),
             "interactive-charts": "true",
-            "is-demo": "temp_14aabbb1-95bc-4203-a678-596258d6fdf3",
             "is-native": "false",
             "orient-split": "true",
             "request-id": str(uuid.uuid4()),
@@ -216,7 +217,7 @@ class Julius(Provider):
         return response["text"]
 if __name__ == '__main__':
     from rich import print
-    ai = Julius(timeout=5000)
+    ai = Julius(api_key="",timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

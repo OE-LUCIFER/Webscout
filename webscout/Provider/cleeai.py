@@ -207,6 +207,6 @@ class Cleeai(Provider):
 if __name__ == "__main__":
     from rich import print
     ai = Cleeai(timeout=5000)
-    response = ai.chat("write a poem about AI", stream=True)
+    response = ai.chat("tell me about Abhay koul, HelpingAI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

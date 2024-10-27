@@ -1,4 +1,4 @@
-import requests
+import cloudscraper
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation, Proxy
 from webscout.AIutel import AwesomePrompts, sanitize_stream
@@ -49,7 +49,7 @@ class Editee(Provider):
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.session = requests.Session()
+        self.session = cloudscraper.create_scraper()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.api_endpoint = "https://editee.com/submit/chatgptfree"
