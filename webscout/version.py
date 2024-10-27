@@ -1,2 +1,2 @@
-__version__ = "6.2-bete"
+__version__ = "6.2b"
 __prog__ = "webscout"
