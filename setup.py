@@ -89,9 +89,8 @@ setup(
     },
     license="HelpingAI",
     project_urls={
-        "Documentation": "https://github.com/OE-LUCIFER/Webscout/wiki",
-        "Source": "https://github.com/OE-LUCIFER/Webscout",
-        "Tracker": "https://github.com/OE-LUCIFER/Webscout/issues",
+        "Source": "https://github.com/HelpingAI/Webscout",
+        "Tracker": "https://github.com/HelpingAI/Webscout/issues",
         "YouTube": "https://youtube.com/@OEvortex",
     },
 )

@@ -183,7 +183,7 @@ class LLAMA3(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    ai = LLAMA3(api_key='7979b01c-c5ea-40df-9198-f45733fa2208')
+    ai = LLAMA3(api_key='')
     response = ai.chat(input(">>> "))
     for chunks in response:
         print(chunks, end="", flush=True)

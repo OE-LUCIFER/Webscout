@@ -1,8 +1,8 @@
 <div align="center">
   <!-- Replace `#` with your actual links -->
-  <a href="https://t.me/devsdocode"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
-  <a href="https://www.instagram.com/sree.shades_/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
-  <a href="https://www.linkedin.com/in/developer-sreejan/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
+  <a href="https://t.me/official_helpingai"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+  <a href="https://www.instagram.com/oevortex/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
+  <a href="https://www.linkedin.com/in/oe-vortex-29a407265/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
   <a href="https://buymeacoffee.com/oevortex"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>
 </div>
 
@@ -745,7 +745,7 @@ with WEBS() as WEBS:
 ___
 </details>
 
-### 🖼️ Text to Images - DeepInfraImager, PollinationsAI, BlackboxAIImager, AiForceimager, NexraImager, HFimager, ArtbitImager, NinjaImager, WebSimAI, AIUncensoredImager
+### 🖼️ Text to Images - DeepInfraImager, PollinationsAI, BlackboxAIImager, AiForceimager, NexraImager, HFimager, ArtbitImager, NinjaImager, WebSimAI, AIUncensoredImager, TalkaiImager
 
 **Every TTI provider has the same usage code, you just need to change the import.**
 
@@ -1283,7 +1283,7 @@ if __name__ == "__main__":
     main()
 ```
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat
 
 Code is similar to other providers.
 
@@ -1489,9 +1489,9 @@ python -m webscout.webai webai --provider "phind" --rawdog
 
 <div align="center">
   <!-- Replace `#` with your actual links -->
-  <a href="https://t.me/devsdocode"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
-  <a href="https://www.instagram.com/sree.shades_/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
-  <a href="https://www.linkedin.com/in/developer-sreejan/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
+  <a href="https://t.me/official_helpingai"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+  <a href="https://www.instagram.com/oevortex/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
+  <a href="https://www.linkedin.com/in/oe-vortex-29a407265/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
   <a href="https://buymeacoffee.com/oevortex"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>
 </div>
 

@@ -63,6 +63,8 @@ from .aimathgpt import *
 from .gaurish import *
 from .geminiprorealtime import *
 from .NinjaChat import *
+from .llmchat import *
+from .talkai import *
 __all__ = [
     'Farfalle',
     'LLAMA', 
@@ -128,6 +130,7 @@ __all__ = [
     'GaurishCerebras',
     'GeminiPro',
     'NinjaChat',
-
+    'LLMChat',
+    'Talkai'
 
 ]

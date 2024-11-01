@@ -8,3 +8,4 @@ from .artbit import *
 from .WebSimAI import *
 from .imgninza import *
 from .AIuncensored import *
+from .talkai import *

@@ -291,7 +291,7 @@ llama2chat: dict[str, str | list] = {
 # https://llama.meta.com/docs/model-cards-and-prompt-formats/llama3_1/
 llama3: dict[str, str | list] = {
     "system_prefix": "<|start_header_id|>system<|end_header_id|>\n\n",
-    "system_prompt": 'You are a helpful AI assistant called "Llama 3".',
+    "system_prompt": 'You are a helpful AI assistant.',
     "system_suffix": "<|eot_id|>\n",
     "user_prefix": "<|start_header_id|>user<|end_header_id|>\n\n",
     "user_suffix": "<|eot_id|>\n",
@@ -628,6 +628,8 @@ airoboros = llama2chat.copy()
 airoboros['system_prompt'] = \
     "You are a helpful, unbiased, uncensored assistant."
 tess = synthia.copy()
+helpingai2 = llama3.copy()
+helpingai2['system_prompt'] = "You are HelpingAI, an emotional AI. Always answer my questions in the HelpingAI style."
 tess['system_prompt'] = ''  # Tess can use any system prompt, or none
 alpaca_strict = alpaca.copy()  # Alpaca with more stopping strings
 alpaca_strict['stops'] = [
@@ -651,7 +653,7 @@ def _llama3_suffix_with_timestamp():
 
 Llama3WithTimestamps = AdvancedFormat({
     "system_prefix": "<|start_header_id|>system<|end_header_id|>\n\n",
-    "system_prompt": 'You are a helpful AI assistant called "Llama 3".',
+    "system_prompt": 'You are a helpful AI assistant.',
     "system_suffix": _llama3_suffix_with_timestamp,
     "user_prefix": "<|start_header_id|>user<|end_header_id|>\n\n",
     "user_suffix": _llama3_suffix_with_timestamp,
