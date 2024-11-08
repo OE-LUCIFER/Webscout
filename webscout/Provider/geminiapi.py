@@ -7,6 +7,7 @@ $ pip install google-generativeai
 import os
 import google.generativeai as genai
 
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import requests
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -36,6 +37,7 @@ class GEMINIAPI(Provider):
         history_offset: int = 10250,
         act: str = None,
         system_instruction: str = "You are a helpful and informative AI assistant.",
+        safety_settings: dict = None,
     ):
         """
         Initializes the Gemini API with the given parameters.
@@ -67,7 +69,7 @@ class GEMINIAPI(Provider):
         self.top_k = top_k
         self.max_output_tokens = max_output_tokens
         self.system_instruction = system_instruction
-
+        self.safety_settings = safety_settings if safety_settings else {}
         self.session = requests.Session()  # Not directly used for Gemini API calls, but can be used for other requests
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_output_tokens
@@ -103,6 +105,7 @@ class GEMINIAPI(Provider):
             "max_output_tokens": self.max_output_tokens,
             "response_mime_type": "text/plain",
         }
+
         self.model = genai.GenerativeModel(
             model_name=self.model_name,
             generation_config=self.generation_config,
@@ -192,6 +195,13 @@ class GEMINIAPI(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 if __name__ == "__main__":
+    safety_settings = {
+        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+    }
     ai = GEMINIAPI(api_key="")
     res = ai.chat(input(">>> "))
     for r in res:
