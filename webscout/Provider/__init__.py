@@ -11,7 +11,6 @@ from .Koboldai import KOBOLDAI
 from .Koboldai import AsyncKOBOLDAI
 from .Perplexity import *
 from .Blackboxai import BLACKBOXAI 
-from .Blackboxai import AsyncBLACKBOXAI
 from .Phind import PhindSearch 
 from .Phind import Phindv2
 from .ai4chat import *
@@ -65,6 +64,9 @@ from .geminiprorealtime import *
 from .NinjaChat import *
 from .llmchat import *
 from .talkai import *
+from .askmyai import *
+from .llama3mitril import *
+from .Marcus import *
 __all__ = [
     'Farfalle',
     'LLAMA', 
@@ -78,7 +80,6 @@ __all__ = [
     'AsyncKOBOLDAI',
     'Perplexity',
     'BLACKBOXAI', 
-    'AsyncBLACKBOXAI',
     'PhindSearch', 
     'Felo',
     'GEMINI',
@@ -94,6 +95,7 @@ __all__ = [
     'KOALA',
     'RUBIKSAI',
     'Meta',
+    'AskMyAI',
     'DiscordRocks',
     'PiAI',
     'Julius',
@@ -131,6 +133,8 @@ __all__ = [
     'GeminiPro',
     'NinjaChat',
     'LLMChat',
-    'Talkai'
+    'Talkai',
+    'Llama3Mitril',
+    'Marcus',
 
 ]

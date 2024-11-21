@@ -11,6 +11,7 @@ import pyreqwest_impersonate as pri
 from .webscout_search import WEBS
 from .utils import json_dumps, json_loads
 from .version import __version__
+from .interactive import interactive_session
 
 # Import rich for panel interface
 from rich.panel import Panel
@@ -341,6 +342,13 @@ def suggestions(keywords, region, proxy):
     """Performs a suggestions search using DuckDuckGo API with a rich UI."""
     data = WEBS(proxy=proxy).suggestions(keywords=keywords, region=region)
     _print_data(data)
+
+
+@cli.command()
+@click.option("--proxy", help="Proxy to use for requests", default=None)
+def interactive(proxy):
+    """Start an interactive search session with AI-powered responses."""
+    interactive_session()
 
 
 if __name__ == "__main__":

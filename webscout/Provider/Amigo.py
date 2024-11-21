@@ -16,12 +16,17 @@ class AmigoChat(Provider):
     """
 
     AVAILABLE_MODELS = [
-        "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",  # Llama 3
-        "o1-mini",                                   # OpenAI O1 Mini
-        "claude-3-sonnet-20240229",                  # Claude Sonnet
-        "gemini-1.5-pro",                             # Gemini Pro
-        "gemini-1-5-flash",                            # Gemini Flash
-        "o1-preview",                                 # OpenAI O1 Preview
+        "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",    # Llama 3
+        "o1-mini",                                          # OpenAI O1 Mini
+        "claude-3-sonnet-20240229",                         # Claude Sonnet
+        "gemini-1.5-pro",                                   # Gemini Pro
+        "gemini-1-5-flash",                                 # Gemini Flash
+        "o1-preview",                                       # OpenAI O1 Preview
+        "claude-3-5-sonnet-20241022",                       # Claude 3.5 Sonnet
+        "Qwen/Qwen2.5-72B-Instruct-Turbo",                  # Qwen 2.5
+        "gpt-4o"                                            # OpenAI GPT-4o
+        "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo"    # Llama 3.2
+
     ]
 
     def __init__(
@@ -29,13 +34,15 @@ class AmigoChat(Provider):
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
+        temperature: float = 1,
         intro: str = None,
         filepath: str = None,
+        top_p: float = 0.95,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "o1-preview",  # Default model
+        model: str = "Qwen/Qwen2.5-72B-Instruct-Turbo",  # Default model
         system_prompt: str = "You are a helpful and friendly AI assistant.",
     ):
         """
@@ -68,8 +75,10 @@ class AmigoChat(Provider):
         self.api_endpoint = "https://api.amigochat.io/v1/chat/completions"
         self.stream_chunk_size = 64
         self.timeout = timeout
+        self.temperature = temperature
         self.last_response = {}
         self.model = model
+        self.top_p = top_p
         self.headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -158,11 +167,11 @@ class AmigoChat(Provider):
             ],
             "model": self.model,
             "frequency_penalty": 0,
-            "max_tokens": 4000,
+            "max_tokens": self.max_tokens_to_sample,
             "presence_penalty": 0,
             "stream": stream,
-            "temperature": 0.5,
-            "top_p": 0.95
+            "temperature":self.temperature,
+            "top_p": self.top_p
         }
 
         def for_stream():

@@ -41,7 +41,8 @@ class AIUncensored(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = 'https://twitterclone-i0wr.onrender.com/api/chat'
+        self.api_endpoint = ['https://twitterclone-i0wr.onrender.com/api/chat', 'https://twitterclone-4e8t.onrender.com/api/chat', 'https://twitterclone-8wd1.onrender.com/api/chat']
+        self.endpoint_index = 0
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
@@ -149,10 +150,10 @@ class AIUncensored(Provider):
 
 
         def for_stream():
-            with requests.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
+            full_content = ''
+            with requests.post(self.api_endpoint[self.endpoint_index], headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
 
                 if response.status_code == 200:
-                    full_content = ''
                     for line in response.iter_lines():
                         decoded_line = line.decode('utf-8').strip()
                         if decoded_line:
@@ -174,11 +175,11 @@ class AIUncensored(Provider):
                 self.conversation.update_chat_history(
                     prompt, self.get_message(self.last_response)
                 )
+                self.endpoint_index = (self.endpoint_index + 1) % len(self.api_endpoint)
         def for_non_stream():
-
+            full_content = ''
             for _ in for_stream():
                 pass
-
             return self.last_response
 
         return for_stream() if stream else for_non_stream()

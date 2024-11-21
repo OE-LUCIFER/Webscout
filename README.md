@@ -1283,7 +1283,7 @@ if __name__ == "__main__":
     main()
 ```
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus
 
 Code is similar to other providers.
 

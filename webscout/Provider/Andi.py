@@ -92,40 +92,7 @@ class AndiSearch(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
-        """Chat with AI
 
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-           dict : {}
-        ```json
-        {
-            "id": "chatcmpl-TaREJpBZsRVQFRFic1wIA7Q7XfnaD",
-            "object": "chat.completion",
-            "created": 1704623244,
-            "model": "gpt-3.5-turbo",
-            "usage": {
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "total_tokens": 0
-                },
-            "choices": [
-                {
-                    "message": {
-                        "role": "assistant",
-                        "content": "Hello! How can I assist you today?"
-                },
-                "finish_reason": "stop",
-                "index": 0
-                }
-            ]
-        }
-        ```
-        """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:

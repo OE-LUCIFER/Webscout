@@ -30,7 +30,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     install_requires=[
-        "docstring_inheritance",
         "click",
         "curl_cffi",
         "nest-asyncio",
@@ -67,6 +66,7 @@ setup(
         "colorlog",
         "yaspin",
         "cerebras-cloud-sdk",
+
     ],
     entry_points={
         "console_scripts": [

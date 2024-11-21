@@ -7,5 +7,5 @@ from .huggingface import *
 from .artbit import *
 from .WebSimAI import *
 from .imgninza import *
-from .AIuncensored import *
+from .AIuncensoredimage import *
 from .talkai import *

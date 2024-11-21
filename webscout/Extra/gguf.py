@@ -1,47 +1,221 @@
 # webscout/Extra/gguf.py
 import subprocess
 import os 
+import sys
+import logging
+import shutil
+from pathlib import Path
+from typing import List, Optional, Dict, Any
 from pyfiglet import figlet_format
 from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+from rich.logging import RichHandler
+from rich.panel import Panel
+from rich.table import Table
 
+# Set up logging with Rich
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True)]
+)
+
+log = logging.getLogger("rich")
 console = Console()
 
-def convert(model_id, username=None, token=None, quantization_methods="q4_k_m,q5_k_m"):
-    """Converts and quantizes a Hugging Face model to GGUF format.
+class ConversionError(Exception):
+    """Custom exception for conversion errors"""
+    pass
 
-    Args:
-        model_id (str): The Hugging Face model ID (e.g., 'google/flan-t5-xl').
-        username (str, optional): Your Hugging Face username. Required for uploads.
-        token (str, optional): Your Hugging Face API token. Required for uploads. 
-        quantization_methods (str, optional): Comma-separated quantization methods. 
-                                                Defaults to "q4_k_m,q5_k_m".
-
-    Raises:
-        ValueError: If an invalid quantization method is provided.
-    """
-
-    console.print(f"[bold green]{figlet_format('GGUF Converter')}[/]\n", justify="center")
-    # List of valid quantization methods
-    valid_methods = [
-        "q2_k", "q3_k_l", "q3_k_m", "q3_k_s", 
-        "q4_0", "q4_1", "q4_k_m", "q4_k_s", 
-        "q5_0", "q5_1", "q5_k_m", "q5_k_s", 
-        "q6_k", "q8_0"
-    ]
+class ModelConverter:
+    """Handles the conversion of Hugging Face models to GGUF format."""
     
-    # Validate the selected quantization methods
-    selected_methods_list = quantization_methods.split(',')
-    for method in selected_methods_list:
-        if method not in valid_methods:
-            raise ValueError(f"Invalid method: {method}. Please select from the available methods: {', '.join(valid_methods)}")
+    VALID_METHODS = {
+        "q2_k": "2-bit quantization",
+        "q3_k_l": "3-bit quantization (large)",
+        "q3_k_m": "3-bit quantization (medium)",
+        "q3_k_s": "3-bit quantization (small)",
+        "q4_0": "4-bit quantization (version 0)",
+        "q4_1": "4-bit quantization (version 1)",
+        "q4_k_m": "4-bit quantization (medium)",
+        "q4_k_s": "4-bit quantization (small)",
+        "q5_0": "5-bit quantization (version 0)",
+        "q5_1": "5-bit quantization (version 1)",
+        "q5_k_m": "5-bit quantization (medium)",
+        "q5_k_s": "5-bit quantization (small)",
+        "q6_k": "6-bit quantization",
+        "q8_0": "8-bit quantization"
+    }
     
-   # Construct the absolute path to the shell script
-    script_path = os.path.join(os.getcwd(), "gguf.sh")
-    if not os.path.exists(script_path):
-        # Create autollama.sh with the content provided
-        with open(script_path, "w") as f:
-            f.write("""
-cat << "EOF"
+    def __init__(self, model_id: str, username: Optional[str] = None, 
+                 token: Optional[str] = None, quantization_methods: str = "q4_k_m,q5_k_m"):
+        self.model_id = model_id
+        self.username = username
+        self.token = token
+        self.quantization_methods = quantization_methods.split(',')
+        self.model_name = model_id.split('/')[-1]
+        self.workspace = Path(os.getcwd())
+        
+    def validate_inputs(self) -> None:
+        """Validates all input parameters."""
+        if not '/' in self.model_id:
+            raise ValueError("Invalid model ID format. Expected format: 'organization/model-name'")
+            
+        invalid_methods = [m for m in self.quantization_methods if m not in self.VALID_METHODS]
+        if invalid_methods:
+            raise ValueError(
+                f"Invalid quantization methods: {', '.join(invalid_methods)}.\n"
+                f"Valid methods are: {', '.join(self.VALID_METHODS.keys())}"
+            )
+            
+        if bool(self.username) != bool(self.token):
+            raise ValueError("Both username and token must be provided for upload, or neither.")
+    
+    @staticmethod
+    def check_dependencies() -> Dict[str, bool]:
+        """Check if all required dependencies are installed."""
+        dependencies = {
+            'git': 'Git version control',
+            'pip3': 'Python package installer',
+            'huggingface-cli': 'Hugging Face CLI',
+            'nvcc': 'NVIDIA CUDA Compiler (optional)'
+        }
+        
+        status = {}
+        for cmd, desc in dependencies.items():
+            status[cmd] = subprocess.run(['which', cmd], capture_output=True, text=True).returncode == 0
+            
+        return status
+    
+    def setup_llama_cpp(self) -> None:
+        """Sets up and builds llama.cpp repository."""
+        llama_path = self.workspace / "llama.cpp"
+        
+        with console.status("[bold green]Setting up llama.cpp...") as status:
+            if not llama_path.exists():
+                log.info("Cloning llama.cpp repository...")
+                subprocess.run(['git', 'clone', 'https://github.com/ggerganov/llama.cpp'], check=True)
+            
+            os.chdir(llama_path)
+            log.info("Installing requirements...")
+            subprocess.run(['pip3', 'install', '-r', 'requirements.txt'], check=True)
+            
+            has_cuda = subprocess.run(['nvcc', '--version'], capture_output=True).returncode == 0
+            
+            log.info("Building llama.cpp...")
+            subprocess.run(['make', 'clean'], check=True)
+            if has_cuda:
+                status.update("[bold green]Building with CUDA support...")
+                subprocess.run(['make', 'LLAMA_CUBLAS=1'], check=True)
+            else:
+                status.update("[bold yellow]Building without CUDA support...")
+                subprocess.run(['make'], check=True)
+            
+            os.chdir(self.workspace)
+    
+    def display_config(self) -> None:
+        """Displays the current configuration in a formatted table."""
+        table = Table(title="Configuration", show_header=True, header_style="bold magenta")
+        table.add_column("Setting", style="cyan")
+        table.add_column("Value", style="green")
+        
+        table.add_row("Model ID", self.model_id)
+        table.add_row("Model Name", self.model_name)
+        table.add_row("Username", self.username or "Not provided")
+        table.add_row("Token", "****" if self.token else "Not provided")
+        table.add_row("Quantization Methods", "\n".join(
+            f"{method} ({self.VALID_METHODS[method]})" 
+            for method in self.quantization_methods
+        ))
+        
+        console.print(Panel(table))
+    
+    def convert(self) -> None:
+        """Performs the model conversion process."""
+        try:
+            # Display banner and configuration
+            console.print(f"[bold green]{figlet_format('GGUF Converter')}[/]\n", justify="center")
+            self.display_config()
+            
+            # Validate inputs
+            self.validate_inputs()
+            
+            # Check dependencies
+            deps = self.check_dependencies()
+            missing = [name for name, installed in deps.items() if not installed and name != 'nvcc']
+            if missing:
+                raise ConversionError(f"Missing required dependencies: {', '.join(missing)}")
+            
+            # Setup llama.cpp
+            self.setup_llama_cpp()
+            
+            # Create and execute conversion script
+            script_path = self.workspace / "gguf.sh"
+            if not script_path.exists():
+                self._create_conversion_script(script_path)
+            
+            # Prepare command
+            command = ["bash", str(script_path), "-m", self.model_id]
+            if self.username and self.token:
+                command.extend(["-u", self.username, "-t", self.token])
+            command.extend(["-q", ",".join(self.quantization_methods)])
+            
+            # Execute conversion with progress tracking
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                console=console
+            ) as progress:
+                task = progress.add_task("Converting model...", total=None)
+                
+                process = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True
+                )
+                
+                while True:
+                    output = process.stdout.readline()
+                    if output == '' and process.poll() is not None:
+                        break
+                    if output:
+                        progress.update(task, description=output.strip())
+                        log.info(output.strip())
+                
+                stderr = process.stderr.read()
+                if stderr:
+                    log.warning(stderr)
+                
+                if process.returncode != 0:
+                    raise ConversionError(f"Conversion failed with return code {process.returncode}")
+                
+                progress.update(task, completed=True)
+            
+            # Display success message
+            console.print(Panel.fit(
+                "[bold green]✓[/] Conversion completed successfully!\n\n"
+                f"[cyan]Output files can be found in: {self.workspace / self.model_name}[/]",
+                title="Success",
+                border_style="green"
+            ))
+            
+        except Exception as e:
+            console.print(Panel.fit(
+                f"[bold red]✗[/] {str(e)}",
+                title="Error",
+                border_style="red"
+            ))
+            raise
+    
+    def _create_conversion_script(self, script_path: Path) -> None:
+        """Creates the conversion shell script."""
+        script_content = """cat << "EOF"
 Made with love in India
 EOF
 
@@ -143,7 +317,6 @@ fi
 
 
 
-
 # Download model 
 #todo : shall we put condition to check if model has been already downloaded? similar to autogguf?
 echo "Downloading the model..."
@@ -195,32 +368,49 @@ else
 fi
 
 echo "Script completed."
-            """)
-        # Make autollama.sh executable (using chmod)
-        os.chmod(script_path, 0o755)
+            """
+        script_path.write_text(script_content)
+        script_path.chmod(0o755)
 
-    # Construct the command
-    command = ["bash", script_path, "-m", model_id]
-    
-    if username:
-        command.extend(["-u", username])
-    
-    if token:
-        command.extend(["-t", token])
-    
-    if quantization_methods:
-        command.extend(["-q", quantization_methods])
-    
-    # Execute the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+def convert(
+    model_id: str,
+    username: Optional[str] = None,
+    token: Optional[str] = None,
+    quantization_methods: str = "q4_k_m,q5_k_m"
+) -> None:
+    """Converts and quantizes a Hugging Face model to GGUF format.
 
-    # Print the output and error in real-time
-    for line in process.stdout:
-        print(line, end='')
+    Args:
+        model_id (str): The Hugging Face model ID (e.g., 'google/flan-t5-xl').
+        username (str, optional): Your Hugging Face username. Required for uploads.
+        token (str, optional): Your Hugging Face API token. Required for uploads. 
+        quantization_methods (str, optional): Comma-separated quantization methods. 
+                                            Defaults to "q4_k_m,q5_k_m".
 
-    for line in process.stderr:
-        print(line, end='')
+    Raises:
+        ConversionError: If any step in the conversion process fails.
+        ValueError: If invalid parameters are provided.
+    """
+    converter = ModelConverter(model_id, username, token, quantization_methods)
+    converter.convert()
+
+if __name__ == "__main__":
+    import argparse
     
-    process.wait()
-
-
+    parser = argparse.ArgumentParser(description="Convert Hugging Face models to GGUF format")
+    parser.add_argument("model_id", help="The Hugging Face model ID (e.g., 'google/flan-t5-xl')")
+    parser.add_argument("-u", "--username", help="Your Hugging Face username")
+    parser.add_argument("-t", "--token", help="Your Hugging Face API token")
+    parser.add_argument(
+        "-q", "--quantization-methods",
+        default="q4_k_m,q5_k_m",
+        help="Comma-separated quantization methods"
+    )
+    
+    args = parser.parse_args()
+    convert(
+        model_id=args.model_id,
+        username=args.username,
+        token=args.token,
+        quantization_methods=args.quantization_methods
+    )

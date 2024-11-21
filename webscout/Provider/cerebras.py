@@ -7,7 +7,7 @@ from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from fake_useragent import UserAgent
-from cerebras.cloud.sdk import Cerebras as CerebrasSDK
+from cerebras.cloud.sdk import Cerebras as CerebrasSDK # type: ignore
 
 
 class Cerebras(Provider):
