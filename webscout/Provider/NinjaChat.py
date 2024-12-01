@@ -35,7 +35,7 @@ class NinjaChat(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "perplexity",  # Default model
+        model: str = "llama",  # Default model
         system_message: str = "You are a helpful AI assistant.",  # Default system message
     ):
         """Initializes the NinjaChat API client."""

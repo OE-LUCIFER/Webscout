@@ -1,31 +1,49 @@
-# webscout/Extra/gguf.py
+"""
+Yo fam! 🔥 Welcome to GGUF Converter - your ultimate tool for converting models to GGUF format! 💪
+
+- Converting HuggingFace models to GGUF format 🚀
+- Multiple quantization methods for different needs 🎯
+- Easy upload back to HuggingFace Hub 📤
+
+Usage:
+>>> python -m webscout.Extra.gguf convert -m "OEvortex/HelpingAI-Lite-1.5T" -q "q4_k_m,q5_k_m"
+>>> # With upload options:
+>>> python -m webscout.Extra.gguf convert -m "your-model" -u "username" -t "token" -q "q4_k_m"
+
+Features:
+- Smart dependency checking 🔍
+- CUDA support detection ⚡
+- Progress tracking that keeps it real 📈
+- Multiple quantization options 🎮
+
+Join the squad on Discord and level up your AI game! 🎮
+"""
+
 import subprocess
 import os 
 import sys
-import logging
 import shutil
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from pyfiglet import figlet_format
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
-from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.table import Table
+from ..Litlogger import LitLogger, LogFormat, ColorScheme
+from ..swiftcli import CLI, option
 
-# Set up logging with Rich
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True)]
+# Initialize LitLogger with ocean vibes
+logger = LitLogger(
+    name="GGUFConverter",
+    format=LogFormat.MODERN_EMOJI,
+    color_scheme=ColorScheme.OCEAN
 )
 
-log = logging.getLogger("rich")
 console = Console()
 
 class ConversionError(Exception):
-    """Custom exception for conversion errors"""
+    """Custom exception for when things don't go as planned! ⚠️"""
     pass
 
 class ModelConverter:
@@ -94,16 +112,16 @@ class ModelConverter:
         
         with console.status("[bold green]Setting up llama.cpp...") as status:
             if not llama_path.exists():
-                log.info("Cloning llama.cpp repository...")
+                logger.info("Cloning llama.cpp repository...")
                 subprocess.run(['git', 'clone', 'https://github.com/ggerganov/llama.cpp'], check=True)
             
             os.chdir(llama_path)
-            log.info("Installing requirements...")
+            logger.info("Installing requirements...")
             subprocess.run(['pip3', 'install', '-r', 'requirements.txt'], check=True)
             
             has_cuda = subprocess.run(['nvcc', '--version'], capture_output=True).returncode == 0
             
-            log.info("Building llama.cpp...")
+            logger.info("Building llama.cpp...")
             subprocess.run(['make', 'clean'], check=True)
             if has_cuda:
                 status.update("[bold green]Building with CUDA support...")
@@ -186,11 +204,11 @@ class ModelConverter:
                         break
                     if output:
                         progress.update(task, description=output.strip())
-                        log.info(output.strip())
+                        logger.info(output.strip())
                 
                 stderr = process.stderr.read()
                 if stderr:
-                    log.warning(stderr)
+                    logger.warning(stderr)
                 
                 if process.returncode != 0:
                     raise ConversionError(f"Conversion failed with return code {process.returncode}")
@@ -372,45 +390,52 @@ echo "Script completed."
         script_path.write_text(script_content)
         script_path.chmod(0o755)
 
-def convert(
-    model_id: str,
-    username: Optional[str] = None,
-    token: Optional[str] = None,
-    quantization_methods: str = "q4_k_m,q5_k_m"
-) -> None:
-    """Converts and quantizes a Hugging Face model to GGUF format.
+# Initialize CLI with HAI vibes
+app = CLI(
+    name="gguf",
+    help="Convert HuggingFace models to GGUF format with style! 🔥",
+    version="1.0.0"
+)
 
-    Args:
-        model_id (str): The Hugging Face model ID (e.g., 'google/flan-t5-xl').
-        username (str, optional): Your Hugging Face username. Required for uploads.
-        token (str, optional): Your Hugging Face API token. Required for uploads. 
-        quantization_methods (str, optional): Comma-separated quantization methods. 
-                                            Defaults to "q4_k_m,q5_k_m".
-
-    Raises:
-        ConversionError: If any step in the conversion process fails.
-        ValueError: If invalid parameters are provided.
+@app.command(name="convert")
+@option("-m", "--model-id", help="The HuggingFace model ID (e.g., 'OEvortex/HelpingAI-Lite-1.5T')", required=True)
+@option("-u", "--username", help="Your HuggingFace username for uploads", default=None)
+@option("-t", "--token", help="Your HuggingFace API token for uploads", default=None)
+@option("-q", "--quantization", help="Comma-separated quantization methods", default="q4_k_m,q5_k_m")
+def convert_command(model_id: str, username: Optional[str] = None, 
+                   token: Optional[str] = None, quantization: str = "q4_k_m,q5_k_m"):
     """
-    converter = ModelConverter(model_id, username, token, quantization_methods)
-    converter.convert()
+    Convert and quantize HuggingFace models to GGUF format! 🚀
+    
+    Args:
+        model_id (str): Your model's HF ID (like 'OEvortex/HelpingAI-Lite-1.5T') 🎯
+        username (str, optional): Your HF username for uploads 👤
+        token (str, optional): Your HF API token 🔑
+        quantization (str): Quantization methods (default: q4_k_m,q5_k_m) 🎮
+        
+    Example:
+        >>> python -m webscout.Extra.gguf convert \\
+        ...     -m "OEvortex/HelpingAI-Lite-1.5T" \\
+        ...     -q "q4_k_m,q5_k_m"
+    """
+    try:
+        converter = ModelConverter(
+            model_id=model_id,
+            username=username,
+            token=token,
+            quantization_methods=quantization
+        )
+        converter.convert()
+    except (ConversionError, ValueError) as e:
+        logger.error(f"Conversion failed: {str(e)}")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        sys.exit(1)
+
+def main():
+    """Fire up the GGUF converter! 🚀"""
+    app.run()
 
 if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Convert Hugging Face models to GGUF format")
-    parser.add_argument("model_id", help="The Hugging Face model ID (e.g., 'google/flan-t5-xl')")
-    parser.add_argument("-u", "--username", help="Your Hugging Face username")
-    parser.add_argument("-t", "--token", help="Your Hugging Face API token")
-    parser.add_argument(
-        "-q", "--quantization-methods",
-        default="q4_k_m,q5_k_m",
-        help="Comma-separated quantization methods"
-    )
-    
-    args = parser.parse_args()
-    convert(
-        model_id=args.model_id,
-        username=args.username,
-        token=args.token,
-        quantization_methods=args.quantization_methods
-    )
+    main()

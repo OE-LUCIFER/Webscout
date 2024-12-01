@@ -1,6 +1,6 @@
 import cloudscraper
 from webscout.AIutel import Optimizers
-from webscout.AIutel import Conversation, Proxy
+from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import  Provider, AsyncProvider
 from webscout import exceptions

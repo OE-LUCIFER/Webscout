@@ -47,7 +47,11 @@
 * **GGUF Conversion & Quantization:** Convert and quantize Hugging Face models to GGUF format.
 * **Autollama:** Download Hugging Face models and automatically convert them for Ollama compatibility.
 * **Function Calling (Beta):** Experiment with function calling capabilities for enhanced AI interactions.
-
+* **[SwiftCLI](webscout/swiftcli/Readme.md):** A powerful and elegant CLI framework that makes it easy to create beautiful command-line interfaces.
+* **[LitPrinter](webscout/litprinter/Readme.md):** Provides beautiful, styled console output with rich formatting and colors
+* **[LitLogger](webscout/litlogger/Readme.md):** Simplifies logging with customizable formats and color schemes
+* **[LitAgent](webscout/litagent/Readme.md):** Powerful and modern user agent generator that keeps your requests fresh and undetectable
+* **[Text-to-Image](webscout/Provider/TTI/README.md):** Generate high-quality images using a wide range of AI art providers
 
 ## ⚙️ Installation
 ```python
@@ -745,17 +749,6 @@ with WEBS() as WEBS:
 ___
 </details>
 
-### 🖼️ Text to Images - DeepInfraImager, PollinationsAI, BlackboxAIImager, AiForceimager, NexraImager, HFimager, ArtbitImager, NinjaImager, WebSimAI, AIUncensoredImager, TalkaiImager
-
-**Every TTI provider has the same usage code, you just need to change the import.**
-
-```python
-from webscout import DeepInfraImager
-bot = DeepInfraImager()
-resp = bot.generate("AI-generated image - webscout", 1)
-print(bot.save(resp))
-```
-
 ### 🗣️ Text to Speech - Voicepods, StreamElements
 
 ```python
@@ -864,9 +857,9 @@ ai.tool_registry.register_tool(
     parameters={
         "type": "object",
         "properties": {
-            "location": {"type": "string", "description": "The city and state, or zip code"}
+            "location": {"title": "Location", "type": "string"}
         },
-        "required": ["location"],
+        "required": ["location"]
     },
 )
 
@@ -947,8 +940,7 @@ meta_ai = Meta(fb_email=fb_email, fb_password=fb_password)
 # Text prompt with web search
 response = meta_ai.ask("what is currently happning in bangladesh in aug 2024")
 print(response["message"]) # Access the text message
-print("Sources:", response["sources"]) # Access sources (if ```python
-any)
+print("Sources:", response["sources"]) # Access sources (if any)
 
 # Image generation
 response = meta_ai.ask("Create an image of a cat wearing a hat.") 
@@ -1283,36 +1275,28 @@ if __name__ == "__main__":
     main()
 ```
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, PerplexityLabs, TypeGPT, Mhystical
 
 Code is similar to other providers.
 
 ### `LLM`
 
 ```python
-from webscout.LLM import LLM
+from webscout.LLM import LLM, VLM
 
-# Read the system message from the file
-with open('system.txt', 'r') as file:
-    system_message = file.read()
+# Chat with text
+llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+response = llm.chat([{"role": "user", "content": "What's good?"}])
 
-# Initialize the LLM class with the model name and system message
-llm = LLM(model="microsoft/WizardLM-2-8x22B", system_message=system_message)
-
-while True:
-    # Get the user input
-    user_input = input("User: ")
-
-    # Define the messages to be sent
-    messages = [
-        {"role": "user", "content": user_input}
+# Chat with images
+vlm = VLM("cogvlm-grounding-generalist")
+response = vlm.chat([{
+    "role": "user",
+    "content": [
+        {"type": "image", "image_url": "cool_pic.jpg"},
+        {"type": "text", "text": "What's in this image?"}
     ]
-
-    # Use the mistral_chat method to get the response
-    response = llm.chat(messages)
-
-    # Print the response
-    print("AI: ", response)
+}])
 ```
 
 ##  💻 Local-LLM

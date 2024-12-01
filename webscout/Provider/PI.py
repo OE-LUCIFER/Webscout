@@ -10,7 +10,6 @@ from webscout.AIbase import Provider
 class PiAI(Provider):
     def __init__(
         self,
-        conversation_id: str,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
@@ -35,7 +34,6 @@ class PiAI(Provider):
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
         """
-        self.conversation_id = conversation_id
         self.scraper = cloudscraper.create_scraper()
         self.url = 'https://pi.ai/api/chat'
         self.headers = {
@@ -66,6 +64,7 @@ class PiAI(Provider):
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
+        self.conversation_id = None
 
         self.__available_optimizers = (
             method
@@ -85,6 +84,21 @@ class PiAI(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+        # Initialize conversation ID
+        if self.is_conversation:
+            self.start_conversation()
+
+    def start_conversation(self) -> str:
+        response = self.scraper.post(
+            "https://pi.ai/api/chat/start",
+            headers=self.headers,
+            cookies=self.cookies,
+            json={},
+            timeout=self.timeout
+        )
+        data = response.json()
+        self.conversation_id = data['conversations'][0]['sid']
+        return self.conversation_id
 
     def ask(
         self,
@@ -202,7 +216,7 @@ class PiAI(Provider):
 
 if __name__ == '__main__':
     from rich import print
-    ai = PiAI(conversation_id="6kti6HPbUKKWUAEpeD7vQ")  
-    response = ai.chat(input(">>> "))
+    ai = PiAI()  
+    response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -1,14 +1,53 @@
+"""
+>>> from webscout.LLM import LLM, VLM
+>>> llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+>>> response = llm.chat([{"role": "user", "content": "What's good?"}])
+>>> print(response)
+'Hey! I'm doing great, thanks for asking! How can I help you today? 😊'
+
+>>> # For vision tasks
+>>> vlm = VLM("cogvlm-grounding-generalist")
+>>> response = vlm.chat([{"role": "user", "content": [{"type": "image", "image_url": "path/to/image.jpg"}, {"type": "text", "text": "What's in this image?"}]}])
+"""
+
 import requests
 import base64
 import json
 from typing import List, Dict, Union, Generator, Optional, Any
 
 class LLMError(Exception):
-    """Custom exception for LLM API errors"""
+    """Custom exception for LLM API errors 🚫
+
+    Examples:
+        >>> try:
+        ...     raise LLMError("API key not found!")
+        ... except LLMError as e:
+        ...     print(f"Error: {e}")
+        Error: API key not found!
+    """
     pass
 
 class LLM:
-    """A class for interacting with the DeepInfra LLM API."""
+    """A class for chatting with DeepInfra's powerful language models! 🚀
+
+    This class lets you:
+    - Chat with state-of-the-art language models 💬
+    - Stream responses in real-time ⚡
+    - Control temperature and token limits 🎮
+    - Handle system messages and chat history 📝
+
+    Examples:
+        >>> from webscout.LLM import LLM
+        >>> llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+        >>> response = llm.chat([
+        ...     {"role": "user", "content": "Write a short poem!"}
+        ... ])
+        >>> print(response)
+        'Through starlit skies and morning dew,
+        Nature's beauty, forever new.
+        In every moment, magic gleams,
+        Life's poetry flows like gentle streams.'
+    """
     
     def __init__(self, model: str, system_message: str = "You are a Helpful AI."):
         """
@@ -17,6 +56,11 @@ class LLM:
         Args:
             model: The model identifier (e.g., "meta-llama/Meta-Llama-3-70B-Instruct")
             system_message: The system message to use for the conversation
+            
+        Examples:
+            >>> llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+            >>> print(llm.model)
+            'meta-llama/Meta-Llama-3-70B-Instruct'
         """
         self.model = model
         self.api_url = "https://api.deepinfra.com/v1/openai/chat/completions"
@@ -48,7 +92,26 @@ class LLM:
         max_tokens: int = 8028,
         stop: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
-        """Prepare the API request payload."""
+        """Prepare the chat payload with all the right settings! 🎯
+
+        Args:
+            messages: Your chat messages (role & content)
+            stream: Want real-time responses? Set True! ⚡
+            temperature: Creativity level (0-1) 🎨
+            max_tokens: Max words to generate 📝
+            stop: Words to stop at (optional) 🛑
+
+        Returns:
+            Dict with all the API settings ready to go! 🚀
+
+        Examples:
+            >>> llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+            >>> payload = llm._prepare_payload([
+            ...     {"role": "user", "content": "Hi!"}
+            ... ])
+            >>> print(payload['model'])
+            'meta-llama/Meta-Llama-3-70B-Instruct'
+        """
         return {
             'model': self.model,
             'messages': messages,
@@ -66,21 +129,38 @@ class LLM:
         max_tokens: int = 8028,
         stop: Optional[List[str]] = None,
     ) -> Union[str, Generator[str, None, None]]:
-        """
-        Send a chat request to the DeepInfra API.
-        
+        """Start chatting with the AI! 💬
+
+        This method is your gateway to:
+        - Having awesome conversations 🗣️
+        - Getting creative responses 🎨
+        - Streaming real-time replies ⚡
+        - Controlling the output style 🎮
+
         Args:
-            messages: List of message dictionaries with 'role' and 'content'
-            stream: Whether to stream the response
-            temperature: Sampling temperature (0-1)
-            max_tokens: Maximum tokens to generate
-            stop: Optional list of stop sequences
-            
+            messages: Your chat messages (role & content)
+            stream: Want real-time responses? Set True!
+            temperature: Creativity level (0-1)
+            max_tokens: Max words to generate
+            stop: Words to stop at (optional)
+
         Returns:
-            Either a string response or a generator for streaming
-            
+            Either a complete response or streaming generator
+
         Raises:
-            LLMError: If the API request fails
+            LLMError: If something goes wrong 🚫
+
+        Examples:
+            >>> llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+            >>> # Regular chat
+            >>> response = llm.chat([
+            ...     {"role": "user", "content": "Tell me a joke!"}
+            ... ])
+            >>> # Streaming chat
+            >>> for chunk in llm.chat([
+            ...     {"role": "user", "content": "Tell me a story!"}
+            ... ], stream=True):
+            ...     print(chunk, end='')
         """
         payload = self._prepare_payload(messages, stream, temperature, max_tokens, stop)
         
@@ -93,7 +173,24 @@ class LLM:
             raise LLMError(f"API request failed: {str(e)}")
 
     def _stream_response(self, payload: Dict[str, Any]) -> Generator[str, None, None]:
-        """Stream the chat response."""
+        """Stream the chat response in real-time! ⚡
+
+        Args:
+            payload: The prepared chat payload
+
+        Yields:
+            Streaming chunks of the response
+
+        Raises:
+            LLMError: If the stream request fails 🚫
+
+        Examples:
+            >>> llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+            >>> for chunk in llm._stream_response(llm._prepare_payload([
+            ...     {"role": "user", "content": "Tell me a story!"}
+            ... ])):
+            ...     print(chunk, end='')
+        """
         try:
             with requests.post(self.api_url, json=payload, headers=self.headers, stream=True) as response:
                 response.raise_for_status()
@@ -112,7 +209,24 @@ class LLM:
             raise LLMError(f"Stream request failed: {str(e)}")
 
     def _send_request(self, payload: Dict[str, Any]) -> str:
-        """Send a non-streaming chat request."""
+        """Send a non-streaming chat request.
+
+        Args:
+            payload: The prepared chat payload
+
+        Returns:
+            The complete response
+
+        Raises:
+            LLMError: If the request fails 🚫
+
+        Examples:
+            >>> llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+            >>> response = llm._send_request(llm._prepare_payload([
+            ...     {"role": "user", "content": "Tell me a joke!"}
+            ... ]))
+            >>> print(response)
+        """
         try:
             response = requests.post(self.api_url, json=payload, headers=self.headers)
             response.raise_for_status()
@@ -127,15 +241,40 @@ class LLM:
 
 
 class VLM:
-    """A class for interacting with the DeepInfra VLM (Vision Language Model) API."""
-    
+    """Your gateway to vision-language AI magic! 🖼️
+
+    This class lets you:
+    - Chat about images with AI 🎨
+    - Get detailed image descriptions 📝
+    - Answer questions about images 🤔
+    - Stream responses in real-time ⚡
+
+    Examples:
+        >>> from webscout.LLM import VLM
+        >>> vlm = VLM("cogvlm-grounding-generalist")
+        >>> # Chat about an image
+        >>> response = vlm.chat([{
+        ...     "role": "user",
+        ...     "content": [
+        ...         {"type": "image", "image_url": "path/to/image.jpg"},
+        ...         {"type": "text", "text": "What's in this image?"}
+        ...     ]
+        ... }])
+        >>> print(response)
+        'I see a beautiful sunset over mountains...'
+    """
+
     def __init__(self, model: str, system_message: str = "You are a Helpful AI."):
-        """
-        Initialize the VLM client.
-        
+        """Get ready for some vision-language magic! 🚀
+
         Args:
-            model: The model identifier
-            system_message: The system message to use for the conversation
+            model: Your chosen vision model
+            system_message: Set the AI's personality
+
+        Examples:
+            >>> vlm = VLM("cogvlm-grounding-generalist")
+            >>> print(vlm.model)
+            'cogvlm-grounding-generalist'
         """
         self.model = model
         self.api_url = "https://api.deepinfra.com/v1/openai/chat/completions"
@@ -166,20 +305,39 @@ class VLM:
         temperature: float = 0.7,
         max_tokens: int = 8028,
     ) -> Union[str, Generator[str, None, None]]:
-        """
-        Send a chat request with image support to the DeepInfra API.
-        
+        """Chat about images with AI! 🖼️
+
+        This method lets you:
+        - Ask questions about images 🤔
+        - Get detailed descriptions 📝
+        - Stream responses in real-time ⚡
+        - Control response creativity 🎨
+
         Args:
-            messages: List of message dictionaries that may include image data
-            stream: Whether to stream the response
-            temperature: Sampling temperature (0-1)
-            max_tokens: Maximum tokens to generate
-            
+            messages: Your chat + image data
+            stream: Want real-time responses?
+            temperature: Creativity level (0-1)
+            max_tokens: Max words to generate
+
         Returns:
-            Either a string response or a generator for streaming
-            
+            Either a complete response or streaming generator
+
         Raises:
-            LLMError: If the API request fails
+            LLMError: If something goes wrong 🚫
+
+        Examples:
+            >>> vlm = VLM("cogvlm-grounding-generalist")
+            >>> # Regular chat with image
+            >>> response = vlm.chat([{
+            ...     "role": "user",
+            ...     "content": [
+            ...         {"type": "image", "image_url": "sunset.jpg"},
+            ...         {"type": "text", "text": "Describe this scene"}
+            ...     ]
+            ... }])
+            >>> # Streaming chat
+            >>> for chunk in vlm.chat([...], stream=True):
+            ...     print(chunk, end='')
         """
         payload = {
             "model": self.model,
@@ -232,17 +390,22 @@ class VLM:
 
 
 def encode_image_to_base64(image_path: str) -> str:
-    """
-    Encode an image file to base64 string.
-    
+    """Turn your image into base64 magic! 🎨
+
     Args:
-        image_path: Path to the image file
-        
+        image_path: Where's your image at?
+
     Returns:
-        Base64 encoded string of the image
-        
+        Your image as a base64 string ✨
+
     Raises:
-        IOError: If the image file cannot be read
+        IOError: If we can't read your image 🚫
+
+    Examples:
+        >>> from webscout.LLM import encode_image_to_base64
+        >>> image_data = encode_image_to_base64("cool_pic.jpg")
+        >>> print(len(image_data))  # Check the encoded length
+        12345
     """
     try:
         with open(image_path, "rb") as image_file:

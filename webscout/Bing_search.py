@@ -10,7 +10,51 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class BingS:
-    """Bing search class to get search results from bing.com."""
+    """A Python interface for Bing search engine.
+    
+The BingS class provides a simple interface to perform searches on Bing.com
+and extract search results programmatically.
+
+Basic Usage:
+    >>> from webscout.Bing_search import BingS
+    >>> searcher = BingS()
+    >>> results = searcher.search("Python programming")
+    >>> for result in results:
+    ...     print(result['title'], result['href'])
+
+Advanced Usage:
+    >>> # With custom headers and proxy
+    >>> headers = {'User-Agent': 'Custom User Agent'}
+    >>> proxy = 'http://proxy.example.com:8080'
+    >>> searcher = BingS(headers=headers, proxy=proxy)
+    >>> results = searcher.search(
+    ...     "AI developments",
+    ...     max_results=5,
+    ...     extract_webpage_text=True,
+    ...     max_extract_characters=1000
+    ... )
+    >>> # Access result fields
+    >>> for result in results:
+    ...     print(f"Title: {result['title']}")
+    ...     print(f"URL: {result['href']}")
+    ...     print(f"Description: {result['abstract']}")
+    ...     if result['visible_text']:
+    ...         print(f"Page Content: {result['visible_text'][:100]}...")
+
+The class supports context management protocol:
+    >>> with BingS() as searcher:
+    ...     results = searcher.search("Python tutorials")
+
+Return Dictionary Format:
+    {
+        'title': str,       # The title of the search result
+        'href': str,        # The URL of the search result
+        'abstract': str,    # Brief description or snippet
+        'index': int,       # Position in search results
+        'type': str,        # Type of result (always 'web')
+        'visible_text': str # Extracted webpage text (if requested)
+    }
+"""
 
     _executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=10)
 
@@ -20,7 +64,22 @@ class BingS:
         proxy: Optional[str] = None,
         timeout: Optional[int] = 10,
     ) -> None:
-        """Initialize the BingS object."""
+        """Initialize a new BingS instance.
+
+        Args:
+            headers (Optional[Dict[str, str]]): Custom HTTP headers for requests.
+                Defaults to a standard User-Agent if not provided.
+            proxy (Optional[str]): Proxy URL to use for requests.
+                Example: 'http://proxy.example.com:8080'
+            timeout (Optional[int]): Request timeout in seconds. Defaults to 10.
+
+        Example:
+            >>> searcher = BingS(
+            ...     headers={'User-Agent': 'Custom UA'},
+            ...     proxy='http://proxy.example.com:8080',
+            ...     timeout=15
+            ... )
+        """
         self.proxy: Optional[str] = proxy
         self.headers = headers if headers else {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -71,7 +130,45 @@ class BingS:
         extract_webpage_text: bool = False,
         max_extract_characters: Optional[int] = 100,
     ) -> List[Dict[str, str]]:
-        """Bing text search."""
+        """Perform a Bing search and return results.
+
+        Args:
+            keywords (str): Search query string.
+            max_results (Optional[int]): Maximum number of results to return.
+                Defaults to 10.
+            extract_webpage_text (bool): If True, fetches and extracts text from
+                each result webpage. Defaults to False.
+            max_extract_characters (Optional[int]): Maximum number of characters
+                to extract from each webpage. Only used if extract_webpage_text
+                is True. Defaults to 100.
+
+        Returns:
+            List[Dict[str, str]]: List of search results. Each result contains:
+                - title: The title of the search result
+                - href: The URL of the search result
+                - abstract: Brief description or snippet
+                - index: Position in search results
+                - type: Type of result (always 'web')
+                - visible_text: Extracted webpage text (if extract_webpage_text=True)
+
+        Raises:
+            AssertionError: If keywords is empty.
+            Exception: If request fails or returns non-200 status code.
+
+        Example:
+            >>> searcher = BingS()
+            >>> results = searcher.search(
+            ...     "Python tutorials",
+            ...     max_results=5,
+            ...     extract_webpage_text=True
+            ... )
+            >>> for result in results:
+            ...     print(f"Title: {result['title']}")
+            ...     print(f"URL: {result['href']}")
+            ...     print(f"Description: {result['abstract']}")
+            ...     if result['visible_text']:
+            ...         print(f"Content: {result['visible_text'][:100]}...")
+        """
         assert keywords, "keywords is mandatory"
 
         results = []

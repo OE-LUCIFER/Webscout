@@ -218,7 +218,7 @@ class DARKAI(Provider):
         return response["text"]
 if __name__ == '__main__':
     from rich import print
-    ai = DARKAI(model='llama-3-405b')
+    ai = DARKAI()
     response = ai.chat("tell me about india")
     for chunk in response:
         print(chunk, end="", flush=True)

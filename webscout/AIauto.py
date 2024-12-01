@@ -1,12 +1,19 @@
 from webscout.AIbase import Provider
 from webscout.g4f import GPT4FREE, TestProviders
 from webscout.exceptions import AllProvidersFailure
+from webscout.Litlogger import Litlogger, LogFormat, ColorScheme
 from typing import Union, Any, Dict, Generator
 import importlib
 import pkgutil
-import logging
 import random
 import inspect
+
+# Initialize LitLogger with cyberpunk theme
+logger = Litlogger(
+    name="AIauto",
+    format=LogFormat.DETAILED,
+    color_scheme=ColorScheme.CYBERPUNK
+)
 
 def load_providers():
     provider_map = {}
@@ -23,9 +30,13 @@ def load_providers():
                     # Check if the provider needs an API key
                     if 'api_key' in inspect.signature(attr.__init__).parameters:
                         api_key_providers.add(attr_name.upper())
+                        logger.debug(f"Provider {attr_name} requires API key")
+            logger.success(f"Loaded provider module: {module_name}")
         except Exception as e:
-            logging.warning(f"Failed to load provider {module_name}: {e}")
+            logger.error(f"Failed to load provider {module_name}: {str(e)}")
     
+    logger.info(f"Total providers loaded: {len(provider_map)}")
+    logger.info(f"API key providers: {len(api_key_providers)}")
     return provider_map, api_key_providers
 
 provider_map, api_key_providers = load_providers()
@@ -95,6 +106,8 @@ class AUTO(Provider):
         for provider_name, provider_class in available_providers:
             try:
                 self.provider_name = f"webscout-{provider_name}"
+                logger.info(f"Trying provider: {self.provider_name}")
+                
                 self.provider = provider_class(
                     is_conversation=self.is_conversation,
                     max_tokens=self.max_tokens,
@@ -106,13 +119,12 @@ class AUTO(Provider):
                     history_offset=self.history_offset,
                     act=self.act,
                 )
-
-                return self.provider.ask(**ask_kwargs)
-
+                response = self.provider.ask(**ask_kwargs)
+                logger.success(f"Successfully used provider: {self.provider_name}")
+                return response
             except Exception as e:
-                logging.debug(
-                    f"Failed to generate response using provider {provider_name} - {e}"
-                )
+                logger.warning(f"Provider {self.provider_name} failed: {str(e)}")
+                continue
 
         # Try GPT4FREE providers
         gpt4free_providers = TestProviders(timeout=self.timeout).get_results(run=run_new_test)
@@ -123,6 +135,8 @@ class AUTO(Provider):
                 continue
             try:
                 self.provider_name = f"g4f-{provider_info['name']}"
+                logger.info(f"Trying provider: {self.provider_name}")
+                
                 self.provider = GPT4FREE(
                     provider=provider_info["name"],
                     is_conversation=self.is_conversation,
@@ -135,15 +149,16 @@ class AUTO(Provider):
                     act=self.act,
                 )
 
-                print(f"Using provider: {self.provider_name}")
-                return self.provider.ask(**ask_kwargs)
-
+                response = self.provider.ask(**ask_kwargs)
+                logger.success(f"Successfully used provider: {self.provider_name}")
+                return response
             except Exception as e:
-                logging.debug(
-                    f"Failed to generate response using GPT4FREE-based provider {provider_info['name']} - {e}"
-                )
+                logger.warning(f"Provider {self.provider_name} failed: {str(e)}")
+                continue
 
-        raise AllProvidersFailure("None of the providers generated response successfully.")
+        # If we get here, all providers failed
+        logger.error("All providers failed to process the request")
+        raise AllProvidersFailure("All providers failed to process the request")
 
     def chat(
         self,

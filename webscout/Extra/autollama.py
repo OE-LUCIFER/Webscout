@@ -1,50 +1,49 @@
+"""
+Yo fam! 🔥 Welcome to AutoLlama - your go-to tool for downloading and setting up HelpingAI models! 💪
+
+Created by the legendary Abhay Koul, this script's got your back when it comes to:
+- Downloading models straight from HuggingFace Hub 🚀
+- Setting up Ollama with zero hassle 💯
+- Getting your AI assistant ready to vibe with you! ⚡
+
+Usage:
+>>> python -m webscout.Extra.autollama download -m "OEvortex/HelpingAI-Lite-1.5T" -g "HelpingAI-Lite-1.5T.q4_k_m.gguf"
+
+Features:
+- Smart model management 🧠
+- Automatic dependency installation 📦
+- Progress tracking that keeps it real 📈
+- Error handling that's got your back 💪
+
+Join the squad on Discord and level up your AI game! 🎮
+"""
+
 import warnings
 from datetime import time
 import os
 import sys
 import subprocess
-import logging
 import psutil
-from huggingface_hub import hf_hub_download  # Updated import
-import colorlog
-import ollama
-import argparse
+from huggingface_hub import hf_hub_download
+from ..Litlogger import LitLogger, LogFormat, ColorScheme
+from ..swiftcli import CLI, option
+# import ollama
 
 # Suppress specific warnings
 warnings.filterwarnings(
     "ignore", category=FutureWarning, module="huggingface_hub.file_download"
 )
 
-# Configure logging with colors
-handler = colorlog.StreamHandler()
-handler.setFormatter(
-    colorlog.ColoredFormatter(
-        "%(log_color)s%(asctime)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        log_colors={
-            "DEBUG": "cyan",
-            "INFO": "green",
-            "WARNING": "yellow",
-            "ERROR": "red",
-            "CRITICAL": "red,bg_white",
-        },
-    )
+# Initialize LitLogger with custom format and colors
+logger = LitLogger(
+    name="AutoLlama",
+    format=LogFormat.MODERN_EMOJI,
+    color_scheme=ColorScheme.OCEAN
 )
 
-logger = colorlog.getLogger(__name__)
-if not logger.hasHandlers():
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-
-logging.captureWarnings(True)
-py_warnings_logger = logging.getLogger("py.warnings")
-if not py_warnings_logger.hasHandlers():
-    py_warnings_logger.addHandler(handler)
-
-
 def show_art():
+    """Dropping that signature HAI love! 💝 Made with passion in India! 🇮🇳"""
     logger.info("Made with love in India")
-
 
 def usage():
     logger.info("Usage: python script.py -m <model_path> -g <gguf_file>")
@@ -53,8 +52,17 @@ def usage():
     logger.info("  -g <gguf_file>     Set the GGUF file name")
     logger.info("  -h                 Display this help and exit")
 
-
 def is_model_downloaded(logging_name, download_log):
+    """
+    Checking if we already got that model downloaded! 🔍
+    
+    Args:
+        logging_name (str): The model's unique name in our records 📝
+        download_log (str): Where we keep track of our downloads 📋
+        
+    Returns:
+        bool: True if we got it, False if we need to grab it! 💯
+    """
     if not os.path.exists(download_log):
         return False
     with open(download_log, "r") as f:
@@ -63,20 +71,45 @@ def is_model_downloaded(logging_name, download_log):
                 return True
     return False
 
-
 def log_downloaded_model(logging_name, download_log):
+    """
+    Keeping track of our downloaded models like a boss! 📝
+    
+    Args:
+        logging_name (str): Model's name to remember 🏷️
+        download_log (str): Our download history file 📋
+    """
     with open(download_log, "a") as f:
         f.write(logging_name + "\n")
 
-
 def is_model_created(model_name):
+    """
+    Checking if the model's already set up in Ollama! 🔍
+    
+    Args:
+        model_name (str): Name of the model we're looking for 🎯
+        
+    Returns:
+        bool: True if it's ready to roll, False if we need to set it up! 💪
+    """
     result = subprocess.run(["ollama", "list"], stdout=subprocess.PIPE)
     return model_name in result.stdout.decode("utf-8")
 
-
 def download_model(repo_id, filename, token, cache_dir="downloads"):
     """
-    Downloads a model file from the Hugging Face Hub using hf_hub_download.
+    Pulling models straight from HuggingFace Hub! 🚀
+    
+    Args:
+        repo_id (str): Where to find the model on HF 🎯
+        filename (str): Name of the file we want 📄
+        token (str): Your HF access token (optional but recommended) 🔑
+        cache_dir (str): Where to save the downloads (default: 'downloads') 📂
+        
+    Returns:
+        str: Path to your downloaded model file 📍
+        
+    Raises:
+        Exception: If something goes wrong, we'll let you know what's up! ⚠️
     """
     try:
         os.makedirs(cache_dir, exist_ok=True)
@@ -107,29 +140,42 @@ def download_model(repo_id, filename, token, cache_dir="downloads"):
         logger.error(f"Error downloading model: {str(e)}")
         raise
 
-
 def is_ollama_running():
+    """
+    Checking if Ollama's up and running! 🏃‍♂️
+    
+    Returns:
+        bool: True if Ollama's vibing, False if it needs a kickstart! ⚡
+    """
     for proc in psutil.process_iter(["name"]):
         if proc.info["name"] in ["ollama", "ollama.exe"]:
             return True
     return False
 
+# Initialize CLI
+app = CLI(
+    name="autollama",
+    help="Download and create Ollama models",
+    version="1.0.0"
+)
 
-def main(model_path=None, gguf_file=None):
+@app.command(name="download")
+@option("-m", "--model-path", help="Path to the model on Hugging Face Hub", required=True)
+@option("-g", "--gguf-file", help="Name of the GGUF file", required=True)
+def download_command(model_path: str, gguf_file: str):
+    """
+    Your one-stop command to download and set up HelpingAI models! 🚀
+    
+    Args:
+        model_path (str): Where to find your model on HuggingFace Hub 🎯
+        gguf_file (str): The GGUF file you want to download 📄
+        
+    Example:
+        >>> python -m webscout.Extra.autollama download \\
+        ...     -m "OEvortex/HelpingAI-Lite-1.5T" \\
+        ...     -g "HelpingAI-Lite-1.5T.q4_k_m.gguf"
+    """
     show_art()
-
-    parser = argparse.ArgumentParser(description="Download and create an Ollama model")
-    parser.add_argument("-m", "--model_path", help="Path to the model on Hugging Face Hub")
-    parser.add_argument("-g", "--gguf_file", help="Name of the GGUF file")
-    args = parser.parse_args()
-
-    model_path = args.model_path if args.model_path else model_path
-    gguf_file = args.gguf_file if args.gguf_file else gguf_file
-
-    if not model_path or not gguf_file:
-        logger.error("Error: model_path and gguf_file are required.")
-        usage()
-        sys.exit(2)
 
     model_name = gguf_file.split(".Q4")[0]
     download_log = "downloaded_models.log"
@@ -188,9 +234,14 @@ def main(model_path=None, gguf_file=None):
         subprocess.check_call(['ollama', 'create', model_name, '-f', 'Modelfile'])
         logger.info(f"Model {model_name} created.")
 
-    logger.info(f"model name is > {model_name}")
+    logger.success(f"model name is > {model_name}")
     logger.info(f"Use Ollama run {model_name}")
 
+def main():
+    """
+    Main function to run the AutoLlama CLI.
+    """
+    app.run()
 
 if __name__ == "__main__":
     main()

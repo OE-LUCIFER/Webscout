@@ -1,5 +1,6 @@
 import requests
 import json
+import random
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
@@ -144,7 +145,8 @@ class AIUncensored(Provider):
                     "role": "user",
                     "content": conversation_prompt
                 }
-            ]
+            ],
+            "cipher": "24040024"
         }
 
 
@@ -152,7 +154,6 @@ class AIUncensored(Provider):
         def for_stream():
             full_content = ''
             with requests.post(self.api_endpoint[self.endpoint_index], headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
-
                 if response.status_code == 200:
                     for line in response.iter_lines():
                         decoded_line = line.decode('utf-8').strip()
@@ -224,6 +225,11 @@ class AIUncensored(Provider):
             return self.get_message(response)
 
         return for_stream() if stream else for_non_stream()
+
+    @staticmethod
+    def generate_cipher() -> str:
+        """Generate a cipher in format like '3221229284179118'"""
+        return ''.join([str(random.randint(0, 9)) for _ in range(16)])
 
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response

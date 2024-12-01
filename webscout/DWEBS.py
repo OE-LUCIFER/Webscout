@@ -3,19 +3,97 @@ import requests
 from typing import Dict, List, Optional, Union, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import quote, urljoin
-from termcolor import colored
+
 import time
 import random
 import json
 import os
 from datetime import datetime, timedelta
 from functools import lru_cache
-import logging
+from .Litlogger import LitLogger, LogFormat, ColorScheme
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 class GoogleS:
-    """
-    Enhanced Google Search class with support for web search, image search, and advanced filters.
+    """A Python interface for Google search with advanced features 🔥
+
+    The GoogleS class provides a powerful interface to perform web searches, image searches,
+    and advanced filtering on Google. Built with love by HAI to keep it 💯
+
+    Basic Usage:
+        >>> from webscout.DWEBS import GoogleS
+        >>> searcher = GoogleS()
+        >>> # Simple web search
+        >>> results = searcher.search("Python programming")
+        >>> for result in results:
+        ...     print(f"Title: {result['title']}")
+        ...     print(f"URL: {result['href']}")
+        ...     print(f"Description: {result['abstract']}")
+
+    Advanced Web Search:
+        >>> # Search with filters
+        >>> results = searcher.search(
+        ...     query="Python tutorials",
+        ...     site="github.com",
+        ...     file_type="pdf",
+        ...     time_period="month",
+        ...     max_results=5
+        ... )
+        >>> # Example response format:
+        >>> {
+        ...     'title': 'Python Tutorial',
+        ...     'href': 'https://example.com/python-tutorial',
+        ...     'abstract': 'Comprehensive Python tutorial covering basics to advanced topics',
+        ...     'index': 0,
+        ...     'type': 'web',
+        ...     'visible_text': ''  # Optional: Contains webpage text if extract_text=True
+        ... }
+
+    Image Search:
+        >>> # Search for images
+        >>> images = searcher.search_images(
+        ...     query="cute puppies",
+        ...     size="large",
+        ...     color="color",
+        ...     type_filter="photo",
+        ...     max_results=5
+        ... )
+        >>> # Example response format:
+        >>> {
+        ...     'title': 'Cute Puppy Image',
+        ...     'thumbnail': 'https://example.com/puppy-thumb.jpg',
+        ...     'full_url': 'https://example.com/puppy-full.jpg',
+        ...     'type': 'image'
+        ... }
+
+    Features:
+        - Web Search: Get detailed web results with title, URL, and description
+        - Image Search: Find images with thumbnails and full-resolution URLs
+        - Advanced Filters: Site-specific search, file types, time periods
+        - Rate Limiting: Smart request handling to avoid blocks
+        - Caching: Save results for faster repeat searches
+        - Retry Logic: Automatic retry on temporary failures
+        - Logging: Optional LitLogger integration for beautiful console output
+        - Proxy Support: Use custom proxies for requests
+        - Concurrent Processing: Multi-threaded requests for better performance
+
+    Response Format:
+        Web Search Results:
+            {
+                'title': str,       # Title of the webpage
+                'href': str,        # URL of the webpage
+                'abstract': str,    # Brief description or snippet
+                'index': int,       # Result position
+                'type': 'web',      # Result type identifier
+                'visible_text': str # Full page text (if extract_text=True)
+            }
+
+        Image Search Results:
+            {
+                'title': str,       # Image title or description
+                'thumbnail': str,   # Thumbnail image URL
+                'full_url': str,    # Full resolution image URL
+                'type': 'image'     # Result type identifier
+            }
     """
 
     SEARCH_TYPES = {
@@ -31,7 +109,8 @@ class GoogleS:
         timeout: Optional[int] = 10,
         max_workers: int = 20,
         cache_dir: Optional[str] = None,
-        rate_limit: float = 0.01
+        rate_limit: float = 0.01,
+        use_litlogger: bool = False
     ):
         """
         Initialize the GoogleS object with enhanced features.
@@ -39,6 +118,7 @@ class GoogleS:
         Args:
             cache_dir: Directory to store search result cache
             rate_limit: Minimum time between requests in seconds
+            use_litlogger: Whether to use LitLogger for logging (default: False)
         """
         self.proxy = proxy
         self.headers = headers if headers else {
@@ -56,10 +136,16 @@ class GoogleS:
             os.makedirs(cache_dir)
         self.last_request_time = 0
         self.rate_limit = rate_limit
+        self.use_litlogger = use_litlogger
         
-        # Setup logging
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
+        # Setup enhanced logging with LitLogger if enabled
+        if self.use_litlogger:
+            self.logger = LitLogger(
+                name="GoogleS",
+                format=LogFormat.MODERN_EMOJI,
+                color_scheme=ColorScheme.CYBERPUNK,
+                console_output=True
+            )
 
     def _respect_rate_limit(self):
         """Ensure minimum time between requests"""
@@ -77,11 +163,16 @@ class GoogleS:
         """
         self._respect_rate_limit()
         try:
+            if self.use_litlogger:
+                self.logger.debug(f"Making {method} request to {url}")
             resp = self.client.request(method, url, params=params, data=data, timeout=self.timeout)
             resp.raise_for_status()
+            if self.use_litlogger:
+                self.logger.success(f"Request successful: {resp.status_code}")
             return resp.content
         except requests.exceptions.RequestException as ex:
-            self.logger.error(f"Request failed: {url} - {str(ex)}")
+            if self.use_litlogger:
+                self.logger.error(f"Request failed: {url} - {str(ex)}")
             raise
 
     @lru_cache(maxsize=100)
@@ -99,7 +190,11 @@ class GoogleS:
             with open(cache_file, 'r') as f:
                 cached_data = json.load(f)
                 if datetime.fromisoformat(cached_data['timestamp']) + timedelta(hours=24) > datetime.now():
+                    if self.use_litlogger:
+                        self.logger.info(f"Using cached results for: {cache_key}")
                     return cached_data['results']
+        if self.use_litlogger:
+            self.logger.debug(f"No valid cache found for: {cache_key}")
         return None
 
     def _cache_results(self, cache_key: str, results: List[Dict[str, Any]]):
@@ -117,18 +212,49 @@ class GoogleS:
         self,
         query: str,
         max_results: int = 10,
-        size: Optional[str] = None,  # large, medium, icon
-        color: Optional[str] = None,  # color, gray, transparent
-        type_filter: Optional[str] = None,  # face, photo, clipart, lineart
+        size: Optional[str] = None,
+        color: Optional[str] = None,
+        type_filter: Optional[str] = None,
         **kwargs
     ) -> List[Dict[str, str]]:
-        """
-        Perform an image search and return results.
-        
+        """Search for images on Google with style! 🖼️
+
         Args:
-            size: Filter by image size
-            color: Filter by color
-            type_filter: Filter by image type
+            query (str): What you're looking for fam
+            max_results (int): How many results you want (default: 10)
+            size (Optional[str]): Image size filter
+                - 'large': Big pics
+                - 'medium': Medium sized
+                - 'icon': Small icons
+            color (Optional[str]): Color filter
+                - 'color': Full color
+                - 'gray': Black and white
+                - 'transparent': Transparent background
+            type_filter (Optional[str]): Type of image
+                - 'face': Just faces
+                - 'photo': Real photos
+                - 'clipart': Vector art
+                - 'lineart': Line drawings
+
+        Returns:
+            List[Dict[str, str]]: List of image results with these keys:
+                - 'thumbnail': Small preview URL
+                - 'full_url': Full resolution image URL
+                - 'title': Image title/description
+                - 'type': Always 'image'
+
+        Example:
+            >>> searcher = GoogleS()
+            >>> # Find some cool nature pics
+            >>> images = searcher.search_images(
+            ...     query="beautiful landscapes",
+            ...     size="large",
+            ...     color="color",
+            ...     max_results=5
+            ... )
+            >>> for img in images:
+            ...     print(f"Found: {img['title']}")
+            ...     print(f"URL: {img['full_url']}")
         """
         params = {
             "q": query,
@@ -192,6 +318,9 @@ class GoogleS:
             exclude_terms: List of terms to exclude from search
             exact_phrase: Exact phrase to match
         """
+        if self.use_litlogger:
+            self.logger.info(f"Starting search for: {query}")
+        
         # Build advanced query
         advanced_query = query
         if site:
@@ -202,7 +331,10 @@ class GoogleS:
             advanced_query += " " + " ".join(f"-{term}" for term in exclude_terms)
         if exact_phrase:
             advanced_query = f'"{exact_phrase}"' + advanced_query
-
+            
+        if self.use_litlogger:
+            self.logger.debug(f"Advanced query: {advanced_query}")
+        
         # Check cache first
         cache_key = self._cache_key(advanced_query, region=region, language=language,
                                   safe=safe, time_period=time_period, sort_by=sort_by)

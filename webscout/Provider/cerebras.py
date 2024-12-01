@@ -7,14 +7,11 @@ from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from fake_useragent import UserAgent
-from cerebras.cloud.sdk import Cerebras as CerebrasSDK # type: ignore
-
 
 class Cerebras(Provider):
     """
     A class to interact with the Cerebras API using a cookie for authentication.
     """
-
     def __init__(
         self,
         is_conversation: bool = True,
@@ -41,10 +38,6 @@ class Cerebras(Provider):
         # Get API key first
         try:
             self.api_key = self.get_demo_api_key(cookie_path)
-            # Set environment variable for the SDK
-            os.environ["CEREBRAS_API_KEY"] = self.api_key
-            # Initialize the client with the API key
-            self.client = CerebrasSDK(api_key=self.api_key)
         except Exception as e:
             raise exceptions.APIConnectionError(f"Failed to initialize Cerebras client: {e}")
 
@@ -61,7 +54,7 @@ class Cerebras(Provider):
                 act, raise_not_found=True, default=None, case_insensitive=True
             )
             if act
-            else intro or Conversation.intro
+            else None
         )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
@@ -121,11 +114,56 @@ class Cerebras(Provider):
         except KeyError:
             raise exceptions.InvalidResponseError("API key not found in response.")
 
+    def _make_request(self, messages: List[Dict], stream: bool = False) -> Union[Dict, Generator]:
+        """Make a request to the Cerebras API."""
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": UserAgent().random
+        }
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": stream
+        }
+
+        try:
+            response = requests.post(
+                "https://api.cerebras.ai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                stream=stream,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+
+            if stream:
+                def generate_stream():
+                    for line in response.iter_lines():
+                        if line:
+                            line = line.decode('utf-8')
+                            if line.startswith('data:'):
+                                try:
+                                    data = json.loads(line[6:])
+                                    if data.get('choices') and data['choices'][0].get('delta', {}).get('content'):
+                                        content = data['choices'][0]['delta']['content']
+                                        yield content
+                                except json.JSONDecodeError:
+                                    continue
+
+                return generate_stream()
+            else:
+                response_json = response.json()
+                return response_json['choices'][0]['message']['content']
+
+        except requests.exceptions.RequestException as e:
+            raise exceptions.APIConnectionError(f"Request failed: {e}")
+
     def ask(
         self,
         prompt: str,
         stream: bool = False,
-        raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Union[Dict, Generator]:
@@ -140,48 +178,20 @@ class Cerebras(Provider):
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         messages = [
-            {"content": self.system_prompt, "role": "system"},
-            {"content": conversation_prompt, "role": "user"},
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": conversation_prompt}
         ]
 
         try:
+            response = self._make_request(messages, stream)
             if stream:
-                return self._handle_stream_response(messages)
-            return self._handle_normal_response(messages)
+                return response
+            
+            self.last_response = response
+            return response
+
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"Error during request: {e}")
-
-    def _handle_stream_response(self, messages: List[Dict]) -> Generator:
-        """Handle streaming response from the model."""
-        try:
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model,
-                stream=True
-            )
-            
-            for choice in response.choices:
-                if hasattr(choice, 'delta') and hasattr(choice.delta, 'content') and choice.delta.content:
-                    yield dict(text=choice.delta.content)
-            
-            # Update last response with the complete message
-            if hasattr(response.choices[0], 'message'):
-                self.last_response.update({"text": response.choices[0].message.content})
-                
-        except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(f"Error during streaming: {e}")
-
-    def _handle_normal_response(self, messages: List[Dict]) -> Dict:
-        """Handle normal (non-streaming) response from the model."""
-        try:
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model
-            )
-            self.last_response.update({"text": response.choices[0].message.content})
-            return self.last_response
-        except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(f"Error during response: {e}")
 
     def chat(
         self,
@@ -190,17 +200,15 @@ class Cerebras(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Union[str, Generator]:
-        """High-level method to chat with the model."""
-        return self.get_message(
-            self.ask(
-                prompt, stream, optimizer=optimizer, conversationally=conversationally
-            )
-        )
+        """Chat with the model."""
+        response = self.ask(prompt, stream, optimizer, conversationally)
+        if stream:
+            return response
+        return response
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: str) -> str:
         """Retrieves message from response."""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        return response
 
 
 if __name__ == "__main__":
@@ -208,12 +216,12 @@ if __name__ == "__main__":
     
     # Example usage
     cerebras = Cerebras(
-        cookie_path='cookie.json',
+        cookie_path=r'C:\Users\koula\OneDrive\Desktop\Webscout\cookie.json',
         model='llama3.1-8b',
         system_prompt="You are a helpful AI assistant."
     )
     
     # Test with streaming
-    response = cerebras.chat("What is the meaning of life?", stream=True)
+    response = cerebras.chat("Hello!", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
