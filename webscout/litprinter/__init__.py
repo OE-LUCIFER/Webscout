@@ -767,6 +767,7 @@ class LitPrinter:
         """Clear the current line."""
         print('\r' + ' ' * self._get_terminal_width(), end='\r', file=self.file, flush=True)
 
+print = LitPrinter().print
 if __name__ == "__main__":
     printer = LitPrinter()
     

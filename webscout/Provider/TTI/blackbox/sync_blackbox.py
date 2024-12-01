@@ -7,7 +7,7 @@ from typing import List
 from requests.exceptions import RequestException
 
 from webscout.AIbase import ImageProvider
-from webscout.litagent import agent  # Import our fire user agent generator 🔥
+from webscout.litagent import LitAgent  # Import our fire user agent generator 🔥
 from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 
 # Initialize our fire logger 🚀
@@ -41,7 +41,7 @@ class BlackboxAIImager(ImageProvider):
         self.url = "https://www.blackbox.ai/api/chat"
         self.headers = {
             "Content-Type": "application/json",
-            "User-Agent": agent.random(),  # Using our fire random agent! 🔥
+            "User-Agent": LitAgent().random(),  # Using our fire random agent! 🔥
             "Origin": "https://www.blackbox.ai",
             "Referer": "https://www.blackbox.ai/agent/ImageGenerationLV45LJp"
         }

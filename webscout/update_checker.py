@@ -11,7 +11,7 @@ import os
 from packaging import version
 from typing import Optional
 
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout import LitLogger, LogFormat, ColorScheme
 
 # Initialize logger with custom format
 CUSTOM_FORMAT = """{message}"""

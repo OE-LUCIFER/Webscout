@@ -18,7 +18,9 @@ from .Agents import *
 from .optimizers import *
 from .litprinter import *
 from .swiftcli import *
-from .litagent import *
+from .litagent import LitAgent
+
+agent = LitAgent()
 
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 

@@ -9,7 +9,7 @@ from random import randint
 import aiofiles
 
 from webscout.AIbase import AsyncImageProvider
-from webscout.litagent import agent  # Import our fire user agent generator 🔥
+from webscout.litagent import LitAgent  # Import our fire user agent generator 🔥
 from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 
 # Initialize our fire logger 🚀
@@ -56,7 +56,7 @@ class AsyncDeepInfraImager(AsyncImageProvider):
             "Accept": "application/json, text/plain, */*",
             "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
             "Accept-Encoding": "gzip, deflate, br, zstd",
-            "User-Agent": agent.random(),  # Using our fire random agent! 🔥
+            "User-Agent": LitAgent().random(),  # Using our fire random agent! 🔥
             "DNT": "1",
             "Origin": "https://deepinfra.com",
             "Referer": "https://deepinfra.com/",

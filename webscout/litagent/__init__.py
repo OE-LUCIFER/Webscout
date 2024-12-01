@@ -159,9 +159,11 @@ class LitAgent:
         """Refresh the agents with new ones! 🔄"""
         self.agents = self._generate_agents(100)
 
+agent = LitAgent()
+
 if __name__ == "__main__":
     # Test it out! 🧪
-    agent = LitAgent()
+
     print("Random:", agent.random())
     print("Chrome:", agent.chrome())
     print("Firefox:", agent.firefox())
