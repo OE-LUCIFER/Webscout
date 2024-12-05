@@ -1,7 +1,6 @@
 import time
 import requests
 import pathlib
-import base64
 from io import BytesIO
 from playsound import playsound
 from nltk import sent_tokenize
@@ -9,39 +8,34 @@ from webscout import exceptions
 from webscout.AIbase import TTSProvider
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-class DeepgramTTS(TTSProvider): 
+class ElevenlabsTTS(TTSProvider): 
     """
-    Text-to-speech provider using the DeepgramTTS API.
+    Text-to-speech provider using the ElevenlabsTTS API.
     """
     # Request headers
     headers: dict[str, str] = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
     cache_dir = pathlib.Path("./audio_cache")
-    all_voices: dict[str, str] = {
-        "Asteria": "aura-asteria-en", "Arcas": "aura-arcas-en", "Luna": "aura-luna-en",
-        "Zeus": "aura-zeus-en", "Orpheus": "aura-orpheus-en", "Angus": "aura-angus-en",
-        "Athena": "aura-athena-en", "Helios": "aura-helios-en", "Hera": "aura-hera-en",
-        "Orion": "aura-orion-en", "Perseus": "aura-perseus-en", "Stella": "aura-stella-en"
-    }
+    all_voices: dict[str, str] = {"Brian": "nPczCjzI2devNBz1zQrb", "Alice":"Xb7hH8MSUJpSbSDYk0k2", "Bill":"pqHfZKP75CvOlQylNhV4", "Callum":"N2lVS1w4EtoT3dr4eOWO", "Charlie":"IKne3meq5aSn9XLyUdCD", "Charlotte":"XB0fDUnXU5powFXDhCwa", "Chris":"iP95p4xoKVk53GoZ742B", "Daniel":"onwK4e9ZLuTAKqWW03F9", "Eric":"cjVigY5qzO86Huf0OWal", "George":"JBFqnCBsd6RMkjVDRZzb", "Jessica":"cgSgspJ2msm6clMCkdW9", "Laura":"FGY2WhTYpPnrIDTdsKH5", "Liam":"TX3LPaxmHKxFdv7VOQHJ", "Lily":"pFZP5JQG7iQjIQuC4Bku", "Matilda":"XrExE9yKIg1WjnnlVkGX", "Sarah":"EXAVITQu4vr4xnSDxMaL", "Will":"bIHbv24MWmeRgasZH58o"}
 
     def __init__(self, timeout: int = 20, proxies: dict = None):
-        """Initializes the DeepgramTTS TTS client."""
+        """Initializes the ElevenlabsTTS TTS client."""
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(proxies)
         self.timeout = timeout
+        self.params = {'allow_unauthenticated': '1'}
 
     def tts(self, text: str, voice: str = "Brian", verbose:bool = True) -> str:
         """
-        Converts text to speech using the DeepgramTTS API and saves it to a file.
+        Converts text to speech using the ElevenlabsTTS API and saves it to a file.
         """
         assert (
             voice in self.all_voices
         ), f"Voice '{voice}' not one of [{', '.join(self.all_voices.keys())}]"
 
-        url = "https://deepgram.com/api/ttsAudioGeneration"
         filename = self.cache_dir / f"{int(time.time())}.mp3"  
 
         # Split text into sentences
@@ -51,19 +45,17 @@ class DeepgramTTS(TTSProvider):
         def generate_audio_for_chunk(part_text: str, part_number: int):
             while True:
                 try:
-                    payload = {"text": part_text, "model": self.all_voices[voice]}
-                    response = self.session.post(url=url, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
+                    json_data = {'text': part_text, 'model_id': 'eleven_multilingual_v2'}
+                    response = self.session.post(f'https://api.elevenlabs.io/v1/text-to-speech/{self.all_voices[voice]}',params=self.params, headers=self.headers, json=json_data, timeout=self.timeout)
                     response.raise_for_status()
 
                     # Create the audio_cache directory if it doesn't exist
                     self.cache_dir.mkdir(parents=True, exist_ok=True) 
 
-                    response_data = response.json().get('data')
-                    if response_data:
-                        audio_data = base64.b64decode(response_data)
-                        if verbose:
-                            print(f"Chunk {part_number} processed successfully.")
-                        return part_number, audio_data
+                    # Check if the request was successful
+                    if response.ok and response.status_code == 200:
+                        if verbose:print(f"Chunk {part_number} processed successfully.")
+                        return part_number, response.content
                     else:
                         if verbose:
                             print(f"No data received for chunk {part_number}. Retrying...")
@@ -124,11 +116,11 @@ class DeepgramTTS(TTSProvider):
 
 # Example usage
 if __name__ == "__main__":
-    deepgram = DeepgramTTS()
-    text = "This is a test of the DeepgramTTS text-to-speech API."
+    elevenlabs = ElevenlabsTTS()
+    text = "This is a test of the ElevenlabsTTS text-to-speech API."
 
     print("Generating audio...")
-    audio_file = deepgram.tts(text, voice="Brian") 
+    audio_file = elevenlabs.tts(text, voice="Brian") 
 
     print("Playing audio...")
     audio_file.play_audio(audio_file)
