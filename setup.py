@@ -63,6 +63,7 @@ setup(
         "gradio_client",
         "psutil",
         "yaspin",
+        "nltk>=3.8.1"
         # "cerebras_cloud_sdk",
 
     ],

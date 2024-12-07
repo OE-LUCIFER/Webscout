@@ -1,13 +1,27 @@
 import cloudscraper
 import json
-
+import re
+import threading
 import requests
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
+from typing import Dict
 
 class PiAI(Provider):
+    """PiAI class for interacting with the Pi.ai chat API, extending the Provider class.
+
+    This class provides methods for sending messages to the Pi.ai chat API and receiving responses,
+    enabling conversational interactions. It supports various configurations such as conversation mode,
+    token limits, and history management.
+
+    Attributes:
+        scraper (cloudscraper.CloudScraper): The scraper instance for handling HTTP requests.
+        url (str): The API endpoint for the Pi.ai chat service.
+        AVAILABLE_VOICES (Dict[str, int]): A dictionary mapping voice names to their corresponding IDs.
+        headers (Dict[str, str]): The headers to be used in HTTP requests to the API.
+    """
     def __init__(
         self,
         is_conversation: bool = True,
@@ -20,22 +34,29 @@ class PiAI(Provider):
         history_offset: int = 10250,
         act: str = None,
     ):
-        """Instantiates PiAI
+        """Initializes the PiAI class for interacting with the Pi.ai chat API.
 
         Args:
-            conversation_id (str): The conversation ID for the Pi.ai chat.
-            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
-            timeout (int, optional): Http request timeout. Defaults to 30.
-            intro (str, optional): Conversation introductory prompt. Defaults to None.
-            filepath (str, optional): Path to file containing conversation history. Defaults to None.
-            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
-            proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
-            act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+            is_conversation (bool, optional): Flag for enabling conversational mode. Defaults to True.
+            max_tokens (int, optional): Maximum number of tokens to generate in the response. Defaults to 600.
+            timeout (int, optional): Timeout duration for HTTP requests in seconds. Defaults to 30.
+            intro (str, optional): Introductory prompt for the conversation. Defaults to None.
+            filepath (str, optional): Path to a file for storing conversation history. Defaults to None.
+            update_file (bool, optional): Indicates whether to update the file with new prompts and responses. Defaults to True.
+            proxies (dict, optional): Dictionary of HTTP request proxies. Defaults to an empty dictionary.
+            history_offset (int, optional): Number of last messages to retain in conversation history. Defaults to 10250.
+            act (str|int, optional): Key or index for selecting an awesome prompt to use as an intro. Defaults to None.
         """
         self.scraper = cloudscraper.create_scraper()
         self.url = 'https://pi.ai/api/chat'
+        self.AVAILABLE_VOICES: Dict[str, str] = {
+            "William": 1,
+            "Samantha": 2,
+            "Peter": 3,
+            "Amy": 4,
+            "Alice": 5,
+            "Harry": 6
+        }
         self.headers = {
             'Accept': 'text/event-stream',
             'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -54,9 +75,9 @@ class PiAI(Provider):
             'X-Api-Version': '3'
         }
         self.cookies = {
-                '__Host-session': 'Ca5SoyAMJEaaB79jj1T69',
-                '__cf_bm': 'g07oaL0jcstNfKDyZv7_YFjN0jnuBZjbMiXOWhy7V7A-1723536536-1.0.1.1-xwukd03L7oIAUqPG.OHbFNatDdHGZ28mRGsbsqfjBlpuy.b8w6UZIk8F3knMhhtNzwo4JQhBVdtYOlG0MvAw8A'
-            }
+            '__Host-session': 'Ca5SoyAMJEaaB79jj1T69',
+            '__cf_bm': 'g07oaL0jcstNfKDyZv7_YFjN0jnuBZjbMiXOWhy7V7A-1723536536-1.0.1.1-xwukd03L7oIAUqPG.OHbFNatDdHGZ28mRGsbsqfjBlpuy.b8w6UZIk8F3knMhhtNzwo4JQhBVdtYOlG0MvAw8A'
+        }
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -103,24 +124,31 @@ class PiAI(Provider):
     def ask(
         self,
         prompt: str,
+        voice_name:str,
         stream: bool = False,
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
+        verbose:bool = None,
+        output_file:str = None
     ) -> dict:
-        """Chat with AI
+        """Interact with the AI by sending a prompt and receiving a response.
 
         Args:
-            prompt (str): Prompt to be send.
+            prompt (str): The prompt to be sent to the AI.
+            voice_name (str): The name of the voice to use for audio responses.
             stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            raw (bool, optional): If True, returns the raw response as received. Defaults to False.
+            optimizer (str, optional): Name of the prompt optimizer to use - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): If True, chat conversationally when using optimizer. Defaults to False.
+            verbose (bool, optional): If True, provides detailed output. Defaults to None.
+            output_file (str, optional): File path to save the output. Defaults to None.
+
         Returns:
-           dict : {}
+            dict: A dictionary containing the AI's response.
         ```json
         {
-            "text" : "How may I assist you today?"
+            "text": "How may I assist you today?"
         }
         ```
         """
@@ -142,7 +170,12 @@ class PiAI(Provider):
 
         def for_stream():
             response = self.scraper.post(self.url, headers=self.headers, cookies=self.cookies, json=data, stream=True, timeout=self.timeout)
-            
+            output_str = response.content.decode('utf-8')
+            sids = re.findall(r'"sid":"(.*?)"', output_str)
+            second_sid = sids[1] if len(sids) >= 2 else None
+            #Start the audio download in a separate thread
+            threading.Thread(target=self.download_audio_threaded, args=(voice_name, second_sid, verbose, output_file)).start()
+
             streaming_text = ""
             for line in response.iter_lines(decode_unicode=True):
                 if line.startswith("data: "):
@@ -170,23 +203,35 @@ class PiAI(Provider):
     def chat(
         self,
         prompt: str,
+        voice_name: str = "Alice",
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
+        verbose:bool = True,
+        output_file:str = "PiAi.mp3"
     ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
-        """
+        """Generates a response based on the provided prompt.
 
+        Args:
+            prompt (str): The input prompt to be sent for generating a response.
+            voice_name (str, optional): The name of the voice to use for the response. Defaults to "Alice".
+            stream (bool, optional): Flag for streaming the response. Defaults to False.
+            optimizer (str, optional): The name of the prompt optimizer to use - `[code, shell_command]`. Defaults to None.
+            conversationally (bool, optional): Indicates whether to chat conversationally when using the optimizer. Defaults to False.
+            verbose (bool, optional): Flag to indicate if verbose output is desired. Defaults to True.
+            output_file (str, optional): The file path where the audio will be saved. Defaults to "PiAi.mp3".
+
+        Returns:
+            str: The generated response.
+        """
+        assert (
+            voice_name in self.AVAILABLE_VOICES
+        ), f"Voice '{voice_name}' not one of [{', '.join(self.AVAILABLE_VOICES.keys())}]"
         def for_stream():
             for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
+                prompt, voice_name, True, optimizer=optimizer, conversationally=conversationally,
+                verbose=verbose,
+                output_file=output_file
             ):
                 yield self.get_message(response).encode('utf-8').decode('utf-8')
 
@@ -194,9 +239,12 @@ class PiAI(Provider):
             return self.get_message(
                 self.ask(
                     prompt,
+                    voice_name,
                     False,
                     optimizer=optimizer,
                     conversationally=conversationally,
+                    verbose=verbose,
+                    output_file=output_file
                 )
             ).encode('utf-8').decode('utf-8')
 
@@ -214,9 +262,32 @@ class PiAI(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
+    def download_audio_threaded(self, voice_name: str, second_sid: str, verbose:bool, output_file:str) -> None:
+        """Downloads audio in a separate thread.
+
+        Args:
+            voice_name (str): The name of the desired voice.
+            second_sid (str): The message SID for the audio request.
+            verbose (bool): Flag to indicate if verbose output is desired.
+            output_file (str): The file path where the audio will be saved.
+        """
+        params = {
+            'mode': 'eager',
+            'voice': f'voice{self.AVAILABLE_VOICES[voice_name]}',
+            'messageSid': second_sid,
+        }
+        try:
+            audio_response = self.scraper.get('https://pi.ai/api/chat/voice', params=params, cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+            audio_response.raise_for_status()  # Raise an exception for bad status codes
+            with open(output_file, "wb") as file:
+                file.write(audio_response.content)
+            if verbose:print("\nAudio file downloaded successfully.")
+        except requests.exceptions.RequestException as e:
+            if verbose:print(f"\nFailed to download audio file. Error: {e}")
+
 if __name__ == '__main__':
     from rich import print
     ai = PiAI()  
-    response = ai.chat(input(">>> "), stream=True)
+    response = ai.chat(input(">>> "), stream=True, verbose=False)
     for chunk in response:
         print(chunk, end="", flush=True)
