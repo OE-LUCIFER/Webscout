@@ -6,14 +6,8 @@ import uuid
 from typing import Dict, Generator, Iterator, List, Union
 
 import random
-
-
-from webscout.requestsHTMLfix import HTMLSession
 import requests
-from bs4 import BeautifulSoup
-
-import requests
-
+from webscout.scout import Scout
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -113,13 +107,15 @@ def get_fb_session(email, password, proxies=None):
     }
     # Send the GET request
     response = requests.get(login_url, headers=headers, proxies=proxies)
-    soup = BeautifulSoup(response.text, "html.parser")
-
+    
+    # Use Scout for parsing instead of BeautifulSoup
+    scout = Scout(response.text)
+    
     # Parse necessary parameters from the login form
-    lsd = soup.find("input", {"name": "lsd"})["value"]
-    jazoest = soup.find("input", {"name": "jazoest"})["value"]
-    li = soup.find("input", {"name": "li"})["value"]
-    m_ts = soup.find("input", {"name": "m_ts"})["value"]
+    lsd = scout.find_first('input[name="lsd"]').get('value')
+    jazoest = scout.find_first('input[name="jazoest"]').get('value')
+    li = scout.find_first('input[name="li"]').get('value')
+    m_ts = scout.find_first('input[name="m_ts"]').get('value')
 
     # Define the URL and body for the POST request to submit the login form
     post_url = "https://mbasic.facebook.com/login/device-based/regular/login/?refsrc=deprecated&lwv=100"
@@ -259,14 +255,20 @@ def get_cookies() -> dict:
     Returns:
         dict: A dictionary containing essential cookies.
     """
-    session = HTMLSession()
-    response = session.get("https://www.meta.ai/")
-    return {
+    headers = {}
+    if self.fb_email is not None and self.fb_password is not None:
+        fb_session = get_fb_session(self.fb_email, self.fb_password, self.proxy)
+        headers = {"cookie": f"abra_sess={fb_session['abra_sess']}"}
+    
+    response = requests.get(
+        "https://www.meta.ai/",
+        headers=headers,
+        proxies=self.proxy,
+    )
+    
+    cookies = {
         "_js_datr": extract_value(
             response.text, start_str='_js_datr":{"value":"', end_str='",'
-        ),
-        "abra_csrf": extract_value(
-            response.text, start_str='abra_csrf":{"value":"', end_str='",'
         ),
         "datr": extract_value(
             response.text, start_str='datr":{"value":"', end_str='",'
@@ -274,7 +276,19 @@ def get_cookies() -> dict:
         "lsd": extract_value(
             response.text, start_str='"LSD",[],{"token":"', end_str='"}'
         ),
+        "fb_dtsg": extract_value(
+            response.text, start_str='DTSGInitData",[],{"token":"', end_str='"'
+        ),
     }
+
+    if len(headers) > 0:
+        cookies["abra_sess"] = fb_session["abra_sess"]
+    else:
+        cookies["abra_csrf"] = extract_value(
+            response.text, start_str='abra_csrf":{"value":"', end_str='",'
+        )
+    return cookies
+
 class Meta(Provider):
     """
     A class to interact with the Meta AI API to obtain and use access tokens for sending
@@ -682,16 +696,17 @@ class Meta(Provider):
         Returns:
             dict: A dictionary containing essential cookies.
         """
-        session = HTMLSession()
         headers = {}
         if self.fb_email is not None and self.fb_password is not None:
             fb_session = get_fb_session(self.fb_email, self.fb_password, self.proxy)
             headers = {"cookie": f"abra_sess={fb_session['abra_sess']}"}
-        response = session.get(
+        
+        response = requests.get(
             "https://www.meta.ai/",
             headers=headers,
             proxies=self.proxy,
         )
+        
         cookies = {
             "_js_datr": extract_value(
                 response.text, start_str='_js_datr":{"value":"', end_str='",'

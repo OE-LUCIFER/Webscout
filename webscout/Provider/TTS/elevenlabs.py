@@ -3,10 +3,12 @@ import requests
 import pathlib
 from io import BytesIO
 from playsound import playsound
-from nltk import sent_tokenize
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.litagent import LitAgent
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from . import utils
 
 class ElevenlabsTTS(TTSProvider): 
     """
@@ -14,7 +16,7 @@ class ElevenlabsTTS(TTSProvider):
     """
     # Request headers
     headers: dict[str, str] = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+        "User-Agent": LitAgent().random()
     }
     cache_dir = pathlib.Path("./audio_cache")
     all_voices: dict[str, str] = {"Brian": "nPczCjzI2devNBz1zQrb", "Alice":"Xb7hH8MSUJpSbSDYk0k2", "Bill":"pqHfZKP75CvOlQylNhV4", "Callum":"N2lVS1w4EtoT3dr4eOWO", "Charlie":"IKne3meq5aSn9XLyUdCD", "Charlotte":"XB0fDUnXU5powFXDhCwa", "Chris":"iP95p4xoKVk53GoZ742B", "Daniel":"onwK4e9ZLuTAKqWW03F9", "Eric":"cjVigY5qzO86Huf0OWal", "George":"JBFqnCBsd6RMkjVDRZzb", "Jessica":"cgSgspJ2msm6clMCkdW9", "Laura":"FGY2WhTYpPnrIDTdsKH5", "Liam":"TX3LPaxmHKxFdv7VOQHJ", "Lily":"pFZP5JQG7iQjIQuC4Bku", "Matilda":"XrExE9yKIg1WjnnlVkGX", "Sarah":"EXAVITQu4vr4xnSDxMaL", "Will":"bIHbv24MWmeRgasZH58o"}
@@ -27,6 +29,11 @@ class ElevenlabsTTS(TTSProvider):
             self.session.proxies.update(proxies)
         self.timeout = timeout
         self.params = {'allow_unauthenticated': '1'}
+        self.logger = LitLogger(
+            name="ElevenlabsTTS",
+            format=LogFormat.MODERN_EMOJI,
+            color_scheme=ColorScheme.AURORA
+        )
 
     def tts(self, text: str, voice: str = "Brian", verbose:bool = True) -> str:
         """
@@ -39,7 +46,7 @@ class ElevenlabsTTS(TTSProvider):
         filename = self.cache_dir / f"{int(time.time())}.mp3"  
 
         # Split text into sentences
-        sentences = sent_tokenize(text)
+        sentences = utils.split_sentences(text)
 
         # Function to request audio for each chunk
         def generate_audio_for_chunk(part_text: str, part_number: int):
@@ -54,14 +61,15 @@ class ElevenlabsTTS(TTSProvider):
 
                     # Check if the request was successful
                     if response.ok and response.status_code == 200:
-                        if verbose:print(f"Chunk {part_number} processed successfully.")
+                        if verbose:
+                            self.logger.success(f"Chunk {part_number} processed successfully 🎉")
                         return part_number, response.content
                     else:
                         if verbose:
-                            print(f"No data received for chunk {part_number}. Retrying...")
+                            self.logger.warning(f"No data received for chunk {part_number}. Retrying...")
                 except requests.RequestException as e:
-                    # if verbose:
-                    #     print(f"Error for chunk {part_number}: {e}. Retrying...")
+                    if verbose:
+                        self.logger.error(f"Error for chunk {part_number}: {e}. Retrying... 🔄")
                     time.sleep(1)
         try:
             # Using ThreadPoolExecutor to handle requests concurrently
@@ -79,22 +87,24 @@ class ElevenlabsTTS(TTSProvider):
                         audio_chunks[part_number] = audio_data  # Store the audio data in correct sequence
                     except Exception as e:
                         if verbose:
-                            print(f"Failed to generate audio for chunk {chunk_num}: {e}")
+                            self.logger.error(f"Failed to generate audio for chunk {chunk_num}: {e} 🚨")
 
             # Combine audio chunks in the correct sequence
             combined_audio = BytesIO()
             for part_number in sorted(audio_chunks.keys()):
                 combined_audio.write(audio_chunks[part_number])
                 if verbose:
-                    print(f"Added chunk {part_number} to the combined file.")
+                    self.logger.debug(f"Added chunk {part_number} to the combined file.")
 
             # Save the combined audio data to a single file
             with open(filename, 'wb') as f:
                 f.write(combined_audio.getvalue())
-            if verbose:print(f"\033[1;93mFinal Audio Saved as {filename}.\033[0m")
+            if verbose:
+                self.logger.info(f"Final Audio Saved as {filename} 🔊")
             return filename.as_posix()
 
         except requests.exceptions.RequestException as e:
+            self.logger.critical(f"Failed to perform the operation: {e} 🚨")
             raise exceptions.FailedToGenerateResponseError(
                 f"Failed to perform the operation: {e}"
             )
@@ -112,15 +122,16 @@ class ElevenlabsTTS(TTSProvider):
         try:
             playsound(filename)
         except Exception as e:
+            self.logger.error(f"Error playing audio: {e} 🔇")
             raise RuntimeError(f"Error playing audio: {e}")
 
 # Example usage
 if __name__ == "__main__":
     elevenlabs = ElevenlabsTTS()
-    text = "This is a test of the ElevenlabsTTS text-to-speech API."
+    text = "This is a test of the ElevenlabsTTS text-to-speech API. It supports multiple sentences and advanced logging."
 
-    print("Generating audio...")
+    elevenlabs.logger.info("Generating audio...")
     audio_file = elevenlabs.tts(text, voice="Brian") 
 
-    print("Playing audio...")
-    audio_file.play_audio(audio_file)
+    elevenlabs.logger.info("Playing audio...")
+    elevenlabs.play_audio(audio_file)

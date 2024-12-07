@@ -1,8 +1,9 @@
-from bs4 import BeautifulSoup
 import requests
 from typing import Dict, List, Optional, Union, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from webscout.scout import Scout
 from urllib.parse import quote, urljoin
+from webscout.litagent import LitAgent
 
 import time
 import random
@@ -10,14 +11,13 @@ import json
 import os
 from datetime import datetime, timedelta
 from functools import lru_cache
-from .Litlogger import LitLogger, LogFormat, ColorScheme
-from tenacity import retry, stop_after_attempt, wait_exponential
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
 
 class GoogleS:
-    """A Python interface for Google search with advanced features 🔥
+    """A Python interface for Google search with advanced features
 
     The GoogleS class provides a powerful interface to perform web searches, image searches,
-    and advanced filtering on Google. Built with love by HAI to keep it 💯
+    and advanced filtering on Google. Built with love by HAI to keep it
 
     Basic Usage:
         >>> from webscout.DWEBS import GoogleS
@@ -122,7 +122,7 @@ class GoogleS:
         """
         self.proxy = proxy
         self.headers = headers if headers else {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+            "User-Agent": LitAgent().random()  # Use LitAgent to generate user agent
         }
         self.headers["Referer"] = "https://www.google.com/"
         self.client = requests.Session()
@@ -155,25 +155,46 @@ class GoogleS:
             time.sleep(self.rate_limit - time_since_last)
         self.last_request_time = time.time()
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def _get_url(self, method: str, url: str, params: Optional[Dict[str, str]] = None,
-                  data: Optional[Union[Dict[str, str], bytes]] = None) -> bytes:
+                  data: Optional[Union[Dict[str, str], bytes]] = None, max_retries: int = 3) -> bytes:
         """
-        Makes an HTTP request with retry logic and rate limiting.
+        Makes an HTTP request with manual retry logic and rate limiting.
+        
+        Args:
+            method (str): HTTP method (GET, POST, etc.)
+            url (str): Target URL
+            params (Optional[Dict[str, str]]): Query parameters
+            data (Optional[Union[Dict[str, str], bytes]]): Request payload
+            max_retries (int): Maximum number of retry attempts
+        
+        Returns:
+            bytes: Response content
         """
         self._respect_rate_limit()
-        try:
-            if self.use_litlogger:
-                self.logger.debug(f"Making {method} request to {url}")
-            resp = self.client.request(method, url, params=params, data=data, timeout=self.timeout)
-            resp.raise_for_status()
-            if self.use_litlogger:
-                self.logger.success(f"Request successful: {resp.status_code}")
-            return resp.content
-        except requests.exceptions.RequestException as ex:
-            if self.use_litlogger:
-                self.logger.error(f"Request failed: {url} - {str(ex)}")
-            raise
+        
+        for attempt in range(max_retries):
+            try:
+                if self.use_litlogger:
+                    self.logger.debug(f"Making {method} request to {url} (Attempt {attempt + 1})")
+                
+                resp = self.client.request(method, url, params=params, data=data, timeout=self.timeout)
+                resp.raise_for_status()
+                
+                if self.use_litlogger:
+                    self.logger.success(f"Request successful: {resp.status_code}")
+                
+                return resp.content
+            
+            except requests.exceptions.RequestException as ex:
+                if self.use_litlogger:
+                    self.logger.error(f"Request failed: {url} - {str(ex)}")
+                
+                # Exponential backoff
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) + random.random()
+                    time.sleep(wait_time)
+                else:
+                    raise
 
     @lru_cache(maxsize=100)
     def _cache_key(self, query: str, **kwargs) -> str:
@@ -217,7 +238,7 @@ class GoogleS:
         type_filter: Optional[str] = None,
         **kwargs
     ) -> List[Dict[str, str]]:
-        """Search for images on Google with style! 🖼️
+        """Search for images on Google with style! 
 
         Args:
             query (str): What you're looking for fam
@@ -270,7 +291,7 @@ class GoogleS:
             params["tbs"] = f"itp:{type_filter}"
 
         content = self._get_url("GET", self.SEARCH_TYPES["image"], params=params)
-        soup = BeautifulSoup(content, 'lxml')
+        soup = Scout(content)  # Use Scout parser
         
         results = []
         for img in soup.find_all("img", class_="rg_i"):
@@ -365,7 +386,8 @@ class GoogleS:
             for future in as_completed(futures):
                 try:
                     resp_content = future.result()
-                    soup = BeautifulSoup(resp_content, 'lxml')  # Use lxml parser
+                    soup = Scout(resp_content)  # Use Scout parser
+                    
                     result_blocks = soup.find_all("div", class_="g")
 
                     if not result_blocks:
@@ -429,9 +451,9 @@ class GoogleS:
 
     def _extract_text_from_webpage(self, html_content: bytes, max_characters: Optional[int] = None) -> str:
         """
-        Extracts visible text from HTML content using lxml parser.
+        Extracts visible text from HTML content using Scout parser.
         """
-        soup = BeautifulSoup(html_content, 'lxml')  # Use lxml parser
+        soup = Scout(html_content)  # Use Scout parser
         for tag in soup(["script", "style", "header", "footer", "nav"]):
             tag.extract()
         visible_text = soup.get_text(strip=True)

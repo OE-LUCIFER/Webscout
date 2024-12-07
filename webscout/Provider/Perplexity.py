@@ -8,7 +8,6 @@ from time import sleep, time
 from threading import Thread
 from json import loads, dumps
 from random import getrandbits
-from websocket import WebSocketApp
 from requests import Session, get, post
 
 
@@ -86,11 +85,11 @@ class Perplexity(Provider):
         self.frontend_session_id: str = str(uuid4())
 
         assert self._ask_anonymous_user(), "failed to ask anonymous user"
-        self.ws: WebSocketApp = self._init_websocket()
+        self.ws: object = self._init_websocket()
         self.ws_thread: Thread = Thread(target=self.ws.run_forever).start()
         self._auth_session()
 
-        while not (self.ws.sock and self.ws.sock.connected):
+        while not (self.ws and self.ws.connected):
             sleep(0.01)
 
         self.__available_optimizers = (
@@ -191,12 +190,12 @@ class Perplexity(Provider):
         with open(".perplexity_files_url", "w") as f:
             f.write(dumps(perplexity_files_url))
 
-    def _init_websocket(self) -> WebSocketApp:
-        def on_open(ws: WebSocketApp) -> None:
+    def _init_websocket(self) -> object:
+        def on_open(ws: object) -> None:
             ws.send("2probe")
             ws.send("5")
 
-        def on_message(ws: WebSocketApp, message: str) -> None:
+        def on_message(ws: object, message: str) -> None:
             if message == "2":
                 ws.send("3")
             elif not self.finished:
@@ -223,14 +222,7 @@ class Perplexity(Provider):
                         self.queue.append(message)
                         self.finished = True
 
-        return WebSocketApp(
-            url=f"wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}",
-            header=self.user_agent,
-            cookie=self._get_cookies_str(),
-            on_open=on_open,
-            on_message=on_message,
-            on_error=lambda ws, err: print(f"websocket error: {err}"),
-        )
+        return object()
 
     def _s(
         self,

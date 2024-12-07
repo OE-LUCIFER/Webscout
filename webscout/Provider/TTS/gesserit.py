@@ -4,16 +4,18 @@ import pathlib
 import base64
 from io import BytesIO
 from playsound import playsound
-from nltk import sent_tokenize
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.litagent import LitAgent
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from . import utils
 
 class GesseritTTS(TTSProvider): 
     """Text-to-speech provider using the GesseritTTS API."""
     # Request headers
     headers: dict[str, str] = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+        "User-Agent": LitAgent().random()
     }
     cache_dir = pathlib.Path("./audio_cache")
     all_voices: dict[str, str] = {
@@ -35,6 +37,11 @@ class GesseritTTS(TTSProvider):
         if proxies:
             self.session.proxies.update(proxies)
         self.timeout = timeout
+        self.logger = LitLogger(
+            name="GesseritTTS",
+            format=LogFormat.MODERN_EMOJI,
+            color_scheme=ColorScheme.AURORA
+        )
 
     def tts(self, text: str, voice: str = "Oliver", verbose:bool = True) -> str:
         """Converts text to speech using the GesseritTTS API and saves it to a file."""
@@ -47,7 +54,7 @@ class GesseritTTS(TTSProvider):
         voice_id = self.all_voices[voice]
 
         # Split text into sentences
-        sentences = sent_tokenize(text)
+        sentences = utils.split_sentences(text)
 
         # Function to request audio for each chunk
         def generate_audio_for_chunk(part_text: str, part_number: int):
@@ -69,14 +76,14 @@ class GesseritTTS(TTSProvider):
                         audio_base64 = data["audioUrl"].split(",")[1]
                         audio_data = base64.b64decode(audio_base64)
                         if verbose:
-                            print(f"Chunk {part_number} processed successfully.")
+                            self.logger.success(f"Chunk {part_number} processed successfully 🎉")
                         return part_number, audio_data
                     else:
                         if verbose:
-                            print(f"No data received for chunk {part_number}. Retrying...")
+                            self.logger.warning(f"No data received for chunk {part_number}. Retrying...")
                 except requests.RequestException as e:
-                    # if verbose:
-                    #     print(f"Error for chunk {part_number}: {e}. Retrying...")
+                    if verbose:
+                        self.logger.error(f"Error for chunk {part_number}: {e}. Retrying... 🔄")
                     time.sleep(1)
         try:
             # Using ThreadPoolExecutor to handle requests concurrently
@@ -94,22 +101,24 @@ class GesseritTTS(TTSProvider):
                         audio_chunks[part_number] = audio_data  # Store the audio data in correct sequence
                     except Exception as e:
                         if verbose:
-                            print(f"Failed to generate audio for chunk {chunk_num}: {e}")
+                            self.logger.error(f"Failed to generate audio for chunk {chunk_num}: {e} 🚨")
 
             # Combine audio chunks in the correct sequence
             combined_audio = BytesIO()
             for part_number in sorted(audio_chunks.keys()):
                 combined_audio.write(audio_chunks[part_number])
                 if verbose:
-                    print(f"Added chunk {part_number} to the combined file.")
+                    self.logger.debug(f"Added chunk {part_number} to the combined file.")
 
             # Save the combined audio data to a single file
             with open(filename, 'wb') as f:
                 f.write(combined_audio.getvalue())
-            if verbose:print(f"\033[1;93mFinal Audio Saved as {filename}.\033[0m")
+            if verbose:
+                self.logger.info(f"Final Audio Saved as {filename} 🔊")
             return filename.as_posix()
 
         except requests.exceptions.RequestException as e:
+            self.logger.critical(f"Failed to perform the operation: {e} 🚨")
             raise exceptions.FailedToGenerateResponseError(
                 f"Failed to perform the operation: {e}"
             )
@@ -127,15 +136,16 @@ class GesseritTTS(TTSProvider):
         try:
             playsound(filename)
         except Exception as e:
+            self.logger.error(f"Error playing audio: {e} 🔇")
             raise RuntimeError(f"Error playing audio: {e}")
 
 # Example usage
 if __name__ == "__main__":
-    elevenlabs = GesseritTTS()
-    text = "This is a test of the GesseritTTS text-to-speech API."
+    gesserit = GesseritTTS()
+    text = "This is a test of the GesseritTTS text-to-speech API. It supports multiple sentences and advanced logging."
 
-    print("Generating audio...")
-    audio_file = elevenlabs.tts(text, voice="Brian") 
+    gesserit.logger.info("Generating audio...")
+    audio_file = gesserit.tts(text, voice="Oliver") 
 
-    print("Playing audio...")
-    audio_file.play_audio(audio_file)
+    gesserit.logger.info("Playing audio...")
+    gesserit.play_audio(audio_file)

@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-import click
 import queue
 import threading
 import platform
@@ -577,7 +576,7 @@ Please fix the code to handle this error. Provide only the corrected code withou
             style (str, optional): Style to apply. Defaults to "info".
         """
         if not self.prettify:
-            click.secho(message, fg="yellow")
+            print(message)
             return
 
         if message.startswith("```") and message.endswith("```"):

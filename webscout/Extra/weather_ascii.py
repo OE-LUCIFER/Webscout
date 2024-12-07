@@ -1,6 +1,6 @@
 import requests
 from rich.console import Console
-from pyfiglet import figlet_format
+from webscout.zeroart import figlet_format
 
 console = Console()
 def get(location):
@@ -12,7 +12,7 @@ def get(location):
         str: ASCII art weather report if the request is successful,
              otherwise an error message.
     """
-    console.print(f"[bold green]{figlet_format('Weather')}[/]\n", justify="center")
+    console.print(f"[bold green]{figlet_format('Weather')}")
     url = f"https://wttr.in/{location}"
     response = requests.get(url, headers={'User-Agent': 'curl'}) 
 

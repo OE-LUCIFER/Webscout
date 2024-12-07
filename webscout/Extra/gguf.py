@@ -25,7 +25,7 @@ import sys
 import shutil
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-from pyfiglet import figlet_format
+from webscout.zeroart import figlet_format
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.panel import Panel
@@ -153,7 +153,7 @@ class ModelConverter:
         """Performs the model conversion process."""
         try:
             # Display banner and configuration
-            console.print(f"[bold green]{figlet_format('GGUF Converter')}[/]\n", justify="center")
+            console.print(f"[bold green]{figlet_format('GGUF Converter')}")
             self.display_config()
             
             # Validate inputs

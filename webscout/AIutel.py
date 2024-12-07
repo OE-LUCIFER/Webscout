@@ -9,10 +9,8 @@ import appdirs
 import datetime
 import re
 import sys
-import click
 from rich.markdown import Markdown
 from rich.console import Console
-import g4f
 from typing import List, Tuple, Union
 from typing import NoReturn
 import requests
@@ -27,43 +25,7 @@ default_path = appdir.user_cache_dir
 
 if not os.path.exists(default_path):
     os.makedirs(default_path)
-webai = [
-   "leo",
-   "openai",
-   "opengpt",
-   "koboldai",
-   "gemini",
-   "phind",
-   "blackboxai",
-   "g4fauto",
-   "perplexity",
-   "groq",
-   "reka",
-   "cohere",
-   "yepchat",
-   "you",
-   "xjai",
-   "thinkany",
-   "berlin4h",
-   "chatgptuk",
-   "auto",
-   "poe",
-   "basedgpt",
-   "deepseek",
-   "deepinfra",
-   "vtlchat",
-   "geminiflash",
-   "geminipro",
-   "ollama",
-   "andi",
-   "llama3"
-]
 
-gpt4free_providers = [
-    provider.__name__ for provider in g4f.Provider.__providers__  # if provider.working
-]
-
-available_providers = webai + gpt4free_providers
 def sanitize_stream(
     chunk: str, intro_value: str = "data:", to_json: bool = True
 ) -> str | dict:
@@ -109,14 +71,10 @@ def run_system_command(
         )
         return (True, result)
     except subprocess.CalledProcessError as e:
-        # Handle error if the command returns a non-zero exit code
-        if stdout_error:
-            click.secho(f"Error Occurred: while running '{command}'", fg="yellow")
-            click.secho(e.stderr, fg="red")
-            if help is not None:
-                click.secho(help, fg="cyan")
-        sys.exit(e.returncode) if exit_on_error else None
-        return (False, e)
+        if exit_on_error:
+            raise Exception(f"Command failed with exit code {e.returncode}") from e
+        else:
+            return (False, e)  
 
 
 from .conversation import Conversation

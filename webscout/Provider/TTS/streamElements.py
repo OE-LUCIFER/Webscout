@@ -6,6 +6,11 @@ from typing import Union, Generator
 from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.litagent import LitAgent
+from . import utils
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from io import BytesIO
 
 class StreamElements(TTSProvider): 
     """
@@ -14,7 +19,7 @@ class StreamElements(TTSProvider):
 
     # Request headers
     headers: dict[str, str] = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+        "User-Agent": LitAgent().random()
     }
     cache_dir = pathlib.Path("./audio_cache")
     all_voices: list[str] = [
@@ -233,43 +238,123 @@ class StreamElements(TTSProvider):
         if proxies:
             self.session.proxies.update(proxies)
         self.timeout = timeout
+        self.logger = LitLogger(
+            name="StreamElementsTTS",
+            format=LogFormat.MODERN_EMOJI,
+            color_scheme=ColorScheme.AURORA
+        )
 
-    def tts(self, text: str, voice: str = "Brian") -> str:
+    def tts(self, text: str, voice: str = "Mathieu", verbose: bool = True) -> str:
         """
         Converts text to speech using the StreamElements API and saves it to a file.
+
+        Args:
+            text (str): The text to convert to speech
+            voice (str): The voice to use for TTS (default: "Mathieu")
+            verbose (bool): Whether to print progress messages (default: True)
+
+        Returns:
+            str: Path to the generated audio file
         """
         assert (
             voice in self.all_voices
         ), f"Voice '{voice}' not one of [{', '.join(self.all_voices)}]"
 
-        url = f"https://api.streamelements.com/kappa/v2/speech?voice={voice}&text={{{urllib.parse.quote(text)}}}"
-        filename = self.cache_dir / f"{int(time.time())}.mp3"  
+        filename = self.cache_dir / f"{int(time.time())}.mp3"
 
+        # Split text into sentences
+        sentences = utils.split_sentences(text)
+
+        # Function to request audio for each chunk
+        def generate_audio_for_chunk(part_text: str, part_number: int):
+            while True:
+                try:
+                    # URL encode the text and voice
+                    encoded_text = urllib.parse.quote(part_text)
+                    encoded_voice = urllib.parse.quote(voice)
+                    
+                    url = f"https://streamelements.com/tts/{encoded_voice}/{encoded_text}"
+                    
+                    response = self.session.get(url, headers=self.headers, timeout=self.timeout)
+                    response.raise_for_status()
+
+                    # Create the audio_cache directory if it doesn't exist
+                    self.cache_dir.mkdir(parents=True, exist_ok=True) 
+
+                    # Check if the request was successful
+                    if response.ok and response.status_code == 200:
+                        if verbose:
+                            self.logger.success(f"Chunk {part_number} processed successfully 🎉")
+                        return part_number, response.content
+                    else:
+                        if verbose:
+                            self.logger.warning(f"No data received for chunk {part_number}. Retrying...")
+                except requests.RequestException as e:
+                    if verbose:
+                        self.logger.error(f"Error for chunk {part_number}: {e}. Retrying... 🔄")
+                    time.sleep(1)
         try:
-            response = self.session.get(url=url, headers=self.headers, stream=True, timeout=self.timeout)
-            response.raise_for_status()
+            # Using ThreadPoolExecutor to handle requests concurrently
+            with ThreadPoolExecutor() as executor:
+                futures = {executor.submit(generate_audio_for_chunk, sentence.strip(), chunk_num): chunk_num 
+                        for chunk_num, sentence in enumerate(sentences, start=1)}
+                
+                # Dictionary to store results with order preserved
+                audio_chunks = {}
 
-            # Create the audio_cache directory if it doesn't exist
-            self.cache_dir.mkdir(parents=True, exist_ok=True) 
+                for future in as_completed(futures):
+                    chunk_num = futures[future]
+                    try:
+                        part_number, audio_data = future.result()
+                        audio_chunks[part_number] = audio_data  # Store the audio data in correct sequence
+                    except Exception as e:
+                        if verbose:
+                            self.logger.error(f"Failed to generate audio for chunk {chunk_num}: {e} 🚨")
 
-            with open(filename, "wb") as f:
-                for chunk in response.iter_content(chunk_size=512):
-                    if chunk:
-                        f.write(chunk)
+            # Combine audio chunks in the correct sequence
+            combined_audio = BytesIO()
+            for part_number in sorted(audio_chunks.keys()):
+                combined_audio.write(audio_chunks[part_number])
+                if verbose:
+                    self.logger.debug(f"Added chunk {part_number} to the combined file.")
 
+            # Save the combined audio data to a single file
+            with open(filename, 'wb') as f:
+                f.write(combined_audio.getvalue())
+            if verbose:
+                self.logger.info(f"Final Audio Saved as {filename} 🔊")
             return filename.as_posix()
 
         except requests.exceptions.RequestException as e:
+            self.logger.critical(f"Failed to perform the operation: {e} 🚨")
             raise exceptions.FailedToGenerateResponseError(
                 f"Failed to perform the operation: {e}"
             )
+        
+    def play_audio(self, filename: str):
+        """
+        Plays an audio file using playsound.
 
+        Args:
+            filename (str): The path to the audio file.
 
+        Raises:
+            RuntimeError: If there is an error playing the audio.
+        """
+        try:
+            self.logger.info(f"Playing audio: {filename} 🎵")
+            playsound(filename)
+        except Exception as e:
+            self.logger.error(f"Error playing audio: {e} 🔇")
+            raise RuntimeError(f"Error playing audio: {e}")
 
 # Example usage
 if __name__ == "__main__":
     streamelements = StreamElements()
-    text = "This is a test of the StreamElements text-to-speech API."
+    text = "This is a test of the StreamElements text-to-speech API. It supports multiple sentences and advanced logging."
 
-    print("Generating audio...")
-    audio_file = streamelements.tts(text, voice="Brian") 
+    streamelements.logger.info("Generating audio...")
+    audio_file = streamelements.tts(text, voice="Mathieu") 
+
+    streamelements.logger.info("Playing audio...")
+    streamelements.play_audio(audio_file)

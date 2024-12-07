@@ -34,10 +34,7 @@ setup(
         "tenacity",
         "curl_cffi",
         "nest-asyncio",
-        "g4f>=0.2.2.3",
-        "g4f[webdriver]",
         "rich",
-        "beautifulsoup4",
         "markdownify",
         "requests",
         "google-generativeai",
@@ -50,7 +47,6 @@ setup(
         "clipman",
         "playsound",
         "ollama",
-        "pyfiglet",
         "pillow",
         "bson",
         "cloudscraper",
@@ -59,11 +55,10 @@ setup(
         "prompt-toolkit",
         "primp",
         "pyreqwest_impersonate",
-        "lxml_html_clean",
         "gradio_client",
         "psutil",
         "yaspin",
-        "nltk>=3.8.1"
+        "websocket"
         # "cerebras_cloud_sdk",
 
     ],

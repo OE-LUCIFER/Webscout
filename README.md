@@ -34,12 +34,11 @@
 </div>
 
 ## 🚀 Features
-* **Comprehensive Search:** Leverage Google, DuckDuckGo, and Phind.com for diverse search results.
+* **Comprehensive Search:** Leverage Google, DuckDuckGo for diverse search results.
 * **AI Powerhouse:** Access and interact with various AI models, including OpenAI, Cohere, and more.
-* **YouTube Toolkit:** Transcribe YouTube videos effortlessly and download audio/video content.
+* **[YouTube Toolkit](webscout/Extra/YTToolkit):** Advanced YouTube video and transcript management with multi-language support, versatile downloading, and intelligent data extraction
 * **Tempmail & Temp Number:** Generate temporary email addresses and phone numbers for enhanced privacy.
-* **Text-to-Speech (TTS):** Convert text into natural-sounding speech using various TTS providers.
-* **WebAI:** Experience the power of terminal-based GPT and an open interpreter for code execution and more.
+* **[Text-to-Speech (TTS)](webscout/Provider/TTS/README.md):** Convert text into natural-sounding speech using multiple AI-powered providers like ElevenLabs, StreamElements, and Voicepods.
 * **Offline LLMs:** Utilize powerful language models offline with GGUF support.
 * **Extensive Provider Ecosystem:** Explore a vast collection of providers, including BasedGPT, DeepSeek, and many others.
 * **Local LLM Execution:** Run GGUF models locally with minimal configuration.
@@ -157,29 +156,7 @@ python -m webscout --help
 
 [Go To TOP](#webscout-️)
 
-## ⬇️ YTdownloader 
 
-```python
-from os import rename, getcwd
-from webscout import YTdownloader
-def download_audio(video_id):
-    youtube_link = video_id 
-    handler = YTdownloader.Handler(query=youtube_link)
-    for third_query_data in handler.run(format='mp3', quality='128kbps', limit=1):
-        audio_path = handler.save(third_query_data, dir=getcwd())  
-        rename(audio_path, "audio.mp3")
-
-def download_video(video_id):
-    youtube_link = video_id 
-    handler = YTdownloader.Handler(query=youtube_link)
-    for third_query_data in handler.run(format='mp4', quality='auto', limit=1):
-        video_path = handler.save(third_query_data, dir=getcwd())  
-        rename(video_path, "video.mp4")
-        
-if __name__ == "__main__":
-    # download_audio("https://www.youtube.com/watch?v=c0tMvzB0OKw")
-    download_video("https://www.youtube.com/watch?v=c0tMvzB0OKw")
-```
 
 ## ☀️ Weather
 
@@ -235,20 +212,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## 📝 Transcriber
 
-The `transcriber` function in Webscout is a handy tool that transcribes YouTube videos. 
-
-**Example:**
-
-```python
-from webscout import YTTranscriber
-yt = YTTranscriber()
-from rich import print
-video_url = input("Enter the YouTube video URL: ") 
-transcript = yt.get_transcript(video_url, languages=None) 
-print(transcript)
-```
 
 ## 🔍 GoogleS (formerly DWEBS)
 
@@ -261,16 +225,6 @@ for result in results:
     print(result)
 ```
 
-### BingS
-
-```python
-from webscout import BingS
-from rich import print
-searcher = BingS()
-results = searcher.search("HelpingAI-9B", max_results=20, extract_webpage_text=True, max_extract_characters=1000)
-for result in results:
-    print(result)
-```
 
 ## 🦆 WEBS and AsyncWEBS
 
@@ -887,18 +841,12 @@ ai = BLACKBOXAI(
     model=None # You can specify a model if needed
 )
 
-# Start an infinite loop for continuous interaction
-while True:
-    # Define a prompt to send to the AI
-    prompt = input("Enter your prompt: ")
-    
-    # Check if the user wants to exit the loop
-    if prompt.lower() == "exit":
-        break
-    
-    # Use the 'chat' method to send the prompt and receive a response
-    r = ai.chat(prompt)
-    print(r)
+
+# Define a prompt to send to the AI
+prompt = "Tell me about india"
+# Use the 'chat' method to send the prompt and receive a response
+r = ai.chat(prompt)
+print(r)
 ```
 
 ###  ❓ `PERPLEXITY` - Search with PERPLEXITY
