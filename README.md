@@ -51,6 +51,7 @@
 * **[LitLogger](webscout/litlogger/Readme.md):** Simplifies logging with customizable formats and color schemes
 * **[LitAgent](webscout/litagent/Readme.md):** Powerful and modern user agent generator that keeps your requests fresh and undetectable
 * **[Text-to-Image](webscout/Provider/TTI/README.md):** Generate high-quality images using a wide range of AI art providers
+* **[MarkdownLite](webscout/Extra/markdownlite/README.md):** Powerful HTML to Markdown conversion library with advanced parsing and structured output
 
 ## ⚙️ Installation
 ```python
