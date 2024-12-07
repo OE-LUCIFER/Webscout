@@ -1,48 +1,40 @@
 import time
 import requests
 import pathlib
-import base64
 from io import BytesIO
+from urllib.parse import urlencode
 from playsound import playsound
 from nltk import sent_tokenize
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-class DeepgramTTS(TTSProvider): 
-    """
-    Text-to-speech provider using the DeepgramTTS API.
-    """
+class MurfAITTS(TTSProvider):
+    """Text-to-speech provider using the MurfAITTS API."""
     # Request headers
     headers: dict[str, str] = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
     cache_dir = pathlib.Path("./audio_cache")
-    all_voices: dict[str, str] = {
-        "Asteria": "aura-asteria-en", "Arcas": "aura-arcas-en", "Luna": "aura-luna-en",
-        "Zeus": "aura-zeus-en", "Orpheus": "aura-orpheus-en", "Angus": "aura-angus-en",
-        "Athena": "aura-athena-en", "Helios": "aura-helios-en", "Hera": "aura-hera-en",
-        "Orion": "aura-orion-en", "Perseus": "aura-perseus-en", "Stella": "aura-stella-en"
-    }
+    all_voices: dict[str, str] = {"Hazel": "en-UK-hazel"}
 
     def __init__(self, timeout: int = 20, proxies: dict = None):
-        """Initializes the DeepgramTTS TTS client."""
+        """Initializes the MurfAITTS TTS client."""
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(proxies)
         self.timeout = timeout
 
-    def tts(self, text: str, voice: str = "Brian", verbose:bool = True) -> str:
-        """
-        Converts text to speech using the DeepgramTTS API and saves it to a file.
-        """
+    def tts(self, text: str, voice: str = "Hazel", verbose:bool = True) -> str:
+        """Converts text to speech using the MurfAITTS API and saves it to a file."""
         assert (
             voice in self.all_voices
         ), f"Voice '{voice}' not one of [{', '.join(self.all_voices.keys())}]"
 
-        url = "https://deepgram.com/api/ttsAudioGeneration"
-        filename = self.cache_dir / f"{int(time.time())}.mp3"  
+        filename = self.cache_dir / f"{int(time.time())}.mp3"
+
+        voice_id = self.all_voices[voice]
 
         # Split text into sentences
         sentences = sent_tokenize(text)
@@ -51,19 +43,21 @@ class DeepgramTTS(TTSProvider):
         def generate_audio_for_chunk(part_text: str, part_number: int):
             while True:
                 try:
-                    payload = {"text": part_text, "model": self.all_voices[voice]}
-                    response = self.session.post(url=url, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
+                    params: dict[str, str] = {
+                    "name": voice_id, 
+                    "text": part_text
+                    }
+                    encode_param: str = urlencode(params)
+                    response = self.session.get(f"https://murf.ai/Prod/anonymous-tts/audio?{encode_param}", headers=self.headers, timeout=self.timeout)
                     response.raise_for_status()
 
                     # Create the audio_cache directory if it doesn't exist
                     self.cache_dir.mkdir(parents=True, exist_ok=True) 
 
-                    response_data = response.json().get('data')
-                    if response_data:
-                        audio_data = base64.b64decode(response_data)
-                        if verbose:
-                            print(f"Chunk {part_number} processed successfully.")
-                        return part_number, audio_data
+                    # Check if the request was successful
+                    if response.ok and response.status_code == 200:
+                        if verbose:print(f"Chunk {part_number} processed successfully.")
+                        return part_number, response.content
                     else:
                         if verbose:
                             print(f"No data received for chunk {part_number}. Retrying...")
@@ -124,11 +118,11 @@ class DeepgramTTS(TTSProvider):
 
 # Example usage
 if __name__ == "__main__":
-    deepgram = DeepgramTTS()
-    text = "This is a test of the DeepgramTTS text-to-speech API."
+    elevenlabs = MurfAITTS()
+    text = "This is a test of the MurfAITTS text-to-speech API."
 
     print("Generating audio...")
-    audio_file = deepgram.tts(text, voice="Brian") 
+    audio_file = elevenlabs.tts(text, voice="Brian") 
 
     print("Playing audio...")
     audio_file.play_audio(audio_file)

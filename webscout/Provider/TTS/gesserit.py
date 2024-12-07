@@ -9,40 +9,42 @@ from webscout import exceptions
 from webscout.AIbase import TTSProvider
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-class DeepgramTTS(TTSProvider): 
-    """
-    Text-to-speech provider using the DeepgramTTS API.
-    """
+class GesseritTTS(TTSProvider): 
+    """Text-to-speech provider using the GesseritTTS API."""
     # Request headers
     headers: dict[str, str] = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
     cache_dir = pathlib.Path("./audio_cache")
     all_voices: dict[str, str] = {
-        "Asteria": "aura-asteria-en", "Arcas": "aura-arcas-en", "Luna": "aura-luna-en",
-        "Zeus": "aura-zeus-en", "Orpheus": "aura-orpheus-en", "Angus": "aura-angus-en",
-        "Athena": "aura-athena-en", "Helios": "aura-helios-en", "Hera": "aura-hera-en",
-        "Orion": "aura-orion-en", "Perseus": "aura-perseus-en", "Stella": "aura-stella-en"
+        "Emma": "en_us_001",  # Female Voice
+        "Liam": "en_us_006",  # Male Voice
+        "Noah": "en_us_007",  # Male Voice
+        "Oliver": "en_us_009",  # Male Voice
+        "Elijah": "en_us_010",  # Male Voice
+        "James": "en_male_narration",  # Male Voice
+        "Charlie": "en_male_funny",  # Male Voice
+        "Sophia": "en_female_emotional",  # Female Voice
+        "Cody": "en_male_cody",  # Male Voice
     }
 
     def __init__(self, timeout: int = 20, proxies: dict = None):
-        """Initializes the DeepgramTTS TTS client."""
+        """Initializes the GesseritTTS TTS client."""
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(proxies)
         self.timeout = timeout
 
-    def tts(self, text: str, voice: str = "Brian", verbose:bool = True) -> str:
-        """
-        Converts text to speech using the DeepgramTTS API and saves it to a file.
-        """
+    def tts(self, text: str, voice: str = "Oliver", verbose:bool = True) -> str:
+        """Converts text to speech using the GesseritTTS API and saves it to a file."""
         assert (
             voice in self.all_voices
         ), f"Voice '{voice}' not one of [{', '.join(self.all_voices.keys())}]"
 
-        url = "https://deepgram.com/api/ttsAudioGeneration"
-        filename = self.cache_dir / f"{int(time.time())}.mp3"  
+        filename = self.cache_dir / f"{int(time.time())}.mp3"
+
+        voice_id = self.all_voices[voice]
 
         # Split text into sentences
         sentences = sent_tokenize(text)
@@ -51,16 +53,21 @@ class DeepgramTTS(TTSProvider):
         def generate_audio_for_chunk(part_text: str, part_number: int):
             while True:
                 try:
-                    payload = {"text": part_text, "model": self.all_voices[voice]}
-                    response = self.session.post(url=url, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
+                    payload = {
+                        "text": part_text,
+                        "voice": voice_id
+                    }
+                    response = self.session.post('https://gesserit.co/api/tiktok-tts', headers=self.headers, json=payload, timeout=self.timeout)
                     response.raise_for_status()
 
                     # Create the audio_cache directory if it doesn't exist
                     self.cache_dir.mkdir(parents=True, exist_ok=True) 
 
-                    response_data = response.json().get('data')
-                    if response_data:
-                        audio_data = base64.b64decode(response_data)
+                    # Check if the request was successful
+                    if response.ok and response.status_code == 200:
+                        data = response.json()
+                        audio_base64 = data["audioUrl"].split(",")[1]
+                        audio_data = base64.b64decode(audio_base64)
                         if verbose:
                             print(f"Chunk {part_number} processed successfully.")
                         return part_number, audio_data
@@ -124,11 +131,11 @@ class DeepgramTTS(TTSProvider):
 
 # Example usage
 if __name__ == "__main__":
-    deepgram = DeepgramTTS()
-    text = "This is a test of the DeepgramTTS text-to-speech API."
+    elevenlabs = GesseritTTS()
+    text = "This is a test of the GesseritTTS text-to-speech API."
 
     print("Generating audio...")
-    audio_file = deepgram.tts(text, voice="Brian") 
+    audio_file = elevenlabs.tts(text, voice="Brian") 
 
     print("Playing audio...")
     audio_file.play_audio(audio_file)
