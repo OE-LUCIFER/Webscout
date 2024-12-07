@@ -5,7 +5,6 @@ import subprocess
 import logging
 import threading
 import time
-from webscout.zerodir import ZeroDirs
 import datetime
 import re
 import sys
@@ -20,12 +19,7 @@ from time import sleep as wait
 import pathlib
 import urllib.parse
 
-appdir = ZeroDirs("AIWEBS", "webscout")
-
-default_path = str(appdir)  # Convert ZeroDirs to string path
-
-if not os.path.exists(default_path):
-    os.makedirs(default_path)
+default_path = os.path.join(os.path.expanduser("~"), ".cache", "AIWEBS", "webscout")
 
 def sanitize_stream(
     chunk: str, intro_value: str = "data:", to_json: bool = True
