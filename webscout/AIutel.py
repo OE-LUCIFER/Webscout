@@ -5,7 +5,7 @@ import subprocess
 import logging
 import threading
 import time
-import zerodir
+from webscout.zerodir import ZeroDirs
 import datetime
 import re
 import sys
@@ -20,7 +20,7 @@ from time import sleep as wait
 import pathlib
 import urllib.parse
 
-appdir = zerodir.user_cache_dir("AIWEBS", "webscout")
+appdir = ZeroDirs("AIWEBS", "webscout")
 
 default_path = appdir
 
