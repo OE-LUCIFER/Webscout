@@ -351,8 +351,7 @@ class TypeGPT(Provider):
 
 
 if __name__ == "__main__":
-    from webscout import print
-        
+       
     ai = TypeGPT()
     response = ai.chat(input(">>> "), stream=True)
     for chunks in response:
