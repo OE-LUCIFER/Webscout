@@ -22,7 +22,7 @@ import urllib.parse
 
 appdir = ZeroDirs("AIWEBS", "webscout")
 
-default_path = appdir
+default_path = str(appdir)  # Convert ZeroDirs to string path
 
 if not os.path.exists(default_path):
     os.makedirs(default_path)
