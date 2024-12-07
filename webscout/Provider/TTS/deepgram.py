@@ -2,9 +2,9 @@ import time
 import requests
 import pathlib
 import base64
+import re
 from io import BytesIO
 from playsound import playsound
-from nltk import sent_tokenize
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -33,6 +33,28 @@ class DeepgramTTS(TTSProvider):
             self.session.proxies.update(proxies)
         self.timeout = timeout
 
+    @staticmethod
+    def _split_sentences(text: str) -> list[str]:
+        """
+        Custom sentence splitting method.
+        Splits text into sentences based on common sentence-ending punctuation.
+        
+        Args:
+            text (str): Input text to split into sentences.
+        
+        Returns:
+            list[str]: List of sentences.
+        """
+        # Regular expression to split sentences
+        # Handles .  !  ? and their variations with optional spaces and quotes
+        sentence_pattern = r'(?<=[.!?])\s*'
+        sentences = re.split(sentence_pattern, text.strip())
+        
+        # Remove any empty strings and strip whitespace
+        sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
+        
+        return sentences
+
     def tts(self, text: str, voice: str = "Brian", verbose:bool = True) -> str:
         """
         Converts text to speech using the DeepgramTTS API and saves it to a file.
@@ -44,8 +66,8 @@ class DeepgramTTS(TTSProvider):
         url = "https://deepgram.com/api/ttsAudioGeneration"
         filename = self.cache_dir / f"{int(time.time())}.mp3"  
 
-        # Split text into sentences
-        sentences = sent_tokenize(text)
+        # Split text into sentences using custom method
+        sentences = self._split_sentences(text)
         for index, sen in enumerate(sentences):
             print(f"{index}. Sentence: {sen}\n")
 
@@ -70,8 +92,6 @@ class DeepgramTTS(TTSProvider):
                         if verbose:
                             print(f"No data received for chunk {part_number}. Retrying...")
                 except requests.RequestException as e:
-                    # if verbose:
-                    #     print(f"Error for chunk {part_number}: {e}. Retrying...")
                     time.sleep(1)
         try:
             # Using ThreadPoolExecutor to handle requests concurrently
@@ -127,10 +147,10 @@ class DeepgramTTS(TTSProvider):
 # Example usage
 if __name__ == "__main__":
     deepgram = DeepgramTTS()
-    text = "This is a test of the DeepgramTTS text-to-speech API."
+    text = "This is a test of the DeepgramTTS text-to-speech API. It supports multiple sentences. Let's see how it works!"
 
     print("Generating audio...")
     audio_file = deepgram.tts(text, voice="Brian") 
 
     print("Playing audio...")
-    audio_file.play_audio(audio_file)
+    deepgram.play_audio(audio_file)
