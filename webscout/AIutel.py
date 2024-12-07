@@ -5,7 +5,7 @@ import subprocess
 import logging
 import threading
 import time
-import appdirs
+import zerodir
 import datetime
 import re
 import sys
@@ -19,9 +19,10 @@ from playsound import playsound
 from time import sleep as wait
 import pathlib
 import urllib.parse
-appdir = appdirs.AppDirs("AIWEBS", "webscout")
 
-default_path = appdir.user_cache_dir
+appdir = zerodir.user_cache_dir("AIWEBS", "webscout")
+
+default_path = appdir
 
 if not os.path.exists(default_path):
     os.makedirs(default_path)

@@ -42,7 +42,6 @@ setup(
         "termcolor",
         "orjson",
         "PyYAML",
-        "appdirs",
         "tls_client",
         "clipman",
         "playsound",
@@ -60,7 +59,6 @@ setup(
         "yaspin",
         "websocket"
         # "cerebras_cloud_sdk",
-
     ],
     entry_points={
         "console_scripts": [
