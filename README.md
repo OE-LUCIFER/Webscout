@@ -45,13 +45,13 @@
 * **Rawdog Scripting:** Execute Python scripts directly within your terminal using the `rawdog` feature.
 * **GGUF Conversion & Quantization:** Convert and quantize Hugging Face models to GGUF format.
 * **Autollama:** Download Hugging Face models and automatically convert them for Ollama compatibility.
-* **Function Calling (Beta):** Experiment with function calling capabilities for enhanced AI interactions.
 * **[SwiftCLI](webscout/swiftcli/Readme.md):** A powerful and elegant CLI framework that makes it easy to create beautiful command-line interfaces.
 * **[LitPrinter](webscout/litprinter/Readme.md):** Provides beautiful, styled console output with rich formatting and colors
 * **[LitLogger](webscout/litlogger/Readme.md):** Simplifies logging with customizable formats and color schemes
 * **[LitAgent](webscout/litagent/Readme.md):** Powerful and modern user agent generator that keeps your requests fresh and undetectable
 * **[Text-to-Image](webscout/Provider/TTI/README.md):** Generate high-quality images using a wide range of AI art providers
 * **[MarkdownLite](webscout/Extra/markdownlite/README.md):** Powerful HTML to Markdown conversion library with advanced parsing and structured output
+* **[Scout](webscout/scout/README.md):** Advanced web parsing and crawling library with intelligent HTML/XML parsing, web crawling, and Markdown conversion
 
 ## ⚙️ Installation
 ```python
@@ -1106,125 +1106,8 @@ a = AndiSearch()
 print(a.chat("HelpingAI-9B"))
 ```
 
-### 📞 Function Calling (Beta)
 
-```python
-import json
-import logging
-from webscout import Julius, WEBS
-from webscout.Agents.functioncall import FunctionCallingAgent
-from rich import print
-
-class FunctionExecutor:
-    def __init__(self, llama):
-        self.llama = llama
-
-    def execute_web_search(self, arguments):
-        query = arguments.get("query")
-        if not query:
-            return "Please provide a search query."
-        with WEBS() as webs:
-            search_results = webs.text(query, max_results=5)
-        prompt = (
-            f"Based on the following search results:\n\n{search_results}\n\n"
-            f"Question: {query}\n\n"
-            "Please provide a comprehensive answer to the question based on the search results above. "
-            "Include relevant webpage URLs in your answer when appropriate. "
-            "If the search results don't contain relevant information, please state that and provide the best answer you can based on your general knowledge."
-        )
-        return self.llama.chat(prompt)
-
-    def execute_general_ai(self, arguments):
-        question = arguments.get("question")
-        if not question:
-            return "Please provide a question."
-        return self.llama.chat(question)
-
-    def execute_UserDetail(self, arguments):
-        name = arguments.get("name")
-        age = arguments.get("age")
-        return f"User details - Name: {name}, Age: {age}"
-
-def main():
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "UserDetail",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"title": "Name", "type": "string"},
-                        "age": {"title": "Age", "type": "integer"}
-                    },
-                    "required": ["name", "age"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "web_search",
-                "description": "Search the web for information using Google Search.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The search query to be executed."
-                        }
-                    },
-                    "required": ["query"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "general_ai",
-                "description": "Use general AI knowledge to answer the question",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "question": {"type": "string", "description": "The question to answer"}
-                    },
-                    "required": ["question"]
-                }
-            }
-        }
-    ]
-
-    agent = FunctionCallingAgent(tools=tools)
-    llama = Julius()
-    function_executor = FunctionExecutor(llama)
-
-    user_input = input(">>> ")
-    function_call_data = agent.function_call_handler(user_input)
-    print(f"Function Call Data: {function_call_data}")
-
-    try:
-        if "error" not in function_call_data:
-            function_name = function_call_data.get("tool_name")
-            arguments = function_call_data.get("tool_input", {})
-
-            execute_function = getattr(function_executor, f"execute_{function_name}", None)
-            if execute_function:
-                result = execute_function(arguments)
-                print("Function Execution Result:")
-                for c in result:
-                    print(c, end="", flush=True)
-            else:
-                print(f"Unknown function: {function_name}")
-        else:
-            print(f"Error: {function_call_data['error']}")
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-if __name__ == "__main__":
-    main()
-```
-
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, PerplexityLabs, TypeGPT, Mhystical
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Genspark, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, PerplexityLabs, TypeGPT, Mhystical, Netwrck
 
 Code is similar to other providers.
 

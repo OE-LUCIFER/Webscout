@@ -352,7 +352,7 @@ class TypeGPT(Provider):
 
 if __name__ == "__main__":
        
-    ai = TypeGPT()
-    response = ai.chat(input(">>> "), stream=True)
+    ai = TypeGPT(model="llama-3.1-405b")
+    response = ai.chat("hi", stream=True)
     for chunks in response:
         print(chunks, end="", flush=True)

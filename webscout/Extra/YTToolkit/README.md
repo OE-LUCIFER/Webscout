@@ -69,7 +69,7 @@ spanish_transcript = YTTranscriber.get_transcript('video_link', languages='es')
 #### YouTube Data Extraction
 
 ```python
-from webscout.ytapi import Channel
+from webscout import Channel
 
 # Retrieve channel information
 channel = Channel('PewDiePie')

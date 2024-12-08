@@ -37,7 +37,7 @@ pip install webscout
 ### Channel Information
 
 ```python
-from webscout.ytapi import Channel
+from webscout import Channel
 
 # Create a channel instance
 channel = Channel('PewDiePie')
@@ -58,7 +58,7 @@ if channel.live:
 ### Video Extraction
 
 ```python
-from webscout.ytapi import Video
+from webscout import Video
 
 # Create a video instance
 video = Video('dQw4w9WgXcQ')
@@ -72,7 +72,7 @@ print(video.description)  # Video description
 ### Trending Videos
 
 ```python
-from webscout.ytapi import Extras
+from webscout import Extras
 
 # Get trending videos
 trending = Extras.trending_videos()

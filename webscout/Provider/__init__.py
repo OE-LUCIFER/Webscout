@@ -50,6 +50,7 @@ from .genspark import *
 from .upstage import *
 from .Bing import *
 from .GPTWeb import *
+from .Netwrck import Netwrck
 # from .UNFINISHED.aigames import *
 from .llamatutor import *
 from .promptrefine import *
@@ -123,6 +124,7 @@ __all__ = [
     'Free2GPT',
     'Bing',
     'GPTWeb',
+    'Netwrck',
     # 'AIGameIO',
     'LlamaTutor',
     'PromptRefine',
@@ -144,4 +146,5 @@ __all__ = [
     'RoboCoders',
     'TypeGPT',
     'Mhystical',
+    'Netwrck',
 ]
