@@ -68,6 +68,8 @@ import textwrap
 from collections import defaultdict
 import shutil
 import inspect
+from .colors import Colors
+
 try:
     from pygments import highlight
     from pygments.lexers import get_lexer_by_name
@@ -89,60 +91,7 @@ if os.name == 'nt':
     kernel32 = ctypes.windll.kernel32
     kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
 
-# ANSI Color Codes
-class Colors:
-    """ANSI color codes for terminal output."""
-    # Base colors
-    BLACK = '\033[30m'
-    RED = '\033[31m'
-    GREEN = '\033[32m'
-    YELLOW = '\033[33m'
-    BLUE = '\033[34m'
-    MAGENTA = '\033[35m'
-    CYAN = '\033[36m'
-    WHITE = '\033[37m'
-    GRAY = '\033[90m'
-    
-    # Bright colors
-    BRIGHT_BLACK = '\033[90m'
-    BRIGHT_RED = '\033[91m'
-    BRIGHT_GREEN = '\033[92m'
-    BRIGHT_YELLOW = '\033[93m'
-    BRIGHT_BLUE = '\033[94m'
-    BRIGHT_MAGENTA = '\033[95m'
-    BRIGHT_CYAN = '\033[96m'
-    BRIGHT_WHITE = '\033[97m'
-    
-    # Background colors
-    BG_BLACK = '\033[40m'
-    BG_RED = '\033[41m'
-    BG_GREEN = '\033[42m'
-    BG_YELLOW = '\033[43m'
-    BG_BLUE = '\033[44m'
-    BG_MAGENTA = '\033[45m'
-    BG_CYAN = '\033[46m'
-    BG_WHITE = '\033[47m'
-    
-    # Styles
-    BOLD = '\033[1m'
-    DIM = '\033[2m'
-    ITALIC = '\033[3m'
-    UNDERLINE = '\033[4m'
-    BLINK = '\033[5m'
-    REVERSE = '\033[7m'
-    STRIKE = '\033[9m'
-    HIDDEN = '\033[8m'
-    
-    # Special
-    RESET = '\033[0m'
-    CLEAR_SCREEN = '\033[2J'
-    CLEAR_LINE = '\033[2K'
-    
-    # Cursor movement
-    UP = '\033[1A'
-    DOWN = '\033[1B'
-    RIGHT = '\033[1C'
-    LEFT = '\033[1D'
+# Removed the duplicated Colors class to import from colors.py
 
 class SyntaxTheme:
     """Syntax highlighting theme."""
@@ -768,65 +717,4 @@ class LitPrinter:
         print('\r' + ' ' * self._get_terminal_width(), end='\r', file=self.file, flush=True)
 
 print = LitPrinter().print
-if __name__ == "__main__":
-    printer = LitPrinter()
-    
-    printer.banner("Welcome to the LitPrinter Demo! ")
-    
-    printer.status("Loading that heat... ")
-    time.sleep(1)
-    printer.status("Almost ready to drop... ")
-    time.sleep(1)
-    printer.status("")
-    
-    printer.success("Ayy, we made it! ")
-    printer.error("Houston, we got a problem! ")
-    printer.warning("Hold up, something sus... ")
-    printer.info("Just so you know fam... ")
-    
-    headers = ["Name", "Vibe", "Energy"]
-    rows = [
-        ["Python", "Immaculate", "100%"],
-        ["Java", "Decent", "75%"],
-        ["C++", "Complex", "85%"]
-    ]
-    printer.table(headers, rows)
-    
-    data = {
-        "squad": {
-            "python": {"vibe": "lit", "power": "over 9000"},
-            "javascript": {"vibe": "cool", "power": "8000"}
-        },
-        "config": {
-            "mode": "beast",
-            "activated": True
-        }
-    }
-    printer.tree(data)
-    
-    printer.json(data)
-    
-    code = '''def print_drip():
-    # This function brings the heat 
-    print("Straight bussin!")
-    return True  # No cap'''
-    printer.code_block(code)
-    
-    printer.print("Basic text but make it  fancy ")
-    printer.print("Colors go hard", style=Colors.GREEN)
-    printer.print("Bold & Blue = Different breed", style=Colors.BLUE + Colors.BOLD)
-    
-    markdown_text = """# Main Title (Straight Fire)
-## Subtitle (Also Heat)
-- First thing's first
-- Second thing's second
-**Bold moves** and *smooth style*
-"""
-    printer.print(markdown_text, markdown=True)
-    
-    test_dict = {
-        "name": "LitPrinter",
-        "vibes": ["immaculate", "unmatched", "different"],
-        "config": {"mode": "beast", "level": "over 9000"}
-    }
-    printer.print(test_dict)
+

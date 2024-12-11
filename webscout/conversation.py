@@ -1,11 +1,3 @@
-"""
->>> from conversation import Conversation
->>> chat = Conversation(max_tokens=500)
->>> chat.add_message("user", "Hello!")
->>> chat.add_message("llm", "Hi there!")
->>> prompt = chat.gen_complete_prompt("What's up?")
-"""
-
 import os
 import logging
 from typing import Optional
@@ -159,7 +151,9 @@ class Conversation:
             "user": prompt,
             "llm": ""
         }
-        return intro + self.__trim_chat_history(incomplete_chat_history, intro)
+        complete_prompt = intro + self.__trim_chat_history(incomplete_chat_history, intro)
+        logger.info(f"Generated prompt: {complete_prompt}")
+        return complete_prompt
 
     def update_chat_history(
         self, prompt: str, response: str, force: bool = False
@@ -196,6 +190,7 @@ class Conversation:
                 fh.write(new_history)
         
         self.chat_history += new_history
+        logger.info(f"Chat history updated with prompt: {prompt}")
 
     def add_message(self, role: str, content: str) -> None:
         """Add a new message to the chat - simple and clean! 
@@ -214,6 +209,9 @@ class Conversation:
             >>> chat.add_message("user", "Hey there!")
             >>> chat.add_message("llm", "Hi! How can I help?")
         """
+        if not self.validate_message(role, content):
+            raise ValueError("Invalid message role or content")
+
         role_formats = {
             "user": "User",
             "llm": "LLM",
@@ -225,3 +223,28 @@ class Conversation:
             self.chat_history += f"\n{role_formats[role]} : {content}"
         else:
             logger.warning(f"Unknown role '{role}' for message: {content}")
+
+        # Enhanced logging for message addition
+        logger.info(f"Added message from {role}: {content}")
+        logging.info(f"Message added: {role}: {content}")
+
+    def validate_message(self, role: str, content: str) -> bool:
+        """Validate the message role and content."
+        valid_roles = {'user', 'llm', 'tool', 'reasoning'}
+        if role not in valid_roles:
+            logger.error(f"Invalid role: {role}")
+            return False
+        if not content:
+            logger.error("Content cannot be empty.")
+            return False
+        return True
+
+    def clear_chat_history(self) -> None:
+        """Clear the chat history."
+        self.chat_history = ""
+        logger.info("Chat history cleared.")
+
+    def set_intro(self, new_intro: str) -> None:
+        """Set a custom intro for the conversation."
+        self.intro = new_intro
+        logger.info(f"Intro set to: {new_intro}")
