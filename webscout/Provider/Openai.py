@@ -6,7 +6,7 @@ from ..AIbase import  Provider, AsyncProvider
 
 from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
-
+import requests
 import httpx
 #----------------------------------------------------------OpenAI-----------------------------------
 class OPENAI(Provider):
@@ -63,7 +63,7 @@ class OPENAI(Provider):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
         }
-
+        self.session = requests.session()
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)

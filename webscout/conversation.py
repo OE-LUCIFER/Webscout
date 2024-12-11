@@ -229,7 +229,7 @@ class Conversation:
         logging.info(f"Message added: {role}: {content}")
 
     def validate_message(self, role: str, content: str) -> bool:
-        """Validate the message role and content."
+        """Validate the message role and content."""
         valid_roles = {'user', 'llm', 'tool', 'reasoning'}
         if role not in valid_roles:
             logger.error(f"Invalid role: {role}")
@@ -239,12 +239,4 @@ class Conversation:
             return False
         return True
 
-    def clear_chat_history(self) -> None:
-        """Clear the chat history."
-        self.chat_history = ""
-        logger.info("Chat history cleared.")
 
-    def set_intro(self, new_intro: str) -> None:
-        """Set a custom intro for the conversation."
-        self.intro = new_intro
-        logger.info(f"Intro set to: {new_intro}")
