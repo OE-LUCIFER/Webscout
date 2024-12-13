@@ -72,6 +72,8 @@ from .llama3mitril import *
 from .Marcus import *
 from .typegpt import *
 from .mhystical import *
+from .multichat import *
+
 __all__ = [
     'Farfalle',
     'LLAMA', 
@@ -147,4 +149,5 @@ __all__ = [
     'TypeGPT',
     'Mhystical',
     'Netwrck',
+    'MultiChatAI',
 ]

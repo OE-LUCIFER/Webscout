@@ -152,7 +152,7 @@ class Conversation:
             "llm": ""
         }
         complete_prompt = intro + self.__trim_chat_history(incomplete_chat_history, intro)
-        logger.info(f"Generated prompt: {complete_prompt}")
+        # logger.info(f"Generated prompt: {complete_prompt}")
         return complete_prompt
 
     def update_chat_history(
@@ -190,7 +190,7 @@ class Conversation:
                 fh.write(new_history)
         
         self.chat_history += new_history
-        logger.info(f"Chat history updated with prompt: {prompt}")
+        # logger.info(f"Chat history updated with prompt: {prompt}")
 
     def add_message(self, role: str, content: str) -> None:
         """Add a new message to the chat - simple and clean! 
@@ -224,19 +224,19 @@ class Conversation:
         else:
             logger.warning(f"Unknown role '{role}' for message: {content}")
 
-        # Enhanced logging for message addition
-        logger.info(f"Added message from {role}: {content}")
-        logging.info(f"Message added: {role}: {content}")
+    #     # Enhanced logging for message addition
+    #     logger.info(f"Added message from {role}: {content}")
+    #     logging.info(f"Message added: {role}: {content}")
 
-    def validate_message(self, role: str, content: str) -> bool:
-        """Validate the message role and content."""
-        valid_roles = {'user', 'llm', 'tool', 'reasoning'}
-        if role not in valid_roles:
-            logger.error(f"Invalid role: {role}")
-            return False
-        if not content:
-            logger.error("Content cannot be empty.")
-            return False
-        return True
+    # def validate_message(self, role: str, content: str) -> bool:
+    #     """Validate the message role and content."""
+    #     valid_roles = {'user', 'llm', 'tool', 'reasoning'}
+    #     if role not in valid_roles:
+    #         logger.error(f"Invalid role: {role}")
+    #         return False
+    #     if not content:
+    #         logger.error("Content cannot be empty.")
+    #         return False
+    #     return True
 
 
