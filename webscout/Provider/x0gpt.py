@@ -1,7 +1,6 @@
 from typing import Any, Dict
 from uuid import uuid4
 import requests
-
 import re
 
 from webscout.AIutel import Optimizers
@@ -9,10 +8,21 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
+from webscout.litagent import LitAgent
 
 class X0GPT(Provider):
     """
     A class to interact with the x0-gpt.devwtf.in API.
+
+    Attributes:
+        system_prompt (str): The system prompt to define the assistant's role.
+
+    Examples:
+        >>> from webscout.Provider.x0gpt import X0GPT
+        >>> ai = X0GPT()
+        >>> response = ai.chat("What's the weather today?")
+        >>> print(response)
+        'The weather today is sunny with a high of 75°F.'
     """
 
     def __init__(
@@ -26,9 +36,27 @@ class X0GPT(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        system_prompt: str = "You are a helpful assistant."
     ):
         """
         Initializes the X0GPT API with given parameters.
+
+        Args:
+            is_conversation (bool): Whether the provider is in conversation mode.
+            max_tokens (int): Maximum number of tokens to sample.
+            timeout (int): Timeout for API requests.
+            intro (str): Introduction message for the conversation.
+            filepath (str): Filepath for storing conversation history.
+            update_file (bool): Whether to update the conversation history file.
+            proxies (dict): Proxies for the API requests.
+            history_offset (int): Offset for conversation history.
+            act (str): Act for the conversation.
+            system_prompt (str): The system prompt to define the assistant's role.
+
+        Examples:
+            >>> ai = X0GPT(system_prompt="You are a friendly assistant.")
+            >>> print(ai.system_prompt)
+            'You are a friendly assistant.'
         """
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -36,6 +64,11 @@ class X0GPT(Provider):
         self.api_endpoint = "https://x0-gpt.devwtf.in/api/stream/reply"
         self.timeout = timeout
         self.last_response = {}
+        self.system_prompt = system_prompt
+
+        # Initialize LitAgent for user agent generation
+        self.agent = LitAgent()
+
         self.headers = {
             "authority": "x0-gpt.devwtf.in",
             "method": "POST",
@@ -53,10 +86,7 @@ class X0GPT(Provider):
             "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0"
+            "user-agent": self.agent.random()  # Use LitAgent to generate a random user agent
         }
 
         self.__available_optimizers = (
@@ -88,6 +118,22 @@ class X0GPT(Provider):
     ) -> Dict[str, Any]:
         """
         Sends a prompt to the x0-gpt.devwtf.in API and returns the response.
+
+        Args:
+            prompt (str): The prompt to send to the API.
+            stream (bool): Whether to stream the response.
+            raw (bool): Whether to return the raw response.
+            optimizer (str): Optimizer to use for the prompt.
+            conversationally (bool): Whether to generate the prompt conversationally.
+
+        Returns:
+            Dict[str, Any]: The API response.
+
+        Examples:
+            >>> ai = X0GPT()
+            >>> response = ai.ask("Tell me a joke!")
+            >>> print(response)
+            {'text': 'Why did the scarecrow win an award? Because he was outstanding in his field!'}
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -102,10 +148,8 @@ class X0GPT(Provider):
 
         payload = {
             "messages": [
-                {
-                    "role": "user",
-                    "content": conversation_prompt
-                }
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt}
             ],
             "chatId": uuid4().hex,
             "namespace": None
@@ -146,6 +190,21 @@ class X0GPT(Provider):
     ) -> str:
         """
         Generates a response from the X0GPT API.
+
+        Args:
+            prompt (str): The prompt to send to the API.
+            stream (bool): Whether to stream the response.
+            optimizer (str): Optimizer to use for the prompt.
+            conversationally (bool): Whether to generate the prompt conversationally.
+
+        Returns:
+            str: The API response.
+
+        Examples:
+            >>> ai = X0GPT()
+            >>> response = ai.chat("What's the weather today?")
+            >>> print(response)
+            'The weather today is sunny with a high of 75°F.'
         """
 
         def for_stream():
@@ -169,6 +228,19 @@ class X0GPT(Provider):
     def get_message(self, response: dict) -> str:
         """
         Extracts the message from the API response.
+
+        Args:
+            response (dict): The API response.
+
+        Returns:
+            str: The message content.
+
+        Examples:
+            >>> ai = X0GPT()
+            >>> response = ai.ask("Tell me a joke!")
+            >>> message = ai.get_message(response)
+            >>> print(message)
+            'Why did the scarecrow win an award? Because he was outstanding in his field!'
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         formatted_text = response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
