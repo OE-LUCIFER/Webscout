@@ -46,7 +46,7 @@ from .cerebras import *
 from .lepton import *
 from .geminiapi import *
 from .elmo import *
-from .genspark import *
+
 from .upstage import *
 from .Bing import *
 from .GPTWeb import *
@@ -121,7 +121,7 @@ __all__ = [
     'GEMINIAPI',
     'Cleeai',
     'Elmo',
-    'Genspark',
+
     'Upstage',
     'Free2GPT',
     'Bing',
