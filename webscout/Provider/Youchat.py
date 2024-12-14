@@ -1,4 +1,3 @@
-
 from uuid import uuid4
 from re import findall
 import json
@@ -12,11 +11,40 @@ from typing import Any, AsyncGenerator, Dict
 
 import cloudscraper
 
-
 class YouChat(Provider):
     """
     This class provides methods for interacting with the You.com chat API in a consistent provider structure.
     """
+
+    AVAILABLE_MODELS = [
+        "openai_o1",
+        "openai_o1_mini",
+        "gpt_4o_mini",
+        "gpt_4o",
+        "gpt_4_turbo",
+        "gpt_4",
+        "claude_3_5_sonnet",
+        "claude_3_opus",
+        "claude_3_sonnet",
+        "claude_3_5_haiku",
+        "claude_3_haiku",
+        "llama3_3_70b",
+        "llama3_2_90b",
+        "llama3_2_11b",
+        "llama3_1_405b",
+        "llama3_1_70b",
+        "llama3",
+        "mistral_large_2",
+        "gemini_1_5_flash",
+        "gemini_1_5_pro",
+        "databricks_dbrx_instruct",
+        "qwen2p5_72b",
+        "qwen2p5_coder_32b",
+        "command_r",
+        "command_r_plus",
+        "solar_1_mini",
+        "dolphin_2_5"
+    ]
 
     def __init__(
         self,
@@ -29,6 +57,7 @@ class YouChat(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        model: str = "claude_3_5_haiku",  # Default model set to claude_3_5_haiku
     ):
         """Instantiates YouChat
 
@@ -42,7 +71,11 @@ class YouChat(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+            model (str, optional): Model to use. Defaults to "claude_3_5_haiku".
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+
         self.session = cloudscraper.create_scraper()  # Create a Cloudscraper session
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -50,6 +83,7 @@ class YouChat(Provider):
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
+        self.model = model
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
             "Accept": "text/event-stream",
@@ -123,18 +157,18 @@ class YouChat(Provider):
 
         payload = {
                     "q": conversation_prompt,
-                    "page": 1,
-                    "count": 10,
+                    "page": 2,
+                    "count": 20,
                     "safeSearch": "Moderate",
                     "mkt": "en-IN",
                     "domain": "youchat",
-                    "use_personalization_extraction": "true",
+                    "use_personalization_extraction": "false",
                     "queryTraceId": str(uuid4()),
                     "chatId": str(uuid4()),
                     "conversationTurnId": str(uuid4()),
                     "pastChatLength": 0,
                     "isSmallMediumDevice": "true",
-                    "selectedChatMode": "default",
+                    "selectedChatMode": self.model,  # Use the selected model
                     "traceId": str(uuid4()),
                     "chat": "[]"
                 }
@@ -224,6 +258,6 @@ class YouChat(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = YouChat(timeout=5000)
-    response = ai.chat("Who is Abhay Koul in AI?", stream=True)
+    response = ai.chat("hi", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
