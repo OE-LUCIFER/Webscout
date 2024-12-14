@@ -791,36 +791,7 @@ ai = YEPCHAT(Tools=False)
 response = ai.chat(input(">>> "))
 for chunk in response:
     print(chunk, end="", flush=True)
-#---------------Tool Call-------------
 
-from rich import print
-from webscout import YEPCHAT
-def get_current_time():
-    import datetime
-    return f"The current time is {datetime.datetime.now().strftime('%H:%M:%S')}"
-def get_weather(location: str) -> str:
-    return f"The weather in {location} is sunny."
-
-
-ai = YEPCHAT(Tools=True) # Set Tools=True to use tools in the chat.
-
-ai.tool_registry.register_tool("get_current_time", get_current_time, "Gets the current time.")
-ai.tool_registry.register_tool(
-    "get_weather",
-    get_weather,
-    "Gets the weather for a given location.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "location": {"title": "Location", "type": "string"}
-        },
-        "required": ["location"]
-    },
-)
-
-response = ai.chat(input(">>> "))
-for chunk in response:
-    print(chunk, end="", flush=True)
 ```
 
 ###  ⬛ `BlackBox` - Search/Chat with BlackBox
@@ -1107,7 +1078,7 @@ print(a.chat("HelpingAI-9B"))
 ```
 
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Upstage, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, PerplexityLabs, TypeGPT, Mhystical, Netwrck, MultiChatAI
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, AIUncensored, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, PerplexityLabs, TypeGPT, Mhystical, Netwrck, MultiChatAI
 
 Code is similar to other providers.
 
