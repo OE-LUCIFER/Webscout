@@ -7,7 +7,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-
+from webscout.litagent import LitAgent
 class TypeGPT(Provider):
     """
     A class to interact with the TypeGPT.net API.  Improved to match webscout standards.
@@ -207,7 +207,6 @@ class TypeGPT(Provider):
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.top_p = top_p
-
         self.headers = {
             "authority": "chat.typegpt.net",
             "accept": "application/json, text/event-stream",
@@ -215,7 +214,7 @@ class TypeGPT(Provider):
             "content-type": "application/json",
             "origin": "https://chat.typegpt.net",
             "referer": "https://chat.typegpt.net/",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+            "user-agent": LitAgent().random()
         }
 
 
