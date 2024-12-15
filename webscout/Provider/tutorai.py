@@ -9,7 +9,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-
+from webscout.litagent import LitAgent
 
 class TutorAI(Provider):
     """
@@ -75,11 +75,7 @@ class TutorAI(Provider):
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/129.0.0.0 Safari/537.36 Edg/128.0.0.0"
-            ),
+            "User-Agent": LitAgent().random()
         }
 
         self.__available_optimizers = (
