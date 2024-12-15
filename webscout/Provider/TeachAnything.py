@@ -2,6 +2,8 @@ import requests
 from requests.exceptions import RequestException
 from typing import Any, Dict
 from webscout.AIutel import Conversation, Optimizers
+from webscout.litagent import LitAgent
+from webscout.prompt_manager import AwesomePrompts
 
 class TeachAnything:
     """
@@ -54,15 +56,26 @@ class TeachAnything:
             "content-type": "application/json",
             "origin": "https://www.teach-anything.com",
             "referer": "https://www.teach-anything.com/",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
+            "user-agent": LitAgent().random(),
         }
+        self.__available_optimizers = (
+            method
+            for method in dir(Optimizers)
+            if callable(getattr(Optimizers, method)) and not method.startswith("__")
+        )
         self.session.headers.update(self.headers)
+        Conversation.intro = (
+            AwesomePrompts().get_act(
+                act, raise_not_found=True, default=None, case_insensitive=True
+            )
+            if act
+            else intro or Conversation.intro
+        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
-
     def ask(
         self,
         prompt: str,
