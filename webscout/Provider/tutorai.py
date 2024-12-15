@@ -1,112 +1,14 @@
 import requests
 import os
-import time
 from typing import List, Optional
 from string import punctuation
 from random import choice
-from requests.exceptions import RequestException
 import json
-from html.parser import HTMLParser
-import re
-import html.entities
-
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-
-class TerminalFormatter(HTMLParser):
-    """
-    A custom HTML parser that converts HTML content to terminal-friendly formatted text
-    using ANSI escape codes.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.output = []
-        self.list_stack = []
-        self.ol_counters = []
-        self.bold = False
-        self.italic = False
-
-    def handle_starttag(self, tag, attrs):
-        if tag in ["strong", "b"]:
-            self.output.append("\033[1m")  # Bold
-            self.bold = True
-        elif tag in ["em", "i"]:
-            self.output.append("\033[3m")  # Italic
-            self.italic = True
-        elif tag == "br":
-            self.output.append("\n")
-        elif tag in ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6"]:
-            self.output.append("\n")
-        elif tag == "ul":
-            self.list_stack.append("ul")
-            self.output.append("\n")
-        elif tag == "ol":
-            self.list_stack.append("ol")
-            self.ol_counters.append(1)
-            self.output.append("\n")
-        elif tag == "li":
-            if self.list_stack:
-                if self.list_stack[-1] == "ul":
-                    self.output.append("• ")  # Bullet point
-                elif self.list_stack[-1] == "ol":
-                    number = self.ol_counters[-1]
-                    self.output.append(f"{number}. ")
-                    self.ol_counters[-1] += 1
-
-    def handle_endtag(self, tag):
-        if tag in ["strong", "b"]:
-            self.output.append("\033[0m")  # Reset
-            self.bold = False
-        elif tag in ["em", "i"]:
-            self.output.append("\033[0m")  # Reset
-            self.italic = False
-        elif tag in ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6"]:
-            self.output.append("\n")
-        elif tag == "ul":
-            if self.list_stack and self.list_stack[-1] == "ul":
-                self.list_stack.pop()
-                self.output.append("\n")
-        elif tag == "ol":
-            if self.list_stack and self.list_stack[-1] == "ol":
-                self.list_stack.pop()
-                self.ol_counters.pop()
-                self.output.append("\n")
-        elif tag == "li":
-            self.output.append("\n")
-
-    def handle_data(self, data):
-        # Remove ANSI escape codes from the data
-        data = re.sub(r'\033\[[0-9;]*m', '', data)  
-        data = re.sub(r"\s+", " ", data)
-        self.output.append(data)
-
-    def handle_entityref(self, name):
-        entity = f"&{name};"
-        char = html.entities.name2codepoint.get(name, entity)
-        self.output.append(chr(char))
-
-    def handle_charref(self, name):
-        try:
-            if name.startswith("x") or name.startswith("X"):
-                char = chr(int(name[1:], 16))
-            else:
-                char = chr(int(name))
-            self.output.append(char)
-        except ValueError:
-            self.output.append(f"&#{name};")
-
-    def get_text(self):
-        return "".join(self.output).strip()
-
-
-def html_to_terminal(html_content):
-    parser = TerminalFormatter()
-    parser.feed(html_content)
-    return parser.get_text()
 
 
 class TutorAI(Provider):
@@ -132,7 +34,7 @@ class TutorAI(Provider):
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
+            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 1024.
             timeout (int, optional): Http request timeout. Defaults to 30.
             intro (str, optional): Conversation introductory prompt. Defaults to None.
             filepath (str, optional): Path to file containing conversation history. Defaults to None.
@@ -229,9 +131,7 @@ class TutorAI(Provider):
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
-                conversation_prompt = getattr(Optimizers, optimizer)(
-                    conversation_prompt if conversationally else prompt
-                )
+                conversation_prompt = getattr(Optimizers, optimizer)(conversation_prompt if conversationally else prompt)
             else:
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
@@ -268,7 +168,7 @@ class TutorAI(Provider):
                     homeworkify_html = response_data.get("homeworkifyResponse", "")
                     if not homeworkify_html:
                         raise exceptions.FailedToGenerateResponseError("\nNo 'homeworkifyResponse' found in the response.")
-                    clean_text = html_to_terminal(homeworkify_html)
+                    clean_text = homeworkify_html  # Removed html_to_terminal call
                     self.last_response.update(dict(text=clean_text))
                     self.conversation.update_chat_history(
                         prompt, self.get_message(self.last_response)
@@ -288,7 +188,7 @@ class TutorAI(Provider):
             homeworkify_html = response_data.get("homeworkifyResponse", "")
             if not homeworkify_html:
                 return {"text": "No content found in the response"}  # Default in case content not found
-            clean_text = html_to_terminal(homeworkify_html)
+            clean_text = homeworkify_html  # Removed html_to_terminal call
 
             # Simulate streaming by yielding chunks of the content
             chunk_size = self.stream_chunk_size
