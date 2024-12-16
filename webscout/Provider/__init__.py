@@ -30,7 +30,6 @@ from .koala import *
 from .RUBIKSAI import * 
 from .meta import *
 from .DiscordRocks import *
-from .felo_search import *
 from .julius import *
 from .Youchat import *
 from .yep import *
@@ -85,7 +84,6 @@ __all__ = [
     'PerplexityLabs',
     'BLACKBOXAI', 
     'PhindSearch', 
-    'Felo',
     'GEMINI',
     'DeepSeek',
     'DeepInfra',

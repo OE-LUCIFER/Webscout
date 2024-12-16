@@ -7,6 +7,7 @@ from .LLM import VLM, LLM
 from .Provider import *
 from .Provider.TTI import *
 from .Provider.TTS import *
+from .Provider.AISEARCH import *
 from .Extra import *
 from .Litlogger import *
 from .optimizers import *
