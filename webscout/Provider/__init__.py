@@ -69,7 +69,7 @@ from .Marcus import *
 from .typegpt import *
 from .mhystical import *
 from .multichat import *
-
+from .Jadve import *
 __all__ = [
     'Farfalle',
     'LLAMA', 
@@ -141,4 +141,5 @@ __all__ = [
     'Mhystical',
     'Netwrck',
     'MultiChatAI',
+    'JadveOpenAI',
 ]

@@ -1,5 +1,5 @@
 import uuid
-import requests
+import cloudscraper
 import json
 from typing import Any, Dict, Optional, Generator
 
@@ -8,7 +8,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-
+from webscout.litagent import LitAgent
 class Talkai(Provider):
     """
     A class to interact with the Talkai.info API.
@@ -30,7 +30,7 @@ class Talkai(Provider):
         """
         Initializes the Talkai.info API with given parameters.
         """
-        self.session = requests.Session()
+        self.session = cloudscraper.create_scraper()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.api_endpoint = "https://talkai.info/chat/send/"
@@ -43,9 +43,8 @@ class Talkai(Provider):
             'Content-Type': 'application/json',
             'Origin': 'https://talkai.info',
             'Referer': 'https://talkai.info/chat/',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
-            'sec-ch-ua': '"Chromium";v="130", "Microsoft Edge";v="130", "Not?A_Brand";v="99"',
-            'sec-ch-ua-platform': '"Windows"'
+            'User-Agent': LitAgent().random(),
+            'Cookie': '_csrf-front=e19e203a958c74e439261f6860535403324c9ab2ede76449e6407e54e1f366afa%3A2%3A%7Bi%3A0%3Bs%3A11%3A%22_csrf-front%22%3Bi%3A1%3Bs%3A32%3A%22QbnGY7XS5q9i3JnDvi6KRzrOk0D6XFnk%22%3B%7D; _ga=GA1.1.1383924142.1734246140; _ym_uid=1723397035198647017; _ym_d=1734246141; _ym_isad=1; _ym_visorc=b; talkai-front=ngbj23of1t0ujg2raoa3l57vqe; _ga_FB7V9WMN30=GS1.1.1734246139.1.1734246143.0.0.0'
         }
         self.__available_optimizers = (
             method
@@ -87,9 +86,7 @@ class Talkai(Provider):
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
-                conversation_prompt = getattr(Optimizers, optimizer)(
-                    conversation_prompt if conversationally else prompt
-                )
+                conversation_prompt = getattr(Optimizers, optimizer)(conversation_prompt if conversationally else prompt)
             else:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Optimizer is not one of {self.__available_optimizers}"
@@ -111,7 +108,7 @@ class Talkai(Provider):
 
         def for_stream():
             try:
-                with requests.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
+                with self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
                     response.raise_for_status()
 
                     full_response = ""
@@ -120,7 +117,7 @@ class Talkai(Provider):
                             decoded_line = line.decode('utf-8')
                             if 'event: trylimit' in decoded_line:
                                 break  # Stop if trylimit event is encountered
-                            if decoded_line.startswith('data: '):
+                            if decoded_line.startswith('data:'):
                                 data = decoded_line[6:]  # Remove 'data: ' prefix
                                 full_response += data
                                 yield data if raw else dict(text=data)
@@ -130,7 +127,7 @@ class Talkai(Provider):
                         prompt, self.get_message(self.last_response)
                     )
 
-            except requests.exceptions.RequestException as e:
+            except cloudscraper.exceptions as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         def for_non_stream():

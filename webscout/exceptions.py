@@ -1,3 +1,6 @@
+WATCH_URL = 'https://www.youtube.com/watch?v={video_id}'
+
+
 class WebscoutE(Exception):
     """Base exception class for search."""
 
