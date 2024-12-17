@@ -1,8 +1,9 @@
 """Prompt optimization utilities."""
+
+import os
 import platform
 import subprocess
-import os
-
+from typing import  Literal, Optional,  Tuple, Callable, Dict, Any
 class Optimizers:
     """
     >>> Optimizers.code("write a hello world")
@@ -17,254 +18,403 @@ class Optimizers:
     >>> Optimizers.math("solve quadratic equation")
     Returns optimized prompt for math problems
     """
-
     @staticmethod
-    def code(prompt):
+    def code(prompt: str) -> str:
         """Deprecated: Use coder() instead"""
         return Optimizers.coder(prompt)
 
     @staticmethod
-    def shell_command(prompt):
-        """Deprecated: Use coder() instead"""
-        return Optimizers.coder(f"!{prompt}")
+    def shell_command(prompt: str) -> str:
+         """Deprecated: Use coder() instead"""
+         return Optimizers.coder(f"!{prompt}")
 
     @staticmethod
-    def coder(prompt):
+    def coder(prompt: str) -> str:
         """Unified optimizer for both code and shell commands."""
         # Get system info for shell commands
-        operating_system = ""
+        operating_system: str = ""
         if platform.system() == "Windows":
             operating_system = "Windows"
         elif platform.system() == "Darwin":
             operating_system = "MacOS"
         elif platform.system() == "Linux":
             try:
-                result = subprocess.check_output(["lsb_release", "-si"]).decode().strip()
+                result: str = subprocess.check_output(["lsb_release", "-si"]).decode().strip()
                 operating_system = f"Linux/{result}" if result else "Linux"
-            except:
+            except Exception:
                 operating_system = "Linux"
         else:
             operating_system = platform.system()
 
         # Get shell info
-        shell_name = "/bin/sh"
+        shell_name: str = "/bin/sh"
         if platform.system() == "Windows":
             shell_name = "powershell.exe" if os.getenv("PSModulePath") else "cmd.exe"
         else:
-            shell_env = os.getenv("SHELL")
+            shell_env: Optional[str] = os.getenv("SHELL")
             if shell_env:
                 shell_name = shell_env
 
         return (
-            "Your Role: You are a code generation expert. Analyze the request and provide appropriate output.\n"
-            "If the request starts with '!' or involves system/shell operations, provide a shell command.\n"
-            "Otherwise, provide Python code.\n\n"
-            "RULES:\n"
-            "1. Provide ONLY code/command output without any description or markdown\n"
-            "2. For shell commands:\n"
-            f"   - Target OS: {operating_system}\n"
-            f"   - Shell: {shell_name}\n"
-            "   - Combine multiple steps when possible\n"
-            "3. For Python code:\n"
-            "   - Include necessary imports\n"
-            "   - Handle errors appropriately\n"
-            "   - Follow PEP 8 style\n"
-            "4. If details are missing, use most logical implementation\n"
-            "5. No warnings, descriptions, or explanations\n\n"
-            f"Request: {prompt}\n"
-            "Output:\n"
+            f"""<system_context>
+        <role>
+          Your Role: You are a code generation expert. Analyze the request and provide appropriate output.
+          If the request starts with '!' or involves system/shell operations, provide a shell command.
+          Otherwise, provide Python code.
+        </role>
+        <rules>
+           RULES:
+             - Provide ONLY code/command output without any description or markdown
+             - For shell commands:
+                 - Target OS: {operating_system}
+                 - Shell: {shell_name}
+                 - Combine multiple steps when possible
+             - For Python code:
+                - Include necessary imports
+                - Handle errors appropriately
+                - Follow PEP 8 style
+             - If details are missing, use most logical implementation
+             - No warnings, descriptions, or explanations
+        </rules>
+        <request>
+             Request: {prompt}
+        </request>
+        <output>
+            Output:
+        </output>
+</system_context>"""
         )
 
     @staticmethod
-    def search(prompt):
-        """Optimize prompt for web search queries."""
-        return (
-            "Your role: Generate a precise and focused web search query.\n"
-            "IMPORTANT: Return only the search query without any explanation.\n"
-            "Format: Plain text, no markdown.\n"
-            "If details are missing, focus on the most relevant aspects.\n\n"
-            f"Request: {prompt}\n"
-            "Search Query:"
-        )
+    def search(prompt: str) -> str:
+         """Optimize prompt for web search queries."""
+         return f"""
+<system_context>
+  <role>
+    Your role: Generate a precise and focused web search query.
+  </role>
+  <instructions>
+    IMPORTANT: Return only the search query without any explanation.
+    Format: Plain text, no markdown.
+    If details are missing, focus on the most relevant aspects.
+  </instructions>
+ <request>
+    Request: {prompt}
+ </request>
+ <output>
+    Search Query:
+ </output>
+ </system_context>
+        """
 
     @staticmethod
-    def math(prompt):
+    def math(prompt: str) -> str:
         """Optimize prompt for mathematical problem solving."""
-        return (
-            "Your role: Solve mathematical problems step by step.\n"
-            "Format: Plain text, show calculations clearly.\n"
-            "Show all steps and intermediate results.\n"
-            "Include units where applicable.\n"
-            "Provide final answer in a clear format.\n\n"
-            f"Problem: {prompt}\n"
-            "Solution:"
-        )
+        return f"""
+<system_context>
+  <role>
+     Your role: Solve mathematical problems step by step.
+  </role>
+  <instructions>
+    Format: Plain text, show calculations clearly.
+    Show all steps and intermediate results.
+    Include units where applicable.
+    Provide final answer in a clear format.
+  </instructions>
+ <request>
+     Problem: {prompt}
+  </request>
+ <output>
+     Solution:
+  </output>
+ </system_context>
+        """
 
     @staticmethod
-    def explain(prompt):
+    def explain(prompt: str) -> str:
         """Optimize prompt for clear explanations."""
-        return (
-            "Your role: Explain concepts clearly and concisely.\n"
-            "Format: Break down complex ideas into simple terms.\n"
-            "Use analogies where helpful.\n"
-            "Focus on key points and practical understanding.\n\n"
-            f"Topic: {prompt}\n"
-            "Explanation:"
-        )
+        return f"""
+<system_context>
+  <role>
+     Your role: Explain concepts clearly and concisely.
+  </role>
+  <instructions>
+    Format: Break down complex ideas into simple terms.
+    Use analogies where helpful.
+    Focus on key points and practical understanding.
+  </instructions>
+   <topic>
+     Topic: {prompt}
+    </topic>
+  <output>
+    Explanation:
+ </output>
+</system_context>
+        """
 
     @staticmethod
-    def debug(prompt):
-        """Optimize prompt for debugging code."""
-        return (
-            "Your role: Debug code and identify issues.\n"
-            "Steps:\n"
-            "1. Identify syntax errors\n"
-            "2. Check logic issues\n"
-            "3. Look for common pitfalls\n"
-            "4. Suggest fixes\n\n"
-            f"Code to debug: {prompt}\n"
-            "Analysis:"
-        )
+    def debug(prompt: str) -> str:
+         """Optimize prompt for debugging code."""
+         return f"""
+<system_context>
+  <role>
+     Your role: Debug code and identify issues.
+  </role>
+  <instructions>
+    Steps:
+     - Identify syntax errors
+     - Check logic issues
+     - Look for common pitfalls
+     - Suggest fixes
+  </instructions>
+  <input>
+     Code to debug: {prompt}
+  </input>
+ <output>
+   Analysis:
+ </output>
+</system_context>
+        """
 
     @staticmethod
-    def api(prompt):
+    def api(prompt: str) -> str:
         """Optimize prompt for API endpoint design."""
-        return (
-            "Your role: Design RESTful API endpoints.\n"
-            "Include:\n"
-            "- HTTP methods\n"
-            "- URL structure\n"
-            "- Request/Response format\n"
-            "- Status codes\n\n"
-            f"API requirement: {prompt}\n"
-            "Design:"
-        )
+        return f"""
+<system_context>
+  <role>
+   Your role: Design RESTful API endpoints.
+  </role>
+  <instructions>
+     Include:
+      - HTTP methods
+      - URL structure
+      - Request/Response format
+      - Status codes
+   </instructions>
+    <input>
+        API requirement: {prompt}
+    </input>
+    <output>
+        Design:
+    </output>
+</system_context>
+        """
 
     @staticmethod
-    def sql(prompt):
-        """Optimize prompt for SQL query generation."""
-        return (
-            "Your role: Generate optimized SQL queries.\n"
-            "Requirements:\n"
-            "- Standard SQL syntax\n"
-            "- Efficient query structure\n"
-            "- Proper joins and indexing\n"
-            "- Consider performance\n\n"
-            f"Query need: {prompt}\n"
-            "SQL:"
-        )
+    def sql(prompt: str) -> str:
+         """Optimize prompt for SQL query generation."""
+         return f"""
+<system_context>
+   <role>
+      Your role: Generate optimized SQL queries.
+   </role>
+   <instructions>
+        Requirements:
+        - Standard SQL syntax
+        - Efficient query structure
+        - Proper joins and indexing
+        - Consider performance
+    </instructions>
+    <input>
+        Query need: {prompt}
+    </input>
+  <output>
+        SQL:
+   </output>
+</system_context>
+        """
 
     @staticmethod
-    def regex(prompt):
+    def regex(prompt: str) -> str:
         """Optimize prompt for regex pattern generation."""
-        return (
-            "Your role: Generate precise regex patterns.\n"
-            "Requirements:\n"
-            "- Standard regex syntax\n"
-            "- Pattern explanation\n"
-            "- Test cases\n"
-            "- Consider edge cases\n\n"
-            f"Pattern need: {prompt}\n"
-            "Regex:"
-        )
+        return f"""
+<system_context>
+    <role>
+     Your role: Generate precise regex patterns.
+    </role>
+   <instructions>
+        Requirements:
+        - Standard regex syntax
+        - Pattern explanation
+        - Test cases
+        - Consider edge cases
+    </instructions>
+    <input>
+        Pattern need: {prompt}
+    </input>
+   <output>
+         Regex:
+     </output>
+</system_context>
+        """
 
     @staticmethod
-    def test(prompt):
+    def test(prompt: str) -> str:
         """Optimize prompt for test case generation."""
-        return (
-            "Your role: Generate comprehensive test cases.\n"
-            "Include:\n"
-            "- Edge cases\n"
-            "- Corner cases\n"
-            "- Error scenarios\n"
-            "- Happy path\n"
-            "Format: Test name and expected result\n\n"
-            f"Test requirement: {prompt}\n"
-            "Test Cases:"
-        )
+        return f"""
+<system_context>
+  <role>
+     Your role: Generate comprehensive test cases.
+  </role>
+   <instructions>
+        Include:
+        - Edge cases
+        - Corner cases
+        - Error scenarios
+        - Happy path
+        Format: Test name and expected result
+   </instructions>
+   <input>
+      Test requirement: {prompt}
+    </input>
+    <output>
+      Test Cases:
+   </output>
+</system_context>
+        """
 
     @staticmethod
-    def docker(prompt):
+    def docker(prompt: str) -> str:
         """Optimize prompt for Dockerfile creation."""
-        return (
-            "Your role: Create efficient Dockerfile.\n"
-            "Consider:\n"
-            "- Base image selection\n"
-            "- Layer optimization\n"
-            "- Security best practices\n"
-            "- Multi-stage builds if needed\n\n"
-            f"Container requirement: {prompt}\n"
-            "Dockerfile:"
-        )
+        return f"""
+<system_context>
+  <role>
+     Your role: Create efficient Dockerfile.
+  </role>
+    <instructions>
+        Consider:
+        - Base image selection
+        - Layer optimization
+        - Security best practices
+        - Multi-stage builds if needed
+    </instructions>
+    <input>
+      Container requirement: {prompt}
+    </input>
+   <output>
+      Dockerfile:
+   </output>
+</system_context>
+        """
 
     @staticmethod
-    def git(prompt):
+    def git(prompt: str) -> str:
         """Optimize prompt for git commands."""
-        return (
-            "Your role: Generate git commands.\n"
-            "Requirements:\n"
-            "- Clear and safe commands\n"
-            "- Consider current state\n"
-            "- Include safety checks\n"
-            "- Best practices\n\n"
-            f"Git task: {prompt}\n"
-            "Command:"
-        )
+        return f"""
+<system_context>
+   <role>
+    Your role: Generate git commands.
+  </role>
+   <instructions>
+        Requirements:
+        - Clear and safe commands
+        - Consider current state
+        - Include safety checks
+        - Best practices
+    </instructions>
+    <input>
+     Git task: {prompt}
+    </input>
+   <output>
+    Command:
+   </output>
+</system_context>
+        """
 
     @staticmethod
-    def yaml(prompt):
+    def yaml(prompt: str) -> str:
         """Optimize prompt for YAML configuration."""
-        return (
-            "Your role: Generate YAML configuration.\n"
-            "Requirements:\n"
-            "- Valid YAML syntax\n"
-            "- Clear structure\n"
-            "- Comments for complex parts\n"
-            "- Best practices\n\n"
-            f"Config need: {prompt}\n"
-            "YAML:"
-        )
+        return f"""
+<system_context>
+    <role>
+     Your role: Generate YAML configuration.
+    </role>
+   <instructions>
+        Requirements:
+        - Valid YAML syntax
+        - Clear structure
+        - Comments for complex parts
+        - Best practices
+   </instructions>
+   <input>
+     Config need: {prompt}
+    </input>
+  <output>
+    YAML:
+  </output>
+</system_context>
+        """
 
     @staticmethod
-    def cli(prompt):
+    def cli(prompt: str) -> str:
         """Optimize prompt for CLI command design."""
-        return (
-            "Your role: Design CLI commands.\n"
-            "Include:\n"
-            "- Command structure\n"
-            "- Arguments/options\n"
-            "- Help messages\n"
-            "- Examples\n\n"
-            f"CLI requirement: {prompt}\n"
-            "Design:"
-        )
+        return f"""
+<system_context>
+    <role>
+         Your role: Design CLI commands.
+    </role>
+   <instructions>
+        Include:
+          - Command structure
+          - Arguments/options
+          - Help messages
+          - Examples
+    </instructions>
+  <input>
+     CLI requirement: {prompt}
+    </input>
+  <output>
+      Design:
+   </output>
+</system_context>
+        """
 
     @staticmethod
-    def refactor(prompt):
+    def refactor(prompt: str) -> str:
         """Optimize prompt for code refactoring suggestions."""
-        return (
-            "Your role: Suggest code improvements.\n"
-            "Focus on:\n"
-            "- Code quality\n"
-            "- Performance\n"
-            "- Readability\n"
-            "- Best practices\n"
-            "- Design patterns\n\n"
-            f"Code to refactor: {prompt}\n"
-            "Suggestions:"
-        )
+        return f"""
+<system_context>
+    <role>
+         Your role: Suggest code improvements.
+   </role>
+    <instructions>
+        Focus on:
+        - Code quality
+        - Performance
+        - Readability
+        - Best practices
+        - Design patterns
+    </instructions>
+    <input>
+        Code to refactor: {prompt}
+     </input>
+   <output>
+        Suggestions:
+    </output>
+</system_context>
+        """
 
     @staticmethod
-    def security(prompt):
+    def security(prompt: str) -> str:
         """Optimize prompt for security analysis."""
-        return (
-            "Your role: Security analysis and fixes.\n"
-            "Check for:\n"
-            "- Common vulnerabilities\n"
-            "- Security best practices\n"
-            "- Input validation\n"
-            "- Authentication/Authorization\n"
-            "- Data protection\n\n"
-            f"Code to analyze: {prompt}\n"
-            "Analysis:"
-        )
+        return f"""
+<system_context>
+   <role>
+        Your role: Security analysis and fixes.
+   </role>
+   <instructions>
+        Check for:
+        - Common vulnerabilities
+        - Security best practices
+        - Input validation
+        - Authentication/Authorization
+        - Data protection
+    </instructions>
+     <input>
+       Code to analyze: {prompt}
+    </input>
+  <output>
+        Analysis:
+  </output>
+</system_context>
+        """
