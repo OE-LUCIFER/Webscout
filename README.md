@@ -788,7 +788,7 @@ print(response)
 
 ```python
 from webscout import YEPCHAT
-ai = YEPCHAT(Tools=False)
+ai = YEPCHAT()
 response = ai.chat(input(">>> "))
 for chunk in response:
     print(chunk, end="", flush=True)
@@ -822,20 +822,6 @@ r = ai.chat(prompt)
 print(r)
 ```
 
-###  ❓ `PERPLEXITY` - Search with PERPLEXITY
-
-```python
-from webscout import Perplexity
-from rich import print
-
-perplexity = Perplexity() 
-# Stream the response
-response = perplexity.chat(input(">>> "))
-for chunk in response:
-    print(chunk, end="", flush=True)
-
-perplexity.close()
-```
 
 ###  🤖 `Meta AI` - Chat with Meta AI
 
@@ -1079,7 +1065,7 @@ print(a.chat("HelpingAI-9B"))
 ```
 
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, PerplexityLabs, TypeGPT, Mhystical, Netwrck, MultiChatAI, JadveOpenAI, OOAi
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, TypeGPT, Mhystical, Netwrck, MultiChatAI, JadveOpenAI, OOAi
 
 Code is similar to other providers.
 

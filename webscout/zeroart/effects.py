@@ -4,7 +4,7 @@ ZeroArt Effects: ASCII art text effects and transformations
 
 import random
 import textwrap
-
+ 
 class AsciiArtEffects:
     """Collection of ASCII art text effects"""
     

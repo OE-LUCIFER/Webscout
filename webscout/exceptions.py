@@ -2,50 +2,116 @@ WATCH_URL = 'https://www.youtube.com/watch?v={video_id}'
 
 
 class WebscoutE(Exception):
-    """Base exception class for search."""
+    """
+    Base exception class for all Webscout related errors.
+
+    This class serves as the root for all custom exceptions raised by the Webscout library.
+    It provides a common base for catching and handling errors specific to Webscout.
+    """
+    pass
 
 
 class APIConnectionError(Exception):
-    """Raised when there are connection issues with an API."""
+    """
+    Exception raised when there are issues connecting to an API.
+
+    This exception is raised when a network connection to an external API fails.
+    It indicates a problem with the network or the API server itself.
+    """
     pass
 
 
 class RatelimitE(Exception):
-    """Raised for rate limit exceeded errors during API requests."""
+    """
+    Exception raised when an API rate limit is exceeded.
+
+    This exception is raised when the number of requests to an API exceeds the allowed limit within a given time frame.
+    It indicates that the application is making too many requests and needs to slow down.
+    """
+    pass
 
 
 class ConversationLimitException(Exception):
-    """Raised for conversation limit exceeded errors during API requests."""
+    """
+    Exception raised when a conversation limit is exceeded.
+
+    This exception is raised when a limit on the number of turns or messages in a conversation is exceeded.
+    It indicates that the conversation has reached its maximum allowed length.
+    """
     pass
 
 
 class TimeoutE(Exception):
-    """Raised for timeout errors during API requests."""
+    """
+    Exception raised when a request to an API times out.
+
+    This exception is raised when a request to an API takes longer than the allowed time to complete.
+    It indicates a problem with the network or the API server being slow to respond.
+    """
+    pass
 
 
 class FailedToGenerateResponseError(Exception):
-    """Provider failed to fetch response"""
+    """
+    Exception raised when a provider fails to generate a response.
+
+    This exception is raised when a provider is unable to generate a response for a given request.
+    It indicates an issue with the provider's logic or data.
+    """
+    pass
 
 
 class AllProvidersFailure(Exception):
-    """None of the providers generated response successfully"""
+    """
+    Exception raised when all providers fail to generate a response.
+
+    This exception is raised when none of the available providers are able to generate a response for a given request.
+    It indicates a widespread issue with all providers.
+    """
     pass
 
 
 class FacebookInvalidCredentialsException(Exception):
+    """
+    Exception raised when Facebook credentials are invalid.
+
+    This exception is raised when the provided Facebook credentials (e.g., username, password, cookies) are invalid.
+    It indicates that the application is unable to authenticate with Facebook.
+    """
     pass
 
 
 class FacebookRegionBlocked(Exception):
+    """
+    Exception raised when Facebook access is blocked due to region restrictions.
+
+    This exception is raised when access to Facebook is blocked due to geographical restrictions.
+    It indicates that the application is unable to access Facebook from the current location.
+    """
     pass
 
 
 class ModelUnloadedException(Exception):
+    """
+    Exception raised when a model is unloaded.
+
+    This exception is raised when a required model is not loaded or has been unloaded.
+    It indicates that the application is unable to perform operations that require the model.
+    """
     pass
 
 
 class TranscriptRetrievalError(WebscoutE):
-    """Base class for transcript retrieval errors."""
+    """
+    Base class for transcript retrieval errors.
+
+    This class serves as the root for all custom exceptions related to transcript retrieval.
+    It provides a common base for catching and handling errors specific to transcript retrieval.
+
+    Args:
+        video_id (str): The ID of the video for which the transcript retrieval failed.
+        message (str): A message describing the error.
+    """
 
     def __init__(self, video_id, message):
         super().__init__(message.format(video_url=WATCH_URL.format(video_id=video_id)))
@@ -53,7 +119,16 @@ class TranscriptRetrievalError(WebscoutE):
 
 
 class YouTubeRequestFailedError(TranscriptRetrievalError):
-    """Raised when a request to YouTube fails."""
+    """
+    Exception raised when a request to YouTube fails.
+
+    This exception is raised when a network request to YouTube fails.
+    It indicates a problem with the network or the YouTube server itself.
+
+    Args:
+        video_id (str): The ID of the video for which the request failed.
+        http_error (str): The HTTP error that occurred.
+    """
 
     def __init__(self, video_id, http_error):
         message = 'Request to YouTube failed: {reason}'
@@ -61,7 +136,15 @@ class YouTubeRequestFailedError(TranscriptRetrievalError):
 
 
 class VideoUnavailableError(TranscriptRetrievalError):
-    """Raised when the video is unavailable."""
+    """
+    Exception raised when the video is unavailable.
+
+    This exception is raised when the requested video is no longer available on YouTube.
+    It indicates that the video has been removed or made private.
+
+    Args:
+        video_id (str): The ID of the unavailable video.
+    """
 
     def __init__(self, video_id):
         message = 'The video is no longer available'
@@ -69,7 +152,15 @@ class VideoUnavailableError(TranscriptRetrievalError):
 
 
 class InvalidVideoIdError(TranscriptRetrievalError):
-    """Raised when an invalid video ID is provided."""
+    """
+    Exception raised when an invalid video ID is provided.
+
+    This exception is raised when the provided video ID is not in the correct format.
+    It indicates that the application is using a URL instead of the video ID.
+
+    Args:
+        video_id (str): The invalid video ID.
+    """
 
     def __init__(self, video_id):
         message = (
@@ -81,7 +172,15 @@ class InvalidVideoIdError(TranscriptRetrievalError):
 
 
 class TooManyRequestsError(TranscriptRetrievalError):
-    """Raised when YouTube rate limits the requests."""
+    """
+    Exception raised when YouTube rate limits the requests.
+
+    This exception is raised when YouTube rate limits the requests from the current IP address.
+    It indicates that the application is making too many requests and needs to slow down or use a different IP.
+
+    Args:
+        video_id (str): The ID of the video for which the request was rate-limited.
+    """
 
     def __init__(self, video_id):
         message = (
@@ -95,7 +194,15 @@ class TooManyRequestsError(TranscriptRetrievalError):
 
 
 class TranscriptsDisabledError(TranscriptRetrievalError):
-    """Raised when transcripts are disabled for the video."""
+    """
+    Exception raised when transcripts are disabled for the video.
+
+    This exception is raised when the video has subtitles disabled.
+    It indicates that the application cannot retrieve transcripts for this video.
+
+    Args:
+        video_id (str): The ID of the video with disabled transcripts.
+    """
 
     def __init__(self, video_id):
         message = 'Subtitles are disabled for this video'
@@ -103,7 +210,15 @@ class TranscriptsDisabledError(TranscriptRetrievalError):
 
 
 class NoTranscriptAvailableError(TranscriptRetrievalError):
-    """Raised when no transcripts are available for the video."""
+    """
+    Exception raised when no transcripts are available for the video.
+
+    This exception is raised when the video has no transcripts available.
+    It indicates that the application cannot retrieve transcripts for this video.
+
+    Args:
+        video_id (str): The ID of the video with no available transcripts.
+    """
 
     def __init__(self, video_id):
         message = 'No transcripts are available for this video'
@@ -111,7 +226,15 @@ class NoTranscriptAvailableError(TranscriptRetrievalError):
 
 
 class NotTranslatableError(TranscriptRetrievalError):
-    """Raised when the transcript is not translatable."""
+    """
+    Exception raised when the transcript is not translatable.
+
+    This exception is raised when the requested language is not translatable.
+    It indicates that the application cannot translate the transcript to the requested language.
+
+    Args:
+        video_id (str): The ID of the video with a non-translatable transcript.
+    """
 
     def __init__(self, video_id):
         message = 'The requested language is not translatable'
@@ -119,7 +242,15 @@ class NotTranslatableError(TranscriptRetrievalError):
 
 
 class TranslationLanguageNotAvailableError(TranscriptRetrievalError):
-    """Raised when the requested translation language is not available."""
+    """
+    Exception raised when the requested translation language is not available.
+
+    This exception is raised when the requested translation language is not supported for the transcript.
+    It indicates that the application cannot translate the transcript to the requested language.
+
+    Args:
+        video_id (str): The ID of the video for which the translation language is not available.
+    """
 
     def __init__(self, video_id):
         message = 'The requested translation language is not available'
@@ -127,7 +258,15 @@ class TranslationLanguageNotAvailableError(TranscriptRetrievalError):
 
 
 class CookiePathInvalidError(TranscriptRetrievalError):
-    """Raised when the cookie path is invalid."""
+    """
+    Exception raised when the cookie path is invalid.
+
+    This exception is raised when the provided cookie path is invalid.
+    It indicates that the application cannot access the cookie file.
+
+    Args:
+        video_id (str): The ID of the video for which the cookie path is invalid.
+    """
 
     def __init__(self, video_id):
         message = 'The provided cookie path is invalid'
@@ -135,7 +274,15 @@ class CookiePathInvalidError(TranscriptRetrievalError):
 
 
 class CookiesInvalidError(TranscriptRetrievalError):
-    """Raised when the provided cookies are invalid."""
+    """
+    Exception raised when the provided cookies are invalid.
+
+    This exception is raised when the provided cookies are not valid or have expired.
+    It indicates that the application cannot authenticate with YouTube using the provided cookies.
+
+    Args:
+        video_id (str): The ID of the video for which the cookies are invalid.
+    """
 
     def __init__(self, video_id):
         message = 'The cookies provided are not valid (may have expired)'
@@ -143,7 +290,15 @@ class CookiesInvalidError(TranscriptRetrievalError):
 
 
 class FailedToCreateConsentCookieError(TranscriptRetrievalError):
-    """Raised when consent cookie creation fails."""
+    """
+    Exception raised when consent cookie creation fails.
+
+    This exception is raised when the application fails to automatically give consent to saving cookies.
+    It indicates that the application cannot proceed without the consent cookie.
+
+    Args:
+        video_id (str): The ID of the video for which the consent cookie creation failed.
+    """
 
     def __init__(self, video_id):
         message = 'Failed to automatically give consent to saving cookies'
@@ -151,7 +306,17 @@ class FailedToCreateConsentCookieError(TranscriptRetrievalError):
 
 
 class NoTranscriptFoundError(TranscriptRetrievalError):
-    """Raised when no transcript is found for the requested language codes."""
+    """
+    Exception raised when no transcript is found for the requested language codes.
+
+    This exception is raised when no transcripts are found for any of the requested language codes.
+    It indicates that the application cannot retrieve transcripts for the requested languages.
+
+    Args:
+        video_id (str): The ID of the video for which no transcript was found.
+        requested_language_codes (list): The list of requested language codes.
+        transcript_data (dict): The transcript data that was found.
+    """
 
     def __init__(self, video_id, requested_language_codes, transcript_data):
         message = (

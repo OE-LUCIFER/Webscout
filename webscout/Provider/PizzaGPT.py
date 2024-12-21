@@ -7,7 +7,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import  Provider, AsyncProvider
 from webscout import exceptions
-
+from webscout import LitAgent as Lit
 
 class PIZZAGPT(Provider):
     """
@@ -63,7 +63,7 @@ class PIZZAGPT(Provider):
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
+            "user-agent": Lit().random(),
             "x-secret": "Marinara"
         }
 
@@ -133,7 +133,7 @@ class PIZZAGPT(Provider):
             )
 
         resp = response.json()
-        self.last_response.update(dict(text=resp['answer']['content']))
+        self.last_response.update(dict(text=resp['content']))
         self.conversation.update_chat_history(
             prompt, self.get_message(self.last_response)
         )

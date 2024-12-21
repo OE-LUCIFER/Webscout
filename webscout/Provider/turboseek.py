@@ -145,7 +145,7 @@ class TurboSeek(Provider):
                         data = json.loads(value[6:].decode('utf-8')) # Decode manually
                         if "text" in data:
                             streaming_text += data["text"]
-                            resp = dict(text=streaming_text)
+                            resp = dict(text=data["text"])
                             self.last_response.update(resp)
                             yield value if raw else resp
                 except json.decoder.JSONDecodeError:
@@ -210,6 +210,7 @@ class TurboSeek(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = TurboSeek()
-    response = ai.chat("hi")
+    response = ai.chat("hello buddy", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
+

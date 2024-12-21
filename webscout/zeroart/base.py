@@ -37,25 +37,24 @@ class ZeroArtFont:
         return self.letters.get(char.upper(), self.letters.get(' ', [' ']))
 
     def render(self, text):
-        """
-        Render text as ASCII art
-        
-        :param text: Text to convert
-        :return: Rendered ASCII art as a string
-        """
-        # Ensure text is uppercase
-        text = text.upper()
-        
-        # Initialize lines for rendering
-        art_lines = [''] * 5  # Assuming 5-line height
-        
-        for char in text:
-            # Get character's art or use space if not found
-            char_art = self.get_letter(char)
+        if not text:
+            return ""
             
-            # Combine lines
-            for i in range(len(char_art)):
-                art_lines[i] += char_art[i] + " "
+        # Get the maximum height of any character in the font
+        max_height = max(len(self.get_letter(c)) for c in text)
         
-        # Join lines and remove trailing space
+        # Initialize art_lines with empty strings
+        art_lines = ["" for _ in range(max_height)]
+        
+        # Process each character
+        for char in text:
+            char_art = self.get_letter(char)
+            # Pad shorter characters with empty lines to match max_height
+            while len(char_art) < max_height:
+                char_art.append(" " * len(char_art[0]))
+                
+            # Add character art to each line
+            for i in range(max_height):
+                art_lines[i] += char_art[i] + " "
+                
         return "\n".join(art_lines)

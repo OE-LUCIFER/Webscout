@@ -81,7 +81,7 @@ class Tag:
     
     def __repr__(self):
         """Detailed representation of the tag."""
-        return f"&lt;{self.name} {self.attrs}&gt;"
+        return f"<{self.name} {self.attrs}>"
     
     def __call__(self, *args, **kwargs):
         """
@@ -335,6 +335,7 @@ class Tag:
                     texts.append(content.get_text(separator, strip))
         
         text = separator.join(texts)
+        text = re.sub(r'\n\n+', '\n', text) # Replace multiple newlines with single newlines
         return text.strip() if strip else text
     
     def find_text(self, pattern: Union[str, re.Pattern], **kwargs) -> Optional[str]:
@@ -442,10 +443,10 @@ class Tag:
             str: Prettified tag representation
         """
         def _prettify(tag, indent=0):
-            result = ' ' * indent + f'&lt;{tag.name}'
+            result = ' ' * indent + f'<{tag.name}'
             for k, v in tag.attrs.items():
                 result += f' {k}="{v}"'
-            result += '&gt;\n'
+            result += '>\n'
             
             for content in tag.contents:
                 if isinstance(content, Tag):
@@ -453,7 +454,7 @@ class Tag:
                 else:
                     result += ' ' * (indent + 2) + str(content) + '\n'
             
-            result += ' ' * indent + f'&lt;/{tag.name}&gt;\n'
+            result += ' ' * indent + f'</{tag.name}>\n'
             return result
         
         return _prettify(self)

@@ -27,6 +27,7 @@ class OPENAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        base_url: str = "https://api.openai.com/v1/chat/completions",
     ):
         """Instantiates OPENAI
 
@@ -55,7 +56,7 @@ class OPENAI(Provider):
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.top_p = top_p
-        self.chat_endpoint = "https://api.openai.com/v1/chat/completions"
+        self.chat_endpoint = base_url
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}

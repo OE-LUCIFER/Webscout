@@ -245,6 +245,6 @@ if __name__ == "__main__":
     from rich import print
 
     ai = TutorAI()
-    response = ai.chat(input(">>> "), attachment_path=None)
+    response = ai.chat("hello buddy", attachment_path=None)
     for chunk in response:
         print(chunk, end="", flush=True)

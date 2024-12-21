@@ -7,32 +7,21 @@ Scout is a powerful web parsing library designed to provide flexible and intelli
 ## ✨ New Features
 
 ### 🌐 Web Crawling
-Easily crawl websites with depth and page limit controls:
+Easily crawl websites:
 
 ```python
 from webscout.scout import ScoutCrawler
 
 # Crawl a website
-crawler = ScoutCrawler('https://example.com', max_depth=2, max_pages=10)
+crawler = ScoutCrawler('https://example.com')
 crawled_pages = crawler.crawl()
 
 for page in crawled_pages:
     print(f"URL: {page['url']}")
     print(f"Title: {page['title']}")
-    print(f"Markdown Content:\n{page['markdown']}")
+
 ```
 
-### 📝 HTML to Markdown Conversion
-Convert HTML to clean Markdown effortlessly:
-
-```python
-from webscout.scout import Scout
-
-# Parse and convert HTML to Markdown
-scout = Scout(html_content)
-markdown_text = scout.to_markdown()
-print(markdown_text)
-```
 
 ## 🚀 Core Features
 
@@ -87,7 +76,8 @@ title = scout.find('h1')
 links = scout.find_all('a')
 
 # Extract text
-print(title.get_text())  # Output: Hello, Scout!
+print(title.texts()[0])  # Output: Hello Scout!
+
 ```
 
 ## 🔧 Dependencies

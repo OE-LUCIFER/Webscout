@@ -1,8 +1,18 @@
+import time
+import uuid
 import requests
-from typing import Any, Dict, Generator, Optional
-from webscout.AIutel import Optimizers, Conversation
+import json
+
+from typing import Any, Dict, Optional, Generator, Union
+from dataclasses import dataclass, asdict
+from datetime import date
+
+from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.litagent import LitAgent
+
 
 class Netwrck(Provider):
     """
@@ -24,7 +34,7 @@ class Netwrck(Provider):
     def __init__(
         self,
         model: str = "lumimaid",
-        is_conversation: bool = False,
+        is_conversation: bool = True,
         max_tokens: int = 2048,
         timeout: int = 30,
         intro: Optional[str] = None,
@@ -34,6 +44,9 @@ class Netwrck(Provider):
         history_offset: int = 0,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
+        temperature: float = 0.7,
+        top_p: float = 0.8,
+        logging: bool = False
     ):
         """Initializes the Netwrck API client."""
         if model not in self.AVAILABLE_MODELS:
@@ -47,6 +60,12 @@ class Netwrck(Provider):
         self.max_tokens_to_sample = max_tokens
         self.timeout = timeout
         self.last_response: Dict[str, Any] = {}
+        self.temperature = temperature
+        self.top_p = top_p
+        
+        # Initialize LitAgent for user agent generation
+        self.agent = LitAgent()
+
         self.headers = {
             'authority': 'netwrck.com',
             'accept': '*/*',
@@ -54,10 +73,16 @@ class Netwrck(Provider):
             'content-type': 'application/json',
             'origin': 'https://netwrck.com',
             'referer': 'https://netwrck.com/',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
+            'user-agent': self.agent.random()
         }
         self.session.headers.update(self.headers)
         self.proxies = proxies or {}
+
+        Conversation.intro = (
+            AwesomePrompts().get_act(act, raise_not_found=True, default=None, case_insensitive=True)
+            if act
+            else intro or Conversation.intro
+        )
         self.conversation = Conversation(is_conversation, max_tokens, filepath, update_file)
         self.conversation.history_offset = history_offset
         self.__available_optimizers = (
@@ -66,6 +91,10 @@ class Netwrck(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
+        # Initialize logger
+        self.logger = LitLogger(name="Netwrck", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+    
+
     def ask(
         self,
         prompt: str,
@@ -73,8 +102,12 @@ class Netwrck(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> Union[Dict[str, Any], Generator]:
         """Sends a prompt to the Netwrck API and returns the response."""
+
+        if self.logger:
+             self.logger.debug(f"ask() called with prompt: {prompt}")
+
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -82,6 +115,8 @@ class Netwrck(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
+                if self.logger:
+                    self.logger.error(f"Invalid optimizer: {optimizer}")
                 raise exceptions.FailedToGenerateResponseError(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
@@ -91,7 +126,10 @@ class Netwrck(Provider):
             "context": self.system_prompt,
             "examples": [],
             "model_name": self.model_name,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
         }
+
 
         def for_stream():
             try:
@@ -105,12 +143,18 @@ class Netwrck(Provider):
                 )
                 response.raise_for_status()
 
+                streaming_text = ""
                 for line in response.iter_lines():
                     if line:
                         decoded_line = line.decode('utf-8').strip('"')
-                        result = {"text": decoded_line} if not raw else decoded_line
-                        yield result
+                        streaming_text += decoded_line
+                        yield {"text": decoded_line} if not raw else decoded_line
+                
+                self.conversation.update_chat_history(prompt, streaming_text)
+
             except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Error communicating with Netwrck: {e}")
                 raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
 
         def for_non_stream():
@@ -123,10 +167,15 @@ class Netwrck(Provider):
                     timeout=self.timeout,
                 )
                 response.raise_for_status()
+                print(response.text)
                 text = response.text.strip('"')
                 self.last_response = {"text": text}
+                self.conversation.update_chat_history(prompt, text)
+
                 return self.last_response
             except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Error communicating with Netwrck: {e}")
                 raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
 
         return for_stream() if stream else for_non_stream()
@@ -139,6 +188,9 @@ class Netwrck(Provider):
         conversationally: bool = False,
     ) -> str:
         """Generates a response from the Netwrck API."""
+        if self.logger:
+             self.logger.debug(f"chat() called with prompt: {prompt}")
+
         def for_stream():
             for response in self.ask(
                 prompt, 
@@ -171,7 +223,7 @@ if __name__ == "__main__":
 
     # Non-streaming example
     print("Non-Streaming Response:")
-    netwrck = Netwrck(model="lumimaid")
+    netwrck = Netwrck(model="lumimaid", logging=True)
     response = netwrck.chat("What is the capital of France?")
     print(response)
 

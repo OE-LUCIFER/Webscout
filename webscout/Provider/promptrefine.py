@@ -6,7 +6,7 @@ from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
-from fake_useragent import UserAgent
+from webscout import LitAgent as UserAgent
 
 class PromptRefine(Provider):
     """
@@ -55,7 +55,7 @@ class PromptRefine(Provider):
         self.headers = {
             'origin': 'https://www.promptrefine.com',
             'referer': 'https://www.promptrefine.com/prompt/new',
-            'user-agent': UserAgent().random
+            'user-agent': UserAgent().random()
         }
 
         self.__available_optimizers = (

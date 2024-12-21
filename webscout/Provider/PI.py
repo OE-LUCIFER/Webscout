@@ -8,7 +8,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from typing import Dict
-
+from webscout import LitAgent
 class PiAI(Provider):
     """PiAI class for interacting with the Pi.ai chat API, extending the Provider class.
 
@@ -71,7 +71,7 @@ class PiAI(Provider):
             'Sec-Fetch-Dest': 'empty',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
+            'User-Agent': LitAgent().random(),
             'X-Api-Version': '3'
         }
         self.cookies = {

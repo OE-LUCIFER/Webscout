@@ -9,9 +9,6 @@ from .Openai import OPENAI
 from .Openai import AsyncOPENAI
 from .Koboldai import KOBOLDAI
 from .Koboldai import AsyncKOBOLDAI
-from .RoboCoders import RoboCoders
-from .Perplexity import *
-from .perplexitylabs import PerplexityLabs
 from .Blackboxai import BLACKBOXAI 
 from .Phind import PhindSearch 
 from .Phind import Phindv2
@@ -53,9 +50,7 @@ from .promptrefine import *
 from .tutorai import *
 from .ChatGPTES import *
 from .Amigo import *
-from .prefind import *
 from .bagoodex import *
-
 from .aimathgpt import *
 from .gaurish import *
 from .geminiprorealtime import *
@@ -80,8 +75,6 @@ __all__ = [
     'AsyncOPENAI',
     'KOBOLDAI',
     'AsyncKOBOLDAI',
-    'Perplexity',
-    'PerplexityLabs',
     'BLACKBOXAI', 
     'PhindSearch', 
     'GEMINI',
@@ -124,7 +117,6 @@ __all__ = [
     'TutorAI',
     'ChatGPTES',
     'AmigoChat',
-    'PrefindAI',
     'Bagoodex',
     'AIMathGPT',
     'GaurishCerebras',
@@ -134,7 +126,6 @@ __all__ = [
     'Talkai',
     'Llama3Mitril',
     'Marcus',
-    'RoboCoders',
     'TypeGPT',
     'Mhystical',
     'Netwrck',
