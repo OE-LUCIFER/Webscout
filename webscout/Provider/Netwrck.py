@@ -18,6 +18,7 @@ class Netwrck(Provider):
     """
     A class to interact with the Netwrck.com API. Supports streaming.
     """
+    greeting = """An unknown multiverse phenomenon occurred, and you found yourself in a dark space. You looked around and found a source of light in a distance. You approached the light and *whoosh*....\nChoose your origin:\na) As a baby who just got birthed, your fate unknown\nb) As an amnesic stranded on an uninhabited island with mysterious ruins\nc) As an abandoned product of a forbidden experiment\nd) As a slave being sold at an auction\ne) Extremely Chaotic Randomizer\nOr, dive into your own fantasy."""
 
     AVAILABLE_MODELS = {
         "lumimaid": "neversleep/llama-3.1-lumimaid-8b",
@@ -33,7 +34,7 @@ class Netwrck(Provider):
 
     def __init__(
         self,
-        model: str = "lumimaid",
+        model: str = "claude",
         is_conversation: bool = True,
         max_tokens: int = 2048,
         timeout: int = 30,
@@ -93,7 +94,6 @@ class Netwrck(Provider):
 
         # Initialize logger
         self.logger = LitLogger(name="Netwrck", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
-    
 
     def ask(
         self,
@@ -120,16 +120,13 @@ class Netwrck(Provider):
                 raise exceptions.FailedToGenerateResponseError(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-
         payload = {
-            "query": conversation_prompt,
+            "query": prompt,
             "context": self.system_prompt,
             "examples": [],
             "model_name": self.model_name,
-            "temperature": self.temperature,
-            "top_p": self.top_p,
+            "greeting": self.greeting
         }
-
 
         def for_stream():
             try:
@@ -143,14 +140,21 @@ class Netwrck(Provider):
                 )
                 response.raise_for_status()
 
+                # Initialize an empty string to accumulate the streaming text
                 streaming_text = ""
                 for line in response.iter_lines():
                     if line:
                         decoded_line = line.decode('utf-8').strip('"')
-                        streaming_text += decoded_line
-                        yield {"text": decoded_line} if not raw else decoded_line
-                
-                self.conversation.update_chat_history(prompt, streaming_text)
+                        streaming_text += decoded_line  # Accumulate the text
+                        yield {"text": decoded_line}  # Yield each chunk
+
+                # Optionally, you can update the conversation history with the full streaming text
+                self.conversation.update_chat_history(payload["query"], streaming_text)
+
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Error communicating with Netwrck: {e}")
+                raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
 
             except Exception as e:
                 if self.logger:
@@ -167,7 +171,7 @@ class Netwrck(Provider):
                     timeout=self.timeout,
                 )
                 response.raise_for_status()
-                print(response.text)
+                # print(response.text)
                 text = response.text.strip('"')
                 self.last_response = {"text": text}
                 self.conversation.update_chat_history(prompt, text)
@@ -193,9 +197,9 @@ class Netwrck(Provider):
 
         def for_stream():
             for response in self.ask(
-                prompt, 
-                stream=True, 
-                optimizer=optimizer, 
+                prompt,
+                stream=True,
+                optimizer=optimizer,
                 conversationally=conversationally
             ):
                 yield self.get_message(response)
@@ -223,13 +227,13 @@ if __name__ == "__main__":
 
     # Non-streaming example
     print("Non-Streaming Response:")
-    netwrck = Netwrck(model="lumimaid", logging=True)
-    response = netwrck.chat("What is the capital of France?")
+    netwrck = Netwrck(model="claude", logging=True)
+    response = netwrck.chat("tell me about Russia")
     print(response)
 
     # Streaming example
     print("\nStreaming Response:")
-    response = netwrck.chat("tell me about india", stream=True)
+    response = netwrck.chat("tell me about India", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
     print()  # Add a newline at the end
