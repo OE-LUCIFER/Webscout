@@ -69,25 +69,36 @@ from collections import defaultdict
 import shutil
 import inspect
 from .colors import Colors
+import ctypes
 
+# Checking Pygments availability
 try:
     from pygments import highlight
     from pygments.lexers import get_lexer_by_name
     from pygments.formatters import Terminal256Formatter
+
     PYGMENTS_AVAILABLE = True
 except ImportError:
     PYGMENTS_AVAILABLE = False
 
-# Enable UTF-8 output on Windows
+# Enabling UTF-8 output on Windows
 if sys.platform == 'win32':
     import ctypes
+
     kernel32 = ctypes.windll.kernel32
     kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-    sys.stdout.reconfigure(encoding='utf-8')
 
-# Enable ANSI escape sequences for Windows
+    # Checking and overriding sys.stdout
+    try:
+        if sys.stdout is not None:
+            sys.stdout.reconfigure(encoding='utf-8')
+        else:
+            print("sys.stdout is not available.")
+    except AttributeError:
+        print("Failed to redefine sys.stdout.")
+
+# Enabling ANSI escape sequences for Windows
 if os.name == 'nt':
-    import ctypes
     kernel32 = ctypes.windll.kernel32
     kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
 
@@ -715,5 +726,3 @@ class LitPrinter:
     def _clear_line(self):
         """Clear the current line."""
         print('\r' + ' ' * self._get_terminal_width(), end='\r', file=self.file, flush=True)
-
-
