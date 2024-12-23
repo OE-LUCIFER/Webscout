@@ -54,7 +54,7 @@ def _print_data(data):
     console = Console()
     if data:
         for i, e in enumerate(data, start=1):
-            table = Table(show_header=False, show_lines=True, expand=True, box=None)  # Removed duplicate title
+            table = Table(show_header=False, show_lines=True, expand=True, box=None)
             table.add_column("Key", style="cyan", no_wrap=True, width=15)
             table.add_column("Value", style="white")
 
@@ -62,15 +62,14 @@ def _print_data(data):
                 if v:
                     width = 300 if k in ("content", "href", "image", "source", "thumbnail", "url") else 78
                     k = "language" if k == "detected_language" else k
-                    text = Text(f"{v}", style="white")
-                    text = text.wrap(width=width, initial_indent="", subsequent_indent=" " * 18, preserve_paragraphs=True)
+                    text = Text(str(v), style="white")
+                    text = text.wrap(width=width, console=console)
                 else:
-                    text = Text(v, style="white")
+                    text = Text(str(v), style="white")
                 table.add_row(k, text)
 
-            # Only the Panel has the title now
             console.print(Panel(table, title=f"Result {i}", expand=False, style="green on black"))
-            console.print("\n") 
+            console.print("\n")
 
 # Initialize CLI app
 app = CLI(name="webscout", help="Search the web with a rich UI", version=__version__)
@@ -117,7 +116,7 @@ def chat(proxy: str = None, model: str = "gpt-4o-mini"):
     console.print("\n[cyan]Chat session ended. Goodbye![/]")
 
 @app.command()
-@option("--keywords", "-k", help="Search keywords")
+@option("--keywords", "-k", help="Search keywords", required=True)
 @option("--region", "-r", help="Region for search results", default="wt-wt")
 @option("--safesearch", "-s", help="SafeSearch setting", default="moderate")
 @option("--timelimit", "-t", help="Time limit for results", default=None)
@@ -128,29 +127,27 @@ def text(keywords: str, region: str, safesearch: str, timelimit: str, backend: s
     """Perform a text search using DuckDuckGo API."""
     webs = WEBS(proxy=proxy)
     try:
-        webs.text(keywords, region, safesearch, timelimit, backend, max_results)
+        results = webs.text(keywords, region, safesearch, timelimit, backend, max_results)
+        _print_data(results)
     except Exception as e:
         logger.error(f"Error in text search: {e}")
         raise e
 
 @app.command()
-@option("--keywords", "-k", help="Search keywords")
-@option("--region", "-r", help="Region for search results", default="wt-wt")
-@option("--safesearch", "-s", help="SafeSearch setting", default="moderate")
-@option("--timelimit", "-t", help="Time limit for results", default=None)
-@option("--max-results", "-m", help="Maximum number of results", type=int, default=25)
+@option("--keywords", "-k", help="Search keywords", required=True)
 @option("--proxy", "-p", help="Proxy URL to use for requests")
-def answers(keywords: str, region: str, safesearch: str, timelimit: str, max_results: int, proxy: str = None):
+def answers(keywords: str, proxy: str = None):
     """Perform an answers search using DuckDuckGo API."""
     webs = WEBS(proxy=proxy)
     try:
-        webs.answers(keywords, region, safesearch, timelimit, max_results)
+        results = webs.answers(keywords)
+        _print_data(results)
     except Exception as e:
         logger.error(f"Error in answers search: {e}")
         raise e
 
 @app.command()
-@option("--keywords", "-k", help="Search keywords")
+@option("--keywords", "-k", help="Search keywords", required=True)
 @option("--region", "-r", help="Region for search results", default="wt-wt")
 @option("--safesearch", "-s", help="SafeSearch setting", default="moderate")
 @option("--timelimit", "-t", help="Time limit for results", default=None)
@@ -177,13 +174,14 @@ def images(
     """Perform an images search using DuckDuckGo API."""
     webs = WEBS(proxy=proxy)
     try:
-        webs.images(keywords, region, safesearch, timelimit, size, color, type, layout, license, max_results)
+        results = webs.images(keywords, region, safesearch, timelimit, size, color, type, layout, license, max_results)
+        _print_data(results)
     except Exception as e:
         logger.error(f"Error in images search: {e}")
         raise e
 
 @app.command()
-@option("--keywords", "-k", help="Search keywords")
+@option("--keywords", "-k", help="Search keywords", required=True)
 @option("--region", "-r", help="Region for search results", default="wt-wt")
 @option("--safesearch", "-s", help="SafeSearch setting", default="moderate")
 @option("--timelimit", "-t", help="Time limit for results", default=None)
@@ -206,13 +204,14 @@ def videos(
     """Perform a videos search using DuckDuckGo API."""
     webs = WEBS(proxy=proxy)
     try:
-        webs.videos(keywords, region, safesearch, timelimit, resolution, duration, license, max_results)
+        results = webs.videos(keywords, region, safesearch, timelimit, resolution, duration, license, max_results)
+        _print_data(results)
     except Exception as e:
         logger.error(f"Error in videos search: {e}")
         raise e
 
 @app.command()
-@option("--keywords", "-k", help="Search keywords")
+@option("--keywords", "-k", help="Search keywords", required=True)
 @option("--region", "-r", help="Region for search results", default="wt-wt")
 @option("--safesearch", "-s", help="SafeSearch setting", default="moderate")
 @option("--timelimit", "-t", help="Time limit for results", default=None)
@@ -222,13 +221,14 @@ def news(keywords: str, region: str, safesearch: str, timelimit: str, max_result
     """Perform a news search using DuckDuckGo API."""
     webs = WEBS(proxy=proxy)
     try:
-        webs.news(keywords, region, safesearch, timelimit, max_results)
+        results = webs.news(keywords, region, safesearch, timelimit, max_results)
+        _print_data(results)
     except Exception as e:
         logger.error(f"Error in news search: {e}")
         raise e
 
 @app.command()
-@option("--keywords", "-k", help="Search keywords")
+@option("--keywords", "-k", help="Search keywords", required=True)
 @option("--place", "-p", help="Simplified search - if set, the other parameters are not used")
 @option("--street", "-s", help="House number/street")
 @option("--city", "-c", help="City of search")
@@ -259,7 +259,7 @@ def maps(
     """Perform a maps search using DuckDuckGo API."""
     webs = WEBS(proxy=proxy)
     try:
-        webs.maps(
+        results = webs.maps(
             keywords,
             place,
             street,
@@ -273,12 +273,13 @@ def maps(
             radius,
             max_results,
         )
+        _print_data(results)
     except Exception as e:
         logger.error(f"Error in maps search: {e}")
         raise e
 
 @app.command()
-@option("--keywords", "-k", help="Text for translation")
+@option("--keywords", "-k", help="Text for translation", required=True)
 @option("--from", "-f", help="Language to translate from (defaults automatically)")
 @option("--to", "-t", help="Language to translate to (default: 'en')", default="en")
 @option("--proxy", "-p", help="Proxy URL to use for requests")
@@ -286,20 +287,22 @@ def translate(keywords: str, from_: str, to: str, proxy: str = None):
     """Perform translation using DuckDuckGo API."""
     webs = WEBS(proxy=proxy)
     try:
-        webs.translate(keywords, from_, to)
+        results = webs.translate(keywords, from_, to)
+        _print_data(results)
     except Exception as e:
         logger.error(f"Error in translation: {e}")
         raise e
 
 @app.command()
-@option("--keywords", "-k", help="Search keywords")
+@option("--keywords", "-k", help="Search keywords", required=True)
 @option("--region", "-r", help="Region for search results", default="wt-wt")
 @option("--proxy", "-p", help="Proxy URL to use for requests")
 def suggestions(keywords: str, region: str, proxy: str = None):
     """Perform a suggestions search using DuckDuckGo API."""
     webs = WEBS(proxy=proxy)
     try:
-        webs.suggestions(keywords, region)
+        results = webs.suggestions(keywords, region)
+        _print_data(results)
     except Exception as e:
         logger.error(f"Error in suggestions search: {e}")
         raise e

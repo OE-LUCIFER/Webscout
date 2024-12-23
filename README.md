@@ -1255,12 +1255,6 @@ autollama.main(model_path, gguf_file)
 * The `model_path` in `autollama` is the Hugging Face model ID, and `gguf_file` is the GGUF file ID.
 
 
-## 🌐 `Webai` - Terminal GPT and an Open Interpreter
-
-```bash
-python -m webscout.webai webai --provider "phind" --rawdog
-```
-
 <div align="center">
   <!-- Replace `#` with your actual links -->
   <a href="https://t.me/official_helpingai"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
