@@ -16,7 +16,7 @@ from rich.columns import Columns
 # Initialize Rich console with force terminal
 console = Console(force_terminal=True)
 
-def get_weather_emoji(condition: str) -> str:
+def get_emoji(condition: str) -> str:
     """Get appropriate emoji for weather condition"""
     conditions = {
         'sunny': '*', 'clear': '*',
@@ -61,7 +61,7 @@ def create_current_weather_panel(data):
     location_name = f"{location['areaName'][0]['value']}, {location['country'][0]['value']}"
     
     weather_desc = current['weatherDesc'][0]['value']
-    symbol = get_weather_emoji(weather_desc)
+    symbol = get_emoji(weather_desc)
     
     # Create weather info table
     table = Table(show_header=False, box=box.ROUNDED, expand=True)
@@ -98,7 +98,7 @@ def create_forecast_panel(data):
         # Get mid-day conditions (noon)
         noon = day['hourly'][4]
         condition = noon['weatherDesc'][0]['value']
-        symbol = get_weather_emoji(condition)
+        symbol = get_emoji(condition)
         temp_range = f"{day['mintempC']}° - {day['maxtempC']}°"
         rain_chance = f"v {noon['chanceofrain']}%"
         wind = f"> {noon['windspeedKmph']} km/h"
@@ -113,7 +113,7 @@ def create_forecast_panel(data):
     
     return Panel(table, title="[bold]3-Day Forecast[/]", border_style="blue")
 
-def get_weather(location: str):
+def get(location: str):
     """Get weather data with progress indicator"""
     with Progress(
         SpinnerColumn(),
@@ -159,7 +159,7 @@ def main():
         console.print("\n[bold cyan]* Weather Information[/]\n")
         location = console.input("[cyan]Enter location: [/]")
         
-        weather_data = get_weather(location)
+        weather_data = get(location)
         if weather_data:
             display_weather(weather_data)
             

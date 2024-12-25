@@ -66,7 +66,7 @@ setup(
     entry_points={
         "console_scripts": [
             "WEBS = webscout.cli:cli",
-            "webscout = webscout.webai:main",
+            "webscout = webscout.cli:cli",
         ],
     },
     extras_require={

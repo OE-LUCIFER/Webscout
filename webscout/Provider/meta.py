@@ -248,7 +248,7 @@ def get_fb_session(email, password, proxies=None):
     return cookies
 
 
-def get_cookies() -> dict:
+def get_cookies(self) -> dict:
     """
     Extracts necessary cookies from the Meta AI main page.
 

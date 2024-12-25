@@ -307,17 +307,6 @@ def suggestions(keywords: str, region: str, proxy: str = None):
         logger.error(f"Error in suggestions search: {e}")
         raise e
 
-@app.command()
-@option("--proxy", help="Proxy URL to use for requests")
-def interactive(proxy: str = None):
-    """Start an interactive search session with AI-powered responses."""
-    webs = WEBS(proxy=proxy)
-    try:
-        webs.interactive()
-    except Exception as e:
-        logger.error(f"Error in interactive mode: {e}")
-        raise e
-
 def main():
     """Main entry point for the CLI."""
     try:

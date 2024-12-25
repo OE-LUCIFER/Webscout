@@ -180,7 +180,7 @@ class WEBS:
         )
         self._chat_vqd = resp.headers.get("x-vqd-4", "")
 
-        data = ",".join(x for line in resp.text.rstrip("[DONE]LIMT_CVRSA\n").split("data:") if (x := line.strip()))
+        data = ",".join(line.strip() for line in resp.text.rstrip("[DONE]LIMT_CVRSA\n").split("data:") if line.strip())
         data = json_loads("[" + data + "]")
 
         results = []
