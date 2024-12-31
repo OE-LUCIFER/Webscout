@@ -9,6 +9,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from typing import Dict
 from webscout import LitAgent
+
 class PiAI(Provider):
     """PiAI class for interacting with the Pi.ai chat API, extending the Provider class.
 
@@ -84,7 +85,7 @@ class PiAI(Provider):
         self.max_tokens_to_sample = max_tokens
         self.stream_chunk_size = 64
         self.timeout = timeout
-        self.last_response = {}
+        self.last_response = {} if self.is_conversation else {'text': ""}
         self.conversation_id = None
 
         self.__available_optimizers = (
@@ -187,8 +188,8 @@ class PiAI(Provider):
                             resp = dict(text=streaming_text)
                             self.last_response.update(resp)
                             yield parsed_data if raw else resp
-                    except json.JSONDecodeError:
-                        continue
+                    except:continue
+
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
