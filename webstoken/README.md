@@ -100,6 +100,4 @@ for sentence in sentences:
 
 All features are implemented from scratch in pure Python, making this package completely self-contained and easy to install.
 
-## License
 
-MIT License
