@@ -9,7 +9,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-
+from webscout import LitAgent
 
 class Free2GPT(Provider):
     """
@@ -48,7 +48,7 @@ class Free2GPT(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://chat10.free2gpt.xyz/api/generate"
+        self.api_endpoint = "https://chat1.free2gpt.com/api/generate"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
@@ -59,15 +59,15 @@ class Free2GPT(Provider):
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "text/plain;charset=UTF-8",
             "dnt": "1",
-            "origin": "https://chat10.free2gpt.xyz",
-            "referer": "https://chat10.free2gpt.xyz/",
+            "origin": "https://chat1.free2gpt.co",
+            "referer": "https://chat1.free2gpt.co",
             "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0"
+            "user-agent": LitAgent().random(),
         }
 
         self.__available_optimizers = (

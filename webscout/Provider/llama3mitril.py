@@ -7,7 +7,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-
+from webscout import LitAgent as Lit
 
 class Llama3Mitril(Provider):
     """
@@ -40,7 +40,7 @@ class Llama3Mitril(Provider):
         self.headers = {
             "Content-Type": "application/json",
             "DNT": "1",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0"
+            "User-Agent": Lit().random(),
         }
         self.__available_optimizers = (
             method
@@ -177,4 +177,4 @@ if __name__ == "__main__":
     )
 
     for response in ai.chat("Hello", stream=True):
-        print(response)
+        print(response, end="", flush=True)

@@ -4,7 +4,7 @@ from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider
-from webscout import exceptions
+from webscout import exceptions, LitAgent
 import requests
 
 class DARKAI(Provider):
@@ -75,7 +75,7 @@ class DARKAI(Provider):
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "cross-site",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0"
+            "user-agent": LitAgent().random(),
         }
 
         self.__available_optimizers = (

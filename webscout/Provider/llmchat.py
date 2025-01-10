@@ -7,7 +7,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-
+from webscout import LitAgent as Lit
 class LLMChat(Provider):
     """
     A class to interact with the LLMChat API.
@@ -18,6 +18,7 @@ class LLMChat(Provider):
         "@cf/meta/llama-3.1-8b-instruct",
         "@cf/meta/llama-3.2-3b-instruct",
         "@cf/meta/llama-3.2-1b-instruct"
+        "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
     ]
 
     def __init__(
@@ -51,7 +52,7 @@ class LLMChat(Provider):
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "*/*",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0",
+            "User-Agent": Lit().random(),
             "Origin": "https://llmchat.in",
             "Referer": "https://llmchat.in/"
         }

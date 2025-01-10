@@ -1,4 +1,4 @@
-import requests
+import cloudscraper
 import json
 from typing import Any, Dict, Optional
 
@@ -30,6 +30,7 @@ class RUBIKSAI(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "gpt-4o-mini",
+        temperature: float = 0.6,
     ) -> None:
         """
         Initializes the RUBIKSAI API with given parameters.
@@ -48,25 +49,54 @@ class RUBIKSAI(Provider):
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
             model (str, optional): AI model to use. Defaults to "gpt-4o-mini". 
                                     Available models: "gpt-4o-mini", "gemini-1.5-pro"
+            temperature (float, optional): Sampling temperature. Defaults to 0.6.
         """
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.session = requests.Session()
+        self.temperature = temperature
+        self.session = cloudscraper.create_scraper()
+        self.api_endpoint = "https://rubiks.ai/search/api/"
+        
+        # Updated headers with all necessary fields
+        self.headers = {
+            "authority": "rubiks.ai",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "content-type": "application/json",
+            "dnt": "1",
+            "origin": "https://rubiks.ai",
+            "referer": f"https://rubiks.ai/search/?q=&model={model}",
+            "sec-ch-ua": '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
+        }
+
+        # Get initial cookies
+        init_response = self.session.get("https://rubiks.ai/search/")
+        if not init_response.ok:
+            raise exceptions.FailedToGenerateResponseError("Failed to initialize session")
+
+        # Extract cf_clearance and other cookies
+        self.cookies = {
+            'cf_clearance': init_response.cookies.get('cf_clearance', ''),
+        }
+        
+        # Update session with cookies and headers
+        self.session.headers.update(self.headers)
+        self.session.cookies.update(self.cookies)
+
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://rubiks.ai/search/api.php"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
         self.model = model
-        self.headers = {
-            "accept": "text/event-stream",
-            "accept-encoding": "gzip, deflate, br, zstd",
-            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
-            "cache-control": "no-cache",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0"
-        }
 
         self.__available_optimizers = (
             method
@@ -119,41 +149,66 @@ class RUBIKSAI(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-        params = {
-            "q": conversation_prompt,
+        payload = {
             "model": self.model,
+            "stream": True,
+            "messages": [{"role": "user", "content": conversation_prompt}],
+            "temperature": self.temperature,
+            "search": ""
         }
 
         def for_stream():
-            response = self.session.get(
-                self.api_endpoint, params=params, headers=self.headers, stream=True, timeout=self.timeout
-            )
+            try:
+                response = self.session.post(
+                    self.api_endpoint,
+                    json=payload,
+                    stream=True,
+                    timeout=self.timeout
+                )
+                
+                if response.status_code == 403:
+                    # Try to refresh the session
+                    init_response = self.session.get("https://rubiks.ai/search/")
+                    self.cookies['cf_clearance'] = init_response.cookies.get('cf_clearance', '')
+                    self.session.cookies.update(self.cookies)
+                    
+                    # Retry the request
+                    response = self.session.post(
+                        self.api_endpoint,
+                        json=payload,
+                        stream=True,
+                        timeout=self.timeout
+                    )
 
-            if not response.ok:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Failed to generate response - ({response.status_code}, {response.reason})"
+                if not response.ok:
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Failed to generate response - ({response.status_code}, {response.reason})"
+                    )
+
+                # ...rest of the streaming code...
+                streaming_response = ""
+                for line in response.iter_lines(decode_unicode=True):
+                    if line:
+                        if line.startswith("data: "):
+                            json_data = line[6:]
+                            if json_data == "[DONE]":
+                                break
+                            try:
+                                data = json.loads(json_data)
+                                if "choices" in data and len(data["choices"]) > 0:
+                                    content = data["choices"][0]["delta"].get("content", "")
+                                    streaming_response += content
+                                    yield content if raw else dict(text=content)
+                            except json.decoder.JSONDecodeError:
+                                continue
+
+                self.last_response.update(dict(text=streaming_response))
+                self.conversation.update_chat_history(
+                    prompt, self.get_message(self.last_response)
                 )
 
-            streaming_response = ""
-            for line in response.iter_lines(decode_unicode=True):
-                if line:
-                    if line.startswith("data: "):
-                        json_data = line[6:]
-                        if json_data == "[DONE]":
-                            break
-                        try:
-                            data = json.loads(json_data)
-                            if "choices" in data and len(data["choices"]) > 0:
-                                content = data["choices"][0]["delta"].get("content", "")
-                                streaming_response += content
-                                yield content if raw else dict(text=content) 
-                        except json.decoder.JSONDecodeError:
-                            continue
-
-            self.last_response.update(dict(text=streaming_response))
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+            except Exception as e:
+                raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}")
 
         def for_non_stream():
             for _ in for_stream():

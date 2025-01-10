@@ -6,7 +6,7 @@ from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
-
+import webscout
 class Cleeai(Provider):
     """
     A class to interact with the Cleeai.com API.
@@ -59,7 +59,7 @@ class Cleeai(Provider):
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
+            "user-agent": webscout.LitAgent().random()
         }
 
         self.__available_optimizers = (

@@ -16,7 +16,6 @@ from .ai4chat import *
 from .Gemini import GEMINI
 from .Deepseek import DeepSeek
 from .Deepinfra import DeepInfra
-from .Farfalle import *
 from .cleeai import *
 from .OLLAMA import OLLAMA
 from .Andi import AndiSearch
@@ -54,18 +53,15 @@ from .bagoodex import *
 from .aimathgpt import *
 from .gaurish import *
 from .geminiprorealtime import *
-from .NinjaChat import *
 from .llmchat import *
 from .talkai import *
 from .askmyai import *
 from .llama3mitril import *
 from .Marcus import *
 from .typegpt import *
-from .mhystical import *
 from .multichat import *
 from .Jadve import *
 __all__ = [
-    'Farfalle',
     'LLAMA', 
     'Cohere',
     'REKA',
@@ -121,13 +117,11 @@ __all__ = [
     'AIMathGPT',
     'GaurishCerebras',
     'GeminiPro',
-    'NinjaChat',
     'LLMChat',
     'Talkai',
     'Llama3Mitril',
     'Marcus',
     'TypeGPT',
-    'Mhystical',
     'Netwrck',
     'MultiChatAI',
     'JadveOpenAI',

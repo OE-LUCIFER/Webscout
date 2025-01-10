@@ -10,7 +10,7 @@ from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 
-
+from webscout import LitAgent
 class GaurishCerebras(Provider):
     """
     A class to interact with the Gaurish Cerebras API.
@@ -65,7 +65,7 @@ class GaurishCerebras(Provider):
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
+            "user-agent": LitAgent().random(),
             "x-stainless-arch": "unknown",
             "x-stainless-lang": "js",
             "x-stainless-os": "Unknown",

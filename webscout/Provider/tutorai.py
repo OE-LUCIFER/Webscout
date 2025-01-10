@@ -48,7 +48,7 @@ class TutorAI(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://tutorai.me/api/generate-homeworkify-response"
+        self.api_endpoint = "https://ai-tutor.ai/api/generate-homeworkify-response"
         self.stream_chunk_size = 1024
         self.timeout = timeout
         self.last_response = {}

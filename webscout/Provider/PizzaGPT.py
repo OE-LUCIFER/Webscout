@@ -1,17 +1,21 @@
 import requests
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any, AsyncGenerator, Dict, Optional, Union, Generator
 import json
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import  Provider, AsyncProvider
+from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 from webscout import LitAgent as Lit
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
 
 class PIZZAGPT(Provider):
     """
-    A class to interact with the PizzaGPT API.
+    PIZZAGPT is a provider class for interacting with the PizzaGPT API.
+
+    Attributes:
+        knowledge_cutoff (str): The knowledge cutoff date for the model
     """
 
     def __init__(
@@ -25,20 +29,18 @@ class PIZZAGPT(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        logging: bool = False,
     ) -> None:
         """
-        Initializes the PizzaGPT API with given parameters.
+        Initializes the PizzaGPT provider with the specified parameters.
 
-        Args:
-            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
-            timeout (int, optional): Http request timeout. Defaults to 30.
-            intro (str, optional): Conversation introductory prompt. Defaults to None.
-            filepath (str, optional): Path to file containing conversation history. Defaults to None.
-            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
-            proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
-            act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
+        Examples:
+            >>> ai = PIZZAGPT(logging=True)
+            >>> ai.ask("What's the weather today?")
+            Sends a prompt to the PizzaGPT API and returns the response.
+
+            >>> ai.chat("Tell me a joke")
+            Initiates a chat with the PizzaGPT API using the provided prompt.
         """
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -85,6 +87,10 @@ class PIZZAGPT(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+        
+        # Initialize logger
+        self.logger = LitLogger(name="PIZZAGPT", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+
 
     def ask(
         self,
@@ -93,23 +99,16 @@ class PIZZAGPT(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict:
-        """Chat with AI
-
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-           dict : {}
-        ```json
-        {
-           "text" : "How may I assist you today?"
-        }
-        ```
+    ) -> Dict[str, Any]:
         """
+        Sends a prompt to the PizzaGPT API and returns the response.
+
+        Examples:
+            >>> ai = PIZZAGPT()
+            >>> ai.ask("What's the weather today?")
+            Returns the response from the PizzaGPT API.
+        """
+
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -117,27 +116,37 @@ class PIZZAGPT(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                if self.logger:
+                    self.logger.error(f"Invalid optimizer: {optimizer}")
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         self.session.headers.update(self.headers)
         payload = {"question": conversation_prompt}
 
-        response = self.session.post(
-            self.api_endpoint, json=payload, timeout=self.timeout
-        )
-        if not response.ok:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+        try:
+            response = self.session.post(
+                self.api_endpoint, json=payload, timeout=self.timeout
             )
+            if self.logger:
+                self.logger.debug(response)
+            if not response.ok:
+                if self.logger:
+                    self.logger.error(f"Failed to generate response: {response.status_code} {response.reason}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                )
 
-        resp = response.json()
-        self.last_response.update(dict(text=resp['content']))
-        self.conversation.update_chat_history(
-            prompt, self.get_message(self.last_response)
-        )
-        return self.last_response # Return the updated last_response
+            resp = response.json()
+            if self.logger:
+                self.logger.debug(resp)
+            self.last_response.update(dict(text=resp['content']))
+            self.conversation.update_chat_history(
+                prompt, self.get_message(self.last_response)
+            )
+            return self.last_response
+
+        except Exception as e:
+            raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
     def chat(
         self,
@@ -146,14 +155,13 @@ class PIZZAGPT(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
+        """
+        Initiates a chat with the PizzaGPT API using the provided prompt.
+
+        Examples:
+            >>> ai = PIZZAGPT()
+            >>> ai.chat("Tell me a joke")
+            Returns the chat response from the PizzaGPT API.
         """
 
         return self.get_message(
@@ -163,6 +171,7 @@ class PIZZAGPT(Provider):
                 conversationally=conversationally,
             )
         )
+
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response
 
@@ -177,7 +186,7 @@ class PIZZAGPT(Provider):
 if __name__ == "__main__":
     from rich import print
 
-    ai = PIZZAGPT() 
+    ai = PIZZAGPT(logging=True) 
     # Stream the response
     response = ai.chat("hi")
     for chunk in response:

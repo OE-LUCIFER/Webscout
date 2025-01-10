@@ -14,7 +14,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider
 from webscout import exceptions
-
+from webscout import LitAgent as Lit
 MAX_RETRIES = 3
 
 def generate_offline_threading_id() -> str:
@@ -103,7 +103,7 @@ def get_fb_session(email, password, proxies=None):
         "sec-fetch-site": "none",
         "sec-fetch-user": "?1",
         "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "user-agent": Lit().random(),
     }
     # Send the GET request
     response = requests.get(login_url, headers=headers, proxies=proxies)

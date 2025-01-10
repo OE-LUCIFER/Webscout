@@ -501,3 +501,9 @@ class Phindv2(Provider):
                 else ""
             )
 
+if __name__ == "__main__":
+    from rich import print
+
+    ai = Phindv2() 
+    print(ai.chat("Tell me a joke"))
+    # Returns the chat response from the Phindv2 API.

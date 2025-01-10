@@ -7,7 +7,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-
+from webscout import LitAgent as Lit
 
 class Marcus(Provider):
     """
@@ -39,7 +39,7 @@ class Marcus(Provider):
             'accept': '*/*',
             'origin': 'https://www.askmarcus.app',
             'referer': 'https://www.askmarcus.app/chat',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+            'user-agent': Lit().random(),
         }
         self.__available_optimizers = (
             method
@@ -134,4 +134,4 @@ if __name__ == '__main__':
     ai = Marcus(timeout=30)
     response = ai.chat("Tell me about India", stream=True)
     for chunk in response:
-        print(chunk)
+        print(chunk, end="", flush=True)
