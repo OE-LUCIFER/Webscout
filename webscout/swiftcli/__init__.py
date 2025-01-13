@@ -27,6 +27,7 @@ Advanced Usage:
 For more examples, check out the documentation!
 """
 
+import importlib
 import os
 import sys
 import json

@@ -40,7 +40,7 @@ pip install webscout
 from webscout import Channel
 
 # Create a channel instance
-channel = Channel('PewDiePie')
+channel = Channel('@PewDiePie')
 
 # Access channel metadata
 print(channel.name)          # Channel name
@@ -59,14 +59,7 @@ if channel.live:
 
 ```python
 from webscout import Video
-
-# Create a video instance
-video = Video('dQw4w9WgXcQ')
-
-# Access video metadata
-print(video.title)        # Video title
-print(video.views)        # View count
-print(video.description)  # Video description
+print(Video('https://www.youtube.com/watch?v=9bZkp7q19f0').metadata)
 ```
 
 ### Trending Videos
@@ -80,6 +73,15 @@ music_videos = Extras.music_videos()
 gaming_videos = Extras.gaming_videos()
 ```
 
+### Search across youtube
+
+```python
+from webscout import Search
+print(Search.videos("LET ME IN WWE SONG"))
+print(Search.channels("OEvortex"))
+print(Search.playlists("OEvortex"))
+```
+
 ## 🛠 Modules
 
 - `channel.py`: Channel metadata and interaction
@@ -87,12 +89,3 @@ gaming_videos = Extras.gaming_videos()
 - `extras.py`: Trending and category-based video retrieval
 - `query.py`: Advanced search capabilities
 - `playlist.py`: Playlist metadata extraction
-
-## ⚠️ Disclaimer
-
-This module uses web scraping techniques. YouTube's HTML structure may change, potentially affecting extraction reliability.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please submit pull requests or open issues on the Webscout GitHub repository.
-

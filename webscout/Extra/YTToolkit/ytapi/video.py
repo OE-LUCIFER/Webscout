@@ -100,3 +100,5 @@ class Video:
         except AttributeError:
             data['genre'] = None
         return data
+if __name__ == '__main__':
+    print(Video('https://www.youtube.com/watch?v=9bZkp7q19f0').metadata)

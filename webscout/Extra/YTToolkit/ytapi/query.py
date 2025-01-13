@@ -35,3 +35,6 @@ class Search:
     @staticmethod
     def playlists(keywords: str, limit: int = 20) -> Optional[List[str]]:
         return dup_filter(Patterns.playlist_id.findall(find_playlists(keywords)), limit)
+
+if __name__ == "__main__":
+    print(Search.videos("java"))

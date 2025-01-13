@@ -58,3 +58,6 @@ class Video:
             'tags': data[7].split(',') if data[7] else None,
             'description': data[8].replace('\\n', '\n') if data[8] else None
         }
+
+if __name__ == '__main__':
+    print(Video('https://www.youtube.com/watch?v=9bZkp7q19f0').metadata)

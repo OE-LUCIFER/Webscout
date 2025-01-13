@@ -37,14 +37,14 @@ pip install webscout
 #### Video Downloader
 
 ```python
-from webscout import YTDownloader
+from webscout import Handler
 
 # Basic video download
-downloader = YTDownloader.Handler('https://youtube.com/video_link')
-downloader.auto_save()
+downloader = Handler('https://youtube.com/video_link')
+downloader.save()
 
 # Advanced download with custom settings
-downloader = YTDownloader.Handler(
+downloader = Handler(
     query='tutorial video', 
     format='mp4', 
     quality='720p', 
@@ -72,7 +72,7 @@ spanish_transcript = YTTranscriber.get_transcript('video_link', languages='es')
 from webscout import Channel
 
 # Retrieve channel information
-channel = Channel('PewDiePie')
+channel = Channel('@PewDiePie')
 print(f"Channel Name: {channel.name}")
 print(f"Subscribers: {channel.subscribers}")
 print(f"Recent Uploads: {channel.uploads(5)}")
