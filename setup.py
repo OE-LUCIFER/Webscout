@@ -52,6 +52,8 @@ setup(
             "pillow",
             "bson",
             "cloudscraper",
+            "html5lib",
+            "aiofiles",
             "emoji",
             "openai",
             "prompt-toolkit",

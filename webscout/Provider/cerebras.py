@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Generator, List, Union
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from fake_useragent import UserAgent
+from webscout import LitAgent as UserAgent
 
 class Cerebras(Provider):
     """
@@ -89,7 +89,7 @@ class Cerebras(Provider):
             "Content-Type": "application/json",
             "Origin": "https://inference.cerebras.ai",
             "Referer": "https://inference.cerebras.ai/",
-            "user-agent": UserAgent().random,
+            "user-agent": UserAgent().random(),
         }
 
         json_data = {
@@ -119,7 +119,7 @@ class Cerebras(Provider):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "User-Agent": UserAgent().random
+            "User-Agent": UserAgent().random(),
         }
 
         payload = {

@@ -7,8 +7,9 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from functools import cached_property
 from itertools import cycle, islice
-from random import choice
+from random import choice, shuffle
 from threading import Event
+from time import sleep, time
 from types import TracebackType
 from typing import cast
 
@@ -67,13 +68,29 @@ class WEBS:
                 example: "http://user:pass@example.com:3128". Defaults to None.
             timeout (int, optional): Timeout value for the HTTP client. Defaults to 10.
         """
-        self.proxy: str | None = _expand_proxy_tb_alias(proxy)  # replaces "tb" with "socks5://127.0.0.1:9150"
+        self.proxy: str | None = _expand_proxy_tb_alias(proxy)
         assert self.proxy is None or isinstance(self.proxy, str), "proxy must be a str"
         if not proxy and proxies:
             warnings.warn("'proxies' is deprecated, use 'proxy' instead.", stacklevel=1)
             self.proxy = proxies.get("http") or proxies.get("https") if isinstance(proxies, dict) else proxies
+        
+        default_headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "DNT": "1",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Referer": "https://duckduckgo.com/",
+        }
+        
         self.headers = headers if headers else {}
-        self.headers["Referer"] = "https://duckduckgo.com/"
+        self.headers.update(default_headers)
+        
         self.client = primp.Client(
             headers=self.headers,
             proxy=self.proxy,
@@ -81,9 +98,11 @@ class WEBS:
             cookie_store=True,
             referer=True,
             impersonate=choice(self._impersonates),
-            follow_redirects=False,
+            follow_redirects=True,
             verify=False,
         )
+        self.sleep_timestamp = 0.0
+
         self._exception_event = Event()
         self._chat_messages: list[dict[str, str]] = []
         self._chat_tokens_count = 0
@@ -105,30 +124,40 @@ class WEBS:
         """Get HTML parser."""
         return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
 
+    def _sleep(self, sleeptime: float = 2.0) -> None:
+        """Sleep between API requests."""
+        delay = sleeptime if not self.sleep_timestamp else sleeptime if time() - self.sleep_timestamp >= 30 else sleeptime * 2
+        self.sleep_timestamp = time()
+        sleep(delay)
+
     def _get_url(
         self,
         method: str,
         url: str,
         params: dict[str, str] | None = None,
         content: bytes | None = None,
-        data: dict[str, str] | bytes | None = None,
+        data: dict[str, str] | None = None,
     ) -> bytes:
-        if self._exception_event.is_set():
-            raise WebscoutE("Exception occurred in previous call.")
+        """Make HTTP request with proper rate limiting."""
+        self._sleep()
         try:
             resp = self.client.request(method, url, params=params, content=content, data=data)
+            
+            # Add additional delay if we get a 429 or similar status
+            if resp.status_code in (429, 403, 503):
+                sleep(5.0)  # Additional delay for rate limit responses
+                resp = self.client.request(method, url, params=params, content=content, data=data)
+                
         except Exception as ex:
-            self._exception_event.set()
             if "time" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
             raise WebscoutE(f"{url} {type(ex).__name__}: {ex}") from ex
-        # logger.debug(f"_get_url() {resp.url} {resp.status_code} {len(resp.content)}")
+
         if resp.status_code == 200:
-            return cast(bytes, resp.content)
-        self._exception_event.set()
-        if resp.status_code in (202, 301, 403):
-            raise RatelimitE(f"{resp.url} {resp.status_code} Ratelimit")
-        raise WebscoutE(f"{resp.url} return None. {params=} {content=} {data=}")
+            return resp.content
+        elif resp.status_code in (202, 301, 403, 429, 503):
+            raise RatelimitE(f"{url} {resp.status_code} Ratelimit - Please wait a few minutes before retrying")
+        raise WebscoutE(f"{url} return None. {params=} {content=} {data=}")
 
     def _get_vqd(self, keywords: str) -> str:
         """Get vqd value for a search query."""
@@ -208,7 +237,7 @@ class WEBS:
         region: str = "wt-wt",
         safesearch: str = "moderate",
         timelimit: str | None = None,
-        backend: str = "api",
+        backend: str = "auto",
         max_results: int | None = None,
     ) -> list[dict[str, str]]:
         """webscout text search. Query params: https://duckduckgo.com/params.
@@ -218,31 +247,38 @@ class WEBS:
             region: wt-wt, us-en, uk-en, ru-ru, etc. Defaults to "wt-wt".
             safesearch: on, moderate, off. Defaults to "moderate".
             timelimit: d, w, m, y. Defaults to None.
-            backend: api, html, lite. Defaults to api.
-                api - collect data from https://duckduckgo.com,
+            backend: auto, html, lite. Defaults to auto.
+                auto - try all backends in random order,
                 html - collect data from https://html.duckduckgo.com,
                 lite - collect data from https://lite.duckduckgo.com.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
         Returns:
-            List of dictionaries with search results, or None if there was an error.
+            List of dictionaries with search results.
 
         Raises:
             WebscoutE: Base exception for webscout errors.
             RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
-        if LXML_AVAILABLE is False and backend != "api":
-            backend = "api"
-            warnings.warn("lxml is not installed. Using backend='api'.", stacklevel=2)
+        if backend in ("api", "ecosia"):
+            warnings.warn(f"{backend=} is deprecated, using backend='auto'", stacklevel=2)
+            backend = "auto"
+        backends = ["html", "lite"] if backend == "auto" else [backend]
+        shuffle(backends)
 
-        if backend == "api":
-            results = self._text_api(keywords, region, safesearch, timelimit, max_results)
-        elif backend == "html":
-            results = self._text_html(keywords, region, timelimit, max_results)
-        elif backend == "lite":
-            results = self._text_lite(keywords, region, timelimit, max_results)
-        return results
+        results, err = [], None
+        for b in backends:
+            try:
+                if b == "html":
+                    results = self._text_html(keywords, region, timelimit, max_results)
+                elif b == "lite":
+                    results = self._text_lite(keywords, region, timelimit, max_results)
+                return results
+            except Exception as ex:
+                err = ex
+
+        raise WebscoutE(err)
 
     def _text_api(
         self,

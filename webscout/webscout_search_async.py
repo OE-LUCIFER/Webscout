@@ -1,11 +1,51 @@
+from __future__ import annotations
+
 import asyncio
+import logging
+import os
+import warnings
+from datetime import datetime, timezone
+from functools import cached_property
+from itertools import cycle
+from random import choice, shuffle
+from time import time
 from types import TracebackType
-from typing import Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union, cast
 
-from .webscout_search import WEBS
+import httpx
+from lxml.etree import _Element
+from lxml.html import HTMLParser as LHTMLParser
+from lxml.html import document_fromstring
+
+from .exceptions import RatelimitE, TimeoutE, WebscoutE
+from .utils import (
+    _expand_proxy_tb_alias,
+    _extract_vqd,
+    _normalize,
+    _normalize_url,
+    json_loads,
+)
+
+logger = logging.getLogger("webscout.AsyncWEBS")
 
 
-class AsyncWEBS(WEBS):
+class AsyncWEBS:
+    """Asynchronous webscout class to get search results."""
+
+    _impersonates = (
+        "chrome_100", "chrome_101", "chrome_104", "chrome_105", "chrome_106", "chrome_107",
+        "chrome_108", "chrome_109", "chrome_114", "chrome_116", "chrome_117", "chrome_118",
+        "chrome_119", "chrome_120", "chrome_123", "chrome_124", "chrome_126", "chrome_127",
+        "chrome_128", "chrome_129", "chrome_130", "chrome_131",
+        "safari_ios_16.5", "safari_ios_17.2", "safari_ios_17.4.1", "safari_ios_18.1.1",
+        "safari_15.3", "safari_15.5", "safari_15.6.1", "safari_16", "safari_16.5",
+        "safari_17.0", "safari_17.2.1", "safari_17.4.1", "safari_17.5",
+        "safari_18", "safari_18.2",
+        "safari_ipad_18",
+        "edge_101", "edge_122", "edge_127", "edge_131",
+        "firefox_109", "firefox_117", "firefox_128", "firefox_133",
+    )
+
     def __init__(
         self,
         headers: Optional[Dict[str, str]] = None,
@@ -21,20 +61,88 @@ class AsyncWEBS(WEBS):
                 example: "http://user:pass@example.com:3128". Defaults to None.
             timeout (int, optional): Timeout value for the HTTP client. Defaults to 10.
         """
-        super().__init__(headers=headers, proxy=proxy, proxies=proxies, timeout=timeout)
-        self._loop = asyncio.get_running_loop()
-        self._executor = super()._executor
+        self.proxy: Optional[str] = _expand_proxy_tb_alias(proxy)
+        assert self.proxy is None or isinstance(self.proxy, str), "proxy must be a str"
+        if not proxy and proxies:
+            warnings.warn("'proxies' is deprecated, use 'proxy' instead.", stacklevel=1)
+            self.proxy = proxies.get("http") or proxies.get("https") if isinstance(proxies, dict) else proxies
 
-    async def __aenter__(self) -> "AsyncWEBS":
+        default_headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "DNT": "1",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Referer": "https://duckduckgo.com/",
+        }
+
+        self.headers = headers if headers else {}
+        self.headers.update(default_headers)
+
+        self.client = httpx.AsyncClient(
+            headers=self.headers,
+            proxies=self.proxy,
+            timeout=timeout,
+            follow_redirects=True,
+            verify=False,
+        )
+        self.sleep_timestamp = 0.0
+
+    async def __aenter__(self) -> AsyncWEBS:
         return self
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: Optional[Type[BaseException]] = None,
+        exc_val: Optional[BaseException] = None,
+        exc_tb: Optional[TracebackType] = None,
     ) -> None:
-        pass
+        await self.client.aclose()
+
+    @cached_property
+    def parser(self) -> LHTMLParser:
+        """Get HTML parser."""
+        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
+
+    async def _sleep(self, sleeptime: float = 2.0) -> None:
+        """Sleep between API requests."""
+        delay = sleeptime if not self.sleep_timestamp else sleeptime if time() - self.sleep_timestamp >= 30 else sleeptime * 2
+        self.sleep_timestamp = time()
+        await asyncio.sleep(delay)
+
+    async def _get_url(
+        self,
+        method: str,
+        url: str,
+        params: Optional[Dict[str, str]] = None,
+        content: Optional[bytes] = None,
+        data: Optional[Dict[str, str]] = None,
+    ) -> bytes:
+        """Make HTTP request with proper rate limiting."""
+        await self._sleep()
+        try:
+            resp = await self.client.request(method, url, params=params, content=content, data=data)
+            
+            # Add additional delay if we get a 429 or similar status
+            if resp.status_code in (429, 403, 503):
+                await asyncio.sleep(5.0)  # Additional delay for rate limit responses
+                resp = await self.client.request(method, url, params=params, content=content, data=data)
+                
+        except Exception as ex:
+            if "time" in str(ex).lower():
+                raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
+            raise WebscoutE(f"{url} {type(ex).__name__}: {ex}") from ex
+
+        if resp.status_code == 200:
+            return resp.content
+        elif resp.status_code in (202, 301, 403, 429, 503):
+            raise RatelimitE(f"{url} {resp.status_code} Ratelimit - Please wait a few minutes before retrying")
+        raise WebscoutE(f"{url} return None. {params=} {content=} {data=}")
 
     async def achat(self, keywords: str, model: str = "gpt-3.5") -> str:
         """Initiates async chat session with webscout AI.
@@ -56,7 +164,7 @@ class AsyncWEBS(WEBS):
         region: str = "wt-wt",
         safesearch: str = "moderate",
         timelimit: Optional[str] = None,
-        backend: str = "api",
+        backend: str = "auto",
         max_results: Optional[int] = None,
     ) -> List[Dict[str, str]]:
         """webscout async text search. Query params: https://duckduckgo.com/params.
@@ -66,24 +174,190 @@ class AsyncWEBS(WEBS):
             region: wt-wt, us-en, uk-en, ru-ru, etc. Defaults to "wt-wt".
             safesearch: on, moderate, off. Defaults to "moderate".
             timelimit: d, w, m, y. Defaults to None.
-            backend: api, html, lite. Defaults to api.
-                api - collect data from https://duckduckgo.com,
+            backend: auto, html, lite. Defaults to auto.
+                auto - try all backends in random order,
                 html - collect data from https://html.duckduckgo.com,
                 lite - collect data from https://lite.duckduckgo.com.
             max_results: max number of results. If None, returns results only from the first response. Defaults to None.
 
         Returns:
-            List of dictionaries with search results, or None if there was an error.
+            List of dictionaries with search results.
 
         Raises:
-            DuckDuckGoSearchException: Base exception for duckduckgo_search errors.
-            RatelimitException: Inherits from DuckDuckGoSearchException, raised for exceeding API request rate limits.
-            TimeoutException: Inherits from DuckDuckGoSearchException, raised for API request timeouts.
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
-        result = await self._loop.run_in_executor(
-            self._executor, super().text, keywords, region, safesearch, timelimit, backend, max_results
-        )
-        return result
+        if backend in ("api", "ecosia"):
+            warnings.warn(f"{backend=} is deprecated, using backend='auto'", stacklevel=2)
+            backend = "auto"
+        backends = ["html", "lite"] if backend == "auto" else [backend]
+        shuffle(backends)
+
+        results, err = [], None
+        for b in backends:
+            try:
+                if b == "html":
+                    results = await self._text_html(keywords, region, timelimit, max_results)
+                elif b == "lite":
+                    results = await self._text_lite(keywords, region, timelimit, max_results)
+                return results
+            except Exception as ex:
+                err = ex
+
+        raise WebscoutE(err)
+
+    async def _text_html(
+        self,
+        keywords: str,
+        region: str = "wt-wt",
+        timelimit: Optional[str] = None,
+        max_results: Optional[int] = None,
+    ) -> List[Dict[str, str]]:
+        """HTML backend for text search."""
+        assert keywords, "keywords is mandatory"
+
+        payload = {
+            "q": keywords,
+            "s": "0",
+            "o": "json",
+            "api": "d.js",
+            "vqd": "",
+            "kl": region,
+            "bing_market": region,
+        }
+        if timelimit:
+            payload["df"] = timelimit
+
+        cache = set()
+        results: List[Dict[str, str]] = []
+
+        for _ in range(5):
+            resp_content = await self._get_url("POST", "https://html.duckduckgo.com/html", data=payload)
+            if b"No  results." in resp_content:
+                return results
+
+            tree = document_fromstring(resp_content, self.parser)
+            elements = tree.xpath("//div[h2]")
+            if not isinstance(elements, list):
+                return results
+
+            for e in elements:
+                if isinstance(e, _Element):
+                    hrefxpath = e.xpath("./a/@href")
+                    href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
+                    if (
+                        href
+                        and href not in cache
+                        and not href.startswith(
+                            ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                        )
+                    ):
+                        cache.add(href)
+                        titlexpath = e.xpath("./h2/a/text()")
+                        title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
+                        bodyxpath = e.xpath("./a//text()")
+                        body = "".join(str(x) for x in bodyxpath) if bodyxpath and isinstance(bodyxpath, list) else ""
+                        results.append(
+                            {
+                                "title": _normalize(title),
+                                "href": _normalize_url(href),
+                                "body": _normalize(body),
+                            }
+                        )
+                        if max_results and len(results) >= max_results:
+                            return results
+
+            npx = tree.xpath('.//div[@class="nav-link"]')
+            if not npx or not max_results:
+                return results
+            next_page = npx[-1] if isinstance(npx, list) else None
+            if isinstance(next_page, _Element):
+                names = next_page.xpath('.//input[@type="hidden"]/@name')
+                values = next_page.xpath('.//input[@type="hidden"]/@value')
+                if isinstance(names, list) and isinstance(values, list):
+                    payload = {str(n): str(v) for n, v in zip(names, values)}
+
+        return results
+
+    async def _text_lite(
+        self,
+        keywords: str,
+        region: str = "wt-wt",
+        timelimit: Optional[str] = None,
+        max_results: Optional[int] = None,
+    ) -> List[Dict[str, str]]:
+        """Lite backend for text search."""
+        assert keywords, "keywords is mandatory"
+
+        payload = {
+            "q": keywords,
+            "s": "0",
+            "o": "json",
+            "api": "d.js",
+            "vqd": "",
+            "kl": region,
+            "bing_market": region,
+        }
+        if timelimit:
+            payload["df"] = timelimit
+
+        cache = set()
+        results: List[Dict[str, str]] = []
+
+        for _ in range(5):
+            resp_content = await self._get_url("POST", "https://lite.duckduckgo.com/lite/", data=payload)
+            if b"No more results." in resp_content:
+                return results
+
+            tree = document_fromstring(resp_content, self.parser)
+            elements = tree.xpath("//table[last()]//tr")
+            if not isinstance(elements, list):
+                return results
+
+            data = zip(cycle(range(1, 5)), elements)
+            for i, e in data:
+                if isinstance(e, _Element):
+                    if i == 1:
+                        hrefxpath = e.xpath(".//a//@href")
+                        href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
+                        if (
+                            href is None
+                            or href in cache
+                            or href.startswith(
+                                ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                            )
+                        ):
+                            [next(data, None) for _ in range(3)]  # skip block(i=1,2,3,4)
+                        else:
+                            cache.add(href)
+                            titlexpath = e.xpath(".//a//text()")
+                            title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
+                    elif i == 2:
+                        bodyxpath = e.xpath(".//td[@class='result-snippet']//text()")
+                        body = (
+                            "".join(str(x) for x in bodyxpath).strip()
+                            if bodyxpath and isinstance(bodyxpath, list)
+                            else ""
+                        )
+                        if href:
+                            results.append(
+                                {
+                                    "title": _normalize(title),
+                                    "href": _normalize_url(href),
+                                    "body": _normalize(body),
+                                }
+                            )
+                            if max_results and len(results) >= max_results:
+                                return results
+
+            next_page_s = tree.xpath("//form[./input[contains(@value, 'ext')]]/input[@name='s']/@value")
+            if not next_page_s or not max_results:
+                return results
+            elif isinstance(next_page_s, list):
+                payload["s"] = str(next_page_s[0])
+
+        return results
 
     async def aimages(
         self,
@@ -121,9 +395,9 @@ class AsyncWEBS(WEBS):
             List of dictionaries with images search results.
 
         Raises:
-            DuckDuckGoSearchException: Base exception for duckduckgo_search errors.
-            RatelimitException: Inherits from DuckDuckGoSearchException, raised for exceeding API request rate limits.
-            TimeoutException: Inherits from DuckDuckGoSearchException, raised for API request timeouts.
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         result = await self._loop.run_in_executor(
             self._executor,
@@ -168,9 +442,9 @@ class AsyncWEBS(WEBS):
             List of dictionaries with videos search results.
 
         Raises:
-            DuckDuckGoSearchException: Base exception for duckduckgo_search errors.
-            RatelimitException: Inherits from DuckDuckGoSearchException, raised for exceeding API request rate limits.
-            TimeoutException: Inherits from DuckDuckGoSearchException, raised for API request timeouts.
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         result = await self._loop.run_in_executor(
             self._executor,
@@ -207,9 +481,9 @@ class AsyncWEBS(WEBS):
             List of dictionaries with news search results.
 
         Raises:
-            DuckDuckGoSearchException: Base exception for duckduckgo_search errors.
-            RatelimitException: Inherits from DuckDuckGoSearchException, raised for exceeding API request rate limits.
-            TimeoutException: Inherits from DuckDuckGoSearchException, raised for API request timeouts.
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         result = await self._loop.run_in_executor(
             self._executor,
@@ -235,9 +509,9 @@ class AsyncWEBS(WEBS):
             List of dictionaries with instant answers results.
 
         Raises:
-            DuckDuckGoSearchException: Base exception for duckduckgo_search errors.
-            RatelimitException: Inherits from DuckDuckGoSearchException, raised for exceeding API request rate limits.
-            TimeoutException: Inherits from DuckDuckGoSearchException, raised for API request timeouts.
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         result = await self._loop.run_in_executor(
             self._executor,
@@ -261,9 +535,9 @@ class AsyncWEBS(WEBS):
             List of dictionaries with suggestions results.
 
         Raises:
-            DuckDuckGoSearchException: Base exception for duckduckgo_search errors.
-            RatelimitException: Inherits from DuckDuckGoSearchException, raised for exceeding API request rate limits.
-            TimeoutException: Inherits from DuckDuckGoSearchException, raised for API request timeouts.
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         result = await self._loop.run_in_executor(
             self._executor,
@@ -309,9 +583,9 @@ class AsyncWEBS(WEBS):
             List of dictionaries with maps search results, or None if there was an error.
 
         Raises:
-            DuckDuckGoSearchException: Base exception for duckduckgo_search errors.
-            RatelimitException: Inherits from DuckDuckGoSearchException, raised for exceeding API request rate limits.
-            TimeoutException: Inherits from DuckDuckGoSearchException, raised for API request timeouts.
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         result = await self._loop.run_in_executor(
             self._executor,
@@ -348,9 +622,9 @@ class AsyncWEBS(WEBS):
             List od dictionaries with translated keywords.
 
         Raises:
-            DuckDuckGoSearchException: Base exception for duckduckgo_search errors.
-            RatelimitException: Inherits from DuckDuckGoSearchException, raised for exceeding API request rate limits.
-            TimeoutException: Inherits from DuckDuckGoSearchException, raised for API request timeouts.
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         result = await self._loop.run_in_executor(
             self._executor,

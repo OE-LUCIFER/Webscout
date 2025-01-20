@@ -17,7 +17,6 @@ from .swiftcli import *
 from .litagent import LitAgent
 from .scout import *
 from .zeroart import *
-from .zerodir import *
 agent = LitAgent()
 
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"

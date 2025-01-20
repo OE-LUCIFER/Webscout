@@ -14,7 +14,6 @@ from .Phind import PhindSearch
 from .Phind import Phindv2
 from .ai4chat import *
 from .Gemini import GEMINI
-from .Deepseek import DeepSeek
 from .Deepinfra import DeepInfra
 from .cleeai import *
 from .OLLAMA import OLLAMA
@@ -74,7 +73,6 @@ __all__ = [
     'BLACKBOXAI', 
     'PhindSearch', 
     'GEMINI',
-    'DeepSeek',
     'DeepInfra',
     'AI4Chat',
     'Phindv2',

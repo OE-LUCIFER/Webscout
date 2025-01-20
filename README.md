@@ -41,9 +41,8 @@
 * **Tempmail & Temp Number:** Generate temporary email addresses and phone numbers for enhanced privacy.
 * **[Text-to-Speech (TTS)](webscout/Provider/TTS/README.md):** Convert text into natural-sounding speech using multiple AI-powered providers like ElevenLabs, StreamElements, and Voicepods.
 * **Offline LLMs:** Utilize powerful language models offline with GGUF support.
-* **Extensive Provider Ecosystem:** Explore a vast collection of providers, including BasedGPT, DeepSeek, and many others.
+* **Extensive Provider Ecosystem:** Explore a vast collection of AI providers
 * **Local LLM Execution:** Run GGUF models locally with minimal configuration.
-* **Rawdog Scripting:** Execute Python scripts directly within your terminal using the `rawdog` feature.
 * **GGUF Conversion & Quantization:** Convert and quantize Hugging Face models to GGUF format.
 * **Autollama:** Download Hugging Face models and automatically convert them for Ollama compatibility.
 * **[SwiftCLI](webscout/swiftcli/Readme.md):** A powerful and elegant CLI framework that makes it easy to create beautiful command-line interfaces.
@@ -898,34 +897,6 @@ a = Cohere(is_conversation=True, max_tokens=8000, timeout=30,api_key="")
 prompt = "tell me about india"
 response_str = a.chat(prompt)
 print(response_str)
-```
-
-###  `DeepSeek` - Chat with DeepSeek
-
-```python
-from webscout import DeepSeek
-from rich import print
-
-ai = DeepSeek(
-    is_conversation=True,
-    api_key='cookie',
-    max_tokens=800,
-    timeout=30,
-    intro=None,
-    filepath=None,
-    update_file=True,
-    proxies={},
-    history_offset=10250,
-    act=None,
-    model="deepseek_chat"
-)
-
-
-# Define a prompt to send to the AI
-prompt = "Tell me about india"
-# Use the 'chat' method to send the prompt and receive a response
-r = ai.chat(prompt)
-print(r)
 ```
 
 ###  `Deepinfra`

@@ -12,9 +12,14 @@ from sys import stdout
 import os
 import subprocess
 import sys
+import tempfile
 from webscout.version import __prog__, __version__
-from webscout.zerodir import user_cache_dir
 from webscout.swiftcli import CLI, option, argument, group
+
+# Define cache directory using tempfile
+user_cache_dir = os.path.join(tempfile.gettempdir(), 'webscout')
+if not os.path.exists(user_cache_dir):
+    os.makedirs(user_cache_dir)
 
 logging = LitLogger(name="YTDownloader")
 
@@ -32,7 +37,7 @@ session.headers.update(headers)
 
 get_excep = lambda e: e.args[1] if len(e.args) > 1 else e
 
-appdir = user_cache_dir(__prog__, __prog__)
+appdir = user_cache_dir
 
 if not path.isdir(appdir):
     try:
