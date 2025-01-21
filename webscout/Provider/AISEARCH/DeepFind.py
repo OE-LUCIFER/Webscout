@@ -1,16 +1,15 @@
-import re
-import requests
 from uuid import uuid4
+import requests
 import json
+import re
 from typing import Any, Dict, Generator, Optional
 
 from webscout.AIbase import AISearch
 from webscout import exceptions
 from webscout import LitAgent
 
-
 class Response:
-    """A wrapper class for Felo API responses.
+    """A wrapper class for DeepFind API responses.
     
     This class automatically converts response objects to their text representation
     when printed or converted to string.
@@ -34,16 +33,15 @@ class Response:
     def __repr__(self):
         return self.text
 
-
-class Felo(AISearch):
-    """A class to interact with the Felo AI search API.
+class DeepFind(AISearch):
+    """A class to interact with the DeepFind AI search API.
     
-    Felo provides a powerful search interface that returns AI-generated responses
+    DeepFind provides a powerful search interface that returns AI-generated responses
     based on web content. It supports both streaming and non-streaming responses.
     
     Basic Usage:
-        >>> from webscout import Felo
-        >>> ai = Felo()
+        >>> from webscout import DeepFind
+        >>> ai = DeepFind()
         >>> # Non-streaming example
         >>> response = ai.search("What is Python?")
         >>> print(response)
@@ -65,7 +63,7 @@ class Felo(AISearch):
         proxies (dict, optional): Proxy configuration for requests. Defaults to None.
     
     Attributes:
-        api_endpoint (str): The Felo API endpoint URL.
+        api_endpoint (str): The DeepFind API endpoint URL.
         stream_chunk_size (int): Size of chunks when streaming responses.
         timeout (int): Request timeout in seconds.
         headers (dict): HTTP headers used in requests.
@@ -76,37 +74,38 @@ class Felo(AISearch):
         timeout: int = 30,
         proxies: Optional[dict] = None,
     ):
-        """Initialize the Felo API client.
+        """Initialize the DeepFind API client.
         
         Args:
             timeout (int, optional): Request timeout in seconds. Defaults to 30.
             proxies (dict, optional): Proxy configuration for requests. Defaults to None.
         
         Example:
-            >>> ai = Felo(timeout=60)  # Longer timeout
-            >>> ai = Felo(proxies={'http': 'http://proxy.com:8080'})  # With proxy
+            >>> ai = DeepFind(timeout=60)  # Longer timeout
+            >>> ai = DeepFind(proxies={'http': 'http://proxy.com:8080'})  # With proxy
         """
         self.session = requests.Session()
-        self.chat_endpoint = "https://api.felo.ai/search/threads"
-        self.stream_chunk_size = 64
+        self.api_endpoint = "https://www.deepfind.co/?q={query}"
+        self.stream_chunk_size = 1024
         self.timeout = timeout
         self.last_response = {}
         self.headers = {
-            "accept": "*/*",
-            "accept-encoding": "gzip, deflate, br, zstd",
-            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
-            "content-type": "application/json",
-            "cookie": "_clck=1gifk45%7C2%7Cfoa%7C0%7C1686; _clsk=1g5lv07%7C1723558310439%7C1%7C1%7Cu.clarity.ms%2Fcollect; _ga=GA1.1.877307181.1723558313; _ga_8SZPRV97HV=GS1.1.1723558313.1.1.1723558341.0.0.0; _ga_Q9Q1E734CC=GS1.1.1723558313.1.1.1723558341.0.0.0",
-            "dnt": "1",
-            "origin": "https://felo.ai",
-            "referer": "https://felo.ai/",
-            "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
-            "user-agent": LitAgent().random()
+            "Accept": "text/x-component",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Content-Type": "text/plain;charset=UTF-8",
+            "DNT": "1",
+            "Next-Action": "f354668f23f516a46ad0abe4dedb84b19068bb54",
+            "Next-Router-State-Tree": '%5B%22%22%2C%7B%22children%22%3A%5B%22__PAGE__%3F%7B%5C%22q%5C%22%3A%5C%22hi%5C%22%7D%22%2C%7B%7D%2C%22%2F%3Fq%3Dhi%22%2C%22refresh%22%5D%7D%2Cnull%2Cnull%2Ctrue%5D',
+            "Origin": "https://www.deepfind.co",
+            "Referer": "https://www.deepfind.co/?q=hi",
+            "Sec-Ch-Ua": '"Not A(Brand";v="8", "Chromium";v="132", "Microsoft Edge";v="132"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": LitAgent().random(),
         }
         self.session.headers.update(self.headers)
         self.proxies = proxies
@@ -117,9 +116,9 @@ class Felo(AISearch):
         stream: bool = False,
         raw: bool = False,
     ) -> Dict[str, Any] | Generator[str, None, None]:
-        """Search using the Felo API and get AI-generated responses.
+        """Search using the DeepFind API and get AI-generated responses.
         
-        This method sends a search query to Felo and returns the AI-generated response.
+        This method sends a search query to DeepFind and returns the AI-generated response.
         It supports both streaming and non-streaming modes, as well as raw response format.
         
         Args:
@@ -140,7 +139,7 @@ class Felo(AISearch):
         
         Examples:
             Basic search:
-            >>> ai = Felo()
+            >>> ai = DeepFind()
             >>> response = ai.search("What is Python?")
             >>> print(response)
             Python is a programming language...
@@ -162,47 +161,49 @@ class Felo(AISearch):
             ... except exceptions.APIConnectionError as e:
             ...     print(f"API error: {e}")
         """
-        payload = {
-            "query": prompt,
-            "search_uuid": uuid4().hex,
-            "lang": "",
-            "agent_lang": "en",
-            "search_options": {
-                "langcode": "en-US"
-            },
-            "search_video": True,
-            "contexts_from": "google"
-        }
+        url = self.api_endpoint.format(query=prompt)
+        payload = [
+            [{"role": "user", "id": uuid4().hex, "content": prompt}],
+            uuid4().hex,
+        ]
 
         def for_stream():
             try:
                 with self.session.post(
-                    self.chat_endpoint,
+                    url,
+                    headers=self.headers,
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
                 ) as response:
-                    if not response.ok:
-                        raise exceptions.APIConnectionError(
-                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                        )
-
+                    response.raise_for_status()
                     streaming_text = ""
                     for line in response.iter_lines(decode_unicode=True):
-                        if line.startswith('data:'):
-                            try:
-                                data = json.loads(line[5:].strip())
-                                if data['type'] == 'answer' and 'text' in data['data']:
-                                    new_text = data['data']['text']
-                                    if len(new_text) > len(streaming_text):
-                                        delta = new_text[len(streaming_text):]
-                                        streaming_text = new_text
+                        if line:
+                            content_matches = re.findall(r'"content":"([^"\\]*(?:\\.[^"\\]*)*)"', line)
+                            if content_matches:
+                                for content in content_matches:
+                                    if len(content) > len(streaming_text):
+                                        delta = content[len(streaming_text):]
+                                        streaming_text = content
+                                        delta = delta.replace('\\"', '"').replace('\\n', '\n')
+                                        delta = re.sub(r'\[REF\]\(https?://[^\s]*\)', '', delta)
                                         if raw:
                                             yield {"text": delta}
                                         else:
                                             yield Response(delta)
-                            except json.JSONDecodeError:
-                                pass
+                            description_matches = re.findall(r'"description":"([^"\\]*(?:\\.[^"\\]*)*)"', line)
+                            if description_matches:
+                                for description in description_matches:
+                                    if description and len(description) > len(streaming_text):
+                                        delta = description[len(streaming_text):]
+                                        streaming_text = description
+                                        delta = delta.replace('\\"', '"').replace('\\n', '\n')
+                                        delta = re.sub(r'\[REF\]\(https?://[^\s]*\)', '', delta)
+                                        if raw:
+                                            yield {"text": f"{delta}\n"}
+                                        else:
+                                            yield Response(f"{delta}\n")
                     self.last_response = Response(streaming_text)
             except requests.exceptions.RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
@@ -220,10 +221,31 @@ class Felo(AISearch):
         
         return for_stream() if stream else for_non_stream()
 
+    @staticmethod
+    def clean_content(text: str) -> str:
+        """Removes all webblock elements with research or detail classes.
+        
+        Args:
+            text (str): The text to clean
+        
+        Returns:
+            str: The cleaned text
+        
+        Example:
+            >>> text = '<webblock class="research">...</webblock>Other text'
+            >>> cleaned_text = DeepFind.clean_content(text)
+            >>> print(cleaned_text)
+            Other text
+        """
+        cleaned_text = re.sub(
+            r'<webblock class="(?:research|detail)">[^<]*</webblock>', "", text
+        )
+        return cleaned_text
+
 
 if __name__ == "__main__":
     from rich import print
-    ai = Felo()
+    ai = DeepFind()
     response = ai.search(input(">>> "), stream=True, raw=False)
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -109,7 +109,7 @@ class GoogleS:
         timeout: Optional[int] = 10,
         max_workers: int = 20,
         cache_dir: Optional[str] = None,
-        rate_limit: float = 0.01,
+        rate_limit: float = 2.0,
         use_litlogger: bool = False
     ):
         """
@@ -152,7 +152,10 @@ class GoogleS:
         current_time = time.time()
         time_since_last = current_time - self.last_request_time
         if time_since_last < self.rate_limit:
-            time.sleep(self.rate_limit - time_since_last)
+            sleep_time = self.rate_limit - time_since_last
+            if self.use_litlogger:
+                self.logger.debug(f"Rate limiting: Waiting {sleep_time:.2f} seconds")
+            time.sleep(sleep_time)
         self.last_request_time = time.time()
 
     def _get_url(self, method: str, url: str, params: Optional[Dict[str, str]] = None,
@@ -170,31 +173,44 @@ class GoogleS:
         Returns:
             bytes: Response content
         """
-        self._respect_rate_limit()
+        retry_count = 0
+        base_delay = 5  # Base delay in seconds
         
-        for attempt in range(max_retries):
+        while retry_count < max_retries:
             try:
-                if self.use_litlogger:
-                    self.logger.debug(f"Making {method} request to {url} (Attempt {attempt + 1})")
+                self._respect_rate_limit()
+                response = self.client.request(
+                    method=method,
+                    url=url,
+                    params=params,
+                    data=data,
+                    timeout=self.timeout
+                )
                 
-                resp = self.client.request(method, url, params=params, data=data, timeout=self.timeout)
-                resp.raise_for_status()
+                if response.status_code == 429:
+                    retry_delay = base_delay * (2 ** retry_count)  # Exponential backoff
+                    if self.use_litlogger:
+                        self.logger.warning(f"Rate limited by Google. Waiting {retry_delay} seconds before retry...")
+                    time.sleep(retry_delay)
+                    retry_count += 1
+                    continue
+                    
+                response.raise_for_status()
+                return response.content
                 
-                if self.use_litlogger:
-                    self.logger.success(f"Request successful: {resp.status_code}")
-                
-                return resp.content
-            
-            except requests.exceptions.RequestException as ex:
-                if self.use_litlogger:
-                    self.logger.error(f"Request failed: {url} - {str(ex)}")
-                
-                # Exponential backoff
-                if attempt < max_retries - 1:
-                    wait_time = (2 ** attempt) + random.random()
-                    time.sleep(wait_time)
-                else:
+            except requests.exceptions.RequestException as e:
+                if retry_count == max_retries - 1:
+                    if self.use_litlogger:
+                        self.logger.error(f"Max retries reached. Last error: {str(e)}")
                     raise
+                
+                retry_delay = base_delay * (2 ** retry_count)
+                if self.use_litlogger:
+                    self.logger.warning(f"Request failed. Retrying in {retry_delay} seconds... Error: {str(e)}")
+                time.sleep(retry_delay)
+                retry_count += 1
+                
+        raise Exception("Max retries reached")
 
     @lru_cache(maxsize=100)
     def _cache_key(self, query: str, **kwargs) -> str:
@@ -471,7 +487,7 @@ class GoogleS:
 
 if __name__ == "__main__":
     from rich import print
-    searcher = GoogleS()
-    results = searcher.search("HelpingAI-9B", max_results=200, extract_text=False, max_text_length=200)
+    searcher = GoogleS(rate_limit=3.0, use_litlogger=True)
+    results = searcher.search("HelpingAI-9B", max_results=5, extract_text=False, max_text_length=200)
     for result in results:
         print(result)

@@ -1,2 +1,2 @@
-from .felo_search import *
-from .ooai import *
+from .felo_search import Felo
+from .DeepFind import DeepFind

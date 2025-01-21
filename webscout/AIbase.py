@@ -1,5 +1,4 @@
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import AsyncGenerator, List, Union, Generator, Optional
 from typing_extensions import TypeAlias
@@ -110,4 +109,15 @@ class AsyncImageProvider(ABC):
         name: Optional[str] = None,
         dir: Optional[Union[str, Path]] = None
     ) -> List[str]:
+        raise NotImplementedError("Method needs to be implemented in subclass")
+
+class AISearch(ABC):
+
+    @abstractmethod
+    def search(
+        self,
+        prompt: str,
+        stream: bool = False,
+        raw: bool = False,
+    ) -> Response:
         raise NotImplementedError("Method needs to be implemented in subclass")
