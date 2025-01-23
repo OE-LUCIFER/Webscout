@@ -60,6 +60,8 @@ from .Marcus import *
 from .typegpt import *
 from .multichat import *
 from .Jadve import *
+from .chatglm import *
+from .hermes import *
 __all__ = [
     'LLAMA', 
     'Cohere',
@@ -123,4 +125,6 @@ __all__ = [
     'Netwrck',
     'MultiChatAI',
     'JadveOpenAI',
+    'ChatGLM',
+    'NousHermes',
 ]
