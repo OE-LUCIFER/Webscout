@@ -63,9 +63,11 @@ from .Jadve import *
 from .chatglm import *
 from .hermes import *
 from .TextPollinationsAI import *
+from .Glider import *
 __all__ = [
     'LLAMA', 
     'TextPollinationsAI',
+    'GliderAI',
     'Cohere',
     'REKA',
     'GROQ',
