@@ -16,31 +16,33 @@ class YouChat(Provider):
     This class provides methods for interacting with the You.com chat API in a consistent provider structure.
     """
 
+    # Updated available models based on provided "aiModels" list
     AVAILABLE_MODELS = [
+        "openai_o3_mini_high",
+        "openai_o3_mini_medium",
         "openai_o1",
+        "openai_o1_preview",
         "openai_o1_mini",
         "gpt_4o_mini",
         "gpt_4o",
         "gpt_4_turbo",
         "gpt_4",
+        "grok_2",
         "claude_3_5_sonnet",
         "claude_3_opus",
         "claude_3_sonnet",
         "claude_3_5_haiku",
-        "claude_3_haiku",
+        "deepseek_r1",
+        "deepseek_v3",
         "llama3_3_70b",
         "llama3_2_90b",
-        "llama3_2_11b",
         "llama3_1_405b",
-        "llama3_1_70b",
-        "llama3",
         "mistral_large_2",
         "gemini_1_5_flash",
         "gemini_1_5_pro",
         "databricks_dbrx_instruct",
         "qwen2p5_72b",
         "qwen2p5_coder_32b",
-        "command_r",
         "command_r_plus",
         "solar_1_mini",
         "dolphin_2_5"
@@ -156,22 +158,25 @@ class YouChat(Provider):
                 )
 
         payload = {
-                    "q": conversation_prompt,
-                    "page": 2,
-                    "count": 20,
-                    "safeSearch": "Moderate",
-                    "mkt": "en-IN",
-                    "domain": "youchat",
-                    "use_personalization_extraction": "false",
-                    "queryTraceId": str(uuid4()),
-                    "chatId": str(uuid4()),
-                    "conversationTurnId": str(uuid4()),
-                    "pastChatLength": 0,
-                    "isSmallMediumDevice": "true",
-                    "selectedChatMode": self.model,  # Use the selected model
-                    "traceId": str(uuid4()),
-                    "chat": "[]"
-                }
+            "q": conversation_prompt,
+            "page": 1,
+            "count": 10,
+            "safeSearch": "Moderate",
+            "mkt": "en-IN",
+            "enable_workflow_generation_ux": "true",
+            "domain": "youchat",
+            "use_personalization_extraction": "false",
+            "enable_agent_clarification_questions": "true",
+            "queryTraceId": str(uuid4()),
+            "chatId": str(uuid4()),
+            "conversationTurnId": str(uuid4()),
+            "pastChatLength": 0,
+            "isSmallMediumDevice": "true",
+            "selectedChatMode": self.model,
+            "use_nested_youchat_updates": "true",
+            "traceId": str(uuid4()),
+            "chat": "[]"
+        }
 
         def for_stream():
             response = self.session.get(
@@ -255,6 +260,7 @@ class YouChat(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
 if __name__ == '__main__':
     from rich import print
     ai = YouChat(timeout=5000)
