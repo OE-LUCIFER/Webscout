@@ -41,7 +41,7 @@ class BLACKBOXAI:
         self.session = requests.Session()
         self.max_tokens_to_sample = max_tokens
         self.is_conversation = is_conversation
-        self.chat_endpoint = "https://www.blackbox.ai/api/chat"
+        self.chat_endpoint = "https://api.blackbox.ai/api/chat"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
