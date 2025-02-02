@@ -8,7 +8,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from fake_useragent import UserAgent
+from webscout import  LitAgent as UserAgent
 
 class AskMyAI(Provider):
     """
@@ -41,7 +41,7 @@ class AskMyAI(Provider):
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
-            'user-agent': UserAgent().random
+            'user-agent': UserAgent().random()
         }
         self.__available_optimizers = (
             method

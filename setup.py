@@ -62,7 +62,7 @@ setup(
             "gradio_client",
             "psutil",
             "yaspin",
-            # "cerebras_cloud_sdk",
+            "pygetwindow",
         ],
 
     entry_points={

@@ -8,14 +8,71 @@ import sys
 from typing import List, Optional
 
 from webscout.optimizers import Optimizers
-
+import os
+import platform
+import subprocess
 
 def get_current_app() -> str:
-    """Get the current active application name."""
-    try:
-        active_window: Optional[gw.Window] = gw.getActiveWindow()
-        return f"{active_window.title if active_window else 'Unknown'}"
-    except Exception as e:
+    """
+    Get the current active application or window title in a cross-platform manner.
+
+    On Windows, uses the win32gui module from pywin32.
+    On macOS, uses AppKit to access the active application info.
+    On Linux, uses xprop to get the active window details.
+
+    Returns:
+        A string containing the title of the active application/window, or "Unknown" if it cannot be determined.
+    """
+    system_name = platform.system()
+
+    if system_name == "Windows":
+        try:
+            import win32gui  # pywin32 must be installed
+            window_handle = win32gui.GetForegroundWindow()
+            title = win32gui.GetWindowText(window_handle)
+            return title if title else "Unknown"
+        except Exception:
+            return "Unknown"
+
+    elif system_name == "Darwin":  # macOS
+        try:
+            from AppKit import NSWorkspace # type: ignore
+            active_app = NSWorkspace.sharedWorkspace().activeApplication()
+            title = active_app.get('NSApplicationName')
+            return title if title else "Unknown"
+        except Exception:
+            return "Unknown"
+
+    elif system_name == "Linux":
+        try:
+            # Get the active window id using xprop
+            result = subprocess.run(
+                ["xprop", "-root", "_NET_ACTIVE_WINDOW"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            if result.returncode == 0 and result.stdout:
+                # Expected format: _NET_ACTIVE_WINDOW(WINDOW): window id # 0x1400007
+                parts = result.stdout.strip().split()
+                window_id = parts[-1]
+                if window_id != "0x0":
+                    title_result = subprocess.run(
+                        ["xprop", "-id", window_id, "WM_NAME"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True
+                    )
+                    if title_result.returncode == 0 and title_result.stdout:
+                        # Expected format: WM_NAME(STRING) = "Terminal"
+                        title_parts = title_result.stdout.split(" = ", 1)
+                        if len(title_parts) == 2:
+                            title = title_parts[1].strip().strip('"')
+                            return title if title else "Unknown"
+        except Exception:
+            pass
+        return "Unknown"
+    else:
         return "Unknown"
 
 
@@ -137,3 +194,7 @@ EXAMPLES: str = """
     </example>
 </examples>
 """
+
+if __name__ == "__main__":
+    # Simple test harness to print the current active window title.
+    print("Current Active Window/Application: ", get_current_app())

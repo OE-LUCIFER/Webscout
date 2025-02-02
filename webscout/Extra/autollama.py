@@ -1,21 +1,5 @@
 """
-Yo fam! 🔥 Welcome to AutoLlama - your go-to tool for downloading and setting up HelpingAI models! 💪
-
-Created by the legendary Abhay Koul, this script's got your back when it comes to:
-- Downloading models straight from HuggingFace Hub 🚀
-- Setting up Ollama with zero hassle 💯
-- Getting your AI assistant ready to vibe with you! ⚡
-
-Usage:
 >>> python -m webscout.Extra.autollama download -m "OEvortex/HelpingAI-Lite-1.5T" -g "HelpingAI-Lite-1.5T.q4_k_m.gguf"
-
-Features:
-- Smart model management 🧠
-- Automatic dependency installation 📦
-- Progress tracking that keeps it real 📈
-- Error handling that's got your back 💪
-
-Join the squad on Discord and level up your AI game! 🎮
 """
 
 import warnings

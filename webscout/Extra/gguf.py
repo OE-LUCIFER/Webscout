@@ -1,22 +1,9 @@
 """
-Yo fam! 🔥 Welcome to GGUF Converter - your ultimate tool for converting models to GGUF format! 💪
 
-- Converting HuggingFace models to GGUF format 🚀
-- Multiple quantization methods for different needs 🎯
-- Easy upload back to HuggingFace Hub 📤
-
-Usage:
 >>> python -m webscout.Extra.gguf convert -m "OEvortex/HelpingAI-Lite-1.5T" -q "q4_k_m,q5_k_m"
 >>> # With upload options:
 >>> python -m webscout.Extra.gguf convert -m "your-model" -u "username" -t "token" -q "q4_k_m"
 
-Features:
-- Smart dependency checking 🔍
-- CUDA support detection ⚡
-- Progress tracking that keeps it real 📈
-- Multiple quantization options 🎮
-
-Join the squad on Discord and level up your AI game! 🎮
 """
 
 import subprocess

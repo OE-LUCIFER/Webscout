@@ -62,8 +62,10 @@ from .multichat import *
 from .Jadve import *
 from .chatglm import *
 from .hermes import *
+from .TextPollinationsAI import *
 __all__ = [
     'LLAMA', 
+    'TextPollinationsAI',
     'Cohere',
     'REKA',
     'GROQ',
