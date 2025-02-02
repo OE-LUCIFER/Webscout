@@ -18,7 +18,7 @@ class Qwenlm(Provider):
 
     AVAILABLE_MODELS = [
         'qwen2.5-coder-32b-instruct', 'qwen-plus-latest', 'qvq-72b-preview',
-        'qvq-32b-preview', 'qwen-vl-max-latest'
+        'qvq-32b-preview', 'qwen-vl-max-latest', 'qwen-turbo-latest', 'qwen-max-latest'
     ]
 
     def __init__(
@@ -58,9 +58,18 @@ class Qwenlm(Provider):
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f'Error: Invalid model. Please choose from {self.AVAILABLE_MODELS}')
 
+        self.chat_type = "t2t"  # search - used WEB, t2t - chatbot, t2i - image_gen
+
+        if self.chat_type != "t2t":
+            AVAILABLE_MODELS = [
+                'qwen-plus-latest', 'qvq-72b-preview',
+                'qvq-32b-preview', 'qwen-turbo-latest',
+                'qwen-max-latest'
+            ]
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
+        self.size="960*960"
         self.api_endpoint = "https://chat.qwenlm.ai/api/chat/completions"
         self.stream_chunk_size = 1024
         self.timeout = timeout
@@ -130,10 +139,12 @@ class Qwenlm(Provider):
         # Define the payload
         payload = {
             'chat_id': str(uuid.uuid4()),
+            'chat_type': self.chat_type,
             'id': str(uuid.uuid4()),
             'messages': [{'role': 'user', 'content': conversation_prompt}],
             'model': self.model,
             'session_id': str(uuid.uuid4()),
+            'size':self.size,
             'stream': stream
         }
 
@@ -235,19 +246,18 @@ class Qwenlm(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-
 if __name__ == '__main__':
     from rich import print
 
     ai = Qwenlm(timeout=5000)
-    response = ai.chat("Привет", stream=True)
+    # response = ai.chat("Привет", stream=True)
+    #
+    # last_chunk = ""
+    #
+    # for chunk in response:
+    #     last_chunk = chunk
+    #
+    # print(last_chunk)
 
-    last_chunk = ""
-
-    for chunk in response:
-        last_chunk = chunk
-
-    print(last_chunk)
-
-    response = ai.chat("Привет, как дела?", stream=False)
+    response = ai.chat("Какие новости? Напиши в конце ответа ссылки", stream=False)
     print(response)
