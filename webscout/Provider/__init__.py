@@ -64,8 +64,10 @@ from .chatglm import *
 from .hermes import *
 from .TextPollinationsAI import *
 from .Glider import *
+from .dgaf import *
 __all__ = [
-    'LLAMA', 
+    'LLAMA',
+    'DGAFAI',
     'TextPollinationsAI',
     'GliderAI',
     'Cohere',
