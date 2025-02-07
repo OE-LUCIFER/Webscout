@@ -1,6 +1,7 @@
 import requests
 import json
 from typing import *
+import requests.exceptions
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -8,9 +9,10 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.litagent import LitAgent
+
 class TypeGPT(Provider):
     """
-    A class to interact with the TypeGPT.net API.  Improved to match webscout standards.
+    A class to interact with the TypeGPT.net API. Improved to match webscout standards.
     """
     url = "https://chat.typegpt.net"
     working = True
@@ -19,6 +21,7 @@ class TypeGPT(Provider):
     models = [
         # OpenAI Models
         "gpt-3.5-turbo",
+        "chatgpt-4o-latest",
         "gpt-3.5-turbo-202201",
         "gpt-4o",
         "gpt-4o-2024-05-13",
@@ -184,7 +187,7 @@ class TypeGPT(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "claude-3-5-sonnet-20240620",
+        model: str = "gpt-4o",
         system_prompt: str = "You are a helpful assistant.",
         temperature: float = 0.5,
         presence_penalty: int = 0,
@@ -217,7 +220,6 @@ class TypeGPT(Provider):
             "user-agent": LitAgent().random()
         }
 
-
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
@@ -230,9 +232,7 @@ class TypeGPT(Provider):
             if act
             else intro or Conversation.intro
         )
-        self.conversation = Conversation(
-            is_conversation, self.max_tokens_to_sample, filepath, update_file
-        )
+        self.conversation = Conversation(is_conversation, self.max_tokens_to_sample, filepath, update_file)
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
@@ -256,7 +256,6 @@ class TypeGPT(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
@@ -270,10 +269,17 @@ class TypeGPT(Provider):
             "top_p": self.top_p,
             "max_tokens": self.max_tokens_to_sample,
         }
+
         def for_stream():
-            response = self.session.post(
-                self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout
-            )
+            try:
+                response = self.session.post(
+                    self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout
+                )
+            except requests.exceptions.ConnectionError as ce:
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Network connection failed. Check your firewall or antivirus settings. Original error: {ce}"
+                ) from ce
+
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
@@ -287,10 +293,8 @@ class TypeGPT(Provider):
                         # Skip [DONE] message
                         if line.strip() == "[DONE]":
                             break
-
                         try:
                             data = json.loads(line)
-                            
                             # Extract and yield only new content
                             if 'choices' in data and len(data['choices']) > 0:
                                 delta = data['choices'][0].get('delta', {})
@@ -300,14 +304,18 @@ class TypeGPT(Provider):
                                     # Yield only the new content
                                     yield dict(text=new_content) if not raw else new_content
                                     self.last_response = dict(text=message_load)
-
                         except json.JSONDecodeError:
                             continue
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
 
         def for_non_stream():
+            try:
+                response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout)
+            except requests.exceptions.ConnectionError as ce:
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Network connection failed. Check your firewall or antivirus settings. Original error: {ce}"
+                ) from ce
 
-            response = self.session.post(self.api_endpoint, headers=self.headers, json=payload)
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Request failed - {response.status_code}: {response.text}"
@@ -316,9 +324,7 @@ class TypeGPT(Provider):
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
             return self.last_response
 
-
         return for_stream() if stream else for_non_stream()
-
 
     def chat(
         self,
@@ -327,8 +333,7 @@ class TypeGPT(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str | Generator[str, None, None]:
-        """Generate response `str` or stream."""
-
+        """Generate response string or stream."""
         if stream:
             gen = self.ask(
                 prompt, stream=True, optimizer=optimizer, conversationally=conversationally
@@ -340,18 +345,16 @@ class TypeGPT(Provider):
 
     def get_message(self, response: Dict[str, Any]) -> str:
         """Retrieves message from response."""
-        if isinstance(response, str): #Handle raw responses
+        if isinstance(response, str):  # Handle raw responses
             return response
         elif isinstance(response, dict):
             assert isinstance(response, dict), "Response should be of dict data-type only"
-            return response.get("text", "") #Extract text from dictionary response
+            return response.get("text", "")  # Extract text from dictionary response
         else:
             raise TypeError("Invalid response type. Expected str or dict.")
 
-
 if __name__ == "__main__":
-       
-    ai = TypeGPT(model="claude-3-5-sonnet-20240620")
+    ai = TypeGPT(model="chatgpt-4o-latest")
     response = ai.chat("hi", stream=True)
     for chunks in response:
         print(chunks, end="", flush=True)
