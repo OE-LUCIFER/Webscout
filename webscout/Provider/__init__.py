@@ -87,7 +87,7 @@ __all__ = [
     'OLLAMA',
     'AndiSearch',
     'PIZZAGPT',
-    'LLAMA3',
+    'Sambanova',
     'DARKAI',
     'KOALA',
     'RUBIKSAI',
