@@ -418,7 +418,7 @@ if __name__ == "__main__":
     # Example usage
     try:
         # Initialize LLM with Llama 3 model
-        llm = LLM(model="Qwen/Qwen2.5-Coder-32B-Instruct")
+        llm = LLM(model="mistralai/Mistral-Small-24B-Instruct-2501")
         
         # Example messages
         messages = [
