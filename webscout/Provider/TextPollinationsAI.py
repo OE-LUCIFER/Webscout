@@ -29,7 +29,11 @@ class TextPollinationsAI(Provider):
         "deepseek",
         "claude-hybridspace",
         "deepseek-r1",
-        "llamalight"
+        "llamalight",
+        "llamaguard",
+        "gemini",
+        "gemini-thinking",
+        "hormoz"
     ]
 
     def __init__(
@@ -195,7 +199,7 @@ class TextPollinationsAI(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    ai = TextPollinationsAI(model="openai")
+    ai = TextPollinationsAI(model="deepseek-r1")
     response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
