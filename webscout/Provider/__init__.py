@@ -22,7 +22,6 @@ from .PizzaGPT import *
 from .Llama3 import *
 from .DARKAI import *
 from .koala import *
-from .RUBIKSAI import * 
 from .meta import *
 from .DiscordRocks import *
 from .julius import *
@@ -90,7 +89,6 @@ __all__ = [
     'Sambanova',
     'DARKAI',
     'KOALA',
-    'RUBIKSAI',
     'Meta',
     'AskMyAI',
     'DiscordRocks',
