@@ -146,7 +146,7 @@ def get_fb_session(email, password, proxies=None):
         "sec-fetch-site": "same-origin",
         "sec-fetch-user": "?1",
         "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "user-agent": Lit().random(),
         "viewport-width": "1728",
     }
 
@@ -191,7 +191,8 @@ def get_fb_session(email, password, proxies=None):
         "referer": "https://www.meta.ai/",
         "sec-fetch-mode": "cors",
         "sec-fetch-site": "same-origin",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "user-agent": Lit().random(),
+        "viewport-width": "1728",
     }
 
     response = requests.request("POST", url, headers=headers, data=payload, proxies=proxies)
@@ -211,7 +212,7 @@ def get_fb_session(email, password, proxies=None):
         "sec-fetch-site": "cross-site",
         "sec-fetch-user": "?1",
         "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "user-agent": Lit().random(),
     }
     session = requests.session()
     session.proxies = proxies
@@ -223,7 +224,7 @@ def get_fb_session(email, password, proxies=None):
 
     payload = {}
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:125.0) Gecko/20100101 Firefox/125.0",
+        "User-Agent": Lit().random(),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
         "Accept-Encoding": "gzip, deflate, br",
@@ -330,8 +331,7 @@ class Meta(Provider):
         self.session = requests.Session()
         self.session.headers.update(
             {
-                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                "user-agent": Lit().random(),
             }
         )
         self.access_token = None
