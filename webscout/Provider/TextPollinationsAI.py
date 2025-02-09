@@ -6,7 +6,7 @@ from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
-
+from webscout import LitAgent as Lit
 class TextPollinationsAI(Provider):
     """
     A class to interact with the Pollinations AI API with comprehensive logging.
@@ -60,7 +60,7 @@ class TextPollinationsAI(Provider):
         self.headers = {
             'Accept': '*/*',
             'Accept-Language': 'en-US,en;q=0.9',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+            'User-Agent': Lit().random(),
             'Content-Type': 'application/json',
         }
         
