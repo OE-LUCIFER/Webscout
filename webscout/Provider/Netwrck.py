@@ -2,41 +2,39 @@ import time
 import uuid
 import requests
 import json
-
 from typing import Any, Dict, Optional, Generator, Union
 from dataclasses import dataclass, asdict
 from datetime import date
-
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
 from webscout.litagent import LitAgent
 
-
 class Netwrck(Provider):
     """
     A class to interact with the Netwrck.com API. Supports streaming.
     """
-    greeting = """An unknown multiverse phenomenon occurred, and you found yourself in a dark space. You looked around and found a source of light in a distance. You approached the light and *whoosh*....\nChoose your origin:\na) As a baby who just got birthed, your fate unknown\nb) As an amnesic stranded on an uninhabited island with mysterious ruins\nc) As an abandoned product of a forbidden experiment\nd) As a slave being sold at an auction\ne) Extremely Chaotic Randomizer\nOr, dive into your own fantasy."""
+    greeting = """Hello! I'm a helpful assistant. How can I help you today?"""
 
     AVAILABLE_MODELS = {
-        "lumimaid": "neversleep/llama-3.1-lumimaid-8b",
+        "lumimaid": "neversleep/llama-3-lumimaid-8b:extended",
         "grok": "x-ai/grok-2",
         "claude": "anthropic/claude-3.5-sonnet:beta",
         "euryale": "sao10k/l3-euryale-70b",
         "gpt4mini": "openai/gpt-4o-mini",
         "mythomax": "gryphe/mythomax-l2-13b",
         "gemini": "google/gemini-pro-1.5",
-        "lumimaid70b": "neversleep/llama-3.1-lumimaid-70b",
         "nemotron": "nvidia/llama-3.1-nemotron-70b-instruct",
+        "deepseek-r1": "deepseek/deepseek-r1",
+        "deepseek": "deepseek/deepseek-chat",
     }
 
     def __init__(
         self,
         model: str = "claude",
         is_conversation: bool = True,
-        max_tokens: int = 2048,
+        max_tokens: int = 4096,
         timeout: int = 30,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -50,8 +48,18 @@ class Netwrck(Provider):
         logging: bool = False
     ):
         """Initializes the Netwrck API client."""
+        # Initialize logger first for initialization logging
+        self.logger = LitLogger(
+            name="Netwrck",
+            format=LogFormat.MODERN_EMOJI,
+            color_scheme=ColorScheme.CYBERPUNK
+        ) if logging else None
+
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {list(self.AVAILABLE_MODELS.keys())}")
+            error_msg = f"Invalid model: {model}. Choose from: {list(self.AVAILABLE_MODELS.keys())}"
+            if self.logger:
+                self.logger.error(error_msg)
+            raise ValueError(error_msg)
 
         self.model = model
         self.model_name = self.AVAILABLE_MODELS[model]
@@ -64,9 +72,7 @@ class Netwrck(Provider):
         self.temperature = temperature
         self.top_p = top_p
         
-        # Initialize LitAgent for user agent generation
         self.agent = LitAgent()
-
         self.headers = {
             'authority': 'netwrck.com',
             'accept': '*/*',
@@ -76,6 +82,7 @@ class Netwrck(Provider):
             'referer': 'https://netwrck.com/',
             'user-agent': self.agent.random()
         }
+        
         self.session.headers.update(self.headers)
         self.proxies = proxies or {}
 
@@ -84,16 +91,16 @@ class Netwrck(Provider):
             if act
             else intro or Conversation.intro
         )
+        
         self.conversation = Conversation(is_conversation, max_tokens, filepath, update_file)
         self.conversation.history_offset = history_offset
         self.__available_optimizers = (
-            method
-            for method in dir(Optimizers)
+            method for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        # Initialize logger
-        self.logger = LitLogger(name="Netwrck", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+        if self.logger:
+            self.logger.info(f"Initialized Netwrck with model: {self.model_name}")
 
     def ask(
         self,
@@ -104,22 +111,20 @@ class Netwrck(Provider):
         conversationally: bool = False,
     ) -> Union[Dict[str, Any], Generator]:
         """Sends a prompt to the Netwrck API and returns the response."""
-
-        if self.logger:
-             self.logger.debug(f"ask() called with prompt: {prompt}")
+        if optimizer and optimizer not in self.__available_optimizers:
+            error_msg = f"Optimizer is not one of {self.__available_optimizers}"
+            if self.logger:
+                self.logger.error(f"Invalid optimizer requested: {optimizer}")
+            raise exceptions.FailedToGenerateResponseError(error_msg)
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
-            if optimizer in self.__available_optimizers:
-                conversation_prompt = getattr(Optimizers, optimizer)(
-                    conversation_prompt if conversationally else prompt
-                )
-            else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer: {optimizer}")
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+            conversation_prompt = getattr(Optimizers, optimizer)(
+                conversation_prompt if conversationally else prompt
+            )
+            if self.logger:
+                self.logger.debug(f"Applied optimizer: {optimizer}")
+
         payload = {
             "query": prompt,
             "context": self.system_prompt,
@@ -127,6 +132,9 @@ class Netwrck(Provider):
             "model_name": self.model_name,
             "greeting": self.greeting
         }
+
+        if self.logger:
+            self.logger.debug(f"Sending request to Netwrck API [stream={stream}]")
 
         def for_stream():
             try:
@@ -140,26 +148,23 @@ class Netwrck(Provider):
                 )
                 response.raise_for_status()
 
-                # Initialize an empty string to accumulate the streaming text
                 streaming_text = ""
                 for line in response.iter_lines():
                     if line:
                         decoded_line = line.decode('utf-8').strip('"')
-                        streaming_text += decoded_line  # Accumulate the text
-                        yield {"text": decoded_line}  # Yield each chunk
+                        streaming_text += decoded_line
+                        yield {"text": decoded_line}
 
-                # Optionally, you can update the conversation history with the full streaming text
                 self.conversation.update_chat_history(payload["query"], streaming_text)
 
+            except requests.exceptions.RequestException as e:
+                if self.logger:
+                    self.logger.error(f"Network error: {str(e)}")
+                raise exceptions.ProviderConnectionError(f"Network error: {str(e)}") from e
             except Exception as e:
                 if self.logger:
-                    self.logger.error(f"Error communicating with Netwrck: {e}")
-                raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
-
-            except Exception as e:
-                if self.logger:
-                    self.logger.error(f"Error communicating with Netwrck: {e}")
-                raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
+                    self.logger.error(f"Unexpected error: {str(e)}")
+                raise exceptions.ProviderConnectionError(f"Unexpected error: {str(e)}") from e
 
         def for_non_stream():
             try:
@@ -171,16 +176,24 @@ class Netwrck(Provider):
                     timeout=self.timeout,
                 )
                 response.raise_for_status()
-                # print(response.text)
+                
+                if self.logger:
+                    self.logger.debug(f"Response status: {response.status_code}")
+                
                 text = response.text.strip('"')
                 self.last_response = {"text": text}
                 self.conversation.update_chat_history(prompt, text)
 
                 return self.last_response
+
+            except requests.exceptions.RequestException as e:
+                if self.logger:
+                    self.logger.error(f"Network error: {str(e)}")
+                raise exceptions.FailedToGenerateResponseError(f"Network error: {str(e)}") from e
             except Exception as e:
                 if self.logger:
-                    self.logger.error(f"Error communicating with Netwrck: {e}")
-                raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
+                    self.logger.error(f"Unexpected error: {str(e)}")
+                raise exceptions.FailedToGenerateResponseError(f"Unexpected error: {str(e)}") from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -193,7 +206,7 @@ class Netwrck(Provider):
     ) -> str:
         """Generates a response from the Netwrck API."""
         if self.logger:
-             self.logger.debug(f"chat() called with prompt: {prompt}")
+            self.logger.debug(f"Processing chat request [stream={stream}]")
 
         def for_stream():
             for response in self.ask(
@@ -219,21 +232,20 @@ class Netwrck(Provider):
     def get_message(self, response: Dict[str, Any]) -> str:
         """Retrieves message only from response"""
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
 
-# Example Usage:
 if __name__ == "__main__":
     from rich import print
 
-    # Non-streaming example
+    # Example with logging enabled
+    netwrck = Netwrck(model="claude", logging=False)
+    
     print("Non-Streaming Response:")
-    netwrck = Netwrck(model="claude", logging=True)
-    response = netwrck.chat("tell me about Russia")
+    response = netwrck.chat("Tell me about Russia")
     print(response)
 
-    # Streaming example
     print("\nStreaming Response:")
-    response = netwrck.chat("tell me about India", stream=True)
+    response = netwrck.chat("Tell me about India", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
-    print()  # Add a newline at the end
+    print()
