@@ -192,8 +192,7 @@ class JadveOpenAI(Provider):
             streaming_text = ""
             for content in chunks:
                 streaming_text += content
-                # if self.logger:
-                #     self.logger.debug(f"Received chunk: {content}")
+
                 yield content if raw else dict(text=content)
 
             self.last_response.update(dict(text=streaming_text))
