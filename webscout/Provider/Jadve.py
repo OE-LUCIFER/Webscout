@@ -1,18 +1,19 @@
+
 import requests
 import json
 import re
 from typing import Any, Dict, Optional, Generator
 
-from webscout.AIutel import Optimizers
-from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts
+from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.litagent import LitAgent
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
 
 class JadveOpenAI(Provider):
     """
-    A class to interact with the OpenAI API through jadve.com.
+    A class to interact with the OpenAI API through jadve.com using the streaming endpoint.
+    Includes optional logging capabilities.
     """
 
     AVAILABLE_MODELS = ["gpt-4o", "gpt-4o-mini"]
@@ -29,36 +30,50 @@ class JadveOpenAI(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "gpt-4o-mini",
-        system_prompt: str = "You are a helpful AI assistant."
+        system_prompt: str = "You are a helpful AI assistant.",
+        logging: bool = False
     ):
         """
-        Initializes the OpenAI API client through jadve.com with given parameters.
+        Initializes the JadveOpenAI client with optional logging support.
 
         Args:
-            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
-            timeout (int, optional): Http request timeout. Defaults to 30.
-            intro (str, optional): Conversation introductory prompt. Defaults to None.
-            filepath (str, optional): Path to file containing conversation history. Defaults to None.
-            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
-            proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
-            act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_prompt (str, optional): System prompt for OpenAI. Defaults to "You are a helpful AI assistant.".
-            model (str, optional): AI model to use for text generation. Defaults to "gpt-4o".
+            is_conversation (bool, optional): Enable conversational mode. Defaults to True.
+            max_tokens (int, optional): Maximum tokens for generation. Defaults to 600.
+            timeout (int, optional): HTTP request timeout in seconds. Defaults to 30.
+            intro (str, optional): Introductory prompt text. Defaults to None.
+            filepath (str, optional): Path to conversation history file. Defaults to None.
+            update_file (bool, optional): Whether to update the conversation history file. Defaults to True.
+            proxies (dict, optional): Proxies for HTTP requests. Defaults to {}.
+            history_offset (int, optional): Limit for conversation history. Defaults to 10250.
+            act (str|int, optional): Act key for AwesomePrompts. Defaults to None.
+            model (str, optional): AI model to be used. Defaults to "gpt-4o-mini".
+            system_prompt (str, optional): System prompt text. Defaults to "You are a helpful AI assistant."
+            logging (bool, optional): Enable logging functionality. Defaults to False.
         """
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
+        self.logger = LitLogger(
+            name="JadveOpenAI",
+            format=LogFormat.MODERN_EMOJI,
+            color_scheme=ColorScheme.CYBERPUNK
+        ) if logging else None
+
+        if self.logger:
+            self.logger.info(f"Initializing JadveOpenAI with model: {model}")
+
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://openai.jadve.com/chatgpt"
+        # Streaming endpoint for jadve.com
+        self.api_endpoint = "https://openai.jadve.com/stream"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
         self.model = model
         self.system_prompt = system_prompt
+
+        # Updated headers with required x-authorization header.
         self.headers = {
             "accept": "*/*",
             "accept-encoding": "gzip, deflate, br, zstd",
@@ -75,14 +90,16 @@ class JadveOpenAI(Provider):
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site",
             "user-agent": LitAgent().random(),
+            "x-authorization": "Bearer"
         }
+        self.session.headers.update(self.headers)
+        self.session.proxies = proxies
 
         self.__available_optimizers = (
-            method
-            for method in dir(Optimizers)
+            method for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        self.session.headers.update(self.headers)
+
         Conversation.intro = (
             AwesomePrompts().get_act(
                 act, raise_not_found=True, default=None, case_insensitive=True
@@ -90,11 +107,14 @@ class JadveOpenAI(Provider):
             if act
             else intro or Conversation.intro
         )
+
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+
+        if self.logger:
+            self.logger.info("JadveOpenAI initialized successfully.")
 
     def ask(
         self,
@@ -103,78 +123,88 @@ class JadveOpenAI(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict:
-        """Chat with AI
+    ) -> dict | Generator[dict, None, None]:
+        """
+        Chat with AI.
+
         Args:
             prompt (str): Prompt to be sent.
             stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            raw (bool, optional): Return raw content chunks. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name. Defaults to None.
+            conversationally (bool, optional): Flag for conversational optimization. Defaults to False.
         Returns:
-           dict : {}
-        ```json
-        {
-           "text" : "How may I assist you today?"
-        }
-        ```
+            dict or generator: A dictionary with the generated text or a generator yielding text chunks.
         """
+        if self.logger:
+            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}...")
+            self.logger.debug(f"Stream: {stream}, Optimizer: {optimizer}")
+
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
+                if self.logger:
+                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
+                if self.logger:
+                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
+                    f"Optimizer is not one of {list(self.__available_optimizers)}"
                 )
 
         payload = {
-            "action": "sendmessage",
-            "model": self.model,
             "messages": [
-                {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": [{"type": "text", "text": conversation_prompt}]}
             ],
+            "model": self.model,
+            "botId": "",
+            "chatId": "",
+            "stream": stream,
             "temperature": 0.7,
-            "language": "en",
             "returnTokensUsage": True,
-            "botId": "guest-chat",
-            "chatId": ""
+            "useTools": False
         }
 
         def for_stream():
+            if self.logger:
+                self.logger.debug("Initiating streaming request to API")
             response = self.session.post(
                 self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout
             )
 
             if not response.ok:
+                if self.logger:
+                    self.logger.error(f"API request failed. Status: {response.status_code}, Reason: {response.reason}")
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
+
+            if self.logger:
+                self.logger.info(f"API connection established successfully. Status: {response.status_code}")
+
+            # Read the entire response text.
+            response_text = response.text
+            pattern = r'0:"(.*?)"'
+            chunks = re.findall(pattern, response_text)
             streaming_text = ""
-            for line in response.iter_lines(decode_unicode=True):
-                if line:
-                    if line.startswith("data: "):
-                        data = line[6:]
-                        if data == "[DONE]":
-                            break
-                        try:
-                            json_data = json.loads(data)
-                            if "choices" in json_data and len(json_data["choices"]) > 0:
-                                content = json_data["choices"][0].get("delta", {}).get("content", "")
-                                if content:
-                                    streaming_text += content
-                                    yield content if raw else dict(text=content)
-                        except json.JSONDecodeError as e:
-                            print(f"Error parsing line: {line} - {e}")
+            for content in chunks:
+                streaming_text += content
+                # if self.logger:
+                #     self.logger.debug(f"Received chunk: {content}")
+                yield content if raw else dict(text=content)
+
             self.last_response.update(dict(text=streaming_text))
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+            self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
+
+            if self.logger:
+                self.logger.debug("Response processing completed.")
 
         def for_non_stream():
+            if self.logger:
+                self.logger.debug("Processing non-streaming request")
             for _ in for_stream():
                 pass
             return self.last_response
@@ -187,48 +217,50 @@ class JadveOpenAI(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
+    ) -> str | Generator[str, None, None]:
         """
+        Generate a chat response (string).
+
+        Args:
+            prompt (str): Prompt to be sent.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name. Defaults to None.
+            conversationally (bool, optional): Flag for conversational optimization. Defaults to False.
+        Returns:
+            str or generator: Generated response string or generator yielding response chunks.
+        """
+        if self.logger:
+            self.logger.debug(f"Chat request initiated - Prompt: {prompt[:50]}...")
 
         def for_stream():
             for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
+                prompt, stream=True, optimizer=optimizer, conversationally=conversationally
             ):
                 yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                )
+                self.ask(prompt, stream=False, optimizer=optimizer, conversationally=conversationally)
             )
 
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
-        """Retrieves message only from response
+        """
+        Retrieves message from the response.
+
         Args:
-            response (dict): Response generated by `self.ask`
+            response (dict): Response from the ask() method.
         Returns:
-            str: Message extracted
+            str: Extracted text.
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
 if __name__ == "__main__":
     from rich import print
-    ai = JadveOpenAI(timeout=5000)
+    ai = JadveOpenAI(timeout=5000, logging=False)
+    # For streaming response demonstration.
     response = ai.chat("yo what's up", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
