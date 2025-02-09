@@ -1,16 +1,35 @@
 import requests
-import re
 import json
-from webscout.AIutel import Optimizers
-from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from typing import Any, Dict, Optional, Union, Generator, List
+from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
-import httpx
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
 
-#------------------------------------------------------BLACKBOXAI--------------------------------------------------------
-class BLACKBOXAI:
+class BLACKBOXAI(Provider):
+    """
+    BlackboxAI provider for interacting with the Blackbox API.
+    Supports synchronous operations with multiple models.
+    """
+    url = "https://api.blackbox.ai"
+    api_endpoint = "https://api.blackbox.ai/api/chat"
+
+
+
+    AVAILABLE_MODELS = {
+        "deepseek-v3": "deepseek-ai/DeepSeek-V3",
+        "deepseek-r1": "deepseek-ai/DeepSeek-R1",
+        "deepseek-chat": "deepseek-ai/deepseek-llm-67b-chat",
+        "mixtral-small-28b": "mistralai/Mistral-Small-24B-Instruct-2501",
+        "dbrx-instruct": "databricks/dbrx-instruct",
+        "qwq-32b": "Qwen/QwQ-32B-Preview",
+        "hermes-2-dpo": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
+        "claude-3.5-sonnet": "claude-sonnet-3.5",
+        "gemini-1.5-flash": "gemini-1.5-flash",
+        "gemini-1.5-pro": "gemini-pro",
+        "gemini-2.0-flash": "Gemini-Flash-2.0",
+    }
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -22,51 +41,38 @@ class BLACKBOXAI:
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = None,
+        model: str = "deepseek-ai/DeepSeek-V3",
+        logging: bool = False,
+        system_message: str = "You are a helpful AI assistant."
     ):
-        """Instantiates BLACKBOXAI
+        """Initialize BlackboxAI with enhanced configuration options."""
+        self.logger = LitLogger(
+            name="BlackboxAI",
+            format=LogFormat.MODERN_EMOJI,
+            color_scheme=ColorScheme.CYBERPUNK
+        ) if logging else None
 
-        Args:
-            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
-            timeout (int, optional): Http request timeout. Defaults to 30.
-            intro (str, optional): Conversation introductory prompt. Defaults to None.
-            filepath (str, optional): Path to file containing conversation history. Defaults to None.
-            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
-            proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
-            act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): Model name. Defaults to "Phind Model".
-        """
         self.session = requests.Session()
         self.max_tokens_to_sample = max_tokens
         self.is_conversation = is_conversation
-        self.chat_endpoint = "https://api.blackbox.ai/api/chat"
-        self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
-        self.model = model
-        self.previewToken: str = None
-        self.userId: str = ""
-        self.codeModelMode: bool = True
-        self.id: str = ""
-        self.agentMode: dict = {}
-        self.trendingAgentMode: dict = {}
-        self.isMicMode: bool = False
+        self.model = self.get_model(model)
+        self.system_message = system_message
 
         self.headers = {
             "Content-Type": "application/json",
-            "User-Agent": "",
             "Accept": "*/*",
-            "Accept-Encoding": "Identity",
         }
 
+        if self.logger:
+            self.logger.info(f"Initializing BlackboxAI with model: {self.model}")
+
         self.__available_optimizers = (
-            method
-            for method in dir(Optimizers)
+            method for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        self.session.headers.update(self.headers)
+
         Conversation.intro = (
             AwesomePrompts().get_act(
                 act, raise_not_found=True, default=None, case_insensitive=True
@@ -74,11 +80,61 @@ class BLACKBOXAI:
             if act
             else intro or Conversation.intro
         )
+        
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+
+    @classmethod
+    def get_model(self, model: str) -> str:
+        """Resolve model name from alias"""
+        if model in self.AVAILABLE_MODELS:
+            return self.AVAILABLE_MODELS[model]
+        raise ValueError(f"Unknown model: {model}. Available models: {', '.join(self.AVAILABLE_MODELS)}")
+
+    def _make_request(
+        self,
+        messages: List[Dict[str, str]],
+        stream: bool = False
+    ) -> Generator[str, None, None]:
+        """Make synchronous request to BlackboxAI API."""
+        if self.logger:
+            self.logger.debug(f"Making request with {len(messages)} messages")
+
+        data = {
+            "messages": messages,
+            "model": self.model,
+            "max_tokens": self.max_tokens_to_sample
+        }
+
+        try:
+            response = self.session.post(
+                self.api_endpoint,
+                json=data,
+                headers=self.headers,
+                stream=stream,
+                timeout=self.timeout
+            )
+            
+            if not response.ok:
+                error_msg = f"API request failed: {response.status_code} - {response.text}"
+                if self.logger:
+                    self.logger.error(error_msg)
+                raise exceptions.FailedToGenerateResponseError(error_msg)
+
+            if stream:
+                for line in response.iter_lines(decode_unicode=True):
+                    if line:
+                        yield line
+            else:
+                yield response.text
+
+        except requests.exceptions.RequestException as e:
+            if self.logger:
+                self.logger.error(f"Request failed: {str(e)}")
+            raise exceptions.ProviderConnectionError(f"Connection error: {str(e)}")
 
     def ask(
         self,
@@ -87,83 +143,36 @@ class BLACKBOXAI:
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict:
-        """Chat with AI
+    ) -> Union[Dict[str, str], Generator[Dict[str, str], None, None]]:
+        """Send a prompt to BlackboxAI API and return the response."""
+        if self.logger:
+            self.logger.debug(f"Processing request [stream={stream}]")
 
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-           dict : {}
-        ```json
-        {
-           "text" : "print('How may I help you today?')"
-        }
-        ```
-        """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
+                if self.logger:
+                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                if self.logger:
+                    self.logger.error(f"Invalid optimizer: {optimizer}")
+                raise ValueError(f"Optimizer is not one of {self.__available_optimizers}")
 
-        self.session.headers.update(self.headers)
-        payload = {
-            "messages": [
-                # json.loads(prev_messages),
-                {"content": conversation_prompt, "role": "user"}
-            ],
-            "id": self.id,
-            "previewToken": self.previewToken,
-            "userId": self.userId,
-            "codeModelMode": self.codeModelMode,
-            "agentMode": self.agentMode,
-            "trendingAgentMode": self.trendingAgentMode,
-            "isMicMode": self.isMicMode,
-        }
+        messages = [
+            {"role": "system", "content": self.system_message},
+            {"role": "user", "content": conversation_prompt}
+        ]
 
         def for_stream():
-            response = self.session.post(
-                self.chat_endpoint, json=payload, stream=True, timeout=self.timeout
-            )
-            if (
-                not response.ok
-                or not response.headers.get("Content-Type")
-                == "text/plain; charset=utf-8"
-            ):
-                raise Exception(
-                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                )
-            streaming_text = ""
-            for value in response.iter_lines(
-                decode_unicode=True,
-                chunk_size=self.stream_chunk_size,
-
-            ):
-                try:
-                    if bool(value):
-                        streaming_text += value + ("\n" if stream else "")
-
-                        resp = dict(text=streaming_text)
-                        self.last_response.update(resp)
-                        yield value if raw else resp
-                except json.decoder.JSONDecodeError:
-                    pass
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+            for text in self._make_request(messages, stream=True):
+                yield {"text": text}
 
         def for_non_stream():
-            for _ in for_stream():
-                pass
+            response_text = next(self._make_request(messages, stream=False))
+            self.last_response = {"text": response_text}
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
@@ -174,20 +183,17 @@ class BLACKBOXAI:
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
-        """
+    ) -> Union[str, Generator[str, None, None]]:
+        """Generate response as string."""
+        if self.logger:
+            self.logger.debug(f"Chat request initiated [stream={stream}]")
 
         def for_stream():
             for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally
             ):
                 yield self.get_message(response)
 
@@ -195,7 +201,7 @@ class BLACKBOXAI:
             return self.get_message(
                 self.ask(
                     prompt,
-                    False,
+                    stream=False,
                     optimizer=optimizer,
                     conversationally=conversationally,
                 )
@@ -203,28 +209,21 @@ class BLACKBOXAI:
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
-        """Retrieves message only from response
-
-        Args:
-            response (dict): Response generated by `self.ask`
-
-        Returns:
-            str: Message extracted
-        """
+    def get_message(self, response: Dict[str, Any]) -> str:
+        """Extract message from response dictionary."""
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
 
-# Function to clean the response text
-def clean_response(response_text: str) -> str:
-    # Remove web search results
-    cleaned_response = re.sub(r'\$~~~\$.*?\$~~~\$', '', response_text, flags=re.DOTALL)
-    # Remove any remaining special characters or markers
-    cleaned_response = re.sub(r'\$~~~', '', cleaned_response)
-    return cleaned_response.strip()
-if __name__ == '__main__':
+if __name__ == "__main__":
     from rich import print
-    ai = BLACKBOXAI()
-    response = ai.chat("tell me about india")
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    
+    # Example usage
+    ai = BLACKBOXAI(model="deepseek-v3", logging=True)
+    
+    try:
+        print("Non-streaming response:")
+        response = ai.chat("What is quantum computing?")
+        print(response)
+    
+    except Exception as e:
+        print(f"Error: {str(e)}")
