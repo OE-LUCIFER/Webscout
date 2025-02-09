@@ -1,23 +1,5 @@
-# Create patch to handle pygetwindow gracefully
-cat > fix_imports.patch << 'EOF'
---- a/webscout/Extra/autocoder/rawdog.py
-+++ b/webscout/Extra/autocoder/rawdog.py
-@@ -8,7 +8,10 @@
- import sys
- import tempfile
- import time
--import pygetwindow as gw
-+try:
-+    import pygetwindow as gw
-+except NotImplementedError:
-+    gw = None
-
- class RawDog:
-     def __init__(self):
-EOF
-
-# Apply patch
-patch -p1 < fix_imports.patch
+# Fix pygetwindow import
+sed -i 's/import pygetwindow as gw/try:\n    import pygetwindow as gw\nexcept NotImplementedError:\n    gw = None/' webscout/Extra/autocoder/rawdog.py
 
 # Install dependencies and package
 pip3 install setuptools wheel pip
