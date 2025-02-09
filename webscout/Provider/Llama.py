@@ -1,14 +1,13 @@
-
 import requests
 
 import json
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from typing import AsyncGenerator
 
 
 class LLAMA(Provider):
@@ -42,7 +41,7 @@ class LLAMA(Provider):
         self.max_tokens_to_sample = max_tokens
         self.timeout = timeout
         self.last_response = {}
-        self.model = "llama3-70b-8192",
+        self.model = ("llama3-70b-8192",)
         self.api_endpoint = "https://api.safone.dev/llama"
         self.headers = {
             "accept": "application/json",
@@ -101,11 +100,9 @@ class LLAMA(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
+
         self.session.headers.update(self.headers)
-        payload = {
-            "message": conversation_prompt
-        }
+        payload = {"message": conversation_prompt}
 
         def for_stream():
             response = self.session.get(
@@ -115,12 +112,12 @@ class LLAMA(Provider):
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
-            
+
             message_load = ""
             for chunk in response.iter_lines():
                 try:
                     resp = json.loads(chunk)
-                    message_load += resp['message']
+                    message_load += resp["message"]
                     yield chunk if raw else dict(text=message_load)
                     self.last_response.update(resp)
                 except:
@@ -192,10 +189,12 @@ class LLAMA(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["message"]
+
+
 if __name__ == "__main__":
     from rich import print
 
-    ai = LLAMA() 
+    ai = LLAMA()
     # Stream the response
     response = ai.chat(input(">>> "))
     for chunk in response:

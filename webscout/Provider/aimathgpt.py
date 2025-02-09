@@ -1,12 +1,11 @@
 import requests
 import json
-import os
-from typing import Any, Dict, Optional, Generator, List, Union
+from typing import Dict, Generator, Union
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
 
 
@@ -51,10 +50,10 @@ class AIMathGPT(Provider):
             "priority": "u=1, i",
             "referer": "https://aimathgpt.forit.ai/?ref=taaft&utm_source=taaft&utm_medium=referral",
             "sec-ch-ua": (
-                "\"Microsoft Edge\";v=\"129\", \"Not=A?Brand\";v=\"8\", \"Chromium\";v=\"129\""
+                '"Microsoft Edge";v="129", "Not=A?Brand";v="8", "Chromium";v="129"'
             ),
             "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
@@ -107,8 +106,9 @@ class AIMathGPT(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
-
+                raise Exception(
+                    f"Optimizer is not one of {self.__available_optimizers}"
+                )
 
         payload = {
             "messages": [
@@ -118,22 +118,31 @@ class AIMathGPT(Provider):
             "model": self.model,
         }
 
-
         def for_stream():
             try:
-                with requests.post(self.url, headers=self.headers, data=json.dumps(payload), stream=True, timeout=self.timeout) as response:
+                with requests.post(
+                    self.url,
+                    headers=self.headers,
+                    data=json.dumps(payload),
+                    stream=True,
+                    timeout=self.timeout,
+                ) as response:
                     if response.status_code != 200:
-                        raise exceptions.FailedToGenerateResponseError(f"Request failed with status code {response.status_code}: {response.text}")
+                        raise exceptions.FailedToGenerateResponseError(
+                            f"Request failed with status code {response.status_code}: {response.text}"
+                        )
 
                     streaming_text = ""
                     for line in response.iter_lines(decode_unicode=True):
                         if line:
                             try:
                                 data = json.loads(line)
-                                if 'result' in data and 'response' in data['result']:
-                                    content = data['result']['response']
+                                if "result" in data and "response" in data["result"]:
+                                    content = data["result"]["response"]
                                     streaming_text += content
-                                    resp = dict(text=content)  # Yield only the new content
+                                    resp = dict(
+                                        text=content
+                                    )  # Yield only the new content
                                     yield resp if raw else resp
                                 else:
                                     pass
@@ -151,8 +160,6 @@ class AIMathGPT(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-
-
     def chat(
         self,
         prompt: str,
@@ -160,17 +167,22 @@ class AIMathGPT(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Union[str, Generator]:
-
         def for_stream():
             for response in self.ask(
-                prompt, stream=True, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally,
             ):
                 yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
                 self.ask(
-                    prompt, stream=False, optimizer=optimizer, conversationally=conversationally
+                    prompt,
+                    stream=False,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
                 )
             )
 
@@ -184,6 +196,7 @@ class AIMathGPT(Provider):
 
 if __name__ == "__main__":
     from rich import print
+
     bot = AIMathGPT()
     try:
         response = bot.chat("What is the capital of France?", stream=True)

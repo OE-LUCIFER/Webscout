@@ -11,7 +11,6 @@ from random import choice, shuffle
 from threading import Event
 from time import sleep, time
 from types import TracebackType
-from typing import cast
 
 import primp  # type: ignore
 
@@ -72,8 +71,12 @@ class WEBS:
         assert self.proxy is None or isinstance(self.proxy, str), "proxy must be a str"
         if not proxy and proxies:
             warnings.warn("'proxies' is deprecated, use 'proxy' instead.", stacklevel=1)
-            self.proxy = proxies.get("http") or proxies.get("https") if isinstance(proxies, dict) else proxies
-        
+            self.proxy = (
+                proxies.get("http") or proxies.get("https")
+                if isinstance(proxies, dict)
+                else proxies
+            )
+
         default_headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
@@ -87,10 +90,10 @@ class WEBS:
             "Sec-Fetch-User": "?1",
             "Referer": "https://duckduckgo.com/",
         }
-        
+
         self.headers = headers if headers else {}
         self.headers.update(default_headers)
-        
+
         self.client = primp.Client(
             headers=self.headers,
             proxy=self.proxy,
@@ -122,11 +125,22 @@ class WEBS:
     @cached_property
     def parser(self) -> LHTMLParser:
         """Get HTML parser."""
-        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
+        return LHTMLParser(
+            remove_blank_text=True,
+            remove_comments=True,
+            remove_pis=True,
+            collect_ids=False,
+        )
 
     def _sleep(self, sleeptime: float = 2.0) -> None:
         """Sleep between API requests."""
-        delay = sleeptime if not self.sleep_timestamp else sleeptime if time() - self.sleep_timestamp >= 30 else sleeptime * 2
+        delay = (
+            sleeptime
+            if not self.sleep_timestamp
+            else sleeptime
+            if time() - self.sleep_timestamp >= 30
+            else sleeptime * 2
+        )
         self.sleep_timestamp = time()
         sleep(delay)
 
@@ -141,13 +155,17 @@ class WEBS:
         """Make HTTP request with proper rate limiting."""
         self._sleep()
         try:
-            resp = self.client.request(method, url, params=params, content=content, data=data)
-            
+            resp = self.client.request(
+                method, url, params=params, content=content, data=data
+            )
+
             # Add additional delay if we get a 429 or similar status
             if resp.status_code in (429, 403, 503):
                 sleep(5.0)  # Additional delay for rate limit responses
-                resp = self.client.request(method, url, params=params, content=content, data=data)
-                
+                resp = self.client.request(
+                    method, url, params=params, content=content, data=data
+                )
+
         except Exception as ex:
             if "time" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
@@ -156,12 +174,16 @@ class WEBS:
         if resp.status_code == 200:
             return resp.content
         elif resp.status_code in (202, 301, 403, 429, 503):
-            raise RatelimitE(f"{url} {resp.status_code} Ratelimit - Please wait a few minutes before retrying")
+            raise RatelimitE(
+                f"{url} {resp.status_code} Ratelimit - Please wait a few minutes before retrying"
+            )
         raise WebscoutE(f"{url} return None. {params=} {content=} {data=}")
 
     def _get_vqd(self, keywords: str) -> str:
         """Get vqd value for a search query."""
-        resp_content = self._get_url("GET", "https://duckduckgo.com", params={"q": keywords})
+        resp_content = self._get_url(
+            "GET", "https://duckduckgo.com", params={"q": keywords}
+        )
         return _extract_vqd(resp_content, keywords)
 
     def chat(self, keywords: str, model: str = "gpt-4o-mini", timeout: int = 30) -> str:
@@ -176,10 +198,7 @@ class WEBS:
         Returns:
             str: The response from the AI.
         """
-        models_deprecated = {
-            "gpt-3.5": "gpt-4o-mini",
-            "llama-3-70b": "llama-3.1-70b"
-        }
+        models_deprecated = {"gpt-3.5": "gpt-4o-mini", "llama-3-70b": "llama-3.1-70b"}
         if model in models_deprecated:
             # logger.info(f"{model=} is deprecated, using {models_deprecated[model]}")
             model = models_deprecated[model]
@@ -188,15 +207,20 @@ class WEBS:
             "gpt-4o-mini": "gpt-4o-mini",
             "llama-3.1-70b": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
             "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-            "o3-mini":"o3-mini"
+            "o3-mini": "o3-mini",
         }
         # vqd
         if not self._chat_vqd:
-            resp = self.client.get("https://duckduckgo.com/duckchat/v1/status", headers={"x-vqd-accept": "1"})
+            resp = self.client.get(
+                "https://duckduckgo.com/duckchat/v1/status",
+                headers={"x-vqd-accept": "1"},
+            )
             self._chat_vqd = resp.headers.get("x-vqd-4", "")
 
         self._chat_messages.append({"role": "user", "content": keywords})
-        self._chat_tokens_count += len(keywords) // 4 if len(keywords) >= 4 else 1  # approximate number of tokens
+        self._chat_tokens_count += (
+            len(keywords) // 4 if len(keywords) >= 4 else 1
+        )  # approximate number of tokens
 
         json_data = {
             "model": models[model],
@@ -210,7 +234,11 @@ class WEBS:
         )
         self._chat_vqd = resp.headers.get("x-vqd-4", "")
 
-        data = ",".join(line.strip() for line in resp.text.rstrip("[DONE]LIMT_CVRSA\n").split("data:") if line.strip())
+        data = ",".join(
+            line.strip()
+            for line in resp.text.rstrip("[DONE]LIMT_CVRSA\n").split("data:")
+            if line.strip()
+        )
         data = json_loads("[" + data + "]")
 
         results = []
@@ -263,7 +291,9 @@ class WEBS:
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         if backend in ("api", "ecosia"):
-            warnings.warn(f"{backend=} is deprecated, using backend='auto'", stacklevel=2)
+            warnings.warn(
+                f"{backend=} is deprecated, using backend='auto'", stacklevel=2
+            )
             backend = "auto"
         backends = ["html", "lite"] if backend == "auto" else [backend]
         shuffle(backends)
@@ -336,12 +366,18 @@ class WEBS:
 
         def _text_api_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("GET", "https://links.duckduckgo.com/d.js", params=payload)
+            resp_content = self._get_url(
+                "GET", "https://links.duckduckgo.com/d.js", params=payload
+            )
             page_data = _text_extract_json(resp_content, keywords)
             page_results = []
             for row in page_data:
                 href = row.get("u", None)
-                if href and href not in cache and href != f"http://www.google.com/search?q={keywords}":
+                if (
+                    href
+                    and href not in cache
+                    and href != f"http://www.google.com/search?q={keywords}"
+                ):
                     cache.add(href)
                     body = _normalize(row["a"])
                     if body:
@@ -410,7 +446,9 @@ class WEBS:
 
         def _text_html_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("POST", "https://html.duckduckgo.com/html", data=payload)
+            resp_content = self._get_url(
+                "POST", "https://html.duckduckgo.com/html", data=payload
+            )
             if b"No  results." in resp_content:
                 return []
 
@@ -422,19 +460,34 @@ class WEBS:
             for e in elements:
                 if isinstance(e, _Element):
                     hrefxpath = e.xpath("./a/@href")
-                    href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
+                    href = (
+                        str(hrefxpath[0])
+                        if hrefxpath and isinstance(hrefxpath, list)
+                        else None
+                    )
                     if (
                         href
                         and href not in cache
                         and not href.startswith(
-                            ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                            (
+                                "http://www.google.com/search?q=",
+                                "https://duckduckgo.com/y.js?ad_domain",
+                            )
                         )
                     ):
                         cache.add(href)
                         titlexpath = e.xpath("./h2/a/text()")
-                        title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
+                        title = (
+                            str(titlexpath[0])
+                            if titlexpath and isinstance(titlexpath, list)
+                            else ""
+                        )
                         bodyxpath = e.xpath("./a//text()")
-                        body = "".join(str(x) for x in bodyxpath) if bodyxpath and isinstance(bodyxpath, list) else ""
+                        body = (
+                            "".join(str(x) for x in bodyxpath)
+                            if bodyxpath and isinstance(bodyxpath, list)
+                            else ""
+                        )
                         result = {
                             "title": _normalize(title),
                             "href": _normalize_url(href),
@@ -497,7 +550,9 @@ class WEBS:
 
         def _text_lite_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("POST", "https://lite.duckduckgo.com/lite/", data=payload)
+            resp_content = self._get_url(
+                "POST", "https://lite.duckduckgo.com/lite/", data=payload
+            )
             if b"No more results." in resp_content:
                 return []
 
@@ -512,19 +567,32 @@ class WEBS:
                 if isinstance(e, _Element):
                     if i == 1:
                         hrefxpath = e.xpath(".//a//@href")
-                        href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
+                        href = (
+                            str(hrefxpath[0])
+                            if hrefxpath and isinstance(hrefxpath, list)
+                            else None
+                        )
                         if (
                             href is None
                             or href in cache
                             or href.startswith(
-                                ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                                (
+                                    "http://www.google.com/search?q=",
+                                    "https://duckduckgo.com/y.js?ad_domain",
+                                )
                             )
                         ):
-                            [next(data, None) for _ in range(3)]  # skip block(i=1,2,3,4)
+                            [
+                                next(data, None) for _ in range(3)
+                            ]  # skip block(i=1,2,3,4)
                         else:
                             cache.add(href)
                             titlexpath = e.xpath(".//a//text()")
-                            title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
+                            title = (
+                                str(titlexpath[0])
+                                if titlexpath and isinstance(titlexpath, list)
+                                else ""
+                            )
                     elif i == 2:
                         bodyxpath = e.xpath(".//td[@class='result-snippet']//text()")
                         body = (
@@ -618,7 +686,9 @@ class WEBS:
 
         def _images_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("GET", "https://duckduckgo.com/i.js", params=payload)
+            resp_content = self._get_url(
+                "GET", "https://duckduckgo.com/i.js", params=payload
+            )
             resp_json = json_loads(resp_content)
 
             page_data = resp_json.get("results", [])
@@ -705,7 +775,9 @@ class WEBS:
 
         def _videos_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("GET", "https://duckduckgo.com/v.js", params=payload)
+            resp_content = self._get_url(
+                "GET", "https://duckduckgo.com/v.js", params=payload
+            )
             resp_json = json_loads(resp_content)
 
             page_data = resp_json.get("results", [])
@@ -774,7 +846,9 @@ class WEBS:
 
         def _news_page(s: int) -> list[dict[str, str]]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("GET", "https://duckduckgo.com/news.js", params=payload)
+            resp_content = self._get_url(
+                "GET", "https://duckduckgo.com/news.js", params=payload
+            )
             resp_json = json_loads(resp_content)
             page_data = resp_json.get("results", [])
             page_results = []
@@ -783,7 +857,9 @@ class WEBS:
                     cache.add(row["url"])
                     image_url = row.get("image", None)
                     result = {
-                        "date": datetime.fromtimestamp(row["date"], timezone.utc).isoformat(),
+                        "date": datetime.fromtimestamp(
+                            row["date"], timezone.utc
+                        ).isoformat(),
                         "title": row["title"],
                         "body": _normalize(row["excerpt"]),
                         "url": _normalize_url(row["url"]),
@@ -825,7 +901,9 @@ class WEBS:
             "q": f"what is {keywords}",
             "format": "json",
         }
-        resp_content = self._get_url("GET", "https://api.duckduckgo.com/", params=payload)
+        resp_content = self._get_url(
+            "GET", "https://api.duckduckgo.com/", params=payload
+        )
         page_data = json_loads(resp_content)
 
         results = []
@@ -846,7 +924,9 @@ class WEBS:
             "q": f"{keywords}",
             "format": "json",
         }
-        resp_content = self._get_url("GET", "https://api.duckduckgo.com/", params=payload)
+        resp_content = self._get_url(
+            "GET", "https://api.duckduckgo.com/", params=payload
+        )
         resp_json = json_loads(resp_content)
         page_data = resp_json.get("RelatedTopics", [])
 
@@ -897,7 +977,9 @@ class WEBS:
             "q": keywords,
             "kl": region,
         }
-        resp_content = self._get_url("GET", "https://duckduckgo.com/ac/", params=payload)
+        resp_content = self._get_url(
+            "GET", "https://duckduckgo.com/ac/", params=payload
+        )
         page_data = json_loads(resp_content)
         return [r for r in page_data]
 
@@ -985,7 +1067,9 @@ class WEBS:
                 params=params,
             )
             if resp_content == b"[]":
-                raise WebscoutE("maps() Coordinates are not found, check function parameters.")
+                raise WebscoutE(
+                    "maps() Coordinates are not found, check function parameters."
+                )
             resp_json = json_loads(resp_content)
             coordinates = resp_json[0]["boundingbox"]
             lat_t, lon_l = Decimal(coordinates[1]), Decimal(coordinates[2])
@@ -1019,13 +1103,15 @@ class WEBS:
                 "bbox_br": f"{lat_b},{lon_r}",
                 "strict_bbox": "1",
             }
-            resp_content = self._get_url("GET", "https://duckduckgo.com/local.js", params=params)
+            resp_content = self._get_url(
+                "GET", "https://duckduckgo.com/local.js", params=params
+            )
             resp_json = json_loads(resp_content)
             page_data = resp_json.get("results", [])
 
             page_results = []
             for res in page_data:
-                r_name = f'{res["name"]} {res["address"]}'
+                r_name = f"{res['name']} {res['address']}"
                 if r_name in cache:
                     continue
                 else:
@@ -1043,9 +1129,15 @@ class WEBS:
                         "desc": x.get("description", "") if (x := res["embed"]) else "",
                         "hours": res["hours"] or "",
                         "category": res["ddg_category"] or "",
-                        "facebook": f"www.facebook.com/profile.php?id={x}" if (x := res["facebook_id"]) else "",
-                        "instagram": f"https://www.instagram.com/{x}" if (x := res["instagram_id"]) else "",
-                        "twitter": f"https://twitter.com/{x}" if (x := res["twitter_id"]) else "",
+                        "facebook": f"www.facebook.com/profile.php?id={x}"
+                        if (x := res["facebook_id"])
+                        else "",
+                        "instagram": f"https://www.instagram.com/{x}"
+                        if (x := res["instagram_id"])
+                        else "",
+                        "twitter": f"https://twitter.com/{x}"
+                        if (x := res["twitter_id"])
+                        else "",
                     }
                     page_results.append(result)
             return page_results
@@ -1085,12 +1177,18 @@ class WEBS:
                     results.append(x)
 
             work_bboxes = queue_bboxes
-            if not max_results or len(results) >= max_results or len(work_bboxes_results) == 0:
+            if (
+                not max_results
+                or len(results) >= max_results
+                or len(work_bboxes_results) == 0
+            ):
                 break
 
         return list(islice(results, max_results))
 
-    def translate(self, keywords: list[str] | str, from_: str | None = None, to: str = "en") -> list[dict[str, str]]:
+    def translate(
+        self, keywords: list[str] | str, from_: str | None = None, to: str = "en"
+    ) -> list[dict[str, str]]:
         """webscout translate.
 
         Args:

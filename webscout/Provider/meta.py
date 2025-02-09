@@ -3,7 +3,7 @@ import logging
 import time
 import urllib
 import uuid
-from typing import Dict, Generator, Iterator, List, Union
+from typing import Dict, Generator, List, Union
 
 import random
 import requests
@@ -11,11 +11,13 @@ from webscout.scout import Scout
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
+
 MAX_RETRIES = 3
+
 
 def generate_offline_threading_id() -> str:
     """
@@ -107,15 +109,15 @@ def get_fb_session(email, password, proxies=None):
     }
     # Send the GET request
     response = requests.get(login_url, headers=headers, proxies=proxies)
-    
+
     # Use Scout for parsing instead of BeautifulSoup
     scout = Scout(response.text)
-    
+
     # Parse necessary parameters from the login form
-    lsd = scout.find_first('input[name="lsd"]').get('value')
-    jazoest = scout.find_first('input[name="jazoest"]').get('value')
-    li = scout.find_first('input[name="li"]').get('value')
-    m_ts = scout.find_first('input[name="m_ts"]').get('value')
+    lsd = scout.find_first('input[name="lsd"]').get("value")
+    jazoest = scout.find_first('input[name="jazoest"]').get("value")
+    li = scout.find_first('input[name="li"]').get("value")
+    m_ts = scout.find_first('input[name="m_ts"]').get("value")
 
     # Define the URL and body for the POST request to submit the login form
     post_url = "https://mbasic.facebook.com/login/device-based/regular/login/?refsrc=deprecated&lwv=100"
@@ -178,14 +180,14 @@ def get_fb_session(email, password, proxies=None):
 
     url = "https://www.meta.ai/state/"
 
-    payload = f'__a=1&lsd={meta_ai_cookies["lsd"]}'
+    payload = f"__a=1&lsd={meta_ai_cookies['lsd']}"
     headers = {
         "authority": "www.meta.ai",
         "accept": "*/*",
         "accept-language": "en-US,en;q=0.9",
         "cache-control": "no-cache",
         "content-type": "application/x-www-form-urlencoded",
-        "cookie": f'ps_n=1; ps_l=1; dpr=2; _js_datr={meta_ai_cookies["_js_datr"]}; abra_csrf={meta_ai_cookies["abra_csrf"]}; datr={meta_ai_cookies["datr"]};; ps_l=1; ps_n=1',
+        "cookie": f"ps_n=1; ps_l=1; dpr=2; _js_datr={meta_ai_cookies['_js_datr']}; abra_csrf={meta_ai_cookies['abra_csrf']}; datr={meta_ai_cookies['datr']};; ps_l=1; ps_n=1",
         "origin": "https://www.meta.ai",
         "pragma": "no-cache",
         "referer": "https://www.meta.ai/",
@@ -194,7 +196,9 @@ def get_fb_session(email, password, proxies=None):
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     }
 
-    response = requests.request("POST", url, headers=headers, data=payload, proxies=proxies)
+    response = requests.request(
+        "POST", url, headers=headers, data=payload, proxies=proxies
+    )
 
     state = extract_value(response.text, start_str='"state":"', end_str='"')
 
@@ -229,7 +233,7 @@ def get_fb_session(email, password, proxies=None):
         "Accept-Encoding": "gzip, deflate, br",
         "Referer": "https://www.meta.ai/",
         "Connection": "keep-alive",
-        "Cookie": f'dpr=2; abra_csrf={meta_ai_cookies["abra_csrf"]}; datr={meta_ai_cookies["_js_datr"]}',
+        "Cookie": f"dpr=2; abra_csrf={meta_ai_cookies['abra_csrf']}; datr={meta_ai_cookies['_js_datr']}",
         "Upgrade-Insecure-Requests": "1",
         "Sec-Fetch-Dest": "document",
         "Sec-Fetch-Mode": "navigate",
@@ -259,13 +263,13 @@ def get_cookies(self) -> dict:
     if self.fb_email is not None and self.fb_password is not None:
         fb_session = get_fb_session(self.fb_email, self.fb_password, self.proxy)
         headers = {"cookie": f"abra_sess={fb_session['abra_sess']}"}
-    
+
     response = requests.get(
         "https://www.meta.ai/",
         headers=headers,
         proxies=self.proxy,
     )
-    
+
     cookies = {
         "_js_datr": extract_value(
             response.text, start_str='_js_datr":{"value":"', end_str='",'
@@ -288,6 +292,7 @@ def get_cookies(self) -> dict:
             response.text, start_str='abra_csrf":{"value":"', end_str='",'
         )
     return cookies
+
 
 class Meta(Provider):
     """
@@ -414,8 +419,8 @@ class Meta(Provider):
         payload = urllib.parse.urlencode(payload)  # noqa
         headers = {
             "content-type": "application/x-www-form-urlencoded",
-            "cookie": f'_js_datr={self.cookies["_js_datr"]}; '
-            f'abra_csrf={self.cookies["abra_csrf"]}; datr={self.cookies["datr"]};',
+            "cookie": f"_js_datr={self.cookies['_js_datr']}; "
+            f"abra_csrf={self.cookies['abra_csrf']}; datr={self.cookies['datr']};",
             "sec-fetch-site": "same-origin",
             "x-fb-friendly-name": "useAbraAcceptTOSForTempUserMutation",
         }
@@ -511,7 +516,7 @@ class Meta(Provider):
             "x-fb-friendly-name": "useAbraSendMessageMutation",
         }
         if self.is_authed:
-            headers["cookie"] = f'abra_sess={self.cookies["abra_sess"]}'
+            headers["cookie"] = f"abra_sess={self.cookies['abra_sess']}"
             # Recreate the session to avoid cookie leakage when user is authenticated
             self.session = requests.Session()
             self.session.proxies = self.proxy
@@ -520,7 +525,11 @@ class Meta(Provider):
 
             def for_stream():
                 response = self.session.post(
-                    url, headers=headers, data=payload, stream=True, timeout=self.timeout
+                    url,
+                    headers=headers,
+                    data=payload,
+                    stream=True,
+                    timeout=self.timeout,
                 )
                 if not response.ok:
                     raise exceptions.FailedToGenerateResponseError(
@@ -700,13 +709,13 @@ class Meta(Provider):
         if self.fb_email is not None and self.fb_password is not None:
             fb_session = get_fb_session(self.fb_email, self.fb_password, self.proxy)
             headers = {"cookie": f"abra_sess={fb_session['abra_sess']}"}
-        
+
         response = requests.get(
             "https://www.meta.ai/",
             headers=headers,
             proxies=self.proxy,
         )
-        
+
         cookies = {
             "_js_datr": extract_value(
                 response.text, start_str='_js_datr":{"value":"', end_str='",'
@@ -757,7 +766,7 @@ class Meta(Provider):
             "authority": "graph.meta.ai",
             "accept-language": "en-US,en;q=0.9,fr-FR;q=0.8,fr;q=0.7",
             "content-type": "application/x-www-form-urlencoded",
-            "cookie": f'dpr=2; abra_csrf={self.cookies.get("abra_csrf")}; datr={self.cookies.get("datr")}; ps_n=1; ps_l=1',
+            "cookie": f"dpr=2; abra_csrf={self.cookies.get('abra_csrf')}; datr={self.cookies.get('datr')}; ps_n=1; ps_l=1",
             "x-fb-friendly-name": "AbraSearchPluginDialogQuery",
         }
 
@@ -786,7 +795,8 @@ class Meta(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["message"]
-    
+
+
 if __name__ == "__main__":
     Meta = Meta()
     ai = Meta.chat("hi")

@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Optional, Generator
+from typing import Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -13,6 +13,7 @@ class oivscode(Provider):
     """
     A class to interact with a test API.
     """
+
     AVAILABLE_MODELS = [
         "deepseek/deepseek-chat",
         "claude-3-5-haiku-20241022",
@@ -156,14 +157,14 @@ class oivscode(Provider):
         act: str = None,
         model: str = "claude-3-5-sonnet-20240620",
         system_prompt: str = "You are a helpful AI assistant.",
-        
     ):
         """
         Initializes the oivscode with given parameters.
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
-
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -185,9 +186,8 @@ class oivscode(Provider):
             "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site"
+            "sec-fetch-site": "same-site",
         }
-
 
         self.__available_optimizers = (
             method
@@ -225,7 +225,7 @@ class oivscode(Provider):
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
         Returns:
-            dict or generator: 
+            dict or generator:
                 If stream is False, returns a dict
                 If stream is True, returns a generator
         """
@@ -243,10 +243,10 @@ class oivscode(Provider):
         payload = {
             "model": self.model,
             "stream": stream,
-             "messages": [
+            "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
-            ]
+                {"role": "user", "content": conversation_prompt},
+            ],
         }
 
         def for_stream():
@@ -300,7 +300,6 @@ class oivscode(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-
     def chat(
         self,
         prompt: str,
@@ -317,11 +316,13 @@ class oivscode(Provider):
         Returns:
             str: Response generated
         """
+
         def for_stream():
-             for response in self.ask(
+            for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
             ):
                 yield self.get_message(response)
+
         def for_non_stream():
             return self.get_message(
                 self.ask(
@@ -331,6 +332,7 @@ class oivscode(Provider):
                     conversationally=conversationally,
                 )
             )
+
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
@@ -338,8 +340,10 @@ class oivscode(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
+
 if __name__ == "__main__":
     from rich import print
+
     chatbot = oivscode()
     response = chatbot.chat(input(">>> "), stream=True)
     for chunk in response:

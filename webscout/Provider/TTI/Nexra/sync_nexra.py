@@ -12,11 +12,10 @@ from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
 logger = LitLogger(
-    "Nexra",
-    format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    "Nexra", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK
 )
 agent = LitAgent()
+
 
 class NexraImager(ImageProvider):
     """Your go-to provider for generating fire images with Nexra! 🔥
@@ -52,7 +51,7 @@ class NexraImager(ImageProvider):
             "dalle2",
             "dalle-mini",
             "flux",
-            "midjourney"
+            "midjourney",
         ],
         "prodia": [
             "dreamshaperXL10_alpha2.safetensors [c8afe2ef]",
@@ -64,8 +63,8 @@ class NexraImager(ImageProvider):
             "sd_xl_base_1.0_inpainting_0.1.safetensors [5679a81a]",
             "turbovisionXL_v431.safetensors [78890989]",
             "devlishphotorealism_sdxl15.safetensors [77cba69f]",
-            "realvisxlV40.safetensors [f7fdcb51]"
-        ]
+            "realvisxlV40.safetensors [f7fdcb51]",
+        ],
     }
 
     def __init__(self, timeout: int = 60, proxies: dict = {}, logging: bool = True):
@@ -80,7 +79,7 @@ class NexraImager(ImageProvider):
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": agent.random()
+            "User-Agent": agent.random(),
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -99,7 +98,7 @@ class NexraImager(ImageProvider):
         amount: int = 1,
         max_retries: int = 3,
         retry_delay: int = 5,
-        additional_params: Optional[dict] = None
+        additional_params: Optional[dict] = None,
     ) -> List[bytes]:
         """Generate some fire images from your prompt! 🎨
 
@@ -132,8 +131,10 @@ class NexraImager(ImageProvider):
             json.JSONDecodeError: If the API response is invalid
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int) and amount > 0, "Amount should be a positive integer"
-        
+        assert isinstance(amount, int) and amount > 0, (
+            "Amount should be a positive integer"
+        )
+
         all_models = self.AVAILABLE_MODELS["standard"] + self.AVAILABLE_MODELS["prodia"]
         assert model in all_models, f"Model should be one of {all_models}"
 
@@ -151,7 +152,7 @@ class NexraImager(ImageProvider):
                 "steps": 25,
                 "cfg_scale": 7,
                 "sampler": "DPM++ 2M Karras",
-                "negative_prompt": ""
+                "negative_prompt": "",
             }
         if additional_params:
             payload.update(additional_params)
@@ -249,10 +250,13 @@ class NexraImager(ImageProvider):
             logger.success(f"Images saved successfully! Check {dir} 🎉")
         return filenames
 
+
 if __name__ == "__main__":
     bot = NexraImager()
     try:
-        resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", "midjourney")
+        resp = bot.generate(
+            "A shiny red sports car speeding down a scenic mountain road", "midjourney"
+        )
         print(bot.save(resp))
     except Exception as e:
         logger.error(f"An error occurred: {e} 😢")

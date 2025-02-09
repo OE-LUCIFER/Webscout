@@ -2,24 +2,16 @@ import os
 import json
 import platform
 import subprocess
-import logging
-import threading
-import time
-import datetime
-import re
-import sys
-from rich.markdown import Markdown
-from rich.console import Console
-from typing import List, Tuple, Union
+from typing import Union
 from typing import NoReturn
 import requests
 from pathlib import Path
 from playsound import playsound
-from time import sleep as wait
 import pathlib
 import urllib.parse
 
 default_path = os.path.join(os.path.expanduser("~"), ".cache", "AIWEBS", "webscout")
+
 
 def sanitize_stream(
     chunk: str, intro_value: str = "data:", to_json: bool = True
@@ -39,6 +31,8 @@ def sanitize_stream(
         chunk = chunk[len(intro_value) :]
 
     return json.loads(chunk) if to_json else chunk
+
+
 def run_system_command(
     command: str,
     exit_on_error: bool = True,
@@ -69,16 +63,13 @@ def run_system_command(
         if exit_on_error:
             raise Exception(f"Command failed with exit code {e.returncode}") from e
         else:
-            return (False, e)  
+            return (False, e)
 
 
-from .conversation import Conversation
 
-from .optimizers import Optimizers
 
-from .Extra.autocoder import AutoCoder
 
-from .prompt_manager import AwesomePrompts
+
 
 class Updates:
     """Webscout latest release info"""
@@ -383,13 +374,11 @@ class Audio:
         Returns:
             result (Union[str, bytes]): Path to saved contents or audio content.
         """
-        assert (
-            voice in cls.all_voices
-        ), f"Voice '{voice}' not one of [{', '.join(cls.all_voices)}]"
-        # Base URL for provider API
-        url: str = (
-            f"https://api.streamelements.com/kappa/v2/speech?voice={voice}&text={{{urllib.parse.quote(message)}}}"
+        assert voice in cls.all_voices, (
+            f"Voice '{voice}' not one of [{', '.join(cls.all_voices)}]"
         )
+        # Base URL for provider API
+        url: str = f"https://api.streamelements.com/kappa/v2/speech?voice={voice}&text={{{urllib.parse.quote(message)}}}"
         resp = requests.get(url=url, headers=cls.headers, stream=True)
         if not resp.ok:
             raise Exception(
@@ -433,9 +422,10 @@ class Audio:
 
     @staticmethod
     def play(path_to_audio_file: Union[Path, str]) -> NoReturn:
-        """Play audio (.mp3) using playsound.
-        """
+        """Play audio (.mp3) using playsound."""
         if not Path(path_to_audio_file).is_file():
             raise FileNotFoundError(f"File does not exist - '{path_to_audio_file}'")
         playsound(path_to_audio_file)
-# 
+
+
+#

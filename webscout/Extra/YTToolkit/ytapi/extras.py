@@ -5,7 +5,7 @@ from .https import (
     trending_feeds,
     trending_streams,
     _get_trending_learning_videos,
-    trending_sports
+    trending_sports,
 )
 from .utils import dup_filter
 from .patterns import _ExtraPatterns as Patterns
@@ -13,7 +13,6 @@ from typing import Optional, List
 
 
 class Extras:
-
     @staticmethod
     def trending_videos() -> Optional[List[str]]:
         data = Patterns.video_id.findall(trending_videos())

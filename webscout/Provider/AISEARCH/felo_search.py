@@ -1,4 +1,3 @@
-import re
 import requests
 from uuid import uuid4
 import json
@@ -11,13 +10,13 @@ from webscout import LitAgent
 
 class Response:
     """A wrapper class for Felo API responses.
-    
+
     This class automatically converts response objects to their text representation
     when printed or converted to string.
-    
+
     Attributes:
         text (str): The text content of the response
-        
+
     Example:
         >>> response = Response("Hello, world!")
         >>> print(response)
@@ -25,22 +24,23 @@ class Response:
         >>> str(response)
         'Hello, world!'
     """
+
     def __init__(self, text: str):
         self.text = text
-    
+
     def __str__(self):
         return self.text
-    
+
     def __repr__(self):
         return self.text
 
 
 class Felo(AISearch):
     """A class to interact with the Felo AI search API.
-    
+
     Felo provides a powerful search interface that returns AI-generated responses
     based on web content. It supports both streaming and non-streaming responses.
-    
+
     Basic Usage:
         >>> from webscout import Felo
         >>> ai = Felo()
@@ -48,22 +48,22 @@ class Felo(AISearch):
         >>> response = ai.search("What is Python?")
         >>> print(response)
         Python is a high-level programming language...
-        
+
         >>> # Streaming example
         >>> for chunk in ai.search("Tell me about AI", stream=True):
         ...     print(chunk, end="", flush=True)
         Artificial Intelligence is...
-        
+
         >>> # Raw response format
         >>> for chunk in ai.search("Hello", stream=True, raw=True):
         ...     print(chunk)
         {'text': 'Hello'}
         {'text': ' there!'}
-    
+
     Args:
         timeout (int, optional): Request timeout in seconds. Defaults to 30.
         proxies (dict, optional): Proxy configuration for requests. Defaults to None.
-    
+
     Attributes:
         api_endpoint (str): The Felo API endpoint URL.
         stream_chunk_size (int): Size of chunks when streaming responses.
@@ -77,11 +77,11 @@ class Felo(AISearch):
         proxies: Optional[dict] = None,
     ):
         """Initialize the Felo API client.
-        
+
         Args:
             timeout (int, optional): Request timeout in seconds. Defaults to 30.
             proxies (dict, optional): Proxy configuration for requests. Defaults to None.
-        
+
         Example:
             >>> ai = Felo(timeout=60)  # Longer timeout
             >>> ai = Felo(proxies={'http': 'http://proxy.com:8080'})  # With proxy
@@ -106,7 +106,7 @@ class Felo(AISearch):
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site",
-            "user-agent": LitAgent().random()
+            "user-agent": LitAgent().random(),
         }
         self.session.headers.update(self.headers)
         self.proxies = proxies
@@ -118,10 +118,10 @@ class Felo(AISearch):
         raw: bool = False,
     ) -> Dict[str, Any] | Generator[str, None, None]:
         """Search using the Felo API and get AI-generated responses.
-        
+
         This method sends a search query to Felo and returns the AI-generated response.
         It supports both streaming and non-streaming modes, as well as raw response format.
-        
+
         Args:
             prompt (str): The search query or prompt to send to the API.
             stream (bool, optional): If True, yields response chunks as they arrive.
@@ -129,33 +129,33 @@ class Felo(AISearch):
             raw (bool, optional): If True, returns raw response dictionaries with 'text' key.
                                 If False, returns Response objects that convert to text automatically.
                                 Defaults to False.
-        
+
         Returns:
-            Union[Dict[str, Any], Generator[str, None, None]]: 
+            Union[Dict[str, Any], Generator[str, None, None]]:
                 - If stream=False: Returns complete response
                 - If stream=True: Yields response chunks as they arrive
-        
+
         Raises:
             APIConnectionError: If the API request fails
-        
+
         Examples:
             Basic search:
             >>> ai = Felo()
             >>> response = ai.search("What is Python?")
             >>> print(response)
             Python is a programming language...
-            
+
             Streaming response:
             >>> for chunk in ai.search("Tell me about AI", stream=True):
             ...     print(chunk, end="")
             Artificial Intelligence...
-            
+
             Raw response format:
             >>> for chunk in ai.search("Hello", stream=True, raw=True):
             ...     print(chunk)
             {'text': 'Hello'}
             {'text': ' there!'}
-            
+
             Error handling:
             >>> try:
             ...     response = ai.search("My question")
@@ -167,11 +167,9 @@ class Felo(AISearch):
             "search_uuid": uuid4().hex,
             "lang": "",
             "agent_lang": "en",
-            "search_options": {
-                "langcode": "en-US"
-            },
+            "search_options": {"langcode": "en-US"},
             "search_video": True,
-            "contexts_from": "google"
+            "contexts_from": "google",
         }
 
         def for_stream():
@@ -189,13 +187,13 @@ class Felo(AISearch):
 
                     streaming_text = ""
                     for line in response.iter_lines(decode_unicode=True):
-                        if line.startswith('data:'):
+                        if line.startswith("data:"):
                             try:
                                 data = json.loads(line[5:].strip())
-                                if data['type'] == 'answer' and 'text' in data['data']:
-                                    new_text = data['data']['text']
+                                if data["type"] == "answer" and "text" in data["data"]:
+                                    new_text = data["data"]["text"]
                                     if len(new_text) > len(streaming_text):
-                                        delta = new_text[len(streaming_text):]
+                                        delta = new_text[len(streaming_text) :]
                                         streaming_text = new_text
                                         if raw:
                                             yield {"text": delta}
@@ -217,12 +215,13 @@ class Felo(AISearch):
             if not raw:
                 self.last_response = Response(full_response)
                 return self.last_response
-        
+
         return for_stream() if stream else for_non_stream()
 
 
 if __name__ == "__main__":
     from rich import print
+
     ai = Felo()
     response = ai.search(input(">>> "), stream=True, raw=False)
     for chunk in response:

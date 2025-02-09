@@ -4,7 +4,7 @@ import json
 import re
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 
@@ -127,7 +127,7 @@ class Bing(Provider):
                                 convert = json.loads(data)
                                 result = data
                                 tmp = None
-                            except Exception as e:
+                            except Exception:
                                 if tmp is None:
                                     tmp = data
                                 else:
@@ -135,13 +135,13 @@ class Bing(Provider):
                                         convert = json.loads(tmp)
                                         result = tmp
                                         tmp = None
-                                    except Exception as e:
+                                    except Exception:
                                         tmp = tmp + data
                                         try:
                                             convert = json.loads(tmp)
                                             result = tmp
                                             tmp = None
-                                        except Exception as e:
+                                        except Exception:
                                             tmp = tmp
 
                             if result is not None:
@@ -150,7 +150,9 @@ class Bing(Provider):
 
                                     yield result if raw else dict(text=full_response)
                                 else:
-                                    raise exceptions.FailedToGenerateResponseError(result)
+                                    raise exceptions.FailedToGenerateResponseError(
+                                        result
+                                    )
                 self.last_response.update(dict(text=full_response))
                 self.conversation.update_chat_history(
                     prompt, self.get_message(self.last_response)
@@ -229,14 +231,14 @@ class Bing(Provider):
 
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response"""
-        assert isinstance(
-            response, dict
-        ), "Response should be of dict data-type only"
+        assert isinstance(response, dict), "Response should be of dict data-type only"
         text = re.sub(r"<sup>.*?</sup>", "", response["text"])
         return text
 
+
 if __name__ == "__main__":
     from rich import print
+
     ai = Bing()
     response = ai.chat(input(">>> "))
     for chunk in response:

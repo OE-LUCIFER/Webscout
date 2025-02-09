@@ -10,36 +10,41 @@ import inspect
 
 # Initialize LitLogger with cyberpunk theme
 logger = Litlogger(
-    name="AIauto",
-    format=LogFormat.DETAILED,
-    color_scheme=ColorScheme.CYBERPUNK
+    name="AIauto", format=LogFormat.DETAILED, color_scheme=ColorScheme.CYBERPUNK
 )
+
 
 def load_providers():
     provider_map = {}
     api_key_providers = set()
     provider_package = importlib.import_module("webscout.Provider")
-    
+
     for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
         try:
             module = importlib.import_module(f"webscout.Provider.{module_name}")
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
+                if (
+                    isinstance(attr, type)
+                    and issubclass(attr, Provider)
+                    and attr != Provider
+                ):
                     provider_map[attr_name.upper()] = attr
                     # Check if the provider needs an API key
-                    if 'api_key' in inspect.signature(attr.__init__).parameters:
+                    if "api_key" in inspect.signature(attr.__init__).parameters:
                         api_key_providers.add(attr_name.upper())
                         logger.debug(f"Provider {attr_name} requires API key")
             logger.success(f"Loaded provider module: {module_name}")
         except Exception as e:
             logger.error(f"Failed to load provider {module_name}: {str(e)}")
-    
+
     logger.info(f"Total providers loaded: {len(provider_map)}")
     logger.info(f"API key providers: {len(api_key_providers)}")
     return provider_map, api_key_providers
 
+
 provider_map, api_key_providers = load_providers()
+
 
 class AUTO(Provider):
     def __init__(
@@ -95,7 +100,8 @@ class AUTO(Provider):
 
         # Filter out API key required providers and excluded providers
         available_providers = [
-            (name, cls) for name, cls in provider_map.items()
+            (name, cls)
+            for name, cls in provider_map.items()
             if name not in api_key_providers and name not in self.exclude
         ]
 
@@ -107,7 +113,7 @@ class AUTO(Provider):
             try:
                 self.provider_name = f"webscout-{provider_name}"
                 logger.info(f"Trying provider: {self.provider_name}")
-                
+
                 self.provider = provider_class(
                     is_conversation=self.is_conversation,
                     max_tokens=self.max_tokens,
@@ -127,16 +133,18 @@ class AUTO(Provider):
                 continue
 
         # Try GPT4FREE providers
-        gpt4free_providers = TestProviders(timeout=self.timeout).get_results(run=run_new_test)
+        gpt4free_providers = TestProviders(timeout=self.timeout).get_results(
+            run=run_new_test
+        )
         random.shuffle(gpt4free_providers)
-        
+
         for provider_info in gpt4free_providers:
             if provider_info["name"].upper() in self.exclude:
                 continue
             try:
                 self.provider_name = f"g4f-{provider_info['name']}"
                 logger.info(f"Trying provider: {self.provider_name}")
-                
+
                 self.provider = GPT4FREE(
                     provider=provider_info["name"],
                     is_conversation=self.is_conversation,
@@ -175,7 +183,7 @@ class AUTO(Provider):
             conversationally=conversationally,
             run_new_test=run_new_test,
         )
-        
+
         if stream:
             return (self.get_message(chunk) for chunk in response)
         else:
@@ -184,6 +192,8 @@ class AUTO(Provider):
     def get_message(self, response: dict) -> str:
         assert self.provider is not None, "Chat with AI first"
         return self.provider.get_message(response)
+
+
 if __name__ == "__main__":
     auto = AUTO()
 

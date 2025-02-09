@@ -1,12 +1,13 @@
 import requests
 import json
-from typing import Any, Dict, Generator
+from typing import Any, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
+
 
 class Sambanova(Provider):
     """
@@ -24,7 +25,7 @@ class Sambanova(Provider):
         "Meta-Llama-3.3-70B-Instruct",
         "Qwen2.5-72B-Instruct",
         "Qwen2.5-Coder-32B-Instruct",
-        "QwQ-32B-Preview"
+        "QwQ-32B-Preview",
     ]
 
     def __init__(
@@ -46,7 +47,9 @@ class Sambanova(Provider):
         Initializes the Sambanova API with given parameters.
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.api_key = api_key
         self.model = model
@@ -80,7 +83,7 @@ class Sambanova(Provider):
         self.base_url = "https://api.sambanova.ai/v1/chat/completions"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
     def ask(
@@ -117,7 +120,11 @@ class Sambanova(Provider):
             streaming_text = ""
             try:
                 response = self.session.post(
-                    self.base_url, headers=self.headers, json=payload, stream=True, timeout=self.timeout
+                    self.base_url,
+                    headers=self.headers,
+                    json=payload,
+                    stream=True,
+                    timeout=self.timeout,
                 )
                 if not response.ok:
                     raise exceptions.FailedToGenerateResponseError(
@@ -127,7 +134,11 @@ class Sambanova(Provider):
                 for line in response.iter_lines():
                     if line:
                         # Remove the "data:" prefix and extra whitespace if present
-                        line_str = line.decode('utf-8').strip() if isinstance(line, bytes) else line.strip()
+                        line_str = (
+                            line.decode("utf-8").strip()
+                            if isinstance(line, bytes)
+                            else line.strip()
+                        )
                         if line_str.startswith("data:"):
                             data = line_str[5:].strip()
                         else:
@@ -152,9 +163,7 @@ class Sambanova(Provider):
                         except json.JSONDecodeError:
                             continue
                 self.last_response = streaming_text
-                self.conversation.update_chat_history(
-                    prompt, self.last_response
-                )
+                self.conversation.update_chat_history(prompt, self.last_response)
             except requests.exceptions.RequestException as e:
                 raise exceptions.ProviderConnectionError(f"Request failed: {e}")
 
@@ -183,10 +192,20 @@ class Sambanova(Provider):
         """
         if stream:
             # For stream mode, yield the text chunks directly
-            return self.ask(prompt, stream=True, optimizer=optimizer, conversationally=conversationally)
+            return self.ask(
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally,
+            )
         else:
             # For non-stream mode, return the complete text response
-            return self.ask(prompt, stream=False, optimizer=optimizer, conversationally=conversationally)
+            return self.ask(
+                prompt,
+                stream=False,
+                optimizer=optimizer,
+                conversationally=conversationally,
+            )
 
     def get_message(self, response: Any) -> str:
         """
@@ -204,9 +223,11 @@ class Sambanova(Provider):
             return response["text"]
         return ""
 
+
 if __name__ == "__main__":
     from rich import print
-    ai = Sambanova(api_key='')
+
+    ai = Sambanova(api_key="")
     response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -1,13 +1,13 @@
 import requests
 import json
-import re
-from typing import Any, Dict, Optional, Generator
+from typing import Any, Dict, Generator
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
+
 
 class Llama3Mitril(Provider):
     """
@@ -95,8 +95,8 @@ class Llama3Mitril(Provider):
             "parameters": {
                 "max_new_tokens": self.max_tokens,
                 "temperature": self.temperature,
-                "return_full_text": False
-            }
+                "return_full_text": False,
+            },
         }
 
         def for_stream():
@@ -105,7 +105,7 @@ class Llama3Mitril(Provider):
                 headers=self.headers,
                 json=data,
                 stream=True,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
@@ -116,12 +116,12 @@ class Llama3Mitril(Provider):
             for line in response.iter_lines(decode_unicode=True):
                 if line:
                     try:
-                        chunk = json.loads(line.split('data: ')[1])
-                        if token_text := chunk.get('token', {}).get('text'):
-                            if '<|eot_id|>' not in token_text:
+                        chunk = json.loads(line.split("data: ")[1])
+                        if token_text := chunk.get("token", {}).get("text"):
+                            if "<|eot_id|>" not in token_text:
                                 streaming_response += token_text
                                 yield token_text if raw else {"text": token_text}
-                    except (json.JSONDecodeError, IndexError) as e:
+                    except (json.JSONDecodeError, IndexError):
                         continue
 
             self.last_response.update({"text": streaming_response})
@@ -132,7 +132,7 @@ class Llama3Mitril(Provider):
         def for_non_stream():
             full_response = ""
             for chunk in for_stream():
-                full_response += chunk if raw else chunk['text']
+                full_response += chunk if raw else chunk["text"]
             return {"text": full_response}
 
         return for_stream() if stream else for_non_stream()
@@ -148,14 +148,20 @@ class Llama3Mitril(Provider):
 
         def for_stream():
             for response in self.ask(
-                prompt, stream=True, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally,
             ):
                 yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
                 self.ask(
-                    prompt, stream=False, optimizer=optimizer, conversationally=conversationally
+                    prompt,
+                    stream=False,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
                 )
             )
 
@@ -169,12 +175,8 @@ class Llama3Mitril(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    
-    ai = Llama3Mitril(
-        max_tokens=2048,
-        temperature=0.8,
-        timeout=30
-    )
+
+    ai = Llama3Mitril(max_tokens=2048, temperature=0.8, timeout=30)
 
     for response in ai.chat("Hello", stream=True):
         print(response, end="", flush=True)

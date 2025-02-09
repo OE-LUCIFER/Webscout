@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Optional, Generator
+from typing import Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -30,6 +30,7 @@ MODEL_CONFIGS = {
         "models": {"command-r": {"contextLength": 128000}},
     },
 }
+
 
 class MultiChatAI(Provider):
     """
@@ -97,7 +98,7 @@ class MultiChatAI(Provider):
         # Parse provider and model name
         self.provider = "llama"  # Default provider
         self.model_name = self.model
-        
+
         # Check if model exists in any provider
         model_found = False
         for provider, config in MODEL_CONFIGS.items():
@@ -106,7 +107,7 @@ class MultiChatAI(Provider):
                 self.model_name = self.model
                 model_found = True
                 break
-        
+
         if not model_found:
             available_models = []
             for provider, config in MODEL_CONFIGS.items():
@@ -130,7 +131,7 @@ class MultiChatAI(Provider):
             "contextLength": base_settings["contextLength"],
             "includeProfileContext": True,
             "includeWorkspaceInstructions": True,
-            "embeddingsProvider": "openai"
+            "embeddingsProvider": "openai",
         }
 
     def ask(
@@ -182,7 +183,7 @@ class MultiChatAI(Provider):
 
             self.last_response = {"text": full_response.strip()}
             self.conversation.update_chat_history(prompt, full_response.strip())
-            
+
             if not stream:
                 return self.last_response
 
@@ -191,7 +192,9 @@ class MultiChatAI(Provider):
         except json.JSONDecodeError as e:
             raise exceptions.InvalidResponseError(f"Invalid JSON response: {e}") from e
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(f"Unexpected error: {e}") from e
+            raise exceptions.FailedToGenerateResponseError(
+                f"Unexpected error: {e}"
+            ) from e
 
     def chat(
         self,
@@ -203,7 +206,10 @@ class MultiChatAI(Provider):
         """Generate response."""
         if stream:
             for chunk in self.ask(
-                prompt, stream=True, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally,
             ):
                 if isinstance(chunk, dict):
                     yield chunk.get("text", "")
@@ -211,15 +217,23 @@ class MultiChatAI(Provider):
                     yield str(chunk)
         else:
             response = self.ask(
-                prompt, stream=False, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
-            return response.get("text", "") if isinstance(response, dict) else str(response)
+            return (
+                response.get("text", "")
+                if isinstance(response, dict)
+                else str(response)
+            )
 
     def get_message(self, response: Dict[str, Any] | str) -> str:
         """Retrieves message from response."""
         if isinstance(response, dict):
             return response.get("text", "")
         return str(response)
+
 
 if __name__ == "__main__":
     from rich import print

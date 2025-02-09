@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,6 +9,7 @@ from typing import List, Optional, Set
 @dataclass
 class CleanupResult:
     """Result of cleanup operation"""
+
     removed_count: int
     removed_paths: Set[Path]
     errors: List[tuple[Path, Exception]]
@@ -17,16 +17,12 @@ class CleanupResult:
 
 class DirectoryCleaner:
     """Handles cleaning of Python build artifacts and cache directories"""
-    
-    BUILD_ARTIFACTS = frozenset({
-        "build",
-        "dist",
-        "webscout.egg-info"
-    })
+
+    BUILD_ARTIFACTS = frozenset({"build", "dist", "webscout.egg-info"})
 
     def __init__(self, base_dir: str | Path) -> None:
         """Initialize with base directory path
-        
+
         Args:
             base_dir: Base directory to clean
         """
@@ -38,10 +34,10 @@ class DirectoryCleaner:
 
     def remove_directory(self, path: Path) -> Optional[Exception]:
         """Safely remove a directory
-        
+
         Args:
             path: Directory path to remove
-            
+
         Returns:
             Exception if removal failed, None if successful
         """
@@ -53,7 +49,7 @@ class DirectoryCleaner:
 
     def cleanup(self) -> CleanupResult:
         """Clean build artifacts and cache directories
-        
+
         Returns:
             CleanupResult containing statistics and errors
         """
@@ -84,9 +80,7 @@ class DirectoryCleaner:
                 print(f"Removed __pycache__: {path}")
 
         return CleanupResult(
-            removed_count=removed_count,
-            removed_paths=removed_paths,
-            errors=errors
+            removed_count=removed_count, removed_paths=removed_paths, errors=errors
         )
 
 
@@ -95,8 +89,8 @@ def main() -> None:
     base_dir = Path(r"C:\Users\hp\Desktop\Webscout")
     cleaner = DirectoryCleaner(base_dir)
     result = cleaner.cleanup()
-    
-    print(f"\nCleanup Summary:")
+
+    print("\nCleanup Summary:")
     print(f"Total directories removed: {result.removed_count}")
     if result.errors:
         print(f"Errors encountered: {len(result.errors)}")

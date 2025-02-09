@@ -14,11 +14,10 @@ from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
 logger = LitLogger(
-    "AsyncAiForce",
-    format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    "AsyncAiForce", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK
 )
 agent = LitAgent()
+
 
 class AsyncAiForceimager(AsyncImageProvider):
     """Your go-to async provider for generating fire images with AiForce! ⚡
@@ -55,7 +54,7 @@ class AsyncAiForceimager(AsyncImageProvider):
         "flux-disney",
         "flux-pixel",
         "flux-4o",
-        "any-dark"
+        "any-dark",
     ]
 
     def __init__(self, timeout: int = 60, proxies: dict = {}, logging: bool = True):
@@ -71,7 +70,7 @@ class AsyncAiForceimager(AsyncImageProvider):
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
             "Accept-Encoding": "gzip, deflate",
-            "User-Agent": agent.random()
+            "User-Agent": agent.random(),
         }
         self.timeout = timeout
         self.proxies = proxies
@@ -82,16 +81,16 @@ class AsyncAiForceimager(AsyncImageProvider):
             logger.info("AsyncAiForce provider initialized! 🚀")
 
     async def generate(
-        self, 
-        prompt: str, 
-        amount: int = 1, 
+        self,
+        prompt: str,
+        amount: int = 1,
         additives: bool = True,
-        model: str = "Flux-1.1-Pro", 
-        width: int = 768, 
-        height: int = 768, 
+        model: str = "Flux-1.1-Pro",
+        width: int = 768,
+        height: int = 768,
         seed: Optional[int] = None,
-        max_retries: int = 3, 
-        retry_delay: int = 5
+        max_retries: int = 3,
+        retry_delay: int = 5,
     ) -> List[bytes]:
         """Generate some fire images from your prompt asynchronously! ⚡
 
@@ -126,9 +125,13 @@ class AsyncAiForceimager(AsyncImageProvider):
             ClientError: If the API calls fail after retries
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int), f"Amount should be an integer only not {type(amount)}"
+        assert isinstance(amount, int), (
+            f"Amount should be an integer only not {type(amount)}"
+        )
         assert amount > 0, "Amount should be greater than 0"
-        assert model in self.AVAILABLE_MODELS, f"Model should be one of {self.AVAILABLE_MODELS}"
+        assert model in self.AVAILABLE_MODELS, (
+            f"Model should be one of {self.AVAILABLE_MODELS}"
+        )
 
         ads = lambda: (
             ""
@@ -142,19 +145,21 @@ class AsyncAiForceimager(AsyncImageProvider):
 
         self.prompt = prompt
         response = []
-        
+
         if self.logging:
             logger.info(f"Generating {amount} images with {model}... 🎨")
-        
+
         async with aiohttp.ClientSession(headers=self.headers) as session:
             for i in range(amount):
                 url = f"{self.api_endpoint}?model={model}&prompt={prompt}&size={width}:{height}"
                 if seed:
                     url += f"&seed={seed}"
-                
+
                 for attempt in range(max_retries):
                     try:
-                        async with session.get(url, timeout=self.timeout, proxy=self.proxies.get('http')) as resp:
+                        async with session.get(
+                            url, timeout=self.timeout, proxy=self.proxies.get("http")
+                        ) as resp:
                             resp.raise_for_status()
                             response.append(await resp.read())
                             if self.logging:
@@ -163,11 +168,15 @@ class AsyncAiForceimager(AsyncImageProvider):
                     except ClientError as e:
                         if attempt == max_retries - 1:
                             if self.logging:
-                                logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
+                                logger.error(
+                                    f"Failed to generate image after {max_retries} attempts: {e} 😢"
+                                )
                             raise
                         else:
                             if self.logging:
-                                logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+                                logger.warning(
+                                    f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄"
+                                )
                             await asyncio.sleep(retry_delay)
 
         if self.logging:
@@ -215,19 +224,19 @@ class AsyncAiForceimager(AsyncImageProvider):
         name = self.prompt if name is None else name
         saved_paths = []
         timestamp = int(time.time())
-        
+
         if self.logging:
             logger.info(f"Saving {len(response)} images... 💾")
-        
+
         async def save_single_image(image_bytes: bytes, index: int) -> str:
             filename = f"{filenames_prefix}{name}_{index}.{self.image_extension}"
             filepath = os.path.join(save_dir, filename)
-            
+
             # Write file using asyncio
             async with asyncio.Lock():
                 with open(filepath, "wb") as f:
                     f.write(image_bytes)
-            
+
             if self.logging:
                 logger.success(f"Saved image to: {filepath} 💾")
             return filepath
@@ -244,11 +253,15 @@ class AsyncAiForceimager(AsyncImageProvider):
             logger.success(f"Images saved successfully! Check {dir} 🎉")
         return saved_paths
 
+
 if __name__ == "__main__":
+
     async def main():
         bot = AsyncAiForceimager()
         try:
-            resp = await bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+            resp = await bot.generate(
+                "A shiny red sports car speeding down a scenic mountain road", 1
+            )
             paths = await bot.save(resp)
             print(paths)
         except Exception as e:

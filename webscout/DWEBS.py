@@ -2,16 +2,16 @@ import requests
 from typing import Dict, List, Optional, Union, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from webscout.scout import Scout
-from urllib.parse import quote, urljoin
+from urllib.parse import urljoin
 from webscout.litagent import LitAgent
 
 import time
-import random
 import json
 import os
 from datetime import datetime, timedelta
 from functools import lru_cache
 from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+
 
 class GoogleS:
     """A Python interface for Google search with advanced features
@@ -110,20 +110,24 @@ class GoogleS:
         max_workers: int = 20,
         cache_dir: Optional[str] = None,
         rate_limit: float = 2.0,
-        use_litlogger: bool = False
+        use_litlogger: bool = False,
     ):
         """
         Initialize the GoogleS object with enhanced features.
-        
+
         Args:
             cache_dir: Directory to store search result cache
             rate_limit: Minimum time between requests in seconds
             use_litlogger: Whether to use LitLogger for logging (default: False)
         """
         self.proxy = proxy
-        self.headers = headers if headers else {
-            "User-Agent": LitAgent().random()  # Use LitAgent to generate user agent
-        }
+        self.headers = (
+            headers
+            if headers
+            else {
+                "User-Agent": LitAgent().random()  # Use LitAgent to generate user agent
+            }
+        )
         self.headers["Referer"] = "https://www.google.com/"
         self.client = requests.Session()
         self.client.headers.update(self.headers)
@@ -137,14 +141,14 @@ class GoogleS:
         self.last_request_time = 0
         self.rate_limit = rate_limit
         self.use_litlogger = use_litlogger
-        
+
         # Setup enhanced logging with LitLogger if enabled
         if self.use_litlogger:
             self.logger = LitLogger(
                 name="GoogleS",
                 format=LogFormat.MODERN_EMOJI,
                 color_scheme=ColorScheme.CYBERPUNK,
-                console_output=True
+                console_output=True,
             )
 
     def _respect_rate_limit(self):
@@ -158,24 +162,30 @@ class GoogleS:
             time.sleep(sleep_time)
         self.last_request_time = time.time()
 
-    def _get_url(self, method: str, url: str, params: Optional[Dict[str, str]] = None,
-                  data: Optional[Union[Dict[str, str], bytes]] = None, max_retries: int = 3) -> bytes:
+    def _get_url(
+        self,
+        method: str,
+        url: str,
+        params: Optional[Dict[str, str]] = None,
+        data: Optional[Union[Dict[str, str], bytes]] = None,
+        max_retries: int = 3,
+    ) -> bytes:
         """
         Makes an HTTP request with manual retry logic and rate limiting.
-        
+
         Args:
             method (str): HTTP method (GET, POST, etc.)
             url (str): Target URL
             params (Optional[Dict[str, str]]): Query parameters
             data (Optional[Union[Dict[str, str], bytes]]): Request payload
             max_retries (int): Maximum number of retry attempts
-        
+
         Returns:
             bytes: Response content
         """
         retry_count = 0
         base_delay = 5  # Base delay in seconds
-        
+
         while retry_count < max_retries:
             try:
                 self._respect_rate_limit()
@@ -184,38 +194,42 @@ class GoogleS:
                     url=url,
                     params=params,
                     data=data,
-                    timeout=self.timeout
+                    timeout=self.timeout,
                 )
-                
+
                 if response.status_code == 429:
-                    retry_delay = base_delay * (2 ** retry_count)  # Exponential backoff
+                    retry_delay = base_delay * (2**retry_count)  # Exponential backoff
                     if self.use_litlogger:
-                        self.logger.warning(f"Rate limited by Google. Waiting {retry_delay} seconds before retry...")
+                        self.logger.warning(
+                            f"Rate limited by Google. Waiting {retry_delay} seconds before retry..."
+                        )
                     time.sleep(retry_delay)
                     retry_count += 1
                     continue
-                    
+
                 response.raise_for_status()
                 return response.content
-                
+
             except requests.exceptions.RequestException as e:
                 if retry_count == max_retries - 1:
                     if self.use_litlogger:
                         self.logger.error(f"Max retries reached. Last error: {str(e)}")
                     raise
-                
-                retry_delay = base_delay * (2 ** retry_count)
+
+                retry_delay = base_delay * (2**retry_count)
                 if self.use_litlogger:
-                    self.logger.warning(f"Request failed. Retrying in {retry_delay} seconds... Error: {str(e)}")
+                    self.logger.warning(
+                        f"Request failed. Retrying in {retry_delay} seconds... Error: {str(e)}"
+                    )
                 time.sleep(retry_delay)
                 retry_count += 1
-                
+
         raise Exception("Max retries reached")
 
     @lru_cache(maxsize=100)
     def _cache_key(self, query: str, **kwargs) -> str:
         """Generate a cache key from search parameters"""
-        cache_data = {'query': query, **kwargs}
+        cache_data = {"query": query, **kwargs}
         return json.dumps(cache_data, sort_keys=True)
 
     def _get_cached_results(self, cache_key: str) -> Optional[List[Dict[str, Any]]]:
@@ -224,12 +238,16 @@ class GoogleS:
             return None
         cache_file = os.path.join(self.cache_dir, f"{cache_key}.json")
         if os.path.exists(cache_file):
-            with open(cache_file, 'r') as f:
+            with open(cache_file, "r") as f:
                 cached_data = json.load(f)
-                if datetime.fromisoformat(cached_data['timestamp']) + timedelta(hours=24) > datetime.now():
+                if (
+                    datetime.fromisoformat(cached_data["timestamp"])
+                    + timedelta(hours=24)
+                    > datetime.now()
+                ):
                     if self.use_litlogger:
                         self.logger.info(f"Using cached results for: {cache_key}")
-                    return cached_data['results']
+                    return cached_data["results"]
         if self.use_litlogger:
             self.logger.debug(f"No valid cache found for: {cache_key}")
         return None
@@ -239,11 +257,8 @@ class GoogleS:
         if not self.cache_dir:
             return
         cache_file = os.path.join(self.cache_dir, f"{cache_key}.json")
-        with open(cache_file, 'w') as f:
-            json.dump({
-                'timestamp': datetime.now().isoformat(),
-                'results': results
-            }, f)
+        with open(cache_file, "w") as f:
+            json.dump({"timestamp": datetime.now().isoformat(), "results": results}, f)
 
     def search_images(
         self,
@@ -252,9 +267,9 @@ class GoogleS:
         size: Optional[str] = None,
         color: Optional[str] = None,
         type_filter: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> List[Dict[str, str]]:
-        """Search for images on Google with style! 
+        """Search for images on Google with style!
 
         Args:
             query (str): What you're looking for fam
@@ -293,12 +308,8 @@ class GoogleS:
             ...     print(f"Found: {img['title']}")
             ...     print(f"URL: {img['full_url']}")
         """
-        params = {
-            "q": query,
-            "tbm": "isch",
-            "num": max_results
-        }
-        
+        params = {"q": query, "tbm": "isch", "num": max_results}
+
         if size:
             params["tbs"] = f"isz:{size}"
         if color:
@@ -308,25 +319,25 @@ class GoogleS:
 
         content = self._get_url("GET", self.SEARCH_TYPES["image"], params=params)
         soup = Scout(content)  # Use Scout parser
-        
+
         results = []
         for img in soup.find_all("img", class_="rg_i"):
             if len(results) >= max_results:
                 break
-            
+
             img_data = {
                 "thumbnail": img.get("src", ""),
                 "title": img.get("alt", ""),
-                "type": "image"
+                "type": "image",
             }
-            
+
             # Extract full resolution image URL if available
             parent = img.parent
             if parent and parent.get("href"):
                 img_data["full_url"] = urljoin("https://www.google.com", parent["href"])
-            
+
             results.append(img_data)
-            
+
         return results
 
     def search(
@@ -347,7 +358,7 @@ class GoogleS:
     ) -> List[Dict[str, Union[str, int]]]:
         """
         Enhanced search with additional filters and options.
-        
+
         Args:
             site: Limit search to specific website
             file_type: Filter by file type (pdf, doc, etc.)
@@ -357,7 +368,7 @@ class GoogleS:
         """
         if self.use_litlogger:
             self.logger.info(f"Starting search for: {query}")
-        
+
         # Build advanced query
         advanced_query = query
         if site:
@@ -368,13 +379,19 @@ class GoogleS:
             advanced_query += " " + " ".join(f"-{term}" for term in exclude_terms)
         if exact_phrase:
             advanced_query = f'"{exact_phrase}"' + advanced_query
-            
+
         if self.use_litlogger:
             self.logger.debug(f"Advanced query: {advanced_query}")
-        
+
         # Check cache first
-        cache_key = self._cache_key(advanced_query, region=region, language=language,
-                                  safe=safe, time_period=time_period, sort_by=sort_by)
+        cache_key = self._cache_key(
+            advanced_query,
+            region=region,
+            language=language,
+            safe=safe,
+            time_period=time_period,
+            sort_by=sort_by,
+        )
         cached_results = self._get_cached_results(cache_key)
         if cached_results:
             return cached_results[:max_results]
@@ -396,14 +413,18 @@ class GoogleS:
             if time_period:
                 params["tbs"] = f"qdr:{time_period}"
 
-            futures.append(self._executor.submit(self._get_url, "GET", self.SEARCH_TYPES["web"], params=params))
+            futures.append(
+                self._executor.submit(
+                    self._get_url, "GET", self.SEARCH_TYPES["web"], params=params
+                )
+            )
             start += 10
 
             for future in as_completed(futures):
                 try:
                     resp_content = future.result()
                     soup = Scout(resp_content)  # Use Scout parser
-                    
+
                     result_blocks = soup.find_all("div", class_="g")
 
                     if not result_blocks:
@@ -419,36 +440,44 @@ class GoogleS:
 
                         if link and title and description_box:
                             url = link["href"]
-                            results.append({
-                                "title": title.text,
-                                "href": url,
-                                "abstract": description_box.text,
-                                "index": len(results),
-                                "type": "web",
-                                "visible_text": ""  # Initialize visible_text as empty string
-                            })
+                            results.append(
+                                {
+                                    "title": title.text,
+                                    "href": url,
+                                    "abstract": description_box.text,
+                                    "index": len(results),
+                                    "type": "web",
+                                    "visible_text": "",  # Initialize visible_text as empty string
+                                }
+                            )
 
                             if len(results) >= max_results:
                                 break  # Stop if we have enough results
 
                     # Parallelize text extraction if needed
                     if extract_text:
-                        with ThreadPoolExecutor(max_workers=self._executor._max_workers) as text_extractor:
+                        with ThreadPoolExecutor(
+                            max_workers=self._executor._max_workers
+                        ) as text_extractor:
                             extraction_futures = [
-                                text_extractor.submit(self._extract_text_from_webpage, 
-                                                    self._get_url("GET", result['href']),
-                                                    max_characters=max_text_length)
-                                for result in results 
-                                if 'href' in result
+                                text_extractor.submit(
+                                    self._extract_text_from_webpage,
+                                    self._get_url("GET", result["href"]),
+                                    max_characters=max_text_length,
+                                )
+                                for result in results
+                                if "href" in result
                             ]
-                            for i, future in enumerate(as_completed(extraction_futures)):
+                            for i, future in enumerate(
+                                as_completed(extraction_futures)
+                            ):
                                 try:
-                                    results[i]['visible_text'] = future.result()
+                                    results[i]["visible_text"] = future.result()
                                 except Exception as e:
                                     print(f"Error extracting text: {e}")
 
                 except Exception as e:
-                    print(f"Error: {e}")  
+                    print(f"Error: {e}")
 
         # Cache results before returning
         self._cache_results(cache_key, results)
@@ -456,16 +485,16 @@ class GoogleS:
 
     def get_search_suggestions(self, query: str) -> List[str]:
         """Get search suggestions for a query"""
-        params = {
-            "client": "chrome",
-            "q": query
-        }
-        content = self._get_url("GET", "https://suggestqueries.google.com/complete/search",
-                               params=params)
-        suggestions = json.loads(content.decode('utf-8'))[1]
+        params = {"client": "chrome", "q": query}
+        content = self._get_url(
+            "GET", "https://suggestqueries.google.com/complete/search", params=params
+        )
+        suggestions = json.loads(content.decode("utf-8"))[1]
         return suggestions
 
-    def _extract_text_from_webpage(self, html_content: bytes, max_characters: Optional[int] = None) -> str:
+    def _extract_text_from_webpage(
+        self, html_content: bytes, max_characters: Optional[int] = None
+    ) -> str:
         """
         Extracts visible text from HTML content using Scout parser.
         """
@@ -487,7 +516,10 @@ class GoogleS:
 
 if __name__ == "__main__":
     from rich import print
+
     searcher = GoogleS(rate_limit=3.0, use_litlogger=True)
-    results = searcher.search("HelpingAI-9B", max_results=5, extract_text=False, max_text_length=200)
+    results = searcher.search(
+        "HelpingAI-9B", max_results=5, extract_text=False, max_text_length=200
+    )
     for result in results:
         print(result)

@@ -1,6 +1,5 @@
 import requests
 import uuid
-import json
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -8,11 +7,14 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import LitAgent as UserAgent
 
+
 class PromptRefine(Provider):
     """
     A class to interact with the PromptRefine API.
     """
+
     AVAILABLE_MODELS = ["openai/gpt-4", "openai/gpt-4o", "openai/gpt-4-1106-preview"]
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -46,16 +48,16 @@ class PromptRefine(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = 'https://www.promptrefine.com/api/completion'
+        self.api_endpoint = "https://www.promptrefine.com/api/completion"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
         self.system_prompt = system_prompt
         self.model = model
         self.headers = {
-            'origin': 'https://www.promptrefine.com',
-            'referer': 'https://www.promptrefine.com/prompt/new',
-            'user-agent': UserAgent().random()
+            "origin": "https://www.promptrefine.com",
+            "referer": "https://www.promptrefine.com/prompt/new",
+            "user-agent": UserAgent().random(),
         }
 
         self.__available_optimizers = (
@@ -77,7 +79,9 @@ class PromptRefine(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
         if self.model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {self.model}. Available models: {', '.join(self.AVAILABLE_MODELS)}")
+            raise ValueError(
+                f"Invalid model: {self.model}. Available models: {', '.join(self.AVAILABLE_MODELS)}"
+            )
 
     def ask(
         self,
@@ -117,7 +121,7 @@ class PromptRefine(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "variables": {},
             "parameters": {},
@@ -126,7 +130,13 @@ class PromptRefine(Provider):
         }
 
         def for_stream():
-            response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint,
+                headers=self.headers,
+                json=payload,
+                stream=True,
+                timeout=self.timeout,
+            )
             if not response.ok:
                 raise Exception(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
@@ -185,8 +195,10 @@ class PromptRefine(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich import print
+
     ai = PromptRefine(timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

@@ -5,7 +5,7 @@ from .errors import TooManyRequests, InvalidURL, RequestError
 from webscout.litagent import LitAgent
 
 
-__all__ = ['dup_filter', 'request']
+__all__ = ["dup_filter", "request"]
 
 
 _USER_AGENT_GENERATOR = LitAgent()
@@ -14,41 +14,39 @@ _USER_AGENT_GENERATOR = LitAgent()
 def request(url: str, retry_attempts: int = 3) -> str:
     """
     Send a request with a random user agent and built-in retry mechanism.
-    
+
     Args:
         url (str): The URL to request
         retry_attempts (int, optional): Number of retry attempts. Defaults to 3.
-    
+
     Raises:
         InvalidURL: If the URL cannot be found
         TooManyRequests: If rate-limited
         RequestError: For other request-related errors
-    
+
     Returns:
         str: Decoded response content
     """
     for attempt in range(retry_attempts):
         try:
-            headers = {
-                "User-Agent": _USER_AGENT_GENERATOR.random()
-            }
-            
+            headers = {"User-Agent": _USER_AGENT_GENERATOR.random()}
+
             req = Request(url, headers=headers)
             response = urlopen(req)
-            return response.read().decode('utf-8')
-        
+            return response.read().decode("utf-8")
+
         except HTTPError as e:
             if e.code == 404:
-                raise InvalidURL(f'Cannot find anything with the requested URL: {url}')
+                raise InvalidURL(f"Cannot find anything with the requested URL: {url}")
             if e.code == 429:
-                raise TooManyRequests(f'Rate-limited on attempt {attempt + 1}')
-            
+                raise TooManyRequests(f"Rate-limited on attempt {attempt + 1}")
+
             if attempt == retry_attempts - 1:
-                raise RequestError(f'HTTP Error {e.code}: {e.reason}') from e
-        
+                raise RequestError(f"HTTP Error {e.code}: {e.reason}") from e
+
         except Exception as e:
             if attempt == retry_attempts - 1:
-                raise RequestError(f'Request failed: {e!r}') from None
+                raise RequestError(f"Request failed: {e!r}") from None
 
 
 def dup_filter(iterable: list, limit: int = None) -> list:
@@ -57,6 +55,6 @@ def dup_filter(iterable: list, limit: int = None) -> list:
     lim = limit if limit else len(iterable)
     converted = list(OrderedDict.fromkeys(iterable))
     if len(converted) - lim > 0:
-        return converted[:-len(converted) + lim]
+        return converted[: -len(converted) + lim]
     else:
         return converted

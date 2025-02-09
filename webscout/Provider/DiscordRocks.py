@@ -8,28 +8,71 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 
+
 class DiscordRocks(Provider):
     """
     A class to interact with the Airforce API.
     """
 
     AVAILABLE_MODELS = [
-        'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-5-sonnet-20240620',
-        'claude-3-opus-20240229', 'chatgpt-4o-latest', 'gpt-4', 'gpt-4-0613', 'gpt-4-turbo',
-        'gpt-4o-mini-2024-07-18', 'gpt-4o-mini', 'gpt-3.5-turbo', 'gpt-3.5-turbo-0125',
-        'gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k-0613',
-        'gpt-4o', 'llama-3-70b-chat', 'llama-3-70b-chat-turbo', 'llama-3-8b-chat',
-        'llama-3-8b-chat-turbo', 'llama-3-70b-chat-lite', 'llama-3-8b-chat-lite',
-        'llama-2-13b-chat', 'llama-3.1-405b-turbo', 'llama-3.1-70b-turbo', 'llama-3.1-8b-turbo',
-        'LlamaGuard-2-8b', 'Llama-Guard-7b', 'Meta-Llama-Guard-3-8B', 'Mixtral-8x7B-v0.1',
-        'Mixtral-8x7B-Instruct-v0.1', 'Mixtral-8x22B-Instruct-v0.1', 'Mistral-7B-Instruct-v0.1',
-        'Mistral-7B-Instruct-v0.2', 'Mistral-7B-Instruct-v0.3', 'Qwen1.5-72B-Chat',
-        'Qwen1.5-110B-Chat', 'Qwen2-72B-Instruct', 'gemma-2b-it', 'dbrx-instruct',
-        'deepseek-coder-33b-instruct', 'deepseek-llm-67b-chat', 'Nous-Hermes-2-Mixtral-8x7B-DPO',
-        'Nous-Hermes-2-Yi-34B', 'WizardLM-2-8x22B', 'CodeLlama-7b-Python',
-        'snowflake-arctic-instruct', 'SOLAR-10.7B-Instruct-v1.0', 'StripedHyena-Nous-7B',
-        'CodeLlama-13b-Instruct', 'MythoMax-L2-13b', 'gemma-2-9b-it', 'gemma-2-27b-it',
-        'gemini-1.5-flash', 'gemini-1.5-pro', 'sparkdesk', 'cosmosrp'
+        "claude-3-haiku-20240307",
+        "claude-3-sonnet-20240229",
+        "claude-3-5-sonnet-20240620",
+        "claude-3-opus-20240229",
+        "chatgpt-4o-latest",
+        "gpt-4",
+        "gpt-4-0613",
+        "gpt-4-turbo",
+        "gpt-4o-mini-2024-07-18",
+        "gpt-4o-mini",
+        "gpt-3.5-turbo",
+        "gpt-3.5-turbo-0125",
+        "gpt-3.5-turbo-1106",
+        "gpt-3.5-turbo-16k",
+        "gpt-3.5-turbo-0613",
+        "gpt-3.5-turbo-16k-0613",
+        "gpt-4o",
+        "llama-3-70b-chat",
+        "llama-3-70b-chat-turbo",
+        "llama-3-8b-chat",
+        "llama-3-8b-chat-turbo",
+        "llama-3-70b-chat-lite",
+        "llama-3-8b-chat-lite",
+        "llama-2-13b-chat",
+        "llama-3.1-405b-turbo",
+        "llama-3.1-70b-turbo",
+        "llama-3.1-8b-turbo",
+        "LlamaGuard-2-8b",
+        "Llama-Guard-7b",
+        "Meta-Llama-Guard-3-8B",
+        "Mixtral-8x7B-v0.1",
+        "Mixtral-8x7B-Instruct-v0.1",
+        "Mixtral-8x22B-Instruct-v0.1",
+        "Mistral-7B-Instruct-v0.1",
+        "Mistral-7B-Instruct-v0.2",
+        "Mistral-7B-Instruct-v0.3",
+        "Qwen1.5-72B-Chat",
+        "Qwen1.5-110B-Chat",
+        "Qwen2-72B-Instruct",
+        "gemma-2b-it",
+        "dbrx-instruct",
+        "deepseek-coder-33b-instruct",
+        "deepseek-llm-67b-chat",
+        "Nous-Hermes-2-Mixtral-8x7B-DPO",
+        "Nous-Hermes-2-Yi-34B",
+        "WizardLM-2-8x22B",
+        "CodeLlama-7b-Python",
+        "snowflake-arctic-instruct",
+        "SOLAR-10.7B-Instruct-v1.0",
+        "StripedHyena-Nous-7B",
+        "CodeLlama-13b-Instruct",
+        "MythoMax-L2-13b",
+        "gemma-2-9b-it",
+        "gemma-2-27b-it",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "sparkdesk",
+        "cosmosrp",
     ]
 
     def __init__(
@@ -62,12 +105,14 @@ class DiscordRocks(Provider):
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
             system_prompt (str, optional): System prompt for Airforce. Defaults to "You are a helpful AI assistant.".
-            model (str, optional): AI model to use. Defaults to "chatgpt-4o-latest". 
+            model (str, optional): AI model to use. Defaults to "chatgpt-4o-latest".
             temperature (float, optional): Temperature parameter for the model. Defaults to 1.
             top_p (float, optional): Top_p parameter for the model. Defaults to 1.
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f'Error: Invalid model. Please choose from {self.AVAILABLE_MODELS}')
+            raise ValueError(
+                f"Error: Invalid model. Please choose from {self.AVAILABLE_MODELS}"
+            )
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -81,21 +126,21 @@ class DiscordRocks(Provider):
         self.temperature = temperature
         self.top_p = top_p
         self.headers = {
-            'accept': '*/*',
-            'accept-encoding': 'gzip, deflate, br, zstd',
-            'accept-language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'authorization': 'Bearer missing api key',
-            'content-type': 'application/json',
-            'dnt': '1',
-            'origin': 'https://llmplayground.net',
-            'referer': 'https://llmplayground.net/',
-            'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'cross-site',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0'
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "authorization": "Bearer missing api key",
+            "content-type": "application/json",
+            "dnt": "1",
+            "origin": "https://llmplayground.net",
+            "referer": "https://llmplayground.net/",
+            "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
         }
 
         self.__available_optimizers = (
@@ -139,62 +184,78 @@ class DiscordRocks(Provider):
 
         # Define the payload
         payload = {
-            'messages': [{'role': 'user', 'content': conversation_prompt}],
-            'model': self.model,
-            'max_tokens': self.max_tokens_to_sample,
-            'temperature': self.temperature,
-            'top_p': self.top_p,
-            'stream': stream
+            "messages": [{"role": "user", "content": conversation_prompt}],
+            "model": self.model,
+            "max_tokens": self.max_tokens_to_sample,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "stream": stream,
         }
 
         def for_stream():
             try:
                 # Send the POST request
-                response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True)
-                
+                response = self.session.post(
+                    self.api_endpoint, headers=self.headers, json=payload, stream=True
+                )
+
                 # Check if the request was successful
                 response.raise_for_status()
-                
-                full_content = ''
+
+                full_content = ""
                 for line in response.iter_lines():
                     if line:
-                        decoded_line = line.decode('utf-8')
-                        if decoded_line.startswith('data:'):
-                            if decoded_line.strip() == 'data: [DONE]':
+                        decoded_line = line.decode("utf-8")
+                        if decoded_line.startswith("data:"):
+                            if decoded_line.strip() == "data: [DONE]":
                                 break
                             try:
                                 json_data = json.loads(decoded_line[5:])
-                                content = json_data['choices'][0]['delta'].get('content', '')
+                                content = json_data["choices"][0]["delta"].get(
+                                    "content", ""
+                                )
                                 if content:
                                     full_content += content
                                     yield content if raw else dict(text=content)
                             except json.JSONDecodeError:
-                                print(f'Error decoding JSON: {decoded_line}')
+                                print(f"Error decoding JSON: {decoded_line}")
                             except KeyError:
-                                print(f'Unexpected JSON structure: {json_data}')
+                                print(f"Unexpected JSON structure: {json_data}")
                 self.last_response.update(dict(text=full_content))
                 self.conversation.update_chat_history(
                     prompt, self.get_message(self.last_response)
                 )
             except requests.exceptions.RequestException as e:
-                raise exceptions.FailedToGenerateResponseError(f'An error occurred: {e}')
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An error occurred: {e}"
+                )
 
         def for_non_stream():
             try:
                 # Send the POST request
-                response = self.session.post(self.api_endpoint, headers=self.headers, json=payload)
-                
+                response = self.session.post(
+                    self.api_endpoint, headers=self.headers, json=payload
+                )
+
                 # Check if the request was successful
                 response.raise_for_status()
-                
+
                 resp = response.json()
-                self.last_response.update(dict(text=resp.get("choices", [{}])[0].get('message', {}).get('content', '')))
+                self.last_response.update(
+                    dict(
+                        text=resp.get("choices", [{}])[0]
+                        .get("message", {})
+                        .get("content", "")
+                    )
+                )
                 self.conversation.update_chat_history(
                     prompt, self.get_message(self.last_response)
                 )
                 return self.last_response
             except requests.exceptions.RequestException as e:
-                raise exceptions.FailedToGenerateResponseError(f'An error occurred: {e}')
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An error occurred: {e}"
+                )
 
         return for_stream() if stream else for_non_stream()
 
@@ -245,8 +306,10 @@ class DiscordRocks(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich import print
+
     ai = DiscordRocks(timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

@@ -1,6 +1,5 @@
 import requests
-import json
-from typing import Any, Dict, Optional, Generator
+from typing import Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -8,6 +7,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
+
 
 class Marcus(Provider):
     """
@@ -35,11 +35,11 @@ class Marcus(Provider):
         self.timeout = timeout
         self.last_response = {}
         self.headers = {
-            'content-type': 'application/json',
-            'accept': '*/*',
-            'origin': 'https://www.askmarcus.app',
-            'referer': 'https://www.askmarcus.app/chat',
-            'user-agent': Lit().random(),
+            "content-type": "application/json",
+            "accept": "*/*",
+            "origin": "https://www.askmarcus.app",
+            "referer": "https://www.askmarcus.app/chat",
+            "user-agent": Lit().random(),
         }
         self.__available_optimizers = (
             method
@@ -83,15 +83,25 @@ class Marcus(Provider):
 
         def for_stream():
             try:
-                with requests.post(self.api_endpoint, headers=self.headers, json=data, stream=True, timeout=self.timeout) as response:
+                with requests.post(
+                    self.api_endpoint,
+                    headers=self.headers,
+                    json=data,
+                    stream=True,
+                    timeout=self.timeout,
+                ) as response:
                     response.raise_for_status()
                     for line in response.iter_lines():
                         if line:
-                            yield line.decode('utf-8')
-                    self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
+                            yield line.decode("utf-8")
+                    self.conversation.update_chat_history(
+                        prompt, self.get_message(self.last_response)
+                    )
 
             except requests.exceptions.RequestException as e:
-                raise exceptions.ProviderConnectionError(f"Error connecting to Marcus: {str(e)}")
+                raise exceptions.ProviderConnectionError(
+                    f"Error connecting to Marcus: {str(e)}"
+                )
 
         def for_non_stream():
             full_response = ""
@@ -113,13 +123,19 @@ class Marcus(Provider):
 
         def for_stream():
             for response_chunk in self.ask(
-                prompt, stream=True, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally,
             ):
                 yield response_chunk
 
         def for_non_stream():
             response = self.ask(
-                prompt, stream=False, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             return self.get_message(response)
 
@@ -130,7 +146,8 @@ class Marcus(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response.get("text", "")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     ai = Marcus(timeout=30)
     response = ai.chat("Tell me about India", stream=True)
     for chunk in response:

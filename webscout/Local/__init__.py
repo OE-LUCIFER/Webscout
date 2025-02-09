@@ -6,5 +6,5 @@ from .utils import *
 from .samplers import *
 from .formats import *
 from .ui import *
-from .model  import *
+from .model import *
 from .thread import *

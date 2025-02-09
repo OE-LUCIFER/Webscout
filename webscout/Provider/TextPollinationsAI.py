@@ -33,7 +33,7 @@ class TextPollinationsAI(Provider):
         "llamaguard",
         "gemini",
         "gemini-thinking",
-        "hormoz"
+        "hormoz",
     ]
 
     def __init__(
@@ -52,7 +52,9 @@ class TextPollinationsAI(Provider):
     ):
         """Initializes the TextPollinationsAI API client."""
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -64,10 +66,10 @@ class TextPollinationsAI(Provider):
         self.model = model
         self.system_prompt = system_prompt
         self.headers = {
-            'Accept': '*/*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-            'Content-Type': 'application/json',
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            "Content-Type": "application/json",
         }
         self.session.headers.update(self.headers)
         self.session.proxies = proxies
@@ -121,7 +123,7 @@ class TextPollinationsAI(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "model": self.model,
             "stream": stream,
@@ -129,7 +131,11 @@ class TextPollinationsAI(Provider):
 
         def for_stream():
             response = self.session.post(
-                self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout
+                self.api_endpoint,
+                headers=self.headers,
+                json=payload,
+                stream=True,
+                timeout=self.timeout,
             )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
@@ -138,18 +144,18 @@ class TextPollinationsAI(Provider):
             full_response = ""
             for line in response.iter_lines():
                 if line:
-                    line = line.decode('utf-8').strip()
+                    line = line.decode("utf-8").strip()
                     # Break if the stream signals completion
                     if line == "data: [DONE]":
                         break
-                    if line.startswith('data: '):
+                    if line.startswith("data: "):
                         try:
                             json_data = json.loads(line[6:])
-                            if 'choices' in json_data and len(json_data['choices']) > 0:
-                                choice = json_data['choices'][0]
+                            if "choices" in json_data and len(json_data["choices"]) > 0:
+                                choice = json_data["choices"][0]
                                 # Handle delta responses from streaming output
-                                if 'delta' in choice and 'content' in choice['delta']:
-                                    content = choice['delta']['content']
+                                if "delta" in choice and "content" in choice["delta"]:
+                                    content = choice["delta"]["content"]
                                 else:
                                     content = ""
                                 full_response += content
@@ -176,11 +182,13 @@ class TextPollinationsAI(Provider):
         conversationally: bool = False,
     ) -> str | Generator[str, None, None]:
         """Generate response as a string"""
+
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
             ):
                 yield self.get_message(response)
+
         def for_non_stream():
             return self.get_message(
                 self.ask(
@@ -190,6 +198,7 @@ class TextPollinationsAI(Provider):
                     conversationally=conversationally,
                 )
             )
+
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
@@ -197,8 +206,10 @@ class TextPollinationsAI(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
+
 if __name__ == "__main__":
     from rich import print
+
     ai = TextPollinationsAI(model="deepseek-r1")
     response = ai.chat(input(">>> "), stream=True)
     for chunk in response:

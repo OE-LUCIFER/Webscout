@@ -1,5 +1,4 @@
 import requests
-import json
 from uuid import uuid4
 
 from webscout.AIutel import Optimizers
@@ -7,6 +6,8 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 import webscout
+
+
 class Cleeai(Provider):
     """
     A class to interact with the Cleeai.com API.
@@ -59,7 +60,7 @@ class Cleeai(Provider):
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site",
-            "user-agent": webscout.LitAgent().random()
+            "user-agent": webscout.LitAgent().random(),
         }
 
         self.__available_optimizers = (
@@ -139,10 +140,10 @@ class Cleeai(Provider):
                 raise Exception(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
-            full_response = ''
+            full_response = ""
             for chunk in response.iter_content(chunk_size=self.stream_chunk_size):
-                full_response += chunk.decode('utf-8')
-                yield chunk.decode('utf-8') if raw else dict(text=chunk.decode('utf-8'))
+                full_response += chunk.decode("utf-8")
+                yield chunk.decode("utf-8") if raw else dict(text=chunk.decode("utf-8"))
 
             self.last_response.update(dict(text=full_response))
             self.conversation.update_chat_history(
@@ -206,6 +207,7 @@ class Cleeai(Provider):
 
 if __name__ == "__main__":
     from rich import print
+
     ai = Cleeai(timeout=5000)
     response = ai.chat("tell me about Abhay koul, HelpingAI", stream=True)
     for chunk in response:

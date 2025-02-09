@@ -2,10 +2,10 @@ import requests
 import json
 import time
 from pathlib import Path
-from typing import Generator
 from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
+
 
 class Voicepods(TTSProvider):
     """
@@ -18,20 +18,20 @@ class Voicepods(TTSProvider):
         """
         self.api_endpoint = "https://voicepods-stream.vercel.app/api/resemble"
         self.headers = {
-            'Accept': '*/*',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'DNT': '1',
-            'Origin': 'https://voicepods-stream.vercel.app',
-            'Referer': 'https://voicepods-stream.vercel.app/',
-            'Sec-CH-UA': '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-            'Sec-CH-UA-Mobile': '?0',
-            'Sec-CH-UA-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0',
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Content-Type": "application/json",
+            "DNT": "1",
+            "Origin": "https://voicepods-stream.vercel.app",
+            "Referer": "https://voicepods-stream.vercel.app/",
+            "Sec-CH-UA": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -42,26 +42,30 @@ class Voicepods(TTSProvider):
 
     def tts(self, text: str) -> str:
         """
-        Converts text to speech using the Voicepods API. 
+        Converts text to speech using the Voicepods API.
 
         Args:
             text (str): The text to be converted to speech.
 
         Returns:
             str: The filename of the saved audio file.
-        
+
         Raises:
             exceptions.FailedToGenerateResponseError: If there is an error generating or saving the audio.
         """
         payload = json.dumps({"query": text})
-        filename = self.audio_cache_dir / f"{int(time.time())}.wav"  # Using timestamp for filename
+        filename = (
+            self.audio_cache_dir / f"{int(time.time())}.wav"
+        )  # Using timestamp for filename
 
         try:
-            response = self.session.post(self.api_endpoint, data=payload, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint, data=payload, timeout=self.timeout
+            )
             response.raise_for_status()
 
-            content_type = response.headers.get('Content-Type', '')
-            if 'audio' not in content_type.lower():
+            content_type = response.headers.get("Content-Type", "")
+            if "audio" not in content_type.lower():
                 raise ValueError(f"Unexpected content type: {content_type}")
 
             audio_data = response.content
@@ -69,7 +73,9 @@ class Voicepods(TTSProvider):
             return filename.as_posix()  # Return the filename as a string
 
         except requests.exceptions.RequestException as e:
-            raise exceptions.FailedToGenerateResponseError(f"Error generating audio: {e}")
+            raise exceptions.FailedToGenerateResponseError(
+                f"Error generating audio: {e}"
+            )
 
     def _save_audio(self, audio_data: bytes, filename: Path):
         """Saves the audio data to a WAV file in the audio cache directory."""
@@ -77,10 +83,10 @@ class Voicepods(TTSProvider):
             # Create the audio_cache directory if it doesn't exist
             self.audio_cache_dir.mkdir(parents=True, exist_ok=True)
 
-            riff_start = audio_data.find(b'RIFF')
+            riff_start = audio_data.find(b"RIFF")
             if riff_start == -1:
                 raise ValueError("RIFF header not found in audio data")
-            
+
             trimmed_audio_data = audio_data[riff_start:]
 
             with open(filename, "wb") as f:
@@ -104,9 +110,9 @@ class Voicepods(TTSProvider):
         except Exception as e:
             raise RuntimeError(f"Error playing audio: {e}")
 
+
 # Example usage
 if __name__ == "__main__":
-
     voicepods = Voicepods()
     text = "Hello, this is a test of the Voicepods text-to-speech system."
 

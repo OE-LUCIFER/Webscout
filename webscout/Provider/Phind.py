@@ -4,14 +4,13 @@ import json
 import yaml
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import  Provider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
 
 
-#------------------------------------------------------phind-------------------------------------------------------------
+# ------------------------------------------------------phind-------------------------------------------------------------
 class PhindSearch:
     # default_model = "Phind Model"
     def __init__(
@@ -162,9 +161,9 @@ class PhindSearch:
                     if not retrieved_text:
                         continue
                     streaming_text += retrieved_text
-                    json_modified_value["choices"][0]["delta"][
-                        "content"
-                    ] = streaming_text
+                    json_modified_value["choices"][0]["delta"]["content"] = (
+                        streaming_text
+                    )
                     self.last_response.update(json_modified_value)
                     yield value if raw else json_modified_value
                 except json.decoder.JSONDecodeError:
@@ -254,6 +253,7 @@ class PhindSearch:
                 if response["choices"][0].get("finish_reason") is None
                 else ""
             )
+
 
 class Phindv2(Provider):
     def __init__(
@@ -378,7 +378,7 @@ class Phindv2(Provider):
             "is_vscode_extension": True,
             "message_history": [
                 {"content": self.system_prompt, "metadata": {}, "role": "system"},
-                {"content": conversation_prompt, "metadata": {}, "role": "user"}
+                {"content": conversation_prompt, "metadata": {}, "role": "user"},
             ],
             "requested_model": self.model,
             "user_input": prompt,
@@ -408,9 +408,9 @@ class Phindv2(Provider):
                     if not retrieved_text:
                         continue
                     streaming_text += retrieved_text
-                    json_modified_value["choices"][0]["delta"][
-                        "content"
-                    ] = streaming_text
+                    json_modified_value["choices"][0]["delta"]["content"] = (
+                        streaming_text
+                    )
                     self.last_response.update(json_modified_value)
                     yield value if raw else json_modified_value
                 except json.decoder.JSONDecodeError:
@@ -501,9 +501,10 @@ class Phindv2(Provider):
                 else ""
             )
 
+
 if __name__ == "__main__":
     from rich import print
 
-    ai = Phindv2() 
+    ai = Phindv2()
     print(ai.chat("Tell me a joke"))
     # Returns the chat response from the Phindv2 API.

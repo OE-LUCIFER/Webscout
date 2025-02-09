@@ -3,21 +3,24 @@
 import os
 import platform
 import subprocess
-from typing import  Literal, Optional,  Tuple, Callable, Dict, Any
+from typing import Optional
+
+
 class Optimizers:
     """
     >>> Optimizers.code("write a hello world")
     Returns optimized prompt for code generation
-    
+
     >>> Optimizers.shell_command("list files")
     Returns optimized prompt for shell commands
-    
+
     >>> Optimizers.search("best pizza places")
     Returns optimized prompt for web search
-    
+
     >>> Optimizers.math("solve quadratic equation")
     Returns optimized prompt for math problems
     """
+
     @staticmethod
     def code(prompt: str) -> str:
         """Deprecated: Use coder() instead"""
@@ -25,8 +28,8 @@ class Optimizers:
 
     @staticmethod
     def shell_command(prompt: str) -> str:
-         """Deprecated: Use coder() instead"""
-         return Optimizers.coder(f"!{prompt}")
+        """Deprecated: Use coder() instead"""
+        return Optimizers.coder(f"!{prompt}")
 
     @staticmethod
     def coder(prompt: str) -> str:
@@ -39,7 +42,9 @@ class Optimizers:
             operating_system = "MacOS"
         elif platform.system() == "Linux":
             try:
-                result: str = subprocess.check_output(["lsb_release", "-si"]).decode().strip()
+                result: str = (
+                    subprocess.check_output(["lsb_release", "-si"]).decode().strip()
+                )
                 operating_system = f"Linux/{result}" if result else "Linux"
             except Exception:
                 operating_system = "Linux"
@@ -55,8 +60,7 @@ class Optimizers:
             if shell_env:
                 shell_name = shell_env
 
-        return (
-            f"""<system_context>
+        return f"""<system_context>
         <role>
           Your Role: You are a code generation expert. Analyze the request and provide appropriate output.
           If the request starts with '!' or involves system/shell operations, provide a shell command.
@@ -83,12 +87,11 @@ class Optimizers:
             Output:
         </output>
 </system_context>"""
-        )
 
     @staticmethod
     def search(prompt: str) -> str:
-         """Optimize prompt for web search queries."""
-         return f"""
+        """Optimize prompt for web search queries."""
+        return f"""
 <system_context>
   <role>
     Your role: Generate a precise and focused web search query.
@@ -154,8 +157,8 @@ class Optimizers:
 
     @staticmethod
     def debug(prompt: str) -> str:
-         """Optimize prompt for debugging code."""
-         return f"""
+        """Optimize prompt for debugging code."""
+        return f"""
 <system_context>
   <role>
      Your role: Debug code and identify issues.
@@ -202,8 +205,8 @@ class Optimizers:
 
     @staticmethod
     def sql(prompt: str) -> str:
-         """Optimize prompt for SQL query generation."""
-         return f"""
+        """Optimize prompt for SQL query generation."""
+        return f"""
 <system_context>
    <role>
       Your role: Generate optimized SQL queries.

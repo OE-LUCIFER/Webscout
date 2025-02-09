@@ -1,15 +1,14 @@
 import requests
 from requests.exceptions import RequestException
-from typing import Any, Dict
 from webscout.AIutel import Conversation, Optimizers
 from webscout.litagent import LitAgent
 from webscout.prompt_manager import AwesomePrompts
+
 
 class TeachAnything:
     """
     A class to interact with the Teach-Anything API.
     """
-
 
     def __init__(
         self,
@@ -38,7 +37,6 @@ class TeachAnything:
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
             model (str, optional): AI model to use for text generation. Defaults to "gpt4".
         """
-
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -76,6 +74,7 @@ class TeachAnything:
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+
     def ask(
         self,
         prompt: str,
@@ -107,11 +106,15 @@ class TeachAnything:
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-        payload = {
-            "prompt": conversation_prompt
-        }
+        payload = {"prompt": conversation_prompt}
+
         def for_stream():
-            response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint,
+                headers=self.headers,
+                json=payload,
+                timeout=self.timeout,
+            )
             if not response.ok:
                 raise RequestException(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
@@ -123,7 +126,7 @@ class TeachAnything:
                 prompt, self.get_message(self.last_response)
             )
             return self.last_response
-        
+
         def for_non_stream():
             for _ in for_stream():
                 pass
@@ -179,8 +182,9 @@ class TeachAnything:
         return response["text"]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from rich import print
+
     ai = TeachAnything()
     response = ai.chat("hi")
     for chunk in response:

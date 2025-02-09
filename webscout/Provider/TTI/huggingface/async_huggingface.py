@@ -4,15 +4,15 @@ AsyncHFimager - Your go-to async provider for generating fire images with Huggin
 Examples:
     >>> from webscout import AsyncHFimager
     >>> import asyncio
-    >>> 
+    >>>
     >>> async def example():
     ...     # Initialize with your API key
     ...     provider = AsyncHFimager(api_token="your-hf-token")
-    ...     
+    ...
     ...     # Generate a single image
     ...     images = await provider.generate("A shiny red sports car")
     ...     paths = await provider.save(images)
-    ...     
+    ...
     ...     # Generate multiple images with parameters
     ...     images = await provider.generate(
     ...         prompt="Epic dragon in cyberpunk city",
@@ -25,7 +25,7 @@ Examples:
     ...         height=768
     ...     )
     ...     paths = await provider.save(images, name="dragon", dir="outputs")
-    >>> 
+    >>>
     >>> # Run the example
     >>> asyncio.run(example())
 """
@@ -33,7 +33,6 @@ Examples:
 import os
 import aiohttp
 import aiofiles
-import asyncio
 from typing import Any, List, Optional, Dict
 from webscout.AIbase import AsyncImageProvider
 from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
@@ -43,9 +42,10 @@ from webscout.litagent import LitAgent
 logger = LitLogger(
     "AsyncHuggingFace",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    color_scheme=ColorScheme.CYBERPUNK,
 )
 agent = LitAgent()
+
 
 class AsyncHFimager(AsyncImageProvider):
     """Your go-to async provider for generating fire images with HuggingFace! ⚡"""
@@ -55,7 +55,7 @@ class AsyncHFimager(AsyncImageProvider):
         api_token: str = None,
         timeout: int = 60,
         proxies: dict = {},
-        logging: bool = True
+        logging: bool = True,
     ):
         """Initialize your async HuggingFace provider with custom settings! ⚙️
 
@@ -70,7 +70,7 @@ class AsyncHFimager(AsyncImageProvider):
         self.headers = {
             "Authorization": f"Bearer {self.api_token}",
             "User-Agent": agent.random(),
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
         self.timeout = timeout
         self.proxies = proxies
@@ -111,7 +111,9 @@ class AsyncHFimager(AsyncImageProvider):
             List[bytes]: Your generated images as bytes
         """
         assert bool(prompt), "Yo fam, prompt can't be empty! 🚫"
-        assert isinstance(amount, int), f"Amount gotta be an integer, not {type(amount)} 🤔"
+        assert isinstance(amount, int), (
+            f"Amount gotta be an integer, not {type(amount)} 🤔"
+        )
         assert amount > 0, "Amount gotta be greater than 0! 📈"
 
         self.prompt = prompt
@@ -142,7 +144,9 @@ class AsyncHFimager(AsyncImageProvider):
                     payload["parameters"] = parameters
 
                 try:
-                    async with session.post(url, json=payload, timeout=self.timeout) as resp:
+                    async with session.post(
+                        url, json=payload, timeout=self.timeout
+                    ) as resp:
                         resp.raise_for_status()
                         response.append(await resp.read())
                         if self.logging:
@@ -172,7 +176,9 @@ class AsyncHFimager(AsyncImageProvider):
         Returns:
             List[str]: Where your images were saved
         """
-        assert isinstance(response, list), f"Response gotta be a list, not {type(response)} 🤔"
+        assert isinstance(response, list), (
+            f"Response gotta be a list, not {type(response)} 🤔"
+        )
         name = self.prompt if name is None else name
 
         filenames = []
@@ -181,9 +187,12 @@ class AsyncHFimager(AsyncImageProvider):
             logger.info(f"Saving {len(response)} images... 💾")
 
         for image_bytes in response:
+
             def complete_path():
                 count_value = "" if count == 0 else f"_{count}"
-                return os.path.join(dir, name + count_value + "." + self.image_extension)
+                return os.path.join(
+                    dir, name + count_value + "." + self.image_extension
+                )
 
             while os.path.isfile(complete_path()):
                 count += 1

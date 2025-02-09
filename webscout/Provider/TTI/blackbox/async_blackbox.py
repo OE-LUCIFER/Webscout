@@ -1,6 +1,5 @@
 import aiohttp
 import asyncio
-import json
 import uuid
 import os
 from typing import List, Union, AsyncGenerator
@@ -13,10 +12,11 @@ from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 # Initialize our fire logger 🚀
 logger = LitLogger("AsyncBlackboxAIImager")
 
+
 class AsyncBlackboxAIImager(AsyncImageProvider):
     """
     Async BlackboxAI Image Provider - Your go-to for fire AI art! 🎨
-    
+
     >>> # Generate some fire art asynchronously! 🔥
     >>> async def generate_art():
     ...     imager = AsyncBlackboxAIImager(logging=True)
@@ -25,7 +25,7 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
     ...     print(paths)
     >>> asyncio.run(generate_art())
     ['epic_dragon_0.jpg', 'epic_dragon_1.jpg']
-    
+
     >>> # Turn off logging for stealth mode 🥷
     >>> async def stealth_art():
     ...     quiet_imager = AsyncBlackboxAIImager(logging=False)
@@ -51,7 +51,7 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
             "User-Agent": LitAgent().random(),  # Using our fire random agent! 🔥
             "DNT": "1",
             "Origin": "https://www.blackbox.ai",
-            "Referer": "https://www.blackbox.ai/agent/ImageGenerationLV45LJp"
+            "Referer": "https://www.blackbox.ai/agent/ImageGenerationLV45LJp",
         }
         self.timeout = timeout
         self.proxies = proxies
@@ -59,11 +59,12 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
         self.image_extension: str = "jpg"
         self.logging = logging
         if self.logging:
-            logger.info("AsyncBlackboxAIImager initialized! Ready to create some fire art! 🚀")
+            logger.info(
+                "AsyncBlackboxAIImager initialized! Ready to create some fire art! 🚀"
+            )
 
     async def generate(
-        self, prompt: str, amount: int = 1,
-        max_retries: int = 3, retry_delay: int = 5
+        self, prompt: str, amount: int = 1, max_retries: int = 3, retry_delay: int = 5
     ) -> List[bytes]:
         """Generate some fire images from your prompt! 🎨
 
@@ -77,7 +78,9 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
             List[bytes]: Your generated images as bytes
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int), f"Amount should be an integer only not {type(amount)}"
+        assert isinstance(amount, int), (
+            f"Amount should be an integer only not {type(amount)}"
+        )
         assert amount > 0, "Amount should be greater than 0"
 
         self.prompt = prompt
@@ -90,13 +93,7 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
             for _ in range(amount):
                 message_id = str(uuid.uuid4())
                 payload = {
-                    "messages": [
-                        {
-                            "id": message_id,
-                            "content": prompt,
-                            "role": "user"
-                        }
-                    ],
+                    "messages": [{"id": message_id, "content": prompt, "role": "user"}],
                     "id": message_id,
                     "previewToken": None,
                     "userId": None,
@@ -104,7 +101,7 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
                     "agentMode": {
                         "mode": True,
                         "id": "ImageGenerationLV45LJp",
-                        "name": "Image Generation"
+                        "name": "Image Generation",
                     },
                     "trendingAgentMode": {},
                     "isMicMode": False,
@@ -115,30 +112,38 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
                     "clickedAnswer3": False,
                     "clickedForceWebSearch": False,
                     "visitFromDelta": False,
-                    "mobileClient": False
+                    "mobileClient": False,
                 }
 
                 for attempt in range(max_retries):
                     try:
-                        async with session.post(self.url, json=payload, timeout=self.timeout) as resp:
+                        async with session.post(
+                            self.url, json=payload, timeout=self.timeout
+                        ) as resp:
                             resp.raise_for_status()
                             response_data = await resp.text()
                             image_url = response_data.split("(")[1].split(")")[0]
-                            
+
                             async with session.get(image_url) as image_resp:
                                 image_resp.raise_for_status()
                                 response.append(await image_resp.read())
                                 if self.logging:
-                                    logger.success(f"Generated image {len(response)}/{amount}! 🎨")
+                                    logger.success(
+                                        f"Generated image {len(response)}/{amount}! 🎨"
+                                    )
                             break
                     except aiohttp.ClientError as e:
                         if attempt == max_retries - 1:
                             if self.logging:
-                                logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
+                                logger.error(
+                                    f"Failed to generate image after {max_retries} attempts: {e} 😢"
+                                )
                             raise
                         else:
                             if self.logging:
-                                logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+                                logger.warning(
+                                    f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄"
+                                )
                             await asyncio.sleep(retry_delay)
 
         if self.logging:
@@ -174,10 +179,10 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
         async def save_single_image(image_bytes: bytes, index: int) -> str:
             filename = f"{filenames_prefix}{name}_{index}.{self.image_extension}"
             filepath = os.path.join(dir, filename)
-            
+
             async with aiofiles.open(filepath, "wb") as f:
                 await f.write(image_bytes)
-            
+
             if self.logging:
                 logger.success(f"Saved image to: {filepath} 💾")
             return filename
@@ -199,10 +204,13 @@ class AsyncBlackboxAIImager(AsyncImageProvider):
 
 
 if __name__ == "__main__":
+
     async def main():
         bot = AsyncBlackboxAIImager()
         try:
-            resp = await bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+            resp = await bot.generate(
+                "A shiny red sports car speeding down a scenic mountain road", 1
+            )
             paths = await bot.save(resp)
             print(paths)
         except Exception as e:

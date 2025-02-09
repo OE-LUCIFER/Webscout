@@ -13,11 +13,10 @@ from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
 logger = LitLogger(
-    "AsyncNexra",
-    format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    "AsyncNexra", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK
 )
 agent = LitAgent()
+
 
 class AsyncNexraImager(AsyncImageProvider):
     """Your go-to async provider for generating fire images with Nexra! ⚡
@@ -55,7 +54,7 @@ class AsyncNexraImager(AsyncImageProvider):
             "dalle2",
             "dalle-mini",
             "flux",
-            "midjourney"
+            "midjourney",
         ],
         "prodia": [
             "dreamshaperXL10_alpha2.safetensors [c8afe2ef]",
@@ -67,8 +66,8 @@ class AsyncNexraImager(AsyncImageProvider):
             "sd_xl_base_1.0_inpainting_0.1.safetensors [5679a81a]",
             "turbovisionXL_v431.safetensors [78890989]",
             "devlishphotorealism_sdxl15.safetensors [77cba69f]",
-            "realvisxlV40.safetensors [f7fdcb51]"
-        ]
+            "realvisxlV40.safetensors [f7fdcb51]",
+        ],
     }
 
     def __init__(self, timeout: int = 60, proxies: dict = {}, logging: bool = True):
@@ -83,7 +82,7 @@ class AsyncNexraImager(AsyncImageProvider):
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": agent.random()
+            "User-Agent": agent.random(),
         }
         self.timeout = timeout
         self.proxies = proxies
@@ -100,7 +99,7 @@ class AsyncNexraImager(AsyncImageProvider):
         amount: int = 1,
         max_retries: int = 3,
         retry_delay: int = 5,
-        additional_params: Optional[dict] = None
+        additional_params: Optional[dict] = None,
     ) -> List[bytes]:
         """Generate some fire images from your prompt asynchronously! ⚡
 
@@ -134,8 +133,10 @@ class AsyncNexraImager(AsyncImageProvider):
             json.JSONDecodeError: If the API response is invalid
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int) and amount > 0, "Amount should be a positive integer"
-        
+        assert isinstance(amount, int) and amount > 0, (
+            "Amount should be a positive integer"
+        )
+
         all_models = self.AVAILABLE_MODELS["standard"] + self.AVAILABLE_MODELS["prodia"]
         assert model in all_models, f"Model should be one of {all_models}"
 
@@ -153,7 +154,7 @@ class AsyncNexraImager(AsyncImageProvider):
                 "steps": 25,
                 "cfg_scale": 7,
                 "sampler": "DPM++ 2M Karras",
-                "negative_prompt": ""
+                "negative_prompt": "",
             }
         if additional_params:
             payload.update(additional_params)
@@ -167,7 +168,7 @@ class AsyncNexraImager(AsyncImageProvider):
                         self.url,
                         json=payload,
                         timeout=self.timeout,
-                        proxy=self.proxies.get('http')
+                        proxy=self.proxies.get("http"),
                     ) as resp:
                         resp.raise_for_status()
                         text = await resp.text()
@@ -181,10 +182,14 @@ class AsyncNexraImager(AsyncImageProvider):
                                     img_resp.raise_for_status()
                                     response.append(await img_resp.read())
                                     if self.logging:
-                                        logger.success(f"Generated image {len(response)}/{amount}! 🎨")
+                                        logger.success(
+                                            f"Generated image {len(response)}/{amount}! 🎨"
+                                        )
                             break
                         else:
-                            raise Exception("Failed to generate image: " + str(response_data))
+                            raise Exception(
+                                "Failed to generate image: " + str(response_data)
+                            )
                 except json.JSONDecodeError as json_err:
                     if self.logging:
                         logger.error(f"JSON Decode Error: {json_err} 😢")
@@ -245,16 +250,16 @@ class AsyncNexraImager(AsyncImageProvider):
         name = self.prompt if name is None else name
         saved_paths = []
         timestamp = int(time.time())
-        
+
         async def save_single_image(image_bytes: bytes, index: int) -> str:
             filename = f"{filenames_prefix}{name}_{index}.{self.image_extension}"
             filepath = os.path.join(save_dir, filename)
-            
+
             # Write file using asyncio
             async with asyncio.Lock():
                 with open(filepath, "wb") as f:
                     f.write(image_bytes)
-            
+
             if self.logging:
                 logger.success(f"Saved image to: {filepath} 💾")
             return filepath
@@ -273,11 +278,16 @@ class AsyncNexraImager(AsyncImageProvider):
             logger.success(f"Images saved successfully! Check {dir} 🎉")
         return saved_paths
 
+
 if __name__ == "__main__":
+
     async def main():
         bot = AsyncNexraImager()
         try:
-            resp = await bot.generate("A shiny red sports car speeding down a scenic mountain road", "midjourney")
+            resp = await bot.generate(
+                "A shiny red sports car speeding down a scenic mountain road",
+                "midjourney",
+            )
             paths = await bot.save(resp)
             print(paths)
         except Exception as e:

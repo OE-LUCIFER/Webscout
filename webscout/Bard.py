@@ -15,7 +15,6 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.key_binding import KeyBindings
-from rich.console import Console
 from rich.markdown import Markdown
 
 
@@ -50,10 +49,14 @@ def __get_input(
 def load_cookies(cookie_path: str) -> Tuple[str, str]:
     """Loads cookies from the provided JSON file."""
     try:
-        with open(cookie_path, 'r') as file:
+        with open(cookie_path, "r") as file:
             cookies = json.load(file)
-        session_auth1 = next(item['value'] for item in cookies if item['name'] == '__Secure-1PSID')
-        session_auth2 = next(item['value'] for item in cookies if item['name'] == '__Secure-1PSIDTS')
+        session_auth1 = next(
+            item["value"] for item in cookies if item["name"] == "__Secure-1PSID"
+        )
+        session_auth2 = next(
+            item["value"] for item in cookies if item["name"] == "__Secure-1PSIDTS"
+        )
         return session_auth1, session_auth2
     except FileNotFoundError:
         raise Exception(f"Cookie file not found at path: {cookie_path}")
@@ -324,6 +327,7 @@ class AsyncChatbot:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(0)
     parser = argparse.ArgumentParser()
     parser.add_argument(

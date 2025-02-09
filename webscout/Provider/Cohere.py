@@ -2,12 +2,11 @@ import requests
 import json
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import  Provider, AsyncProvider
-from webscout import exceptions
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 
 
-#-----------------------------------------------Cohere--------------------------------------------
+# -----------------------------------------------Cohere--------------------------------------------
 class Cohere(Provider):
     def __init__(
         self,
@@ -36,7 +35,7 @@ class Cohere(Provider):
             model (str, optional): Model to use for generating text. Defaults to "command-r-plus".
             temperature (float, optional): Diversity of the generated text. Higher values produce more diverse outputs.
                             Defaults to 0.7.
-            system_prompt (str, optional): A system_prompt or context to set the style or tone of the generated text. 
+            system_prompt (str, optional): A system_prompt or context to set the style or tone of the generated text.
                             Defaults to "You are helpful AI".
             timeout (int, optional): Http request timeout. Defaults to 30.
             intro (str, optional): Conversation introductory prompt. Defaults to None.
@@ -200,8 +199,11 @@ class Cohere(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["result"]["chatStreamEndEvent"]["response"]["text"]
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = Cohere(api_key="")
     response = ai.chat("tell me about india")
     for chunk in response:

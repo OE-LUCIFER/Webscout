@@ -1,13 +1,13 @@
 import requests
 import re
-import json
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
+
 
 class DGAFAI(Provider):
     """
@@ -25,8 +25,7 @@ class DGAFAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful AI assistant.", 
-
+        system_prompt: str = "You are a helpful AI assistant.",
     ):
         """Initializes the DGAFAI API client."""
         self.session = requests.Session()
@@ -108,15 +107,21 @@ class DGAFAI(Provider):
 
         payload = {
             "messages": [
-                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt},
             ]
         }
 
         def for_stream():
             try:
-                with self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
-                    response.raise_for_status() # Check for HTTP errors
+                with self.session.post(
+                    self.api_endpoint,
+                    headers=self.headers,
+                    json=payload,
+                    stream=True,
+                    timeout=self.timeout,
+                ) as response:
+                    response.raise_for_status()  # Check for HTTP errors
 
                     streaming_text = ""
                     for line in response.iter_lines(decode_unicode=True):
@@ -139,7 +144,7 @@ class DGAFAI(Provider):
         def for_non_stream():
             full_response = ""
             for chunk in for_stream():
-                full_response += chunk if raw else chunk['text']
+                full_response += chunk if raw else chunk["text"]
             return {"text": full_response}
 
         return for_stream() if stream else for_non_stream()
@@ -152,11 +157,13 @@ class DGAFAI(Provider):
         conversationally: bool = False,
     ) -> str | Generator[str, None, None]:
         """Generate response `str`"""
+
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
             ):
                 yield self.get_message(response)
+
         def for_non_stream():
             return self.get_message(
                 self.ask(
@@ -166,20 +173,23 @@ class DGAFAI(Provider):
                     conversationally=conversationally,
                 )
             )
+
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response"""
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return response["text"].replace("\\n", "\n").replace("\\n\\n", "\n\n")
 
     # @staticmethod
     # def clean_content(text: str) -> str:
     #     cleaned_text = re.sub(r'\[REF\]\(https?://[^\s]*\)', '', text)
     #     return cleaned_text
 
+
 if __name__ == "__main__":
     from rich import print
+
     ai = DGAFAI()
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

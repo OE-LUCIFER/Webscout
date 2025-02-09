@@ -1,16 +1,16 @@
+try:
+    import pygetwindow as gw
+except NotImplementedError:
+    gw = None
 """AutoCoder utilities module."""
 
 import os
 import platform
 import datetime
-import pygetwindow as gw
 import sys
-from typing import List, Optional
 
-from webscout.optimizers import Optimizers
-import os
-import platform
 import subprocess
+
 
 def get_current_app() -> str:
     """
@@ -28,6 +28,7 @@ def get_current_app() -> str:
     if system_name == "Windows":
         try:
             import win32gui  # pywin32 must be installed
+
             window_handle = win32gui.GetForegroundWindow()
             title = win32gui.GetWindowText(window_handle)
             return title if title else "Unknown"
@@ -36,9 +37,10 @@ def get_current_app() -> str:
 
     elif system_name == "Darwin":  # macOS
         try:
-            from AppKit import NSWorkspace # type: ignore
+            from AppKit import NSWorkspace  # type: ignore
+
             active_app = NSWorkspace.sharedWorkspace().activeApplication()
-            title = active_app.get('NSApplicationName')
+            title = active_app.get("NSApplicationName")
             return title if title else "Unknown"
         except Exception:
             return "Unknown"
@@ -50,7 +52,7 @@ def get_current_app() -> str:
                 ["xprop", "-root", "_NET_ACTIVE_WINDOW"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
             )
             if result.returncode == 0 and result.stdout:
                 # Expected format: _NET_ACTIVE_WINDOW(WINDOW): window id # 0x1400007
@@ -61,7 +63,7 @@ def get_current_app() -> str:
                         ["xprop", "-id", window_id, "WM_NAME"],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        text=True
+                        text=True,
                     )
                     if title_result.returncode == 0 and title_result.stdout:
                         # Expected format: WM_NAME(STRING) = "Terminal"
@@ -146,6 +148,7 @@ def get_intro_prompt(name: str = "Vortex") -> str:
      </environment_info>
 </system_context>
 """
+
 
 EXAMPLES: str = """
 <examples>

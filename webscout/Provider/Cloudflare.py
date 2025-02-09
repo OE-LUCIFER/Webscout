@@ -3,14 +3,13 @@ from uuid import uuid4
 import webscout
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
 import cloudscraper
 
-class Cloudflare(Provider):
 
+class Cloudflare(Provider):
     AVAILABLE_MODELS = [
         "@cf/llava-hf/llava-1.5-7b-hf",
         "@cf/unum/uform-gen2-qwen-500m",
@@ -47,7 +46,7 @@ class Cloudflare(Provider):
         "@hf/nexusflow/starling-lm-7b-beta",
         "@cf/tinyllama/tinyllama-1.1b-chat-v1.0",
         "@cf/fblgit/una-cybertron-7b-v2-bf16",
-        "@hf/thebloke/zephyr-7b-beta-awq"
+        "@hf/thebloke/zephyr-7b-beta-awq",
     ]
 
     def __init__(
@@ -62,7 +61,7 @@ class Cloudflare(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "@cf/meta/llama-3.1-8b-instruct",
-        system_prompt: str = "You are a helpful assistant."
+        system_prompt: str = "You are a helpful assistant.",
     ):
         """Instantiates Cloudflare
 
@@ -76,14 +75,16 @@ class Cloudflare(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): Model to use for generating text. 
+            model (str, optional): Model to use for generating text.
                                    Defaults to "@cf/meta/llama-3.1-8b-instruct".
                                    Choose from AVAILABLE_MODELS.
-            system_prompt (str, optional): System prompt for Cloudflare. 
+            system_prompt (str, optional): System prompt for Cloudflare.
                                    Defaults to "You are a helpful assistant.".
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.scraper = cloudscraper.create_scraper()
         self.is_conversation = is_conversation
@@ -95,26 +96,26 @@ class Cloudflare(Provider):
         self.model = model
         self.system_prompt = system_prompt
         self.headers = {
-            'Accept': 'text/event-stream',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'DNT': '1',
-            'Origin': 'https://playground.ai.cloudflare.com',
-            'Referer': 'https://playground.ai.cloudflare.com/',
-            'Sec-CH-UA': '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-            'Sec-CH-UA-Mobile': '?0',
-            'Sec-CH-UA-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': webscout.LitAgent().random()
+            "Accept": "text/event-stream",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Content-Type": "application/json",
+            "DNT": "1",
+            "Origin": "https://playground.ai.cloudflare.com",
+            "Referer": "https://playground.ai.cloudflare.com/",
+            "Sec-CH-UA": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": webscout.LitAgent().random(),
         }
 
         self.cookies = {
-            'cfzs_amplitude': uuid4().hex,
-            'cfz_amplitude': uuid4().hex,
-            '__cf_bm': uuid4().hex,
+            "cfzs_amplitude": uuid4().hex,
+            "cfz_amplitude": uuid4().hex,
+            "__cf_bm": uuid4().hex,
         }
 
         self.__available_optimizers = (
@@ -123,7 +124,7 @@ class Cloudflare(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         # FIX: Initialize the session here
-        self.session = cloudscraper.create_scraper() 
+        self.session = cloudscraper.create_scraper()
         self.session.headers.update(self.headers)
         Conversation.intro = (
             AwesomePrompts().get_act(
@@ -168,21 +169,26 @@ class Cloudflare(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
+
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "lora": None,
             "model": self.model,
             "max_tokens": 512,
-            "stream": True
+            "stream": True,
         }
 
         def for_stream():
             response = self.scraper.post(
-                self.chat_endpoint, headers=self.headers, cookies=self.cookies, data=json.dumps(payload), stream=True, timeout=self.timeout
+                self.chat_endpoint,
+                headers=self.headers,
+                cookies=self.cookies,
+                data=json.dumps(payload),
+                stream=True,
+                timeout=self.timeout,
             )
 
             if not response.ok:
@@ -191,9 +197,9 @@ class Cloudflare(Provider):
                 )
             streaming_response = ""
             for line in response.iter_lines(decode_unicode=True):
-                if line.startswith('data: ') and line != 'data: [DONE]':
+                if line.startswith("data: ") and line != "data: [DONE]":
                     data = json.loads(line[6:])
-                    content = data.get('response', '')
+                    content = data.get("response", "")
                     streaming_response += content
                     yield content if raw else dict(text=content)
             self.last_response.update(dict(text=streaming_response))
@@ -254,8 +260,11 @@ class Cloudflare(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = Cloudflare(timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

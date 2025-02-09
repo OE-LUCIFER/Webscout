@@ -1,16 +1,16 @@
 import requests
 import json
-import os
-from typing import Any, Dict, Optional, Generator, List, Union
-import uuid
+from typing import Dict, Generator, Union
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
 
 from webscout import LitAgent
+
+
 class GaurishCerebras(Provider):
     """
     A class to interact with the Gaurish Cerebras API.
@@ -27,7 +27,7 @@ class GaurishCerebras(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful assistant.", 
+        system_prompt: str = "You are a helpful assistant.",
     ):
         """Initializes the Gaurish Cerebras API client."""
         self.url = "https://proxy.gaurish.xyz/api/cerebras/v1/chat/completions"
@@ -59,9 +59,9 @@ class GaurishCerebras(Provider):
             "origin": "https://chat.gaurish.xyz",
             "priority": "u=1, i",
             "referer": "https://chat.gaurish.xyz/",
-            "sec-ch-ua": "\"Chromium\";v=\"130\", \"Microsoft Edge\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
+            "sec-ch-ua": '"Chromium";v="130", "Microsoft Edge";v="130", "Not?A_Brand";v="99"',
             "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site",
@@ -100,7 +100,6 @@ class GaurishCerebras(Provider):
         self.conversation.history_offset = history_offset
         self.system_prompt = system_prompt  # Store the system prompt
 
-
     def ask(
         self,
         prompt: str,
@@ -109,7 +108,6 @@ class GaurishCerebras(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Union[Dict, Generator]:
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -117,7 +115,9 @@ class GaurishCerebras(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
+                raise Exception(
+                    f"Optimizer is not one of {self.__available_optimizers}"
+                )
 
         payload = {
             "messages": [
@@ -131,7 +131,13 @@ class GaurishCerebras(Provider):
 
         def for_stream():
             try:
-                with self.session.post(self.url, headers=self.headers, data=json.dumps(payload), stream=True, timeout=self.timeout) as response:
+                with self.session.post(
+                    self.url,
+                    headers=self.headers,
+                    data=json.dumps(payload),
+                    stream=True,
+                    timeout=self.timeout,
+                ) as response:
                     response.raise_for_status()
                     streaming_text = ""
                     for line in response.iter_lines(decode_unicode=True):
@@ -143,10 +149,14 @@ class GaurishCerebras(Provider):
                                     break
                                 try:
                                     data = json.loads(line)
-                                    if "choices" in data and data["choices"][0]["delta"].get("content"):
+                                    if "choices" in data and data["choices"][0][
+                                        "delta"
+                                    ].get("content"):
                                         content = data["choices"][0]["delta"]["content"]
                                         streaming_text += content
-                                        resp = dict(text=content)  # Yield only the new content
+                                        resp = dict(
+                                            text=content
+                                        )  # Yield only the new content
                                         yield resp if raw else resp
                                 except json.JSONDecodeError:
                                     # print(f"[Warning] Invalid JSON chunk received: {line}")
@@ -157,15 +167,12 @@ class GaurishCerebras(Provider):
             except requests.exceptions.RequestException as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
-
         def for_non_stream():
             for _ in for_stream():
                 pass
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
-
-
 
     def chat(
         self,
@@ -174,17 +181,22 @@ class GaurishCerebras(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Union[str, Generator]:
-
         def for_stream():
             for response in self.ask(
-                prompt, stream=True, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally,
             ):
                 yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
                 self.ask(
-                    prompt, stream=False, optimizer=optimizer, conversationally=conversationally
+                    prompt,
+                    stream=False,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
                 )
             )
 
@@ -195,9 +207,9 @@ class GaurishCerebras(Provider):
         return response["text"]
 
 
-
 if __name__ == "__main__":
     from rich import print
+
     bot = GaurishCerebras()
     try:
         response = bot.chat("What is the capital of France?", stream=True)

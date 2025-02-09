@@ -16,9 +16,11 @@ except ImportError:
 
 REGEX_STRIP_TAGS = re.compile("<.*?>")
 
+
 def _expand_proxy_tb_alias(proxy: str | None) -> str | None:
     """Expand "tb" to a full proxy URL if applicable."""
     return "socks5://127.0.0.1:9150" if proxy == "tb" else proxy
+
 
 def json_dumps(obj: Any) -> str:
     try:
@@ -63,7 +65,9 @@ def _text_extract_json(html_bytes: bytes, keywords: str) -> List[Dict[str, str]]
         result: List[Dict[str, str]] = json_loads(data)
         return result
     except Exception as ex:
-        raise WebscoutE(f"_text_extract_json() {keywords=} {type(ex).__name__}: {ex}") from ex
+        raise WebscoutE(
+            f"_text_extract_json() {keywords=} {type(ex).__name__}: {ex}"
+        ) from ex
     raise WebscoutE(f"_text_extract_json() {keywords=} return None")
 
 
@@ -77,10 +81,14 @@ def _normalize_url(url: str) -> str:
     return unquote(url.replace(" ", "+")) if url else ""
 
 
-def _calculate_distance(lat1: Decimal, lon1: Decimal, lat2: Decimal, lon2: Decimal) -> float:
+def _calculate_distance(
+    lat1: Decimal, lon1: Decimal, lat2: Decimal, lon2: Decimal
+) -> float:
     """Calculate distance between two points in km. Haversine formula."""
     R = 6371.0087714  # Earth's radius in km
-    rlat1, rlon1, rlat2, rlon2 = map(radians, [float(lat1), float(lon1), float(lat2), float(lon2)])
+    rlat1, rlon1, rlat2, rlon2 = map(
+        radians, [float(lat1), float(lon1), float(lat2), float(lon2)]
+    )
     dlon, dlat = rlon2 - rlon1, rlat2 - rlat1
     a = sin(dlat / 2) ** 2 + cos(rlat1) * cos(rlat2) * sin(dlon / 2) ** 2
     c = 2 * atan2(sqrt(a), sqrt(1 - a))

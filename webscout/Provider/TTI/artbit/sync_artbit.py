@@ -3,14 +3,14 @@ ArtbitImager - Your go-to provider for generating fire images with Artbit! 🔥
 
 Examples:
     >>> from webscout import ArtbitImager
-    >>> 
+    >>>
     >>> # Initialize with logging
     >>> provider = ArtbitImager(logging=True)
-    >>> 
+    >>>
     >>> # Generate a single image
     >>> images = provider.generate("Cool art")
     >>> paths = provider.save(images)
-    >>> 
+    >>>
     >>> # Generate multiple images with parameters
     >>> images = provider.generate(
     ...     prompt="Epic dragon in cyberpunk city",
@@ -32,11 +32,10 @@ from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
 logger = LitLogger(
-    "Artbit",
-    format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    "Artbit", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK
 )
 agent = LitAgent()
+
 
 class ArtbitImager(ImageProvider):
     """Your go-to provider for generating fire images with Artbit! 🔥"""
@@ -61,12 +60,12 @@ class ArtbitImager(ImageProvider):
             logger.info("Artbit provider initialized! 🚀")
 
     def generate(
-        self, 
-        prompt: str, 
+        self,
+        prompt: str,
         amount: int = 1,
         caption_model: str = "sdxl",
         selected_ratio: str = "1024",
-        negative_prompt: str = ""
+        negative_prompt: str = "",
     ) -> List[str]:
         """Generate some fire images! 🎨
 
@@ -81,7 +80,9 @@ class ArtbitImager(ImageProvider):
             List[str]: Your generated image URLs
         """
         assert bool(prompt), "Yo fam, prompt can't be empty! 🚫"
-        assert isinstance(amount, int), f"Amount gotta be an integer, not {type(amount)} 🤔"
+        assert isinstance(amount, int), (
+            f"Amount gotta be an integer, not {type(amount)} 🤔"
+        )
         assert amount > 0, "Amount gotta be greater than 0! 📈"
 
         self.prompt = prompt
@@ -95,7 +96,7 @@ class ArtbitImager(ImageProvider):
             "captionModel": caption_model,
             "selectedRatio": selected_ratio,
             "selectedSamples": str(amount),
-            "negative_prompt": negative_prompt
+            "negative_prompt": negative_prompt,
         }
 
         try:
@@ -104,7 +105,7 @@ class ArtbitImager(ImageProvider):
 
             response_data = resp.json()
             imgs = response_data.get("imgs", [])
-            
+
             if imgs:
                 response.extend(imgs)
                 if self.logging:
@@ -138,7 +139,9 @@ class ArtbitImager(ImageProvider):
         Returns:
             List[str]: Where your images were saved
         """
-        assert isinstance(response, list), f"Response gotta be a list, not {type(response)} 🤔"
+        assert isinstance(response, list), (
+            f"Response gotta be a list, not {type(response)} 🤔"
+        )
         name = self.prompt if name is None else name
 
         filenames = []
@@ -148,9 +151,12 @@ class ArtbitImager(ImageProvider):
             logger.info(f"Saving {len(response)} images... 💾")
 
         for img_url in response:
+
             def complete_path():
                 count_value = "" if count == 0 else f"_{count}"
-                return os.path.join(dir, name + count_value + "." + self.image_extension)
+                return os.path.join(
+                    dir, name + count_value + "." + self.image_extension
+                )
 
             while os.path.isfile(complete_path()):
                 count += 1

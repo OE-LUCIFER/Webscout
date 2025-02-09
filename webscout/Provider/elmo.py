@@ -5,6 +5,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import LitAgent
 
+
 class Elmo(Provider):
     """
     A class to interact with the Elmo.chat API.
@@ -22,7 +23,6 @@ class Elmo(Provider):
         history_offset: int = 10250,
         act: str = None,
         system_prompt: str = "You are a helpful AI assistant. Provide clear, concise, and well-structured information. Organize your responses into paragraphs for better readability.",
-
     ) -> None:
         """Instantiates Elmo
 
@@ -119,7 +119,6 @@ class Elmo(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-
         payload = {
             "metadata": {
                 "system": {"language": "en-US"},
@@ -159,10 +158,10 @@ class Elmo(Provider):
             full_response = ""
             for line in response.iter_lines(decode_unicode=True):
                 if line:
-                    if line.startswith('0:'):
+                    if line.startswith("0:"):
                         chunk = line.split(':"')[1].strip('"')
-                        formatted_output = (
-                            chunk.replace("\\n", "\n").replace("\\n\\n", "\n\n")
+                        formatted_output = chunk.replace("\\n", "\n").replace(
+                            "\\n\\n", "\n\n"
                         )
                         full_response += formatted_output
                         self.last_response.update(dict(text=full_response))
@@ -228,6 +227,7 @@ class Elmo(Provider):
 
 if __name__ == "__main__":
     from rich import print
+
     ai = Elmo()
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

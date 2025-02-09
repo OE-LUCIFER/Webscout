@@ -1,13 +1,13 @@
 import requests
 import json
-import os
-from typing import Any, Dict, Optional, Generator, Union
+from typing import Any, Dict, Generator, Union
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
+
 
 class Bagoodex(Provider):
     """
@@ -71,41 +71,52 @@ class Bagoodex(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
-
+                raise Exception(
+                    f"Optimizer is not one of {self.__available_optimizers}"
+                )
 
         payload = {
             "prompt": "You are AI",  # This seems to be required by the API
-            "messages": [{"content": "Hi, this is chatgpt, let's talk", "role": "assistant"}],
+            "messages": [
+                {"content": "Hi, this is chatgpt, let's talk", "role": "assistant"}
+            ],
             "input": conversation_prompt,
         }
 
         def for_stream():
             try:
-                response = self.session.post(self.url, json=payload, headers=self.headers, timeout=self.timeout)
+                response = self.session.post(
+                    self.url, json=payload, headers=self.headers, timeout=self.timeout
+                )
                 response.raise_for_status()
                 text = response.text
                 self.last_response.update({"text": text})
 
                 if stream:
                     for char in text:
-                        yield {"text": char}  # Yielding one character at a time for streaming
+                        yield {
+                            "text": char
+                        }  # Yielding one character at a time for streaming
                 else:
                     yield {"text": text}
 
-            except (requests.exceptions.RequestException, json.JSONDecodeError) as e:  # Catch JSON errors too
-                raise exceptions.FailedToGenerateResponseError(f"Error during request: {e}")
-            self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
+            except (
+                requests.exceptions.RequestException,
+                json.JSONDecodeError,
+            ) as e:  # Catch JSON errors too
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Error during request: {e}"
+                )
+            self.conversation.update_chat_history(
+                prompt, self.get_message(self.last_response)
+            )
 
         def for_non_stream():
-            for _ in for_stream(): pass
+            for _ in for_stream():
+                pass
             return self.last_response
 
-
         return for_stream() if stream else for_non_stream()
-
-
-
 
     def chat(
         self,
@@ -114,23 +125,26 @@ class Bagoodex(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Union[str, Generator]:
-
-
         def for_stream():
             for response in self.ask(
-                prompt, stream=True, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally,
             ):
                 yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
                 self.ask(
-                    prompt, stream=False, optimizer=optimizer, conversationally=conversationally
+                    prompt,
+                    stream=False,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
                 )
             )
 
         return for_stream() if stream else for_non_stream()
-
 
     def get_message(self, response: dict) -> str:
         assert isinstance(response, dict), "Response should be of dict data-type only"
@@ -139,6 +153,7 @@ class Bagoodex(Provider):
 
 if __name__ == "__main__":
     from rich import print
+
     ai = Bagoodex()
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

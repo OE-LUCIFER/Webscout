@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import warnings
-from datetime import datetime, timezone
 from functools import cached_property
 from itertools import cycle
-from random import choice, shuffle
+from random import shuffle
 from time import time
 from types import TracebackType
-from typing import Any, Dict, List, Optional, Type, Union, cast
+from typing import Dict, List, Optional, Type, Union
 
 import httpx
 from lxml.etree import _Element
@@ -20,10 +18,8 @@ from lxml.html import document_fromstring
 from .exceptions import RatelimitE, TimeoutE, WebscoutE
 from .utils import (
     _expand_proxy_tb_alias,
-    _extract_vqd,
     _normalize,
     _normalize_url,
-    json_loads,
 )
 
 logger = logging.getLogger("webscout.AsyncWEBS")
@@ -33,17 +29,52 @@ class AsyncWEBS:
     """Asynchronous webscout class to get search results."""
 
     _impersonates = (
-        "chrome_100", "chrome_101", "chrome_104", "chrome_105", "chrome_106", "chrome_107",
-        "chrome_108", "chrome_109", "chrome_114", "chrome_116", "chrome_117", "chrome_118",
-        "chrome_119", "chrome_120", "chrome_123", "chrome_124", "chrome_126", "chrome_127",
-        "chrome_128", "chrome_129", "chrome_130", "chrome_131",
-        "safari_ios_16.5", "safari_ios_17.2", "safari_ios_17.4.1", "safari_ios_18.1.1",
-        "safari_15.3", "safari_15.5", "safari_15.6.1", "safari_16", "safari_16.5",
-        "safari_17.0", "safari_17.2.1", "safari_17.4.1", "safari_17.5",
-        "safari_18", "safari_18.2",
+        "chrome_100",
+        "chrome_101",
+        "chrome_104",
+        "chrome_105",
+        "chrome_106",
+        "chrome_107",
+        "chrome_108",
+        "chrome_109",
+        "chrome_114",
+        "chrome_116",
+        "chrome_117",
+        "chrome_118",
+        "chrome_119",
+        "chrome_120",
+        "chrome_123",
+        "chrome_124",
+        "chrome_126",
+        "chrome_127",
+        "chrome_128",
+        "chrome_129",
+        "chrome_130",
+        "chrome_131",
+        "safari_ios_16.5",
+        "safari_ios_17.2",
+        "safari_ios_17.4.1",
+        "safari_ios_18.1.1",
+        "safari_15.3",
+        "safari_15.5",
+        "safari_15.6.1",
+        "safari_16",
+        "safari_16.5",
+        "safari_17.0",
+        "safari_17.2.1",
+        "safari_17.4.1",
+        "safari_17.5",
+        "safari_18",
+        "safari_18.2",
         "safari_ipad_18",
-        "edge_101", "edge_122", "edge_127", "edge_131",
-        "firefox_109", "firefox_117", "firefox_128", "firefox_133",
+        "edge_101",
+        "edge_122",
+        "edge_127",
+        "edge_131",
+        "firefox_109",
+        "firefox_117",
+        "firefox_128",
+        "firefox_133",
     )
 
     def __init__(
@@ -65,7 +96,11 @@ class AsyncWEBS:
         assert self.proxy is None or isinstance(self.proxy, str), "proxy must be a str"
         if not proxy and proxies:
             warnings.warn("'proxies' is deprecated, use 'proxy' instead.", stacklevel=1)
-            self.proxy = proxies.get("http") or proxies.get("https") if isinstance(proxies, dict) else proxies
+            self.proxy = (
+                proxies.get("http") or proxies.get("https")
+                if isinstance(proxies, dict)
+                else proxies
+            )
 
         default_headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -107,11 +142,22 @@ class AsyncWEBS:
     @cached_property
     def parser(self) -> LHTMLParser:
         """Get HTML parser."""
-        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
+        return LHTMLParser(
+            remove_blank_text=True,
+            remove_comments=True,
+            remove_pis=True,
+            collect_ids=False,
+        )
 
     async def _sleep(self, sleeptime: float = 2.0) -> None:
         """Sleep between API requests."""
-        delay = sleeptime if not self.sleep_timestamp else sleeptime if time() - self.sleep_timestamp >= 30 else sleeptime * 2
+        delay = (
+            sleeptime
+            if not self.sleep_timestamp
+            else sleeptime
+            if time() - self.sleep_timestamp >= 30
+            else sleeptime * 2
+        )
         self.sleep_timestamp = time()
         await asyncio.sleep(delay)
 
@@ -126,13 +172,17 @@ class AsyncWEBS:
         """Make HTTP request with proper rate limiting."""
         await self._sleep()
         try:
-            resp = await self.client.request(method, url, params=params, content=content, data=data)
-            
+            resp = await self.client.request(
+                method, url, params=params, content=content, data=data
+            )
+
             # Add additional delay if we get a 429 or similar status
             if resp.status_code in (429, 403, 503):
                 await asyncio.sleep(5.0)  # Additional delay for rate limit responses
-                resp = await self.client.request(method, url, params=params, content=content, data=data)
-                
+                resp = await self.client.request(
+                    method, url, params=params, content=content, data=data
+                )
+
         except Exception as ex:
             if "time" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
@@ -141,7 +191,9 @@ class AsyncWEBS:
         if resp.status_code == 200:
             return resp.content
         elif resp.status_code in (202, 301, 403, 429, 503):
-            raise RatelimitE(f"{url} {resp.status_code} Ratelimit - Please wait a few minutes before retrying")
+            raise RatelimitE(
+                f"{url} {resp.status_code} Ratelimit - Please wait a few minutes before retrying"
+            )
         raise WebscoutE(f"{url} return None. {params=} {content=} {data=}")
 
     async def achat(self, keywords: str, model: str = "gpt-4o-mini") -> str:
@@ -155,7 +207,9 @@ class AsyncWEBS:
         Returns:
             str: The response from the AI.
         """
-        result = await self._loop.run_in_executor(self._executor, super().chat, keywords, model)
+        result = await self._loop.run_in_executor(
+            self._executor, super().chat, keywords, model
+        )
         return result
 
     async def atext(
@@ -189,7 +243,9 @@ class AsyncWEBS:
             TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
         """
         if backend in ("api", "ecosia"):
-            warnings.warn(f"{backend=} is deprecated, using backend='auto'", stacklevel=2)
+            warnings.warn(
+                f"{backend=} is deprecated, using backend='auto'", stacklevel=2
+            )
             backend = "auto"
         backends = ["html", "lite"] if backend == "auto" else [backend]
         shuffle(backends)
@@ -198,9 +254,13 @@ class AsyncWEBS:
         for b in backends:
             try:
                 if b == "html":
-                    results = await self._text_html(keywords, region, timelimit, max_results)
+                    results = await self._text_html(
+                        keywords, region, timelimit, max_results
+                    )
                 elif b == "lite":
-                    results = await self._text_lite(keywords, region, timelimit, max_results)
+                    results = await self._text_lite(
+                        keywords, region, timelimit, max_results
+                    )
                 return results
             except Exception as ex:
                 err = ex
@@ -233,7 +293,9 @@ class AsyncWEBS:
         results: List[Dict[str, str]] = []
 
         for _ in range(5):
-            resp_content = await self._get_url("POST", "https://html.duckduckgo.com/html", data=payload)
+            resp_content = await self._get_url(
+                "POST", "https://html.duckduckgo.com/html", data=payload
+            )
             if b"No  results." in resp_content:
                 return results
 
@@ -245,19 +307,34 @@ class AsyncWEBS:
             for e in elements:
                 if isinstance(e, _Element):
                     hrefxpath = e.xpath("./a/@href")
-                    href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
+                    href = (
+                        str(hrefxpath[0])
+                        if hrefxpath and isinstance(hrefxpath, list)
+                        else None
+                    )
                     if (
                         href
                         and href not in cache
                         and not href.startswith(
-                            ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                            (
+                                "http://www.google.com/search?q=",
+                                "https://duckduckgo.com/y.js?ad_domain",
+                            )
                         )
                     ):
                         cache.add(href)
                         titlexpath = e.xpath("./h2/a/text()")
-                        title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
+                        title = (
+                            str(titlexpath[0])
+                            if titlexpath and isinstance(titlexpath, list)
+                            else ""
+                        )
                         bodyxpath = e.xpath("./a//text()")
-                        body = "".join(str(x) for x in bodyxpath) if bodyxpath and isinstance(bodyxpath, list) else ""
+                        body = (
+                            "".join(str(x) for x in bodyxpath)
+                            if bodyxpath and isinstance(bodyxpath, list)
+                            else ""
+                        )
                         results.append(
                             {
                                 "title": _normalize(title),
@@ -306,7 +383,9 @@ class AsyncWEBS:
         results: List[Dict[str, str]] = []
 
         for _ in range(5):
-            resp_content = await self._get_url("POST", "https://lite.duckduckgo.com/lite/", data=payload)
+            resp_content = await self._get_url(
+                "POST", "https://lite.duckduckgo.com/lite/", data=payload
+            )
             if b"No more results." in resp_content:
                 return results
 
@@ -320,19 +399,32 @@ class AsyncWEBS:
                 if isinstance(e, _Element):
                     if i == 1:
                         hrefxpath = e.xpath(".//a//@href")
-                        href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
+                        href = (
+                            str(hrefxpath[0])
+                            if hrefxpath and isinstance(hrefxpath, list)
+                            else None
+                        )
                         if (
                             href is None
                             or href in cache
                             or href.startswith(
-                                ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                                (
+                                    "http://www.google.com/search?q=",
+                                    "https://duckduckgo.com/y.js?ad_domain",
+                                )
                             )
                         ):
-                            [next(data, None) for _ in range(3)]  # skip block(i=1,2,3,4)
+                            [
+                                next(data, None) for _ in range(3)
+                            ]  # skip block(i=1,2,3,4)
                         else:
                             cache.add(href)
                             titlexpath = e.xpath(".//a//text()")
-                            title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
+                            title = (
+                                str(titlexpath[0])
+                                if titlexpath and isinstance(titlexpath, list)
+                                else ""
+                            )
                     elif i == 2:
                         bodyxpath = e.xpath(".//td[@class='result-snippet']//text()")
                         body = (
@@ -351,7 +443,9 @@ class AsyncWEBS:
                             if max_results and len(results) >= max_results:
                                 return results
 
-            next_page_s = tree.xpath("//form[./input[contains(@value, 'ext')]]/input[@name='s']/@value")
+            next_page_s = tree.xpath(
+                "//form[./input[contains(@value, 'ext')]]/input[@name='s']/@value"
+            )
             if not next_page_s or not max_results:
                 return results
             elif isinstance(next_page_s, list):

@@ -2,7 +2,7 @@ import uuid
 import requests
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from webscout.AIbase import ImageProvider
 from webscout import exceptions
@@ -12,17 +12,18 @@ from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 # Initialize our fire logger 🚀
 logger = LitLogger("TalkaiImager")
 
+
 class TalkaiImager(ImageProvider):
     """
     TalkAI Image Provider - Your go-to for fire AI art! 🎨
-    
+
     >>> # Generate some fire art! 🔥
     >>> imager = TalkaiImager(logging=True)
     >>> images = imager.generate("Epic dragon breathing fire", amount=2)
     >>> paths = imager.save(images)
     >>> print(paths)
     ['epic_dragon_0.png', 'epic_dragon_1.png']
-    
+
     >>> # Turn off logging for stealth mode 🥷
     >>> quiet_imager = TalkaiImager(logging=False)
     >>> images = quiet_imager.generate("Cyberpunk city at night")
@@ -39,12 +40,12 @@ class TalkaiImager(ImageProvider):
         """
         self.api_endpoint = "https://talkai.info/chat/send/"
         self.headers = {
-            'accept': 'application/json',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/json',
-            'origin': 'https://talkai.info',
-            'referer': 'https://talkai.info/image/',
-            'user-agent': agent.random(),  # Using our fire random agent! 🔥
+            "accept": "application/json",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            "origin": "https://talkai.info",
+            "referer": "https://talkai.info/image/",
+            "user-agent": agent.random(),  # Using our fire random agent! 🔥
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -57,8 +58,7 @@ class TalkaiImager(ImageProvider):
             logger.info("TalkaiImager initialized! Ready to create some fire art! 🚀")
 
     def generate(
-        self, prompt: str, amount: int = 1,
-        max_retries: int = 3, retry_delay: int = 5
+        self, prompt: str, amount: int = 1, max_retries: int = 3, retry_delay: int = 5
     ) -> List[str]:
         """Generate some fire images from your prompt! 🎨
 
@@ -72,7 +72,9 @@ class TalkaiImager(ImageProvider):
             List[str]: List of image URLs
         """
         assert bool(prompt), "Prompt cannot be empty."
-        assert isinstance(amount, int) and amount > 0, "Amount must be a positive integer."
+        assert isinstance(amount, int) and amount > 0, (
+            "Amount must be a positive integer."
+        )
 
         self.prompt = prompt
         image_urls = []
@@ -86,37 +88,54 @@ class TalkaiImager(ImageProvider):
                     with self.session.post(
                         self.api_endpoint,
                         json=self._create_payload(prompt),
-                        timeout=self.timeout
+                        timeout=self.timeout,
                     ) as response:
                         response.raise_for_status()
                         data = response.json()
 
-                        if 'data' in data and len(data['data']) > 0 and 'url' in data['data'][0]:
-                            image_urls.append(data['data'][0]['url'])
+                        if (
+                            "data" in data
+                            and len(data["data"]) > 0
+                            and "url" in data["data"][0]
+                        ):
+                            image_urls.append(data["data"][0]["url"])
                             if self.logging:
-                                logger.success(f"Generated image {len(image_urls)}/{amount}! 🎨")
+                                logger.success(
+                                    f"Generated image {len(image_urls)}/{amount}! 🎨"
+                                )
                             break
                         else:
-                            raise exceptions.InvalidResponseError("No image URL found in API response.")
+                            raise exceptions.InvalidResponseError(
+                                "No image URL found in API response."
+                            )
 
                 except requests.exceptions.RequestException as e:
                     if attempt == max_retries - 1:
                         if self.logging:
                             logger.error(f"Error making API request: {e} 😢")
-                        raise exceptions.APIConnectionError(f"Error making API request: {e}") from e
+                        raise exceptions.APIConnectionError(
+                            f"Error making API request: {e}"
+                        ) from e
                     else:
                         if self.logging:
-                            logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+                            logger.warning(
+                                f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄"
+                            )
                         import time
+
                         time.sleep(retry_delay)
                 except json.JSONDecodeError as e:
                     if self.logging:
                         logger.error(f"Invalid JSON response: {e} 😢")
-                    raise exceptions.InvalidResponseError(f"Invalid JSON response: {e}") from e
+                    raise exceptions.InvalidResponseError(
+                        f"Invalid JSON response: {e}"
+                    ) from e
                 except Exception as e:
                     if self.logging:
                         logger.error(f"An unexpected error occurred: {e} 😢")
-                    raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred: {e}") from e
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"An unexpected error occurred: {e}"
+                    ) from e
 
         if self.logging:
             logger.success("All images generated successfully! 🎉")
@@ -134,15 +153,11 @@ class TalkaiImager(ImageProvider):
         return {
             "type": "image",
             "messagesHistory": [
-                {
-                    "id": str(uuid.uuid4()),
-                    "from": "you",
-                    "content": prompt
-                }
+                {"id": str(uuid.uuid4()), "from": "you", "content": prompt}
             ],
             "settings": {
                 "model": "gpt-4o-mini"  # Or another suitable model if available
-            }
+            },
         }
 
     def save(
@@ -163,7 +178,9 @@ class TalkaiImager(ImageProvider):
         Returns:
             List[str]: List of saved filenames
         """
-        assert isinstance(response, list), f"Response should be a list, not {type(response)}"
+        assert isinstance(response, list), (
+            f"Response should be a list, not {type(response)}"
+        )
         name = self.prompt if name is None else name
 
         if not os.path.exists(dir):
@@ -181,7 +198,7 @@ class TalkaiImager(ImageProvider):
                     r.raise_for_status()
                     filename = f"{filenames_prefix}{name}_{i}.{self.image_extension}"
                     filepath = os.path.join(dir, filename)
-                    with open(filepath, 'wb') as f:
+                    with open(filepath, "wb") as f:
                         for chunk in r.iter_content(chunk_size=8192):
                             f.write(chunk)
                     filenames.append(filename)
@@ -200,7 +217,9 @@ class TalkaiImager(ImageProvider):
 if __name__ == "__main__":
     bot = TalkaiImager()
     try:
-        resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+        resp = bot.generate(
+            "A shiny red sports car speeding down a scenic mountain road", 1
+        )
         print(bot.save(resp))
     except Exception as e:
         if bot.logging:

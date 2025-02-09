@@ -1,17 +1,14 @@
-import time
 import uuid
 import cloudscraper
 import json
 
-from typing import Any, Dict, Optional, Generator, Union
-from dataclasses import dataclass, asdict
-from datetime import date
+from typing import Any, Dict, Generator, Union
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
-from webscout import WEBS, exceptions
+from webscout import exceptions
 from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
 from webscout.litagent import LitAgent
 
@@ -90,11 +87,12 @@ class YEPCHAT(Provider):
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
-            if callable(getattr(Optimizers, method))
-            and not method.startswith("__")
+            if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         Conversation.intro = (
-            AwesomePrompts().get_act(act, raise_not_found=True, default=None, case_insensitive=True)
+            AwesomePrompts().get_act(
+                act, raise_not_found=True, default=None, case_insensitive=True
+            )
             if act
             else intro or Conversation.intro
         )
@@ -107,7 +105,15 @@ class YEPCHAT(Provider):
         self.knowledge_cutoff = "December 2023"
 
         # Initialize logger
-        self.logger = LitLogger(name="YEPCHAT", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+        self.logger = (
+            LitLogger(
+                name="YEPCHAT",
+                format=LogFormat.MODERN_EMOJI,
+                color_scheme=ColorScheme.CYBERPUNK,
+            )
+            if logging
+            else None
+        )
 
     def ask(
         self,
@@ -155,10 +161,19 @@ class YEPCHAT(Provider):
 
         def for_stream():
             try:
-                with self.session.post(self.chat_endpoint, headers=self.headers, cookies=self.cookies, json=data, stream=True, timeout=self.timeout) as response:
+                with self.session.post(
+                    self.chat_endpoint,
+                    headers=self.headers,
+                    cookies=self.cookies,
+                    json=data,
+                    stream=True,
+                    timeout=self.timeout,
+                ) as response:
                     if not response.ok:
                         if self.logger:
-                            self.logger.error(f"Failed to generate response: {response.status_code} {response.reason}")
+                            self.logger.error(
+                                f"Failed to generate response: {response.status_code} {response.reason}"
+                            )
                         raise exceptions.FailedToGenerateResponseError(
                             f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                         )
@@ -173,18 +188,23 @@ class YEPCHAT(Provider):
                                     break
                                 try:
                                     json_data = json.loads(json_str)
-                                    if 'choices' in json_data:
-                                        choice = json_data['choices'][0]
-                                        if 'delta' in choice and 'content' in choice['delta']:
-                                            content = choice['delta']['content']
+                                    if "choices" in json_data:
+                                        choice = json_data["choices"][0]
+                                        if (
+                                            "delta" in choice
+                                            and "content" in choice["delta"]
+                                        ):
+                                            content = choice["delta"]["content"]
                                             streaming_text += content
-                                            
+
                                             # Yield ONLY the new content:
-                                            resp = dict(text=content) 
+                                            resp = dict(text=content)
                                             yield resp if raw else resp
                                 except json.JSONDecodeError:
                                     if self.logger:
-                                        self.logger.warning("JSONDecodeError encountered.")
+                                        self.logger.warning(
+                                            "JSONDecodeError encountered."
+                                        )
                                     pass
                     self.conversation.update_chat_history(prompt, streaming_text)
             except Exception as e:

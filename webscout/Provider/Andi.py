@@ -3,12 +3,12 @@ import requests
 import json
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import  Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
 from webscout import WEBS
 from rich import print
+
 
 class AndiSearch(Provider):
     def __init__(
@@ -92,7 +92,6 @@ class AndiSearch(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -129,13 +128,15 @@ class AndiSearch(Provider):
                         "title": result["title"],
                         "link": result["href"],
                         "desc": result["body"],
-                        "image": "",  
+                        "image": "",
                         "type": "website",
-                        "source": result["href"].split("//")[1].split("/")[0]  # Extract the domain name
+                        "source": result["href"]
+                        .split("//")[1]
+                        .split("/")[0],  # Extract the domain name
                     }
                     for result in search_results
-                ]
-            }
+                ],
+            },
         }
         self.session.headers.update(self.headers)
         payload = serp_payload
@@ -220,8 +221,11 @@ class AndiSearch(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = AndiSearch()
     response = ai.chat("tell me about india")
     for chunk in response:

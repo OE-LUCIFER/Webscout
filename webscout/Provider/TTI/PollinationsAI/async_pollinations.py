@@ -3,14 +3,14 @@
 Examples:
     >>> from webscout import AsyncPollinationsAI
     >>> import asyncio
-    >>> 
+    >>>
     >>> async def main():
     ...     provider = AsyncPollinationsAI()
     ...     # Generate a single image
     ...     images = await provider.generate("A cool cyberpunk city at night")
     ...     paths = await provider.save(images, dir="my_images")
     ...     print(f"Saved images to: {paths}")
-    ... 
+    ...
     >>> asyncio.run(main())
 """
 
@@ -32,11 +32,12 @@ from webscout.litagent import LitAgent
 logger = LitLogger(
     name="AsyncPollinationsAI",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    color_scheme=ColorScheme.CYBERPUNK,
 )
 
 # Get a fresh user agent! 🔄
 agent = LitAgent()
+
 
 class AsyncPollinationsAI(AsyncImageProvider):
     """Your async homie for generating fire images using pollinations.ai! 🎨
@@ -46,12 +47,12 @@ class AsyncPollinationsAI(AsyncImageProvider):
 
     Examples:
         >>> provider = AsyncPollinationsAI()
-        >>> 
+        >>>
         >>> # Generate one image with default model
         >>> async def single_image():
         ...     image = await provider.generate("A futuristic city")
         ...     await provider.save(image, "city.jpg")
-        >>> 
+        >>>
         >>> # Generate multiple with specific model
         >>> async def multiple_images():
         ...     images = await provider.generate(
@@ -102,15 +103,11 @@ class AsyncPollinationsAI(AsyncImageProvider):
         "flux-3d",
         "any-dark",
         "flux-pro",
-        "turbo"
+        "turbo",
     ]
     DEFAULT_MODEL = "flux"
 
-    def __init__(
-        self, 
-        timeout: int = 60, 
-        proxies: Optional[dict] = None
-    ):
+    def __init__(self, timeout: int = 60, proxies: Optional[dict] = None):
         """Initialize your AsyncPollinationsAI provider with custom settings
 
         Examples:
@@ -190,44 +187,46 @@ class AsyncPollinationsAI(AsyncImageProvider):
 
         # Function to add random characters for variety
         def add_variety():
-            return "" if not additives else "".join(choice(punctuation) for _ in range(5))
+            return (
+                "" if not additives else "".join(choice(punctuation) for _ in range(5))
+            )
 
         self.prompt = prompt
         response = []
-        
+
         # Build base URL with parameters
-        base_params = {
-            "width": width,
-            "height": height,
-            "model": model
-        }
-        
+        base_params = {"width": width, "height": height, "model": model}
+
         if negative_prompt:
             base_params["negative"] = negative_prompt
         if seed is not None:
             base_params["seed"] = seed
 
-        async with aiohttp.ClientSession(headers=self.headers, timeout=self.timeout) as session:
+        async with aiohttp.ClientSession(
+            headers=self.headers, timeout=self.timeout
+        ) as session:
             tasks = []
             for _ in range(amount):
                 current_prompt = f"{prompt}{add_variety()}"
                 params_str = "&".join(f"{k}={v}" for k, v in base_params.items())
                 url = f"{self.image_gen_endpoint.format(prompt=current_prompt)}?{params_str}"
-                
+
                 logger.info(f"Queueing image {_ + 1}/{amount} generation... ⚡")
-                tasks.append(self._generate_single(session, url, max_retries, retry_delay))
-            
+                tasks.append(
+                    self._generate_single(session, url, max_retries, retry_delay)
+                )
+
             response = await asyncio.gather(*tasks)
             logger.success(f"Successfully generated {amount} images! 🎨")
 
         return response
 
     async def _generate_single(
-        self, 
-        session: aiohttp.ClientSession, 
-        url: str, 
-        max_retries: int, 
-        retry_delay: int
+        self,
+        session: aiohttp.ClientSession,
+        url: str,
+        max_retries: int,
+        retry_delay: int,
     ) -> bytes:
         """Helper method to generate a single image with retries"""
         for attempt in range(max_retries):
@@ -239,7 +238,9 @@ class AsyncPollinationsAI(AsyncImageProvider):
                 if attempt == max_retries - 1:
                     logger.error(f"Failed to generate image: {e} 😢")
                     raise
-                logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+                logger.warning(
+                    f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄"
+                )
                 await asyncio.sleep(retry_delay)
 
     async def save(
@@ -281,20 +282,20 @@ class AsyncPollinationsAI(AsyncImageProvider):
 
         saved_paths = []
         timestamp = int(time.time())
-        
+
         async def save_single_image(image_bytes: bytes, index: int) -> str:
             if name:
                 filename = f"{filenames_prefix}{name}_{index}.{self.image_extension}"
             else:
                 filename = f"{filenames_prefix}pollinations_{timestamp}_{index}.{self.image_extension}"
-            
+
             filepath = os.path.join(save_dir, filename)
-            
+
             # Write file using asyncio
             async with asyncio.Lock():
                 with open(filepath, "wb") as f:
                     f.write(image_bytes)
-            
+
             logger.success(f"Saved image to: {filepath} 💾")
             return filepath
 
@@ -320,7 +321,7 @@ if __name__ == "__main__":
                 amount=2,
                 width=1024,
                 height=1024,
-                model="sdxl"
+                model="sdxl",
             )
             paths = await provider.save(images, dir="generated_images")
             print(f"Successfully saved images to: {paths}")

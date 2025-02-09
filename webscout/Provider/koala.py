@@ -1,11 +1,12 @@
 import requests
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
+
 
 class KOALA(Provider):
     """
@@ -25,21 +26,20 @@ class KOALA(Provider):
         act: str = None,
         model: str = "gpt-4o-mini",
         web_search: bool = True,
-
     ) -> None:
         """
         Initializes the KOALASH API with given parameters.
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. 
+            max_tokens (int, optional): Maximum number of tokens to be generated upon completion.
                                         Defaults to 600.
             timeout (int, optional): Http request timeout. Defaults to 30.
             intro (str, optional): Conversation introductory prompt. Defaults to None.
             filepath (str, optional): Path to file containing conversation history. Defaults to None.
             update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
             proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. 
+            history_offset (int, optional): Limit conversation history to this number of last texts.
                                             Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
             model (str, optional): AI model to use. Defaults to "gpt-4o-mini".
@@ -59,7 +59,7 @@ class KOALA(Provider):
             "content-length": "73",
             "content-type": "application/json",
             "dnt": "1",
-            "flag-real-time-data": "true" if web_search else "false", 
+            "flag-real-time-data": "true" if web_search else "false",
             "origin": "https://koala.sh",
             "priority": "u=1, i",
             "referer": "https://koala.sh/chat",
@@ -122,31 +122,36 @@ class KOALA(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
-        payload = {
-            "input": conversation_prompt,
-            "model": self.model 
-        }
+
+        payload = {"input": conversation_prompt, "model": self.model}
 
         def for_stream():
             response = self.session.post(
-                self.api_endpoint, json=payload, headers=self.headers, stream=True, timeout=self.timeout
+                self.api_endpoint,
+                json=payload,
+                headers=self.headers,
+                stream=True,
+                timeout=self.timeout,
             )
 
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason})"
                 )
-            
+
             streaming_response = ""
             for line in response.iter_lines(decode_unicode=True):
                 if line:
                     if line.startswith("data:"):
-                        data = line[len("data:"):].strip()
+                        data = line[len("data:") :].strip()
                         if data:
                             try:
                                 event = json.loads(data)
-                                streaming_response += event.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                                streaming_response += (
+                                    event.get("choices", [{}])[0]
+                                    .get("delta", {})
+                                    .get("content", "")
+                                )
                                 yield event if raw else dict(text=streaming_response)
                             except json.decoder.JSONDecodeError:
                                 continue
@@ -154,39 +159,47 @@ class KOALA(Provider):
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
+
         def for_non_stream():
             response = self.session.post(
-                self.api_endpoint, json=payload, headers=self.headers, timeout=self.timeout
+                self.api_endpoint,
+                json=payload,
+                headers=self.headers,
+                timeout=self.timeout,
             )
 
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason})"
                 )
-            
-            response_content = response.content.decode('utf-8')
-            data_parts = response_content.strip().split('\n\n')
-            formatted_response = ''.join([part.replace('data: ', '') for part in data_parts if part.startswith('data: ')])
+
+            response_content = response.content.decode("utf-8")
+            data_parts = response_content.strip().split("\n\n")
+            formatted_response = "".join(
+                [
+                    part.replace("data: ", "")
+                    for part in data_parts
+                    if part.startswith("data: ")
+                ]
+            )
 
             # Remove extra quotes from the formatted response
-            formatted_response = formatted_response.replace('""', '')
+            formatted_response = formatted_response.replace('""', "")
 
             # Split the response into lines and format with new lines before headers
-            lines = formatted_response.split('\n')
+            lines = formatted_response.split("\n")
             formatted_lines = []
             for line in lines:
-                if line.startswith('###'):
-                    formatted_lines.append('\n' + line)
+                if line.startswith("###"):
+                    formatted_lines.append("\n" + line)
                 else:
                     formatted_lines.append(line)
 
             # Join the formatted lines back into a single string
-            final_response = '\n'.join(formatted_lines)
+            final_response = "\n".join(formatted_lines)
 
             # self.last_response.update(dict(text=streaming_response))
-            self.conversation.update_chat_history(
-                prompt, final_response
-            )
+            self.conversation.update_chat_history(prompt, final_response)
             return dict(text=final_response)
 
         return for_stream() if stream else for_non_stream()
@@ -236,9 +249,12 @@ class KOALA(Provider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
-if __name__ == '__main__':
+        return response["text"].replace("\\n", "\n").replace("\\n\\n", "\n\n")
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = KOALA()
     response = ai.chat("tell me about india")
     for chunk in response:

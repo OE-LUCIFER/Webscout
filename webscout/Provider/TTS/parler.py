@@ -1,6 +1,5 @@
 import time
 from pathlib import Path
-from typing import Generator
 from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
@@ -23,10 +22,16 @@ class ParlerTTS(TTSProvider):
         self.logger = LitLogger(
             name="ParlerTTS",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.AURORA
+            color_scheme=ColorScheme.AURORA,
         )
 
-    def tts(self, text: str, description: str = "", use_large: bool = False, verbose: bool = True) -> str:
+    def tts(
+        self,
+        text: str,
+        description: str = "",
+        use_large: bool = False,
+        verbose: bool = True,
+    ) -> str:
         """
         Converts text to speech using the Parler TTS API.
 
@@ -47,7 +52,7 @@ class ParlerTTS(TTSProvider):
         try:
             if verbose:
                 self.logger.info(f"Generating TTS with description: {description} 🎙️")
-            
+
             result = self.client.predict(
                 text=text,
                 description=description,
@@ -64,10 +69,10 @@ class ParlerTTS(TTSProvider):
                 raise ValueError(f"Unexpected response from API: {result}")
 
             self._save_audio(audio_bytes, filename)
-            
+
             if verbose:
                 self.logger.success(f"Audio generated successfully: {filename} 🔊")
-            
+
             return filename.as_posix()
 
         except Exception as e:

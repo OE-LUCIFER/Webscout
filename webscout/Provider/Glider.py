@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -8,6 +8,8 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
+
+
 class GliderAI(Provider):
     """
     A class to interact with the Glider.so API.
@@ -27,7 +29,6 @@ class GliderAI(Provider):
         "deepseek-r1": "deepseek-ai/DeepSeek-R1",
     }
 
-
     def __init__(
         self,
         is_conversation: bool = True,
@@ -44,7 +45,9 @@ class GliderAI(Provider):
     ):
         """Initializes the GliderAI API client."""
         if model not in self.AVAILABLE_MODELS and model not in self.model_aliases:
-            raise ValueError(f"Invalid model: {model}. Choose from: {', '.join(self.AVAILABLE_MODELS)}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {', '.join(self.AVAILABLE_MODELS)}"
+            )
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -52,7 +55,7 @@ class GliderAI(Provider):
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
-        self.model = self.model_aliases.get(model,model)
+        self.model = self.model_aliases.get(model, model)
         self.system_prompt = system_prompt
         self.headers = {
             "accept": "*/*",
@@ -120,7 +123,7 @@ class GliderAI(Provider):
         payload = {
             "messages": [
                 {"role": "user", "content": conversation_prompt},
-                {"role": "system", "content": self.system_prompt}
+                {"role": "system", "content": self.system_prompt},
             ],
             "model": self.model,
         }
@@ -140,25 +143,27 @@ class GliderAI(Provider):
                     if value.startswith("data: "):
                         try:
                             data = json.loads(value[6:])
-                            content = data['choices'][0].get('delta', {}).get("content", "")
+                            content = (
+                                data["choices"][0].get("delta", {}).get("content", "")
+                            )
                             if content:
                                 streaming_text += content
                                 yield content if raw else dict(text=content)
                         except json.JSONDecodeError:
-                             if "stop" in value :
-                                 break
-                            
+                            if "stop" in value:
+                                break
+
             self.last_response.update(dict(text=streaming_text))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
+
         def for_non_stream():
             for _ in for_stream():
                 pass
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
-
 
     def chat(
         self,
@@ -176,13 +181,15 @@ class GliderAI(Provider):
         Returns:
             str: Response generated
         """
+
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
             ):
-                 yield self.get_message(response)
+                yield self.get_message(response)
+
         def for_non_stream():
-             return self.get_message(
+            return self.get_message(
                 self.ask(
                     prompt,
                     False,
@@ -190,8 +197,8 @@ class GliderAI(Provider):
                     conversationally=conversationally,
                 )
             )
-        return for_stream() if stream else for_non_stream()
 
+        return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response"""
@@ -201,6 +208,7 @@ class GliderAI(Provider):
 
 if __name__ == "__main__":
     from rich import print
+
     ai = GliderAI(model="llama-3.1-70b")
     response = ai.chat("Meaning of Life", stream=True)
     for chunk in response:

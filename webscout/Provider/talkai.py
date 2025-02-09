@@ -1,7 +1,6 @@
 import uuid
 import cloudscraper
-import json
-from typing import Any, Dict, Optional, Generator
+from typing import Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -9,6 +8,8 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.litagent import LitAgent
+
+
 class Talkai(Provider):
     """
     A class to interact with the Talkai.info API.
@@ -38,13 +39,13 @@ class Talkai(Provider):
         self.last_response = {}
         self.model = model
         self.headers = {
-            'Accept': 'application/json, text/event-stream',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'Origin': 'https://talkai.info',
-            'Referer': 'https://talkai.info/chat/',
-            'User-Agent': LitAgent().random(),
-            'Cookie': '_csrf-front=e19e203a958c74e439261f6860535403324c9ab2ede76449e6407e54e1f366afa%3A2%3A%7Bi%3A0%3Bs%3A11%3A%22_csrf-front%22%3Bi%3A1%3Bs%3A32%3A%22QbnGY7XS5q9i3JnDvi6KRzrOk0D6XFnk%22%3B%7D; _ga=GA1.1.1383924142.1734246140; _ym_uid=1723397035198647017; _ym_d=1734246141; _ym_isad=1; _ym_visorc=b; talkai-front=ngbj23of1t0ujg2raoa3l57vqe; _ga_FB7V9WMN30=GS1.1.1734246139.1.1734246143.0.0.0'
+            "Accept": "application/json, text/event-stream",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Content-Type": "application/json",
+            "Origin": "https://talkai.info",
+            "Referer": "https://talkai.info/chat/",
+            "User-Agent": LitAgent().random(),
+            "Cookie": "_csrf-front=e19e203a958c74e439261f6860535403324c9ab2ede76449e6407e54e1f366afa%3A2%3A%7Bi%3A0%3Bs%3A11%3A%22_csrf-front%22%3Bi%3A1%3Bs%3A32%3A%22QbnGY7XS5q9i3JnDvi6KRzrOk0D6XFnk%22%3B%7D; _ga=GA1.1.1383924142.1734246140; _ym_uid=1723397035198647017; _ym_d=1734246141; _ym_isad=1; _ym_visorc=b; talkai-front=ngbj23of1t0ujg2raoa3l57vqe; _ga_FB7V9WMN30=GS1.1.1734246139.1.1734246143.0.0.0",
         }
         self.__available_optimizers = (
             method
@@ -86,7 +87,9 @@ class Talkai(Provider):
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
-                conversation_prompt = getattr(Optimizers, optimizer)(conversation_prompt if conversationally else prompt)
+                conversation_prompt = getattr(Optimizers, optimizer)(
+                    conversation_prompt if conversationally else prompt
+                )
             else:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Optimizer is not one of {self.__available_optimizers}"
@@ -95,29 +98,29 @@ class Talkai(Provider):
         payload = {
             "type": "chat",
             "messagesHistory": [
-                {
-                    "id": str(uuid.uuid4()),
-                    "from": "you",
-                    "content": conversation_prompt
-                }
+                {"id": str(uuid.uuid4()), "from": "you", "content": conversation_prompt}
             ],
-            "settings": {
-                "model": self.model
-            }
+            "settings": {"model": self.model},
         }
 
         def for_stream():
             try:
-                with self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
+                with self.session.post(
+                    self.api_endpoint,
+                    headers=self.headers,
+                    json=payload,
+                    stream=True,
+                    timeout=self.timeout,
+                ) as response:
                     response.raise_for_status()
 
                     full_response = ""
                     for line in response.iter_lines():
                         if line:
-                            decoded_line = line.decode('utf-8')
-                            if 'event: trylimit' in decoded_line:
+                            decoded_line = line.decode("utf-8")
+                            if "event: trylimit" in decoded_line:
                                 break  # Stop if trylimit event is encountered
-                            if decoded_line.startswith('data:'):
+                            if decoded_line.startswith("data:"):
                                 data = decoded_line[6:]  # Remove 'data: ' prefix
                                 full_response += data
                                 yield data if raw else dict(text=data)
@@ -133,11 +136,10 @@ class Talkai(Provider):
         def for_non_stream():
             full_response = ""
             for line in for_stream():
-                full_response += line['text'] if not raw else line
+                full_response += line["text"] if not raw else line
             return dict(text=full_response)
 
         return for_stream() if stream else for_non_stream()
-
 
     def chat(
         self,
@@ -184,7 +186,8 @@ class Talkai(Provider):
             str: Message extracted.
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return response["text"].replace("\\n", "\n").replace("\\n\\n", "\n\n")
+
 
 if __name__ == "__main__":
     t = Talkai()

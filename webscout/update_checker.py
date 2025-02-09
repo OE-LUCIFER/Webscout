@@ -6,19 +6,14 @@ Ayy, check it out! 👀
 Level up with: `pip install --upgrade webscout`'
 """
 
-import subprocess
-import sys
-import os
 from typing import Optional
 
 import requests
 from packaging import version
-import re
 
 from webscout import LitLogger, ColorScheme
 from importlib.metadata import version as get_package_version
 from importlib.metadata import PackageNotFoundError
-from importlib.metadata import metadata as get_package_metadata
 
 # Setting up that clean logger format, no cap! 💯
 CUSTOM_FORMAT = """{message}"""
@@ -29,14 +24,15 @@ logger = LitLogger(
     color_scheme=ColorScheme.OCEAN,
     level_styles={
         "TRACE": "DIM",
-        "DEBUG": "NORMAL", 
+        "DEBUG": "NORMAL",
         "INFO": "BOLD",
         "SUCCESS": "BOLD",
         "WARNING": "BOLD",
         "ERROR": "BOLD",
-        "CRITICAL": "BOLD"
-    }
+        "CRITICAL": "BOLD",
+    },
 )
+
 
 def get_installed_version() -> Optional[str]:
     """Yo, let's check what version you're running! 🔍
@@ -55,11 +51,12 @@ def get_installed_version() -> Optional[str]:
         '1.2.3'
     """
     try:
-        return get_package_version('webscout')
+        return get_package_version("webscout")
     except PackageNotFoundError:
         return None
-    except Exception as e:
+    except Exception:
         return None
+
 
 def get_pypi_version() -> Optional[str]:
     """Let's see what's fresh on PyPI! 🚀
@@ -78,19 +75,17 @@ def get_pypi_version() -> Optional[str]:
         '2.0.0'
     """
     try:
-        response = requests.get(
-            "https://pypi.org/pypi/webscout/json",
-            timeout=10
-        )
+        response = requests.get("https://pypi.org/pypi/webscout/json", timeout=10)
         response.raise_for_status()
-        return response.json()['info']['version']
-    except requests.RequestException as e:
+        return response.json()["info"]["version"]
+    except requests.RequestException:
         pass
-    except (KeyError, ValueError) as e:
+    except (KeyError, ValueError):
         pass
-    except Exception as e:
+    except Exception:
         pass
     return None
+
 
 def version_compare(v1: str, v2: str) -> int:
     """Time to compare these versions! 💪
@@ -114,12 +109,13 @@ def version_compare(v1: str, v2: str) -> int:
         if version1 > version2:
             return 1
         return 0
-    except version.InvalidVersion as e:
+    except version.InvalidVersion:
         pass
         return 0
-    except Exception as e:
+    except Exception:
         pass
         return 0
+
 
 def display_version_info(installed: Optional[str], latest: Optional[str]) -> None:
     """Let's break down your version status! 📱
@@ -139,7 +135,7 @@ def display_version_info(installed: Optional[str], latest: Optional[str]) -> Non
     """
     if installed:
         pass
-    
+
     if latest and installed:
         comparison_result = version_compare(installed, latest)
         if comparison_result < 0:
@@ -149,6 +145,7 @@ def display_version_info(installed: Optional[str], latest: Optional[str]) -> Non
             )
         elif comparison_result > 0:
             logger.success("You already got the latest version, no cap! 💯")
+
 
 def check_for_updates() -> None:
     """Time to check if you're running the latest! 🚀
@@ -164,16 +161,17 @@ def check_for_updates() -> None:
     """
     installed_version = get_installed_version()
     latest_version = get_pypi_version()
-    
+
     if not installed_version:
         pass
         return
-        
+
     if not latest_version:
         pass
         return
-    
+
     display_version_info(installed_version, latest_version)
+
 
 if __name__ == "__main__":
     try:

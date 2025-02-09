@@ -1,7 +1,8 @@
 import aiohttp
 from dataclasses import dataclass
-from typing import ClassVar, NoReturn, List, Dict, Any
+from typing import NoReturn, List, Dict, Any
 import requests
+
 
 @dataclass
 class DomainModel:
@@ -35,10 +36,10 @@ class TempMail:
         self._session = aiohttp.ClientSession(
             base_url="https://api.internal.temp-mail.io",
             headers={
-                'Host': 'api.internal.temp-mail.io',
-                'User-Agent': 'okhttp/4.5.0',
-                'Connection': 'close'
-            }
+                "Host": "api.internal.temp-mail.io",
+                "User-Agent": "okhttp/4.5.0",
+                "Connection": "close",
+            },
         )
 
     async def close(self) -> None:
@@ -55,15 +56,31 @@ class TempMail:
     async def get_domains(self) -> list[DomainModel]:
         async with self._session.get("/api/v3/domains") as response:
             response_json = await response.json()
-            return [DomainModel(domain['name'], domain['type'], domain['forward_available'], domain['forward_max_seconds']) for domain in response_json['domains']]
+            return [
+                DomainModel(
+                    domain["name"],
+                    domain["type"],
+                    domain["forward_available"],
+                    domain["forward_max_seconds"],
+                )
+                for domain in response_json["domains"]
+            ]
 
-    async def create_email(self, alias: str | None = None, domain: str | None = None) -> CreateEmailResponseModel:
-        async with self._session.post("/api/v3/email/new", data={'name': alias, 'domain': domain}) as response:
+    async def create_email(
+        self, alias: str | None = None, domain: str | None = None
+    ) -> CreateEmailResponseModel:
+        async with self._session.post(
+            "/api/v3/email/new", data={"name": alias, "domain": domain}
+        ) as response:
             response_json = await response.json()
-            return CreateEmailResponseModel(response_json['email'], response_json['token'])
+            return CreateEmailResponseModel(
+                response_json["email"], response_json["token"]
+            )
 
     async def delete_email(self, email: str, token: str) -> bool:
-        async with self._session.delete(f"/api/v3/email/{email}", data={'token': token}) as response:
+        async with self._session.delete(
+            f"/api/v3/email/{email}", data={"token": token}
+        ) as response:
             if response.status == 200:
                 return True
             else:
@@ -74,7 +91,20 @@ class TempMail:
             response_json = await response.json()
             if len(response_json) == 0:
                 return None
-            return [MessageResponseModel(message['attachments'], message['body_html'], message['body_text'], message['cc'], message['created_at'], message['from'], message['id'], message['subject'], message['to']) for message in response_json]
+            return [
+                MessageResponseModel(
+                    message["attachments"],
+                    message["body_html"],
+                    message["body_text"],
+                    message["cc"],
+                    message["created_at"],
+                    message["from"],
+                    message["id"],
+                    message["subject"],
+                    message["to"],
+                )
+                for message in response_json
+            ]
 
 
 class VNEngine:
@@ -99,7 +129,13 @@ class VNEngine:
         response: Any = requests.get(url=numbers_url).json()
         if response["response"] == "1":
             numbers: List[Dict[str, str]] = list(
-                map(lambda x: {"data_humans": x["data_humans"], "full_number": x["full_number"]}, response["numbers"])
+                map(
+                    lambda x: {
+                        "data_humans": x["data_humans"],
+                        "full_number": x["full_number"],
+                    },
+                    response["numbers"],
+                )
             )
             return numbers
         return []
@@ -120,6 +156,7 @@ class VNEngine:
                 print(f"Warning: Missing key '{str(e)}' in message data")
 
         return {"messages": messages}
+
 
 class sms_message:
     def __init__(self, content, frm, time):

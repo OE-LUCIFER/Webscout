@@ -1,7 +1,7 @@
 import requests
 import json
 import os
-from typing import List, Dict, Optional
+from typing import List
 
 from webscout.AIbase import ImageProvider
 from webscout import exceptions
@@ -11,17 +11,18 @@ from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 # Initialize our fire logger 🚀
 logger = LitLogger("NinjaImager", "MODERN_EMOJI")
 
+
 class NinjaImager(ImageProvider):
     """
     Image provider for NinjaChat.ai - Your go-to for fire AI art! 🎨
-    
+
     >>> # Generate some fire art! 🔥
     >>> imager = NinjaImager(logging=True)
     >>> images = imager.generate("Epic dragon breathing fire", amount=2)
     >>> paths = imager.save(images)
     >>> print(paths)
     ['epic_dragon_0.png', 'epic_dragon_1.png']
-    
+
     >>> # Turn off logging for stealth mode 🥷
     >>> quiet_imager = NinjaImager(logging=False)
     >>> images = quiet_imager.generate("Cyberpunk city at night")
@@ -56,7 +57,7 @@ class NinjaImager(ImageProvider):
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "User-Agent": agent.random()  # Using our fire random agent! 🔥
+            "User-Agent": agent.random(),  # Using our fire random agent! 🔥
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -68,7 +69,9 @@ class NinjaImager(ImageProvider):
         if self.logging:
             logger.info("NinjaImager initialized! Ready to create some fire art! 🚀")
 
-    def generate(self, prompt: str, amount: int = 1, model: str = "flux-dev") -> List[str]:
+    def generate(
+        self, prompt: str, amount: int = 1, model: str = "flux-dev"
+    ) -> List[str]:
         """Generate some fire images from your prompt! 🎨
 
         Args:
@@ -80,7 +83,9 @@ class NinjaImager(ImageProvider):
             List[str]: URLs to your generated images
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int) and amount > 0, "Amount should be a positive integer"
+        assert isinstance(amount, int) and amount > 0, (
+            "Amount should be a positive integer"
+        )
 
         if model not in self.AVAILABLE_MODELS:
             raise exceptions.ModelNotFoundError(
@@ -98,7 +103,7 @@ class NinjaImager(ImageProvider):
             "aspectRatio": "1:1",
             "outputFormat": self.image_extension,
             "numOutputs": amount,
-            "outputQuality": 90
+            "outputQuality": 90,
         }
 
         if self.logging:
@@ -106,30 +111,40 @@ class NinjaImager(ImageProvider):
 
         image_urls = []
         try:
-            with requests.post(url, headers=self.headers, json=payload, timeout=self.timeout) as response:
+            with requests.post(
+                url, headers=self.headers, json=payload, timeout=self.timeout
+            ) as response:
                 if response.status_code != 200:
                     if self.logging:
-                        logger.error(f"Request failed with status {response.status_code} 😢")
+                        logger.error(
+                            f"Request failed with status {response.status_code} 😢"
+                        )
                     raise exceptions.FailedToGenerateResponseError(
                         f"Request failed with status code: {response.status_code}, {response.text}"
                     )
 
                 data = response.json()
 
-                if 'output' not in data:
+                if "output" not in data:
                     if self.logging:
                         logger.error("Invalid API response format 😢")
-                    raise exceptions.InvalidResponseError("Invalid API response format: 'output' key missing.")
+                    raise exceptions.InvalidResponseError(
+                        "Invalid API response format: 'output' key missing."
+                    )
 
-                for img_url in data['output']:
+                for img_url in data["output"]:
                     image_urls.append(img_url)
                     if self.logging:
-                        logger.success(f"Generated image {len(image_urls)}/{amount}! 🎨")
+                        logger.success(
+                            f"Generated image {len(image_urls)}/{amount}! 🎨"
+                        )
 
         except requests.exceptions.RequestException as e:
             if self.logging:
                 logger.error(f"Connection error: {e} 😢")
-            raise exceptions.APIConnectionError(f"An error occurred during the request: {e}")
+            raise exceptions.APIConnectionError(
+                f"An error occurred during the request: {e}"
+            )
         except json.JSONDecodeError as e:
             if self.logging:
                 logger.error(f"Failed to parse response: {e} 😢")
@@ -157,7 +172,9 @@ class NinjaImager(ImageProvider):
         Returns:
             List[str]: List of saved filenames
         """
-        assert isinstance(response, list), f"Response should be a list, not {type(response)}"
+        assert isinstance(response, list), (
+            f"Response should be a list, not {type(response)}"
+        )
         name = self.prompt if name is None else name
 
         if not os.path.exists(dir):
@@ -171,9 +188,12 @@ class NinjaImager(ImageProvider):
         filenames = []
         count = 0
         for img_url in response:
+
             def complete_path():
                 count_value = "" if count == 0 else f"_{count}"
-                return os.path.join(dir, name + count_value + "." + self.image_extension)
+                return os.path.join(
+                    dir, name + count_value + "." + self.image_extension
+                )
 
             while os.path.isfile(complete_path()):
                 count += 1
@@ -182,7 +202,9 @@ class NinjaImager(ImageProvider):
             filenames.append(filenames_prefix + os.path.split(absolute_path_to_file)[1])
 
             try:
-                with requests.get(img_url, stream=True, timeout=self.timeout) as img_response:
+                with requests.get(
+                    img_url, stream=True, timeout=self.timeout
+                ) as img_response:
                     img_response.raise_for_status()
                     with open(absolute_path_to_file, "wb") as f:
                         for chunk in img_response.iter_content(chunk_size=8192):
@@ -193,7 +215,9 @@ class NinjaImager(ImageProvider):
             except requests.exceptions.RequestException as e:
                 if self.logging:
                     logger.error(f"Failed to save image: {e} 😢")
-                raise exceptions.FailedToSaveImageError(f"An error occurred while downloading/saving image: {e}")
+                raise exceptions.FailedToSaveImageError(
+                    f"An error occurred while downloading/saving image: {e}"
+                )
 
         if self.logging:
             logger.success(f"All images saved successfully! Check {dir} 🎉")
@@ -203,7 +227,9 @@ class NinjaImager(ImageProvider):
 if __name__ == "__main__":
     bot = NinjaImager()
     try:
-        resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+        resp = bot.generate(
+            "A shiny red sports car speeding down a scenic mountain road", 1
+        )
         print(bot.save(resp))
     except Exception as e:
         print(f"An error occurred: {e}")

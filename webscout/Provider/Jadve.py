@@ -1,7 +1,5 @@
 import requests
 import json
-import re
-from typing import Any, Dict, Optional, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -9,6 +7,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.litagent import LitAgent
+
 
 class JadveOpenAI(Provider):
     """
@@ -29,7 +28,7 @@ class JadveOpenAI(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "gpt-4o-mini",
-        system_prompt: str = "You are a helpful AI assistant."
+        system_prompt: str = "You are a helpful AI assistant.",
     ):
         """
         Initializes the OpenAI API client through jadve.com with given parameters.
@@ -48,7 +47,9 @@ class JadveOpenAI(Provider):
             model (str, optional): AI model to use for text generation. Defaults to "gpt-4o".
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -135,18 +136,22 @@ class JadveOpenAI(Provider):
             "model": self.model,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "temperature": 0.7,
             "language": "en",
             "returnTokensUsage": True,
             "botId": "guest-chat",
-            "chatId": ""
+            "chatId": "",
         }
 
         def for_stream():
             response = self.session.post(
-                self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout
+                self.api_endpoint,
+                headers=self.headers,
+                json=payload,
+                stream=True,
+                timeout=self.timeout,
             )
 
             if not response.ok:
@@ -163,7 +168,11 @@ class JadveOpenAI(Provider):
                         try:
                             json_data = json.loads(data)
                             if "choices" in json_data and len(json_data["choices"]) > 0:
-                                content = json_data["choices"][0].get("delta", {}).get("content", "")
+                                content = (
+                                    json_data["choices"][0]
+                                    .get("delta", {})
+                                    .get("content", "")
+                                )
                                 if content:
                                     streaming_text += content
                                     yield content if raw else dict(text=content)
@@ -226,8 +235,10 @@ class JadveOpenAI(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
+
 if __name__ == "__main__":
     from rich import print
+
     ai = JadveOpenAI(timeout=5000)
     response = ai.chat("yo what's up", stream=True)
     for chunk in response:

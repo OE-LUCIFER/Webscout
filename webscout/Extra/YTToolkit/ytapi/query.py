@@ -3,12 +3,11 @@ from .video import Video
 from .channel import Channel
 from .playlist import Playlist
 from .patterns import _QueryPatterns as Patterns
-from typing import Optional, Dict, Any, List
+from typing import Optional, List
 from .https import find_videos, find_channels, find_playlists
 
 
 class Search:
-
     @staticmethod
     def video(keywords: str) -> Optional[Video]:
         video_ids = Patterns.video_id.findall(find_videos(keywords))
@@ -35,6 +34,7 @@ class Search:
     @staticmethod
     def playlists(keywords: str, limit: int = 20) -> Optional[List[str]]:
         return dup_filter(Patterns.playlist_id.findall(find_playlists(keywords)), limit)
+
 
 if __name__ == "__main__":
     print(Search.videos("java"))

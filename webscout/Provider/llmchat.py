@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Optional, Generator, List
+from typing import Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -8,6 +8,8 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
+
+
 class LLMChat(Provider):
     """
     A class to interact with the LLMChat API.
@@ -19,7 +21,7 @@ class LLMChat(Provider):
         "@cf/meta/llama-3.2-3b-instruct",
         "@cf/meta/llama-3.2-1b-instruct"
         "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-        "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b"
+        "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
     ]
 
     def __init__(
@@ -40,7 +42,9 @@ class LLMChat(Provider):
         Initializes the LLMChat API with given parameters.
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -55,7 +59,7 @@ class LLMChat(Provider):
             "Accept": "*/*",
             "User-Agent": Lit().random(),
             "Origin": "https://llmchat.in",
-            "Referer": "https://llmchat.in/"
+            "Referer": "https://llmchat.in/",
         }
         self.__available_optimizers = (
             method
@@ -109,29 +113,39 @@ class LLMChat(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "max_tokens": self.max_tokens_to_sample,
-            "stream": stream
+            "stream": stream,
         }
 
         def for_stream():
             try:
-                with requests.post(url, json=payload, headers=self.headers, stream=True, timeout=self.timeout) as response:
+                with requests.post(
+                    url,
+                    json=payload,
+                    headers=self.headers,
+                    stream=True,
+                    timeout=self.timeout,
+                ) as response:
                     response.raise_for_status()
                     full_response = ""
                     for line in response.iter_lines():
                         if line:
-                            line = line.decode('utf-8')
-                            if line.startswith('data: '):
+                            line = line.decode("utf-8")
+                            if line.startswith("data: "):
                                 try:
                                     data = json.loads(line[6:])
-                                    if data.get('response'):
-                                        response_text = data['response']
+                                    if data.get("response"):
+                                        response_text = data["response"]
                                         full_response += response_text
-                                        yield response_text if raw else dict(text=response_text)
+                                        yield (
+                                            response_text
+                                            if raw
+                                            else dict(text=response_text)
+                                        )
                                 except json.JSONDecodeError:
-                                    if line.strip() != 'data: [DONE]':
+                                    if line.strip() != "data: [DONE]":
                                         print(f"Failed to parse line: {line}")
                                     continue
                     self.last_response.update(dict(text=full_response))
@@ -140,11 +154,11 @@ class LLMChat(Provider):
                     )
             except requests.exceptions.RequestException as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
-        
+
         def for_non_stream():
             full_response = ""
             for line in for_stream():
-                full_response += line['text'] if not raw else line
+                full_response += line["text"] if not raw else line
             return dict(text=full_response)
 
         return for_stream() if stream else for_non_stream()
@@ -199,7 +213,8 @@ class LLMChat(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    ai = LLMChat(model='@cf/meta/llama-3.1-70b-instruct')
+
+    ai = LLMChat(model="@cf/meta/llama-3.1-70b-instruct")
     response = ai.chat("What's the meaning of life?", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

@@ -6,7 +6,7 @@ Examples:
     >>> provider = PollinationsAI()
     >>> images = provider.generate("A cool cyberpunk city")
     >>> provider.save(images, dir="my_images")
-    >>> 
+    >>>
     >>> # Asynchronous usage
     >>> import asyncio
     >>> from webscout import AsyncPollinationsAI

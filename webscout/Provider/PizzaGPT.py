@@ -1,14 +1,14 @@
 import requests
-from typing import Any, AsyncGenerator, Dict, Optional, Union, Generator
-import json
+from typing import Any, Dict
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
 from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+
 
 class PIZZAGPT(Provider):
     """
@@ -66,7 +66,7 @@ class PIZZAGPT(Provider):
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "user-agent": Lit().random(),
-            "x-secret": "Marinara"
+            "x-secret": "Marinara",
         }
 
         self.__available_optimizers = (
@@ -87,10 +87,17 @@ class PIZZAGPT(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
-        
-        # Initialize logger
-        self.logger = LitLogger(name="PIZZAGPT", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
 
+        # Initialize logger
+        self.logger = (
+            LitLogger(
+                name="PIZZAGPT",
+                format=LogFormat.MODERN_EMOJI,
+                color_scheme=ColorScheme.CYBERPUNK,
+            )
+            if logging
+            else None
+        )
 
     def ask(
         self,
@@ -118,7 +125,9 @@ class PIZZAGPT(Provider):
             else:
                 if self.logger:
                     self.logger.error(f"Invalid optimizer: {optimizer}")
-                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
+                raise Exception(
+                    f"Optimizer is not one of {self.__available_optimizers}"
+                )
 
         self.session.headers.update(self.headers)
         payload = {"question": conversation_prompt}
@@ -131,7 +140,9 @@ class PIZZAGPT(Provider):
                 self.logger.debug(response)
             if not response.ok:
                 if self.logger:
-                    self.logger.error(f"Failed to generate response: {response.status_code} {response.reason}")
+                    self.logger.error(
+                        f"Failed to generate response: {response.status_code} {response.reason}"
+                    )
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
@@ -139,7 +150,7 @@ class PIZZAGPT(Provider):
             resp = response.json()
             if self.logger:
                 self.logger.debug(resp)
-            self.last_response.update(dict(text=resp['content']))
+            self.last_response.update(dict(text=resp["content"]))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -183,10 +194,12 @@ class PIZZAGPT(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
+
 if __name__ == "__main__":
     from rich import print
 
-    ai = PIZZAGPT(logging=True) 
+    ai = PIZZAGPT(logging=True)
     # Stream the response
     response = ai.chat("hi")
     for chunk in response:

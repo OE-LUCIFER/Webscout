@@ -8,6 +8,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 
+
 class NousHermes(Provider):
     """
     A class to interact with the Hermes API.
@@ -51,13 +52,13 @@ class NousHermes(Provider):
         self.cookies_path = cookies_path
         self.cookies = self._load_cookies()
         self.headers = {
-            'accept': '*/*',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/json',
-            'origin': 'https://hermes.nousresearch.com',
-            'referer': 'https://hermes.nousresearch.com/',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-            'cookie': self.cookies
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            "origin": "https://hermes.nousresearch.com",
+            "referer": "https://hermes.nousresearch.com/",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+            "cookie": self.cookies,
         }
 
         self.__available_optimizers = (
@@ -82,9 +83,11 @@ class NousHermes(Provider):
     def _load_cookies(self) -> Optional[str]:
         """Load cookies from a JSON file and convert them to a string."""
         try:
-            with open(self.cookies_path, 'r') as f:
+            with open(self.cookies_path, "r") as f:
                 cookies_data = json.load(f)
-            return '; '.join([f"{cookie['name']}={cookie['value']}" for cookie in cookies_data])
+            return "; ".join(
+                [f"{cookie['name']}={cookie['value']}" for cookie in cookies_data]
+            )
         except FileNotFoundError:
             print("Error: cookies.json file not found!")
             return None
@@ -127,14 +130,24 @@ class NousHermes(Provider):
                 )
 
         payload = {
-            "messages": [{"role": "system", "content": self.system_prompt}, {"role": "user", "content": conversation_prompt}],
+            "messages": [
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt},
+            ],
             "model": self.model,
             "max_tokens": self.max_tokens_to_sample,
             "temperature": self.temperature,
             "top_p": self.top_p,
         }
+
         def for_stream():
-            response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint,
+                headers=self.headers,
+                json=payload,
+                stream=True,
+                timeout=self.timeout,
+            )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
@@ -142,11 +155,11 @@ class NousHermes(Provider):
             full_response = ""
             for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8').replace('data: ', '')
+                    decoded_line = line.decode("utf-8").replace("data: ", "")
                     try:
                         data = json.loads(decoded_line)
-                        if data['type'] == 'llm_response':
-                            content = data['content']
+                        if data["type"] == "llm_response":
+                            content = data["content"]
                             full_response += content
                             yield content if raw else dict(text=content)
                     except json.JSONDecodeError:
@@ -213,6 +226,7 @@ class NousHermes(Provider):
 
 if __name__ == "__main__":
     from rich import print
+
     ai = NousHermes(cookies_path="cookies.json")
     response = ai.chat(input(">>> "), stream=True)
     for chunk in response:

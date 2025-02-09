@@ -1,14 +1,14 @@
 import requests
-import json
 import re
-from typing import Any, Dict, Optional, Generator
+from typing import Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout import  LitAgent as UserAgent
+from webscout import LitAgent as UserAgent
+
 
 class AskMyAI(Provider):
     """
@@ -26,7 +26,7 @@ class AskMyAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful assistant.", # Added system prompt
+        system_prompt: str = "You are a helpful assistant.",  # Added system prompt
     ):
         """Initializes the AskMyAI API."""
         self.session = requests.Session()
@@ -35,13 +35,13 @@ class AskMyAI(Provider):
         self.api_endpoint = "https://www.askmyai.chat/api/chat"
         self.timeout = timeout
         self.last_response = {}
-        self.system_prompt = system_prompt # Use system prompt
+        self.system_prompt = system_prompt  # Use system prompt
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
-            'user-agent': UserAgent().random()
+            "user-agent": UserAgent().random(),
         }
         self.__available_optimizers = (
             method
@@ -84,9 +84,9 @@ class AskMyAI(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
-            "data": {"datasource": "thucpn"}
+            "data": {"datasource": "thucpn"},
         }
 
         def for_stream():
@@ -114,7 +114,7 @@ class AskMyAI(Provider):
         def for_non_stream():
             full_response = ""
             for chunk in for_stream():
-                full_response += chunk if raw else chunk['text']
+                full_response += chunk if raw else chunk["text"]
             return {"text": full_response}
 
         return for_stream() if stream else for_non_stream()
@@ -130,14 +130,20 @@ class AskMyAI(Provider):
 
         def for_stream():
             for response in self.ask(
-                prompt, stream=True, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                optimizer=optimizer,
+                conversationally=conversationally,
             ):
                 yield self.get_message(response)
 
         def for_non_stream():
             return self.get_message(
                 self.ask(
-                    prompt, stream=False, optimizer=optimizer, conversationally=conversationally
+                    prompt,
+                    stream=False,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
                 )
             )
 
@@ -146,13 +152,14 @@ class AskMyAI(Provider):
     def get_message(self, response: Dict[str, Any]) -> str:
         """Extracts the message from the API response."""
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return response["text"].replace("\\n", "\n").replace("\\n\\n", "\n\n")
+
 
 if __name__ == "__main__":
     from rich import print
-    
+
     ai = AskMyAI(timeout=30)
     response = ai.chat("write a poem about AI", stream=True)
-    
+
     for chunk in response:
         print(chunk, end="", flush=True)

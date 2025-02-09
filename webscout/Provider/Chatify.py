@@ -5,6 +5,7 @@ from webscout.AIbase import Provider
 from webscout import exceptions
 import requests
 
+
 class Chatify(Provider):
     """
     A class to interact with the Chatify AI API.
@@ -33,20 +34,20 @@ class Chatify(Provider):
         self.timeout = timeout
         self.last_response = {}
         self.headers = {
-            'Accept': '*/*',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'DNT': '1',
-            'Origin': 'https://chatify-ai.vercel.app',
-            'Referer': 'https://chatify-ai.vercel.app/',
-            'Sec-CH-UA': '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-            'Sec-CH-UA-Mobile': '?0',
-            'Sec-CH-UA-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Content-Type": "application/json",
+            "DNT": "1",
+            "Origin": "https://chatify-ai.vercel.app",
+            "Referer": "https://chatify-ai.vercel.app/",
+            "Sec-CH-UA": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
         }
 
         self.__available_optimizers = (
@@ -96,22 +97,26 @@ class Chatify(Provider):
             messages.append({"role": "system", "content": self.system_prompt})
         messages.append({"role": "user", "content": conversation_prompt})
 
-        payload = {
-            "messages": messages
-        }
+        payload = {"messages": messages}
 
         def for_stream():
-            response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint,
+                headers=self.headers,
+                json=payload,
+                stream=True,
+                timeout=self.timeout,
+            )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
 
             streaming_text = ""
-            for line in response.iter_lines(): 
+            for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8')  # Decode the line
-                    parts = decoded_line.split(':', 1)
+                    decoded_line = line.decode("utf-8")  # Decode the line
+                    parts = decoded_line.split(":", 1)
                     if len(parts) > 1:
                         content = parts[1].strip().strip('"')
                         streaming_text += content
@@ -162,14 +167,14 @@ class Chatify(Provider):
         Extracts the message from the API response and formats it.
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return response["text"].replace("\\n", "\n").replace("\\n\\n", "\n\n")
 
 
 # Example usage
 if __name__ == "__main__":
     from rich import print
 
-    ai = Chatify(timeout=5000) 
+    ai = Chatify(timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

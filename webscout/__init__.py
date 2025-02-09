@@ -17,16 +17,19 @@ from .swiftcli import *
 from .litagent import LitAgent
 from .scout import *
 from .zeroart import *
+
 agent = LitAgent()
 
 __repo__ = "https://github.com/OE-LUCIFER/Webscout"
 
 # Add update checker
 from .update_checker import check_for_updates
+
 try:
     check_for_updates()
 except Exception:
     pass  # Silently handle any update check errors
 
 import logging
+
 logging.getLogger("webscout").addHandler(logging.NullHandler())

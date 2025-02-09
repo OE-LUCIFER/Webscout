@@ -1,15 +1,14 @@
 from uuid import uuid4
-from re import findall
 import json
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
 
 import cloudscraper
+
 
 class YouChat(Provider):
     """
@@ -45,7 +44,7 @@ class YouChat(Provider):
         "qwen2p5_coder_32b",
         "command_r_plus",
         "solar_1_mini",
-        "dolphin_2_5"
+        "dolphin_2_5",
     ]
 
     def __init__(
@@ -76,7 +75,9 @@ class YouChat(Provider):
             model (str, optional): Model to use. Defaults to "claude_3_5_haiku".
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = cloudscraper.create_scraper()  # Create a Cloudscraper session
         self.is_conversation = is_conversation
@@ -175,12 +176,17 @@ class YouChat(Provider):
             "selectedChatMode": self.model,
             "use_nested_youchat_updates": "true",
             "traceId": str(uuid4()),
-            "chat": "[]"
+            "chat": "[]",
         }
 
         def for_stream():
             response = self.session.get(
-                self.chat_endpoint, headers=self.headers, cookies=self.cookies, params=payload, stream=True, timeout=self.timeout
+                self.chat_endpoint,
+                headers=self.headers,
+                cookies=self.cookies,
+                params=payload,
+                stream=True,
+                timeout=self.timeout,
             )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
@@ -194,9 +200,13 @@ class YouChat(Provider):
                 delimiter="\n",
             ):
                 try:
-                    if bool(value) and value.startswith('data: ') and 'youChatToken' in value:
+                    if (
+                        bool(value)
+                        and value.startswith("data: ")
+                        and "youChatToken" in value
+                    ):
                         data = json.loads(value[6:])
-                        token = data.get('youChatToken', '')
+                        token = data.get("youChatToken", "")
                         if token:
                             streaming_text += token
                             yield token if raw else dict(text=token)
@@ -261,8 +271,10 @@ class YouChat(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich import print
+
     ai = YouChat(timeout=5000)
     response = ai.chat("hi", stream=True)
     for chunk in response:

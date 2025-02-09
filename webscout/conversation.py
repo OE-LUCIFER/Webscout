@@ -7,18 +7,19 @@ from .Litlogger import LitLogger, LogFormat, ColorScheme
 logger = LitLogger(
     name="Conversation",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    color_scheme=ColorScheme.CYBERPUNK,
 )
+
 
 class Conversation:
     """Handles prompt generation based on history and maintains chat context.
-    
+
     This class is responsible for managing chat conversations, including:
     - Maintaining chat history
     - Loading/saving conversations from/to files
     - Generating prompts based on context
     - Managing token limits and history pruning
-    
+
     Examples:
         >>> chat = Conversation(max_tokens=500)
         >>> chat.add_message("user", "Hello!")
@@ -58,7 +59,7 @@ class Conversation:
         self.update_file = update_file
         self.history_offset = 10250
         self.prompt_allowance = 10
-        
+
         if filepath:
             self.load_conversation(filepath, False)
 
@@ -72,12 +73,12 @@ class Conversation:
         Raises:
             AssertionError: If filepath is not str or file doesn't exist
         """
-        assert isinstance(
-            filepath, str
-        ), f"Filepath needs to be of str datatype not {type(filepath)}"
-        assert (
-            os.path.isfile(filepath) if exists else True
-        ), f"File '{filepath}' does not exist"
+        assert isinstance(filepath, str), (
+            f"Filepath needs to be of str datatype not {type(filepath)}"
+        )
+        assert os.path.isfile(filepath) if exists else True, (
+            f"File '{filepath}' does not exist"
+        )
 
         if not os.path.isfile(filepath):
             logging.debug(f"Creating new chat-history file - '{filepath}'")
@@ -90,9 +91,9 @@ class Conversation:
                 if file_contents:
                     self.intro = file_contents[0]  # First line is intro
                     self.chat_history = "\n".join(file_contents[1:])
-    
+
     def __trim_chat_history(self, chat_history: str, intro: str) -> str:
-        """Keep the chat history fresh by trimming it when it gets too long! 
+        """Keep the chat history fresh by trimming it when it gets too long!
 
         This method makes sure we don't exceed our token limits by:
         - Calculating total length (intro + history)
@@ -104,7 +105,7 @@ class Conversation:
             intro (str): The conversation's intro/system prompt
 
         Returns:
-            str: The trimmed chat history, ready to use! 
+            str: The trimmed chat history, ready to use!
 
         Examples:
             >>> chat = Conversation(max_tokens=500)
@@ -121,7 +122,7 @@ class Conversation:
         return chat_history
 
     def gen_complete_prompt(self, prompt: str, intro: Optional[str] = None) -> str:
-        """Generate a complete prompt that's ready to go! 
+        """Generate a complete prompt that's ready to go!
 
         This method:
         - Combines the intro, history, and new prompt
@@ -133,7 +134,7 @@ class Conversation:
             intro (str, optional): Custom intro to use. Default: None (uses class intro)
 
         Returns:
-            str: The complete conversation prompt, ready for the LLM! 
+            str: The complete conversation prompt, ready for the LLM!
 
         Examples:
             >>> chat = Conversation()
@@ -142,23 +143,29 @@ class Conversation:
         if not self.status:
             return prompt
 
-        intro = intro or self.intro or (
-            "You're a Large Language Model for chatting with people. "
-            "Assume role of the LLM and give your response."
+        intro = (
+            intro
+            or self.intro
+            or (
+                "You're a Large Language Model for chatting with people. "
+                "Assume role of the LLM and give your response."
+            )
         )
-        
+
         incomplete_chat_history = self.chat_history + self.history_format % {
             "user": prompt,
-            "llm": ""
+            "llm": "",
         }
-        complete_prompt = intro + self.__trim_chat_history(incomplete_chat_history, intro)
+        complete_prompt = intro + self.__trim_chat_history(
+            incomplete_chat_history, intro
+        )
         # logger.info(f"Generated prompt: {complete_prompt}")
         return complete_prompt
 
     def update_chat_history(
         self, prompt: str, response: str, force: bool = False
     ) -> None:
-        """Keep the conversation flowing by updating the chat history! 
+        """Keep the conversation flowing by updating the chat history!
 
         This method:
         - Adds new messages to the history
@@ -178,22 +185,22 @@ class Conversation:
             return
 
         new_history = self.history_format % {"user": prompt, "llm": response}
-        
+
         if self.file and self.update_file:
             # Create file if it doesn't exist
             if not os.path.exists(self.file):
                 with open(self.file, "w", encoding="utf-8") as fh:
                     fh.write(self.intro + "\n")
-            
+
             # Append new history
             with open(self.file, "a", encoding="utf-8") as fh:
                 fh.write(new_history)
-        
+
         self.chat_history += new_history
         # logger.info(f"Chat history updated with prompt: {prompt}")
 
     def add_message(self, role: str, content: str) -> None:
-        """Add a new message to the chat - simple and clean! 
+        """Add a new message to the chat - simple and clean!
 
         This method:
         - Validates the message role
@@ -216,7 +223,7 @@ class Conversation:
             "user": "User",
             "llm": "LLM",
             "tool": "Tool",
-            "reasoning": "Reasoning"
+            "reasoning": "Reasoning",
         }
 
         if role in role_formats:
@@ -238,5 +245,3 @@ class Conversation:
     #         logger.error("Content cannot be empty.")
     #         return False
     #     return True
-
-

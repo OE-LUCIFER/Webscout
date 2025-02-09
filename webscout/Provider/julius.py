@@ -1,14 +1,12 @@
-
 import uuid
 
 import requests
 import json
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
 
 
 class Julius(Provider):
@@ -27,9 +25,8 @@ class Julius(Provider):
         "Command R+",
         "o1-mini",
         "o1-preview",
-
-
     ]
+
     def __init__(
         self,
         api_key: str,
@@ -56,11 +53,13 @@ class Julius(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): Model to use for generating text. Defaults to "Gemini Flash". 
+            model (str, optional): Model to use for generating text. Defaults to "Gemini Flash".
                                    Options: "Llama 3", "GPT-4o", "GPT-3.5", "Command R", "Gemini Flash", "Gemini 1.5".
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -80,7 +79,7 @@ class Julius(Provider):
             "orient-split": "true",
             "request-id": str(uuid.uuid4()),
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
-            "visitor-id": str(uuid.uuid4())
+            "visitor-id": str(uuid.uuid4()),
         }
 
         self.__available_optimizers = (
@@ -132,7 +131,7 @@ class Julius(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
+
         payload = {
             "message": {"content": conversation_prompt, "role": "user"},
             "provider": "default",
@@ -142,12 +141,16 @@ class Julius(Provider):
             "new_images": None,
             "new_attachments": None,
             "dataframe_format": "json",
-            "selectedModels": [self.model] # Choose the model here
+            "selectedModels": [self.model],  # Choose the model here
         }
 
         def for_stream():
             response = self.session.post(
-                self.chat_endpoint, json=payload, headers=self.headers, stream=True, timeout=self.timeout
+                self.chat_endpoint,
+                json=payload,
+                headers=self.headers,
+                stream=True,
+                timeout=self.timeout,
             )
 
             if not response.ok:
@@ -159,7 +162,7 @@ class Julius(Provider):
                 if line:
                     try:
                         json_line = json.loads(line)
-                        content = json_line['content']
+                        content = json_line["content"]
                         streaming_response += content
                         yield content if raw else dict(text=content)
                     except:
@@ -170,13 +173,12 @@ class Julius(Provider):
             )
 
         def for_non_stream():
-
             for _ in for_stream():
                 pass
             return self.last_response
 
-
         return for_stream() if stream else for_non_stream()
+
     def chat(
         self,
         prompt: str,
@@ -215,9 +217,12 @@ class Julius(Provider):
     def get_message(self, response: dict) -> str:
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
-    ai = Julius(api_key="",timeout=5000)
+
+    ai = Julius(api_key="", timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

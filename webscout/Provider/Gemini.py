@@ -1,18 +1,17 @@
 from ..AIutel import Optimizers
 from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
-from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
-import logging 
-from ..Bard import Chatbot
+from ..AIbase import Provider
 import logging
+from ..Bard import Chatbot
 from os import path
 from json import load
 from json import dumps
 import warnings
+
 logging.getLogger("httpx").setLevel(logging.ERROR)
 warnings.simplefilter("ignore", category=UserWarning)
+
+
 class GEMINI(Provider):
     def __init__(
         self,
@@ -30,9 +29,9 @@ class GEMINI(Provider):
         self.conversation = Conversation(False)
         self.session_auth1 = None
         self.session_auth2 = None
-        assert isinstance(
-            cookie_file, str
-        ), f"cookie_file should be of {str} only not '{type(cookie_file)}'"
+        assert isinstance(cookie_file, str), (
+            f"cookie_file should be of {str} only not '{type(cookie_file)}'"
+        )
         if path.isfile(cookie_file):
             # let's assume auth is a path to exported .json cookie-file
             with open(cookie_file) as fh:
@@ -43,9 +42,9 @@ class GEMINI(Provider):
                 elif entry["name"] == "__Secure-1PSIDTS":
                     self.session_auth2 = entry["value"]
 
-            assert all(
-                [self.session_auth1, self.session_auth2]
-            ), f"Failed to extract the required cookie value from file '{cookie_file}'"
+            assert all([self.session_auth1, self.session_auth2]), (
+                f"Failed to extract the required cookie value from file '{cookie_file}'"
+            )
         else:
             raise Exception(f"{cookie_file} is not a valid file path")
 

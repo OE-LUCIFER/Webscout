@@ -13,18 +13,18 @@ from .language import LanguageDetector
 from .sentiment import SentimentAnalyzer
 from .keywords import KeywordExtractor
 
-__version__ = '0.1.0'
+__version__ = "0.1.0"
 __all__ = [
-    'SentenceTokenizer',
-    'WordTokenizer',
-    'POSTagger',
-    'Stemmer',
-    'TextNormalizer',
-    'process_text',
-    'NamedEntityRecognizer',
-    'TextClassifier',
-    'TopicClassifier',
-    'LanguageDetector',
-    'SentimentAnalyzer',
-    'KeywordExtractor'
+    "SentenceTokenizer",
+    "WordTokenizer",
+    "POSTagger",
+    "Stemmer",
+    "TextNormalizer",
+    "process_text",
+    "NamedEntityRecognizer",
+    "TextClassifier",
+    "TopicClassifier",
+    "LanguageDetector",
+    "SentimentAnalyzer",
+    "KeywordExtractor",
 ]

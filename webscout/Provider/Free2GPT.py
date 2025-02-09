@@ -1,5 +1,4 @@
 import requests
-import uuid
 import json
 import time
 from hashlib import sha256
@@ -10,6 +9,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent
+
 
 class Free2GPT(Provider):
     """
@@ -42,7 +42,7 @@ class Free2GPT(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_prompt (str, optional): System prompt for Free2GPT. 
+            system_prompt (str, optional): System prompt for Free2GPT.
                                    Defaults to "You are a helpful AI assistant.".
         """
         self.session = requests.Session()
@@ -136,31 +136,36 @@ class Free2GPT(Provider):
 
         payload = {
             "messages": [
-                {
-                    "role": "system",
-                    "content": self.system_prompt
-                },
-                {
-                    "role": "user",
-                    "content": conversation_prompt
-                }
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt},
             ],
             "time": timestamp,
             "pass": None,
-            "sign": signature
+            "sign": signature,
         }
 
         def for_stream():
             try:
                 # Send the POST request with streaming enabled
-                with requests.post(self.api_endpoint, headers=self.headers, data=json.dumps(payload), stream=True) as response:
+                with requests.post(
+                    self.api_endpoint,
+                    headers=self.headers,
+                    data=json.dumps(payload),
+                    stream=True,
+                ) as response:
                     response.raise_for_status()
-                    
+
                     full_response = ""
-                    for chunk in response.iter_content(chunk_size=self.stream_chunk_size):
+                    for chunk in response.iter_content(
+                        chunk_size=self.stream_chunk_size
+                    ):
                         if chunk:
-                            full_response += chunk.decode('utf-8')
-                            yield chunk.decode('utf-8') if raw else dict(text=chunk.decode('utf-8'))
+                            full_response += chunk.decode("utf-8")
+                            yield (
+                                chunk.decode("utf-8")
+                                if raw
+                                else dict(text=chunk.decode("utf-8"))
+                            )
 
                     self.last_response.update(dict(text=full_response))
                     self.conversation.update_chat_history(
@@ -168,8 +173,10 @@ class Free2GPT(Provider):
                     )
 
             except requests.exceptions.RequestException as e:
-                raise exceptions.FailedToGenerateResponseError(f"An error occurred: {e}") 
-        
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An error occurred: {e}"
+                )
+
         def for_non_stream():
             for _ in for_stream():
                 pass
@@ -222,7 +229,7 @@ class Free2GPT(Provider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return response["text"].replace("\\n", "\n").replace("\\n\\n", "\n\n")
 
 
 if __name__ == "__main__":

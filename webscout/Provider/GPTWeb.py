@@ -6,6 +6,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 
+
 class GPTWeb(Provider):
     """
     A class to interact with the Nexra GPTWeb API.
@@ -22,7 +23,6 @@ class GPTWeb(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-
     ):
         """
         Initializes the Nexra GPTWeb API with given parameters.
@@ -42,13 +42,11 @@ class GPTWeb(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = 'https://nexra.aryahcr.cc/api/chat/gptweb'
+        self.api_endpoint = "https://nexra.aryahcr.cc/api/chat/gptweb"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
-        self.headers = {
-            "Content-Type": "application/json"
-        }
+        self.headers = {"Content-Type": "application/json"}
 
         self.__available_optimizers = (
             method
@@ -104,33 +102,37 @@ class GPTWeb(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-        data = {
-            "prompt": conversation_prompt,
-            "markdown": False
-        }
+        data = {"prompt": conversation_prompt, "markdown": False}
 
         def for_stream():
-            response = self.session.post(self.api_endpoint, headers=self.headers, data=json.dumps(data), stream=True, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint,
+                headers=self.headers,
+                data=json.dumps(data),
+                stream=True,
+                timeout=self.timeout,
+            )
             if not response.ok:
                 raise Exception(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
-            
-            full_response = ''
+
+            full_response = ""
             for line in response.iter_lines(decode_unicode=True):
                 if line:
-                    line = line.lstrip('_') # Remove "_"
+                    line = line.lstrip("_")  # Remove "_"
                     try:
                         # Attempt to parse the entire line as JSON
-                        json_data = json.loads(line)  
+                        json_data = json.loads(line)
                         full_response = json_data.get("gpt", "")
-                        yield full_response if raw else dict(text=full_response) 
+                        yield full_response if raw else dict(text=full_response)
                     except json.JSONDecodeError:
-                        print(f"Skipping invalid JSON line: {line}") 
+                        print(f"Skipping invalid JSON line: {line}")
             self.last_response.update(dict(text=full_response))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
+
         def for_non_stream():
             for _ in for_stream():
                 pass
@@ -185,9 +187,11 @@ class GPTWeb(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich import print
+
     ai = GPTWeb()
     response = ai.chat("tell me about Abhay koul, HelpingAI", stream=True)
     for chunk in response:
-        print(chunk, end='', flush=True)
+        print(chunk, end="", flush=True)

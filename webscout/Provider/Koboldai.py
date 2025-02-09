@@ -3,11 +3,13 @@ import json
 from ..AIutel import Optimizers
 from ..AIutel import Conversation
 from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
+from ..AIbase import Provider, AsyncProvider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from typing import AsyncGenerator
 import httpx
-#------------------------------------------------------KOBOLDAI-----------------------------------------------------------
+
+
+# ------------------------------------------------------KOBOLDAI-----------------------------------------------------------
 class KOBOLDAI(Provider):
     def __init__(
         self,
@@ -196,6 +198,8 @@ class KOBOLDAI(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response.get("token")
+
+
 class AsyncKOBOLDAI(AsyncProvider):
     def __init__(
         self,

@@ -1,5 +1,4 @@
 import requests
-import json
 import html
 import re
 from typing import Any, Dict
@@ -8,6 +7,7 @@ from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
+
 
 class AI4Chat(Provider):
     """
@@ -68,7 +68,7 @@ class AI4Chat(Provider):
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0"
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0",
         }
 
         self.__available_optimizers = (
@@ -89,7 +89,7 @@ class AI4Chat(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
-        self.system_prompt = system_prompt 
+        self.system_prompt = system_prompt
 
     def ask(
         self,
@@ -126,28 +126,32 @@ class AI4Chat(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ]
         }
 
-        response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout)
+        response = self.session.post(
+            self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout
+        )
         if not response.ok:
-            raise Exception(f"Failed to generate response: {response.status_code} - {response.reason}")
-        
+            raise Exception(
+                f"Failed to generate response: {response.status_code} - {response.reason}"
+            )
+
         response_data = response.json()
-        message_content = response_data.get('message', 'No message found')
+        message_content = response_data.get("message", "No message found")
 
         # Decode HTML entities
         decoded_message = html.unescape(message_content)
 
         # Remove HTML tags while preserving newlines and list structure
-        cleaned_text = re.sub(r'<p>(.*?)</p>', r'\1\n\n', decoded_message)
-        cleaned_text = re.sub(r'<ol>|</ol>', '', cleaned_text)
-        cleaned_text = re.sub(r'<li><p>(.*?)</p></li>', r'• \1\n', cleaned_text)
-        cleaned_text = re.sub(r'</?[^>]+>', '', cleaned_text)
-        
+        cleaned_text = re.sub(r"<p>(.*?)</p>", r"\1\n\n", decoded_message)
+        cleaned_text = re.sub(r"<ol>|</ol>", "", cleaned_text)
+        cleaned_text = re.sub(r"<li><p>(.*?)</p></li>", r"• \1\n", cleaned_text)
+        cleaned_text = re.sub(r"</?[^>]+>", "", cleaned_text)
+
         # Remove extra newlines
-        cleaned_text = re.sub(r'\n{3,}', '\n\n', cleaned_text.strip())
+        cleaned_text = re.sub(r"\n{3,}", "\n\n", cleaned_text.strip())
 
         self.last_response.update(dict(text=cleaned_text))
         self.conversation.update_chat_history(prompt, cleaned_text)
@@ -165,7 +169,7 @@ class AI4Chat(Provider):
 
         Args:
             prompt (str): The prompt to send to the AI.
-            stream (bool, optional): Not used (AI4Chat doesn't support streaming). 
+            stream (bool, optional): Not used (AI4Chat doesn't support streaming).
             optimizer (str, optional): The name of the optimizer to use. Defaults to None.
             conversationally (bool, optional): Whether to chat conversationally. Defaults to False.
 
@@ -192,9 +196,11 @@ class AI4Chat(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
+
 if __name__ == "__main__":
     from rich import print
-    ai = AI4Chat() 
+
+    ai = AI4Chat()
     response = ai.chat("write me poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

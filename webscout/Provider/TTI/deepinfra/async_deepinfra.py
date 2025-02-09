@@ -15,10 +15,11 @@ from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 # Initialize our fire logger 🚀
 logger = LitLogger("AsyncDeepInfraImager")
 
+
 class AsyncDeepInfraImager(AsyncImageProvider):
     """
     Async DeepInfra Image Provider - Your go-to for fire AI art! 🎨
-    
+
     >>> # Generate some fire art asynchronously! 🔥
     >>> async def generate_art():
     ...     imager = AsyncDeepInfraImager(logging=True)
@@ -27,7 +28,7 @@ class AsyncDeepInfraImager(AsyncImageProvider):
     ...     print(paths)
     >>> asyncio.run(generate_art())
     ['epic_dragon_0.png', 'epic_dragon_1.png']
-    
+
     >>> # Turn off logging for stealth mode 🥷
     >>> async def stealth_art():
     ...     quiet_imager = AsyncDeepInfraImager(logging=False)
@@ -41,7 +42,7 @@ class AsyncDeepInfraImager(AsyncImageProvider):
         model: str = "black-forest-labs/FLUX-1-schnell",
         timeout: int = 60,
         proxies: dict = {},
-        logging: bool = True
+        logging: bool = True,
     ):
         """Initialize your async DeepInfra provider with custom settings! ⚙️
 
@@ -65,7 +66,7 @@ class AsyncDeepInfraImager(AsyncImageProvider):
             "Sec-CH-UA-Platform": '"Windows"',
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-site"
+            "Sec-Fetch-Site": "same-site",
         }
         self.timeout = timeout
         self.proxies = proxies
@@ -73,13 +74,22 @@ class AsyncDeepInfraImager(AsyncImageProvider):
         self.image_extension: str = "png"
         self.logging = logging
         if self.logging:
-            logger.info("AsyncDeepInfraImager initialized! Ready to create some fire art! 🚀")
+            logger.info(
+                "AsyncDeepInfraImager initialized! Ready to create some fire art! 🚀"
+            )
 
     async def generate(
-        self, prompt: str, amount: int = 1, additives: bool = True,
-        num_inference_steps: int = 25, guidance_scale: float = 7.5,
-        width: int = 1024, height: int = 1024, seed: int = None,
-        max_retries: int = 3, retry_delay: int = 5
+        self,
+        prompt: str,
+        amount: int = 1,
+        additives: bool = True,
+        num_inference_steps: int = 25,
+        guidance_scale: float = 7.5,
+        width: int = 1024,
+        height: int = 1024,
+        seed: int = None,
+        max_retries: int = 3,
+        retry_delay: int = 5,
     ) -> List[bytes]:
         """Generate some fire images from your prompt! 🎨
 
@@ -99,7 +109,9 @@ class AsyncDeepInfraImager(AsyncImageProvider):
             List[bytes]: Your generated images as bytes
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int), f"Amount should be an integer only not {type(amount)}"
+        assert isinstance(amount, int), (
+            f"Amount should be an integer only not {type(amount)}"
+        )
         assert amount > 0, "Amount should be greater than 0"
 
         ads = lambda: (
@@ -135,25 +147,31 @@ class AsyncDeepInfraImager(AsyncImageProvider):
                             self.image_gen_endpoint,
                             json=payload,
                             timeout=self.timeout,
-                            proxy=self.proxies.get('http') if self.proxies else None
+                            proxy=self.proxies.get("http") if self.proxies else None,
                         ) as resp:
                             resp.raise_for_status()
                             data = await resp.json()
                             # Extract base64 encoded image data and decode it
-                            image_data = data['images'][0].split(",")[1]
+                            image_data = data["images"][0].split(",")[1]
                             image_bytes = base64.b64decode(image_data)
                             response.append(image_bytes)
                             if self.logging:
-                                logger.success(f"Generated image {len(response)}/{amount}! 🎨")
+                                logger.success(
+                                    f"Generated image {len(response)}/{amount}! 🎨"
+                                )
                             break
                     except aiohttp.ClientError as e:
                         if attempt == max_retries - 1:
                             if self.logging:
-                                logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
+                                logger.error(
+                                    f"Failed to generate image after {max_retries} attempts: {e} 😢"
+                                )
                             raise
                         else:
                             if self.logging:
-                                logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+                                logger.warning(
+                                    f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄"
+                                )
                             await asyncio.sleep(retry_delay)
 
         if self.logging:
@@ -189,10 +207,10 @@ class AsyncDeepInfraImager(AsyncImageProvider):
         async def save_single_image(image_bytes: bytes, index: int) -> str:
             filename = f"{filenames_prefix}{name}_{index}.{self.image_extension}"
             filepath = os.path.join(dir, filename)
-            
+
             async with aiofiles.open(filepath, "wb") as f:
                 await f.write(image_bytes)
-            
+
             if self.logging:
                 logger.success(f"Saved image to: {filepath} 💾")
             return filename
@@ -214,10 +232,13 @@ class AsyncDeepInfraImager(AsyncImageProvider):
 
 
 if __name__ == "__main__":
+
     async def main():
         bot = AsyncDeepInfraImager()
         try:
-            resp = await bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+            resp = await bot.generate(
+                "A shiny red sports car speeding down a scenic mountain road", 1
+            )
             paths = await bot.save(resp)
             print(paths)
         except Exception as e:

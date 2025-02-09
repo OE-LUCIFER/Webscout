@@ -3,16 +3,17 @@ import json
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
 from webscout.litagent import LitAgent
+
 
 class TurboSeek(Provider):
     """
     This class provides methods for interacting with the TurboSeek API.
     """
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -123,10 +124,7 @@ class TurboSeek(Provider):
                 )
 
         self.session.headers.update(self.headers)
-        payload = {
-            "question": conversation_prompt,
-            "sources": []
-        }
+        payload = {"question": conversation_prompt, "sources": []}
 
         def for_stream():
             response = self.session.post(
@@ -141,8 +139,10 @@ class TurboSeek(Provider):
                 chunk_size=self.stream_chunk_size,
             ):
                 try:
-                    if value and value.startswith(b"data: "): #Check for bytes and decode
-                        data = json.loads(value[6:].decode('utf-8')) # Decode manually
+                    if value and value.startswith(
+                        b"data: "
+                    ):  # Check for bytes and decode
+                        data = json.loads(value[6:].decode("utf-8"))  # Decode manually
                         if "text" in data:
                             streaming_text += data["text"]
                             resp = dict(text=data["text"])
@@ -207,10 +207,12 @@ class TurboSeek(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = TurboSeek()
     response = ai.chat("hello buddy", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
-

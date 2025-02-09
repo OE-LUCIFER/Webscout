@@ -4,7 +4,6 @@ Install the Google AI Python SDK
 $ pip install google-generativeai
 """
 
-import os
 import google.generativeai as genai
 
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
@@ -43,9 +42,9 @@ class GEMINIAPI(Provider):
         Initializes the Gemini API with the given parameters.
 
         Args:
-            api_key (str, optional): Your Gemini API key. If None, it will use the environment variable "GEMINI_API_KEY". 
+            api_key (str, optional): Your Gemini API key. If None, it will use the environment variable "GEMINI_API_KEY".
                                       Defaults to None.
-            model_name (str, optional): The name of the Gemini model to use. 
+            model_name (str, optional): The name of the Gemini model to use.
                                         Defaults to "gemini-1.5-flash-exp-0827".
             temperature (float, optional): The temperature parameter for the model. Defaults to 1.
             top_p (float, optional): The top_p parameter for the model. Defaults to 0.95.
@@ -59,7 +58,7 @@ class GEMINIAPI(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_instruction (str, optional): System instruction to guide the AI's behavior. 
+            system_instruction (str, optional): System instruction to guide the AI's behavior.
                                                 Defaults to "You are a helpful and informative AI assistant.".
         """
         self.api_key = api_key
@@ -70,7 +69,9 @@ class GEMINIAPI(Provider):
         self.max_output_tokens = max_output_tokens
         self.system_instruction = system_instruction
         self.safety_settings = safety_settings if safety_settings else {}
-        self.session = requests.Session()  # Not directly used for Gemini API calls, but can be used for other requests
+        self.session = (
+            requests.Session()
+        )  # Not directly used for Gemini API calls, but can be used for other requests
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_output_tokens
         self.timeout = timeout
@@ -157,7 +158,7 @@ class GEMINIAPI(Provider):
         self.conversation.update_chat_history(
             prompt, self.get_message(self.last_response)
         )
-        return self.last_response 
+        return self.last_response
 
     def chat(
         self,
@@ -195,6 +196,8 @@ class GEMINIAPI(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
+
 if __name__ == "__main__":
     safety_settings = {
         HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
@@ -202,7 +205,7 @@ if __name__ == "__main__":
         HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
         HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
     }
-    ai = GEMINIAPI(api_key="" , safety_settings=safety_settings)
+    ai = GEMINIAPI(api_key="", safety_settings=safety_settings)
     res = ai.chat(input(">>> "))
     for r in res:
         print(r, end="", flush=True)

@@ -7,10 +7,13 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import LitAgent as Lit
+
+
 class Lepton(Provider):
     """
     A class to interact with the Lepton.run API.
     """
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -116,17 +119,20 @@ class Lepton(Provider):
                 )
 
         self.session.headers.update(self.headers)
-        payload = json.dumps({"query": conversation_prompt}) 
+        payload = json.dumps({"query": conversation_prompt})
 
         def for_non_stream():
             response = self.session.post(
-                self.api_endpoint, data=payload, headers=self.headers, timeout=self.timeout
+                self.api_endpoint,
+                data=payload,
+                headers=self.headers,
+                timeout=self.timeout,
             )
             if not response.ok:
                 raise Exception(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
-            
+
             response_text = response.text
             start_marker = "__LLM_RESPONSE__"
             end_marker = "__RELATED_QUESTIONS__"
@@ -138,7 +144,7 @@ class Lepton(Provider):
                 extracted_text = response_text[start_index:end_index].strip()
 
                 # Remove citations using regular expression
-                cleaned_text = re.sub(r'\[citation:\d+\]', '', extracted_text)
+                cleaned_text = re.sub(r"\[citation:\d+\]", "", extracted_text)
 
                 self.last_response.update(dict(text=cleaned_text))
 
@@ -147,7 +153,7 @@ class Lepton(Provider):
             )
             return self.last_response
 
-        return for_non_stream() 
+        return for_non_stream()
 
     def chat(
         self,
@@ -186,8 +192,10 @@ class Lepton(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich import print
+
     ai = Lepton()
     response = ai.chat("hi")
     for chunk in response:

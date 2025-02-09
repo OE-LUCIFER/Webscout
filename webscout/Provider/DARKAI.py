@@ -1,11 +1,12 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions, LitAgent
 import requests
+
 
 class DARKAI(Provider):
     """
@@ -16,7 +17,7 @@ class DARKAI(Provider):
         "llama-3-70b",  # Uncensored
         "llama-3-405b",
         "gpt-3.5-turbo",
-        "gpt-4o"
+        "gpt-4o",
     ]
 
     def __init__(
@@ -37,21 +38,23 @@ class DARKAI(Provider):
 
         Args:
             is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. 
+            max_tokens (int, optional): Maximum number of tokens to be generated upon completion.
                                         Defaults to 600.
             timeout (int, optional): Http request timeout. Defaults to 30.
             intro (str, optional): Conversation introductory prompt. Defaults to None.
             filepath (str, optional): Path to file containing conversation history. Defaults to None.
             update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
             proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. 
+            history_offset (int, optional): Limit conversation history to this number of last texts.
                                             Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): AI model to use. Defaults to "gpt-4o". 
+            model (str, optional): AI model to use. Defaults to "gpt-4o".
                                     Options: "llama-3-70b" (uncensored), "llama-3-405b", "gpt-3.5-turbo", "gpt-4o"
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -128,33 +131,34 @@ class DARKAI(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
-        payload = {
-            "query": conversation_prompt,
-            "model": self.model 
-        }
+
+        payload = {"query": conversation_prompt, "model": self.model}
 
         def for_stream():
             response = self.session.post(
-                self.api_endpoint, json=payload, headers=self.headers, stream=True, timeout=self.timeout
+                self.api_endpoint,
+                json=payload,
+                headers=self.headers,
+                stream=True,
+                timeout=self.timeout,
             )
 
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason})"
                 )
-            
+
             streaming_response = ""
             for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8')
+                    decoded_line = line.decode("utf-8")
                     if decoded_line.startswith("data:"):
-                        data = decoded_line[len("data:"):].strip()
+                        data = decoded_line[len("data:") :].strip()
                         if data:
                             try:
                                 event = json.loads(data)
                                 if event.get("event") == "final-response":
-                                    message = event['data'].get('message', '')
+                                    message = event["data"].get("message", "")
                                     streaming_response += message
                                     yield message if raw else dict(text=message)
                             except json.decoder.JSONDecodeError:
@@ -163,6 +167,7 @@ class DARKAI(Provider):
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
+
         def for_non_stream():
             for _ in for_stream():
                 pass
@@ -216,8 +221,11 @@ class DARKAI(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = DARKAI()
     response = ai.chat("tell me about india")
     for chunk in response:

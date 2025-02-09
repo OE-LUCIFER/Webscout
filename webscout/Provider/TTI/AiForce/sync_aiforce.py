@@ -13,11 +13,10 @@ from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
 logger = LitLogger(
-    "AiForce",
-    format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    "AiForce", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK
 )
 agent = LitAgent()
+
 
 class AiForceimager(ImageProvider):
     """Your go-to provider for generating fire images with AiForce! 🔥
@@ -52,7 +51,7 @@ class AiForceimager(ImageProvider):
         "flux-disney",
         "flux-pixel",
         "flux-4o",
-        "any-dark"
+        "any-dark",
     ]
 
     def __init__(self, timeout: int = 60, proxies: dict = {}, logging: bool = True):
@@ -68,7 +67,7 @@ class AiForceimager(ImageProvider):
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
             "Accept-Encoding": "gzip, deflate",
-            "User-Agent": agent.random()
+            "User-Agent": agent.random(),
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -81,16 +80,16 @@ class AiForceimager(ImageProvider):
             logger.info("AiForce provider initialized! 🚀")
 
     def generate(
-        self, 
-        prompt: str, 
-        amount: int = 1, 
+        self,
+        prompt: str,
+        amount: int = 1,
         additives: bool = True,
-        model: str = "Flux-1.1-Pro", 
-        width: int = 768, 
-        height: int = 768, 
+        model: str = "Flux-1.1-Pro",
+        width: int = 768,
+        height: int = 768,
         seed: Optional[int] = None,
-        max_retries: int = 3, 
-        retry_delay: int = 5
+        max_retries: int = 3,
+        retry_delay: int = 5,
     ) -> List[bytes]:
         """Generate some fire images from your prompt! 🎨
 
@@ -124,9 +123,13 @@ class AiForceimager(ImageProvider):
             RequestException: If the API calls fail after retries
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int), f"Amount should be an integer only not {type(amount)}"
+        assert isinstance(amount, int), (
+            f"Amount should be an integer only not {type(amount)}"
+        )
         assert amount > 0, "Amount should be greater than 0"
-        assert model in self.AVAILABLE_MODELS, f"Model should be one of {self.AVAILABLE_MODELS}"
+        assert model in self.AVAILABLE_MODELS, (
+            f"Model should be one of {self.AVAILABLE_MODELS}"
+        )
 
         ads = lambda: (
             ""
@@ -146,7 +149,7 @@ class AiForceimager(ImageProvider):
             url = f"{self.api_endpoint}?model={model}&prompt={prompt}&size={width}:{height}"
             if seed:
                 url += f"&seed={seed}"
-            
+
             for attempt in range(max_retries):
                 try:
                     resp = self.session.get(url, timeout=self.timeout)
@@ -158,11 +161,15 @@ class AiForceimager(ImageProvider):
                 except RequestException as e:
                     if attempt == max_retries - 1:
                         if self.logging:
-                            logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
+                            logger.error(
+                                f"Failed to generate image after {max_retries} attempts: {e} 😢"
+                            )
                         raise
                     else:
                         if self.logging:
-                            logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+                            logger.warning(
+                                f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄"
+                            )
                         time.sleep(retry_delay)
 
         if self.logging:
@@ -213,9 +220,12 @@ class AiForceimager(ImageProvider):
         count = 0
 
         for image in response:
+
             def complete_path():
                 count_value = "" if count == 0 else f"_{count}"
-                return os.path.join(save_dir, name + count_value + "." + self.image_extension)
+                return os.path.join(
+                    save_dir, name + count_value + "." + self.image_extension
+                )
 
             while os.path.isfile(complete_path()):
                 count += 1
@@ -232,10 +242,13 @@ class AiForceimager(ImageProvider):
             logger.success(f"Images saved successfully! Check {dir} 🎉")
         return filenames
 
+
 if __name__ == "__main__":
     bot = AiForceimager()
     try:
-        resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+        resp = bot.generate(
+            "A shiny red sports car speeding down a scenic mountain road", 1
+        )
         print(bot.save(resp))
     except Exception as e:
         if bot.logging:

@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 import json
 import os
-from typing import List, Dict, Optional, Union, AsyncGenerator
+from typing import List, Union, AsyncGenerator
 import aiofiles
 
 from webscout.AIbase import AsyncImageProvider
@@ -13,10 +13,11 @@ from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 # Initialize our fire logger 🚀
 logger = LitLogger("AsyncNinjaImager", "MODERN_EMOJI")
 
+
 class AsyncNinjaImager(AsyncImageProvider):
     """
     Async image provider for NinjaChat.ai - Your go-to for fire AI art! 🎨
-    
+
     >>> # Generate some fire art asynchronously! 🔥
     >>> async def generate_art():
     ...     imager = AsyncNinjaImager(logging=True)
@@ -25,7 +26,7 @@ class AsyncNinjaImager(AsyncImageProvider):
     ...     print(paths)
     >>> asyncio.run(generate_art())
     ['epic_dragon_0.png', 'epic_dragon_1.png']
-    
+
     >>> # Turn off logging for stealth mode 🥷
     >>> async def stealth_art():
     ...     quiet_imager = AsyncNinjaImager(logging=False)
@@ -62,7 +63,7 @@ class AsyncNinjaImager(AsyncImageProvider):
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "User-Agent": agent.random()  # Using our fire random agent! 🔥
+            "User-Agent": agent.random(),  # Using our fire random agent! 🔥
         }
         self.timeout = timeout
         self.proxies = proxies
@@ -70,7 +71,9 @@ class AsyncNinjaImager(AsyncImageProvider):
         self.image_extension = "png"
         self.logging = logging
         if self.logging:
-            logger.info("AsyncNinjaImager initialized! Ready to create some fire art! 🚀")
+            logger.info(
+                "AsyncNinjaImager initialized! Ready to create some fire art! 🚀"
+            )
 
     async def generate(
         self, prompt: str, amount: int = 1, model: str = "flux-dev"
@@ -86,7 +89,9 @@ class AsyncNinjaImager(AsyncImageProvider):
             List[bytes]: Your generated images as bytes
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int) and amount > 0, "Amount should be a positive integer"
+        assert isinstance(amount, int) and amount > 0, (
+            "Amount should be a positive integer"
+        )
 
         if model not in self.AVAILABLE_MODELS:
             raise exceptions.ModelNotFoundError(
@@ -104,7 +109,7 @@ class AsyncNinjaImager(AsyncImageProvider):
             "aspectRatio": "1:1",
             "outputFormat": self.image_extension,
             "numOutputs": amount,
-            "outputQuality": 90
+            "outputQuality": 90,
         }
 
         if self.logging:
@@ -113,7 +118,9 @@ class AsyncNinjaImager(AsyncImageProvider):
         response = []
         async with aiohttp.ClientSession(headers=self.headers) as session:
             try:
-                async with session.post(url, json=payload, timeout=self.timeout) as resp:
+                async with session.post(
+                    url, json=payload, timeout=self.timeout
+                ) as resp:
                     if resp.status != 200:
                         if self.logging:
                             logger.error(f"Request failed with status {resp.status} 😢")
@@ -123,26 +130,34 @@ class AsyncNinjaImager(AsyncImageProvider):
 
                     data = await resp.json()
 
-                    if 'output' not in data:
+                    if "output" not in data:
                         if self.logging:
                             logger.error("Invalid API response format 😢")
-                        raise exceptions.InvalidResponseError("Invalid API response format: 'output' key missing.")
+                        raise exceptions.InvalidResponseError(
+                            "Invalid API response format: 'output' key missing."
+                        )
 
-                    for img_url in data['output']:
+                    for img_url in data["output"]:
                         async with session.get(img_url) as img_resp:
                             img_resp.raise_for_status()
                             response.append(await img_resp.read())
                             if self.logging:
-                                logger.success(f"Generated image {len(response)}/{amount}! 🎨")
+                                logger.success(
+                                    f"Generated image {len(response)}/{amount}! 🎨"
+                                )
 
             except aiohttp.ClientError as e:
                 if self.logging:
                     logger.error(f"Connection error: {e} 😢")
-                raise exceptions.APIConnectionError(f"An error occurred during the request: {e}")
+                raise exceptions.APIConnectionError(
+                    f"An error occurred during the request: {e}"
+                )
             except json.JSONDecodeError as e:
                 if self.logging:
                     logger.error(f"Failed to parse response: {e} 😢")
-                raise exceptions.InvalidResponseError(f"Failed to parse JSON response: {e}")
+                raise exceptions.InvalidResponseError(
+                    f"Failed to parse JSON response: {e}"
+                )
 
         if self.logging:
             logger.success("All images generated successfully! 🎉")
@@ -177,10 +192,10 @@ class AsyncNinjaImager(AsyncImageProvider):
         async def save_single_image(image_bytes: bytes, index: int) -> str:
             filename = f"{filenames_prefix}{name}_{index}.{self.image_extension}"
             filepath = os.path.join(dir, filename)
-            
+
             async with aiofiles.open(filepath, "wb") as f:
                 await f.write(image_bytes)
-            
+
             if self.logging:
                 logger.success(f"Saved image to: {filepath} 💾")
             return filename
@@ -202,10 +217,13 @@ class AsyncNinjaImager(AsyncImageProvider):
 
 
 if __name__ == "__main__":
+
     async def main():
         bot = AsyncNinjaImager()
         try:
-            resp = await bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+            resp = await bot.generate(
+                "A shiny red sports car speeding down a scenic mountain road", 1
+            )
             paths = await bot.save(resp)
             print(paths)
         except Exception as e:

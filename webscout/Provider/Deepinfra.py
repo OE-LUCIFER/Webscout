@@ -1,13 +1,13 @@
 import requests
 import json
-import os
-from typing import Any, Dict, Optional, Generator, Union
+from typing import Any, Dict, Generator, Union
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
+
 
 class DeepInfra(Provider):
     """
@@ -25,13 +25,12 @@ class DeepInfra(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "Qwen/Qwen2.5-72B-Instruct",  
+        model: str = "Qwen/Qwen2.5-72B-Instruct",
     ):
         """Initializes the DeepInfra API client."""
         self.url = "https://api.deepinfra.com/v1/openai/chat/completions"
         self.headers = {
             "Accept": "text/event-stream, application/json",
-
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -69,7 +68,6 @@ class DeepInfra(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Union[Dict[str, Any], Generator]:
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -77,7 +75,9 @@ class DeepInfra(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
+                raise Exception(
+                    f"Optimizer is not one of {self.__available_optimizers}"
+                )
 
         # Payload construction
         payload = {
@@ -86,40 +86,54 @@ class DeepInfra(Provider):
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": conversation_prompt},
             ],
-            "stream": stream
+            "stream": stream,
         }
 
         def for_stream():
             try:
-                with requests.post(self.url, headers=self.headers, data=json.dumps(payload), stream=True, timeout=self.timeout) as response:
+                with requests.post(
+                    self.url,
+                    headers=self.headers,
+                    data=json.dumps(payload),
+                    stream=True,
+                    timeout=self.timeout,
+                ) as response:
                     if response.status_code != 200:
-                        raise exceptions.FailedToGenerateResponseError(f"Request failed with status code {response.status_code}")
+                        raise exceptions.FailedToGenerateResponseError(
+                            f"Request failed with status code {response.status_code}"
+                        )
 
                     streaming_text = ""
-                    for line in response.iter_lines(decode_unicode=True):  # Decode lines
+                    for line in response.iter_lines(
+                        decode_unicode=True
+                    ):  # Decode lines
                         if line:
                             line = line.strip()
                             if line.startswith("data: "):
-                                json_str = line[6:] #Remove "data: " prefix
+                                json_str = line[6:]  # Remove "data: " prefix
                                 if json_str == "[DONE]":
                                     break
                                 try:
                                     json_data = json.loads(json_str)
-                                    if 'choices' in json_data:
-                                        choice = json_data['choices'][0]
-                                        if 'delta' in choice and 'content' in choice['delta']:
-                                            content = choice['delta']['content']
+                                    if "choices" in json_data:
+                                        choice = json_data["choices"][0]
+                                        if (
+                                            "delta" in choice
+                                            and "content" in choice["delta"]
+                                        ):
+                                            content = choice["delta"]["content"]
                                             streaming_text += content
-                                            
+
                                             # Yield ONLY the new content:
-                                            resp = dict(text=content) 
+                                            resp = dict(text=content)
                                             yield resp if raw else resp
                                 except json.JSONDecodeError:
                                     pass  # Or handle the error as needed
-                    self.conversation.update_chat_history(prompt, streaming_text)  # Update history *after* streaming
+                    self.conversation.update_chat_history(
+                        prompt, streaming_text
+                    )  # Update history *after* streaming
             except requests.RequestException as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
-
 
         def for_non_stream():
             # let's make use of stream
@@ -127,10 +141,7 @@ class DeepInfra(Provider):
                 pass
             return self.last_response
 
-
         return for_stream() if stream else for_non_stream()
-
-
 
     def chat(
         self,
@@ -139,7 +150,6 @@ class DeepInfra(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
@@ -163,9 +173,9 @@ class DeepInfra(Provider):
         return response["text"]
 
 
-
 if __name__ == "__main__":
     from rich import print
+
     ai = DeepInfra(timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

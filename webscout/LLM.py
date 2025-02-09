@@ -15,6 +15,7 @@ import base64
 import json
 from typing import List, Dict, Union, Generator, Optional, Any
 
+
 class LLMError(Exception):
     """Custom exception for LLM API errors 🚫
 
@@ -25,7 +26,9 @@ class LLMError(Exception):
         ...     print(f"Error: {e}")
         Error: API key not found!
     """
+
     pass
+
 
 class LLM:
     """A class for chatting with DeepInfra's powerful language models! 🚀
@@ -48,15 +51,15 @@ class LLM:
         In every moment, magic gleams,
         Life's poetry flows like gentle streams.'
     """
-    
+
     def __init__(self, model: str, system_message: str = "You are a Helpful AI."):
         """
         Initialize the LLM client.
-        
+
         Args:
             model: The model identifier (e.g., "meta-llama/Meta-Llama-3-70B-Instruct")
             system_message: The system message to use for the conversation
-            
+
         Examples:
             >>> llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
             >>> print(llm.model)
@@ -66,27 +69,27 @@ class LLM:
         self.api_url = "https://api.deepinfra.com/v1/openai/chat/completions"
         self.conversation_history = [{"role": "system", "content": system_message}]
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-            'Accept-Language': 'en,fr-FR;q=0.9,fr;q=0.8,es-ES;q=0.7,es;q=0.6,en-US;q=0.5,am;q=0.4,de;q=0.3',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Content-Type': 'application/json',
-            'Origin': 'https://deepinfra.com',
-            'Pragma': 'no-cache',
-            'Referer': 'https://deepinfra.com/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
-            'X-Deepinfra-Source': 'web-embed',
-            'accept': 'text/event-stream',
-            'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Accept-Language": "en,fr-FR;q=0.9,fr;q=0.8,es-ES;q=0.7,es;q=0.6,en-US;q=0.5,am;q=0.4,de;q=0.3",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Content-Type": "application/json",
+            "Origin": "https://deepinfra.com",
+            "Pragma": "no-cache",
+            "Referer": "https://deepinfra.com/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "X-Deepinfra-Source": "web-embed",
+            "accept": "text/event-stream",
+            "sec-ch-ua": '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
         }
 
     def _prepare_payload(
-        self, 
-        messages: List[Dict[str, str]], 
+        self,
+        messages: List[Dict[str, str]],
         stream: bool = False,
         temperature: float = 0.7,
         max_tokens: int = 8028,
@@ -113,17 +116,17 @@ class LLM:
             'meta-llama/Meta-Llama-3-70B-Instruct'
         """
         return {
-            'model': self.model,
-            'messages': messages,
-            'temperature': temperature,
-            'max_tokens': max_tokens,
-            'stop': stop or [],
-            'stream': stream
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stop": stop or [],
+            "stream": stream,
         }
 
     def chat(
-        self, 
-        messages: List[Dict[str, str]], 
+        self,
+        messages: List[Dict[str, str]],
         stream: bool = False,
         temperature: float = 0.7,
         max_tokens: int = 8028,
@@ -163,7 +166,7 @@ class LLM:
             ...     print(chunk, end='')
         """
         payload = self._prepare_payload(messages, stream, temperature, max_tokens, stop)
-        
+
         try:
             if stream:
                 return self._stream_response(payload)
@@ -192,16 +195,24 @@ class LLM:
             ...     print(chunk, end='')
         """
         try:
-            with requests.post(self.api_url, json=payload, headers=self.headers, stream=True) as response:
+            with requests.post(
+                self.api_url, json=payload, headers=self.headers, stream=True
+            ) as response:
                 response.raise_for_status()
                 for line in response.iter_lines():
                     if line:
-                        if line.strip() == b'data: [DONE]':
+                        if line.strip() == b"data: [DONE]":
                             break
-                        if line.startswith(b'data: '):
+                        if line.startswith(b"data: "):
                             try:
-                                chunk = json.loads(line.decode('utf-8').removeprefix('data: '))
-                                if content := chunk.get('choices', [{}])[0].get('delta', {}).get('content'):
+                                chunk = json.loads(
+                                    line.decode("utf-8").removeprefix("data: ")
+                                )
+                                if (
+                                    content := chunk.get("choices", [{}])[0]
+                                    .get("delta", {})
+                                    .get("content")
+                                ):
                                     yield content
                             except json.JSONDecodeError:
                                 continue
@@ -231,7 +242,7 @@ class LLM:
             response = requests.post(self.api_url, json=payload, headers=self.headers)
             response.raise_for_status()
             result = response.json()
-            return result['choices'][0]['message']['content']
+            return result["choices"][0]["message"]["content"]
         except requests.RequestException as e:
             raise LLMError(f"Request failed: {str(e)}")
         except (KeyError, IndexError) as e:
@@ -280,27 +291,29 @@ class VLM:
         self.api_url = "https://api.deepinfra.com/v1/openai/chat/completions"
         self.conversation_history = [{"role": "system", "content": system_message}]
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-            'Accept-Language': 'en,fr-FR;q=0.9,fr;q=0.8,es-ES;q=0.7,es;q=0.6,en-US;q=0.5,am;q=0.4,de;q=0.3',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Content-Type': 'application/json',
-            'Origin': 'https://deepinfra.com',
-            'Pragma': 'no-cache',
-            'Referer': 'https://deepinfra.com/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
-            'X-Deepinfra-Source': 'web-embed',
-            'accept': 'text/event-stream',
-            'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Accept-Language": "en,fr-FR;q=0.9,fr;q=0.8,es-ES;q=0.7,es;q=0.6,en-US;q=0.5,am;q=0.4,de;q=0.3",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Content-Type": "application/json",
+            "Origin": "https://deepinfra.com",
+            "Pragma": "no-cache",
+            "Referer": "https://deepinfra.com/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "X-Deepinfra-Source": "web-embed",
+            "accept": "text/event-stream",
+            "sec-ch-ua": '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
         }
 
     def chat(
-        self, 
-        messages: List[Dict[str, Union[str, List[Dict[str, Union[str, Dict[str, str]]]]]]], 
+        self,
+        messages: List[
+            Dict[str, Union[str, List[Dict[str, Union[str, Dict[str, str]]]]]]
+        ],
         stream: bool = False,
         temperature: float = 0.7,
         max_tokens: int = 8028,
@@ -344,7 +357,7 @@ class VLM:
             "messages": messages,
             "stream": stream,
             "temperature": temperature,
-            "max_tokens": max_tokens
+            "max_tokens": max_tokens,
         }
 
         try:
@@ -358,16 +371,24 @@ class VLM:
     def _stream_response(self, payload: Dict[str, Any]) -> Generator[str, None, None]:
         """Stream the VLM chat response."""
         try:
-            with requests.post(self.api_url, json=payload, headers=self.headers, stream=True) as response:
+            with requests.post(
+                self.api_url, json=payload, headers=self.headers, stream=True
+            ) as response:
                 response.raise_for_status()
                 for line in response.iter_lines():
                     if line:
-                        if line.strip() == b'data: [DONE]':
+                        if line.strip() == b"data: [DONE]":
                             break
-                        if line.startswith(b'data: '):
+                        if line.startswith(b"data: "):
                             try:
-                                chunk = json.loads(line.decode('utf-8').removeprefix('data: '))
-                                if content := chunk.get('choices', [{}])[0].get('delta', {}).get('content'):
+                                chunk = json.loads(
+                                    line.decode("utf-8").removeprefix("data: ")
+                                )
+                                if (
+                                    content := chunk.get("choices", [{}])[0]
+                                    .get("delta", {})
+                                    .get("content")
+                                ):
                                     yield content
                             except json.JSONDecodeError:
                                 continue
@@ -380,7 +401,7 @@ class VLM:
             response = requests.post(self.api_url, json=payload, headers=self.headers)
             response.raise_for_status()
             result = response.json()
-            return result['choices'][0]['message']['content']
+            return result["choices"][0]["message"]["content"]
         except requests.RequestException as e:
             raise LLMError(f"VLM request failed: {str(e)}")
         except (KeyError, IndexError) as e:
@@ -419,23 +440,21 @@ if __name__ == "__main__":
     try:
         # Initialize LLM with Llama 3 model
         llm = LLM(model="mistralai/Mistral-Small-24B-Instruct-2501")
-        
+
         # Example messages
-        messages = [
-            {"role": "user", "content": "Write a short poem about AI."}
-        ]
-        
+        messages = [{"role": "user", "content": "Write a short poem about AI."}]
+
         # Example 1: Non-streaming response
         print("\nNon-streaming response:")
         response = llm.chat(messages, stream=False)
         print(response)
-        
+
         # Example 2: Streaming response
         print("\nStreaming response:")
         for chunk in llm.chat(messages, stream=True):
-            print(chunk, end='', flush=True)
+            print(chunk, end="", flush=True)
         print("\n")
-        
+
     except LLMError as e:
         print(f"Error: {str(e)}")
     except KeyboardInterrupt:

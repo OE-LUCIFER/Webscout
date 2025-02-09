@@ -8,11 +8,12 @@ Response: TypeAlias = dict[str, Union[str, bool, None]]
 ImageData: TypeAlias = Union[bytes, str, Generator[bytes, None, None]]
 AsyncImageData: TypeAlias = Union[bytes, str, AsyncGenerator[bytes, None]]
 
+
 class AIProviderError(Exception):
     pass
 
-class Provider(ABC):
 
+class Provider(ABC):
     @abstractmethod
     def ask(
         self,
@@ -38,8 +39,8 @@ class Provider(ABC):
     def get_message(self, response: Response) -> str:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
-class AsyncProvider(ABC):
 
+class AsyncProvider(ABC):
     @abstractmethod
     async def ask(
         self,
@@ -65,40 +66,38 @@ class AsyncProvider(ABC):
     async def get_message(self, response: Response) -> str:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
-class TTSProvider(ABC):
 
+class TTSProvider(ABC):
     @abstractmethod
     def tts(self, text: str) -> ImageData:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
-class AsyncTTSProvider(ABC):
 
+class AsyncTTSProvider(ABC):
     @abstractmethod
     async def tts(self, text: str) -> AsyncImageData:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
-class ImageProvider(ABC):
 
+class ImageProvider(ABC):
     @abstractmethod
     def generate(self, prompt: str, amount: int = 1) -> List[bytes]:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
     @abstractmethod
     def save(
-        self, 
-        response: List[bytes], 
-        name: Optional[str] = None, 
-        dir: Optional[Union[str, Path]] = None
+        self,
+        response: List[bytes],
+        name: Optional[str] = None,
+        dir: Optional[Union[str, Path]] = None,
     ) -> List[str]:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
-class AsyncImageProvider(ABC):
 
+class AsyncImageProvider(ABC):
     @abstractmethod
     async def generate(
-        self, 
-        prompt: str, 
-        amount: int = 1
+        self, prompt: str, amount: int = 1
     ) -> Union[AsyncGenerator[bytes, None], List[bytes]]:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
@@ -107,12 +106,12 @@ class AsyncImageProvider(ABC):
         self,
         response: Union[AsyncGenerator[bytes, None], List[bytes]],
         name: Optional[str] = None,
-        dir: Optional[Union[str, Path]] = None
+        dir: Optional[Union[str, Path]] = None,
     ) -> List[str]:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
-class AISearch(ABC):
 
+class AISearch(ABC):
     @abstractmethod
     def search(
         self,

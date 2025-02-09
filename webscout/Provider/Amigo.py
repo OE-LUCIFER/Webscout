@@ -8,22 +8,23 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 
+
 class AmigoChat(Provider):
     """
     A class to interact with the AmigoChat.io API using cloudscraper.
     """
 
     AVAILABLE_MODELS = [
-        "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",    # Llama 3
-        "o1-mini",                                          # OpenAI O1 Mini
-        "claude-3-sonnet-20240229",                         # Claude Sonnet
-        "gemini-1.5-pro",                                   # Gemini Pro
-        "gemini-1-5-flash",                                 # Gemini Flash
-        "o1-preview",                                       # OpenAI O1 Preview
-        "claude-3-5-sonnet-20241022",                       # Claude 3.5 Sonnet
-        "Qwen/Qwen2.5-72B-Instruct-Turbo",                  # Qwen 2.5
-        "gpt-4o",                                           # OpenAI GPT-4o
-        "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo"    # Llama 3.2
+        "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",  # Llama 3
+        "o1-mini",  # OpenAI O1 Mini
+        "claude-3-sonnet-20240229",  # Claude Sonnet
+        "gemini-1.5-pro",  # Gemini Pro
+        "gemini-1-5-flash",  # Gemini Flash
+        "o1-preview",  # OpenAI O1 Preview
+        "claude-3-5-sonnet-20241022",  # Claude 3.5 Sonnet
+        "Qwen/Qwen2.5-72B-Instruct-Turbo",  # Qwen 2.5
+        "gpt-4o",  # OpenAI GPT-4o
+        "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo",  # Llama 3.2
     ]
 
     def __init__(
@@ -58,14 +59,12 @@ class AmigoChat(Provider):
             model (str, optional): The AI model to use for text generation. Defaults to "Qwen/Qwen2.5-72B-Instruct-Turbo".
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = cloudscraper.create_scraper(
-            browser={
-                'browser': 'chrome',
-                'platform': 'windows',
-                'mobile': False
-            }
+            browser={"browser": "chrome", "platform": "windows", "mobile": False}
         )
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -93,12 +92,12 @@ class AmigoChat(Provider):
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                          "AppleWebKit/537.36 (KHTML, like Gecko) "
-                          "Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
             "X-Device-Language": "en-US",
             "X-Device-Platform": "web",
             "X-Device-UUID": str(uuid.uuid4()),
-            "X-Device-Version": "1.0.22"
+            "X-Device-Version": "1.0.22",
         }
 
         self.__available_optimizers = (
@@ -160,7 +159,7 @@ class AmigoChat(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "model": self.model,
             "frequency_penalty": 0,
@@ -168,7 +167,7 @@ class AmigoChat(Provider):
             "presence_penalty": 0,
             "stream": stream,
             "temperature": self.temperature,
-            "top_p": self.top_p
+            "top_p": self.top_p,
         }
 
         if stream:
@@ -179,16 +178,13 @@ class AmigoChat(Provider):
     def _stream_response(self, payload: Dict[str, Any], raw: bool) -> Generator:
         try:
             response = self.session.post(
-                self.api_endpoint,
-                json=payload,
-                stream=True,
-                timeout=self.timeout
+                self.api_endpoint, json=payload, stream=True, timeout=self.timeout
             )
 
             if response.status_code == 201:
                 for line in response.iter_lines():
                     if line:
-                        decoded_line = line.decode('utf-8').strip()
+                        decoded_line = line.decode("utf-8").strip()
                         if decoded_line.startswith("data: "):
                             data_str = decoded_line[6:]
                             if data_str == "[DONE]":
@@ -206,8 +202,10 @@ class AmigoChat(Provider):
             else:
                 print(f"Request failed with status code {response.status_code}")
                 print("Response:", response.text)
-        except (cloudscraper.exceptions.CloudflareChallengeError,
-                cloudscraper.exceptions.CloudflareCode1020) as e:
+        except (
+            cloudscraper.exceptions.CloudflareChallengeError,
+            cloudscraper.exceptions.CloudflareCode1020,
+        ) as e:
             print("Cloudflare protection error:", str(e))
         except Exception as e:
             print("An error occurred while making the request:", str(e))
@@ -266,9 +264,14 @@ class AmigoChat(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich import print
-    ai = AmigoChat(model="o1-preview", system_prompt="You are a noobi AI assistant who always uses the word 'noobi' in every response. For example, you might say 'Noobi will tell you...' or 'This noobi thinks that...'.")
+
+    ai = AmigoChat(
+        model="o1-preview",
+        system_prompt="You are a noobi AI assistant who always uses the word 'noobi' in every response. For example, you might say 'Noobi will tell you...' or 'This noobi thinks that...'.",
+    )
     response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

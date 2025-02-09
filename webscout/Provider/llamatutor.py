@@ -7,6 +7,8 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
+
+
 class LlamaTutor(Provider):
     """
     A class to interact with the LlamaTutor API (Together.ai).
@@ -38,7 +40,7 @@ class LlamaTutor(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_prompt (str, optional): System prompt for LlamaTutor. 
+            system_prompt (str, optional): System prompt for LlamaTutor.
                                    Defaults to "You are a helpful AI assistant.".
         """
         self.session = requests.Session()
@@ -119,35 +121,39 @@ class LlamaTutor(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
+
         payload = {
             "messages": [
-                {
-                    "role": "system",
-                    "content": self.system_prompt
-                },
-                {
-                    "role": "user",
-                    "content": conversation_prompt
-                }
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt},
             ]
         }
 
         def for_stream():
             try:
-                response = requests.post(self.api_endpoint, headers=self.headers, data=json.dumps(payload), stream=True, timeout=self.timeout)
+                response = requests.post(
+                    self.api_endpoint,
+                    headers=self.headers,
+                    data=json.dumps(payload),
+                    stream=True,
+                    timeout=self.timeout,
+                )
                 response.raise_for_status()
-                
+
                 # Stream and process the response line by line
-                full_response = ''
+                full_response = ""
                 for line in response.iter_lines(decode_unicode=True):
                     if line:
-                        decoded_line = line.decode('utf-8')
+                        decoded_line = line.decode("utf-8")
                         if decoded_line.startswith("data: "):
                             json_data = json.loads(decoded_line[6:])
                             if "text" in json_data:
                                 full_response += json_data["text"]
-                                yield json_data["text"] if raw else dict(text=json_data["text"])
+                                yield (
+                                    json_data["text"]
+                                    if raw
+                                    else dict(text=json_data["text"])
+                                )
 
                 self.last_response.update(dict(text=full_response))
                 self.conversation.update_chat_history(
@@ -155,9 +161,13 @@ class LlamaTutor(Provider):
                 )
 
             except requests.exceptions.HTTPError as http_err:
-                raise exceptions.FailedToGenerateResponseError(f"HTTP error occurred: {http_err}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"HTTP error occurred: {http_err}"
+                )
             except requests.exceptions.RequestException as err:
-                raise exceptions.FailedToGenerateResponseError(f"An error occurred: {err}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An error occurred: {err}"
+                )
 
         def for_non_stream():
             for _ in for_stream():
@@ -212,6 +222,7 @@ class LlamaTutor(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
 
 if __name__ == "__main__":
     from rich import print

@@ -1,21 +1,21 @@
 import cloudscraper
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import  Provider, AsyncProvider
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
 
 
 class Editee(Provider):
     """
     A class to interact with the Editee.com API.
     """
+
     AVAILABLE_MODELS = [
-        "gemini", # it is gemini 1.5pro
-        "claude", # it is claude 3.5
-        "gpt4", # it is gpt4o
-        "mistrallarge", # it is mistral large2
+        "gemini",  # it is gemini 1.5pro
+        "claude",  # it is claude 3.5
+        "gpt4",  # it is gpt4o
+        "mistrallarge",  # it is mistral large2
     ]
 
     def __init__(
@@ -44,10 +44,12 @@ class Editee(Provider):
             proxies (dict, optional): Http request proxies. Defaults to {}.
             history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            model (str, optional): AI model to use for text generation. Defaults to "gemini". 
+            model (str, optional): AI model to use for text generation. Defaults to "gemini".
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = cloudscraper.create_scraper()
         self.is_conversation = is_conversation
@@ -70,7 +72,7 @@ class Editee(Provider):
             "origin": "https://editee.com",
             "referer": "https://editee.com/chat-gpt",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-            "x-requested-with": "XMLHttpRequest"
+            "x-requested-with": "XMLHttpRequest",
         }
         self.__available_optimizers = (
             method
@@ -95,7 +97,9 @@ class Editee(Provider):
         """Gets the editeecom_session value."""
         res = self.session.get("https://editee.com/chat-gpt")
         if res.cookies.get_dict():
-            first_cookie_name, session_value = next(iter(res.cookies.get_dict().items()))
+            first_cookie_name, session_value = next(
+                iter(res.cookies.get_dict().items())
+            )
         return session_value
 
     def ask(
@@ -128,22 +132,24 @@ class Editee(Provider):
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        
+
         payload = {
             "context": " ",
             "selected_model": self.model,
             "template_id": "",
-            "user_input": conversation_prompt
+            "user_input": conversation_prompt,
         }
 
-        response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout)
+        response = self.session.post(
+            self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout
+        )
         if not response.ok:
             raise exceptions.FailedToGenerateResponseError(
                 f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
             )
 
         resp = response.json()
-        self.last_response.update(dict(text=resp['text']))
+        self.last_response.update(dict(text=resp["text"]))
         self.conversation.update_chat_history(
             prompt, self.get_message(self.last_response)
         )
@@ -184,8 +190,11 @@ class Editee(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = Editee()
     response = ai.chat("tell me about india")
     for chunk in response:

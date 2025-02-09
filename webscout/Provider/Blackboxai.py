@@ -3,13 +3,10 @@ import re
 import json
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
-from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
-import httpx
+from webscout.AIutel import AwesomePrompts
 
-#------------------------------------------------------BLACKBOXAI--------------------------------------------------------
+
+# ------------------------------------------------------BLACKBOXAI--------------------------------------------------------
 class BLACKBOXAI:
     def __init__(
         self,
@@ -146,7 +143,6 @@ class BLACKBOXAI:
             for value in response.iter_lines(
                 decode_unicode=True,
                 chunk_size=self.stream_chunk_size,
-
             ):
                 try:
                     if bool(value):
@@ -213,17 +209,21 @@ class BLACKBOXAI:
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return response["text"].replace("\\n", "\n").replace("\\n\\n", "\n\n")
+
 
 # Function to clean the response text
 def clean_response(response_text: str) -> str:
     # Remove web search results
-    cleaned_response = re.sub(r'\$~~~\$.*?\$~~~\$', '', response_text, flags=re.DOTALL)
+    cleaned_response = re.sub(r"\$~~~\$.*?\$~~~\$", "", response_text, flags=re.DOTALL)
     # Remove any remaining special characters or markers
-    cleaned_response = re.sub(r'\$~~~', '', cleaned_response)
+    cleaned_response = re.sub(r"\$~~~", "", cleaned_response)
     return cleaned_response.strip()
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = BLACKBOXAI()
     response = ai.chat("tell me about india")
     for chunk in response:

@@ -2,13 +2,15 @@ import json
 from ..AIutel import Optimizers
 from ..AIutel import Conversation
 from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
+from ..AIbase import Provider, AsyncProvider
 
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from typing import AsyncGenerator
 import requests
 import httpx
-#----------------------------------------------------------OpenAI-----------------------------------
+
+
+# ----------------------------------------------------------OpenAI-----------------------------------
 class OPENAI(Provider):
     def __init__(
         self,
@@ -249,6 +251,8 @@ class OPENAI(Provider):
             return response["choices"][0]["message"]["content"]
         except KeyError:
             return ""
+
+
 class AsyncOPENAI(AsyncProvider):
     def __init__(
         self,
@@ -399,7 +403,6 @@ class AsyncOPENAI(AsyncProvider):
                 message_load = ""
                 async for value in response.aiter_lines():
                     try:
-
                         resp = sanitize_stream(value)
                         incomplete_message = await self.get_message(resp)
                         if incomplete_message:

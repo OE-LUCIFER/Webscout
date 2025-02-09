@@ -6,9 +6,10 @@ import json
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
+from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
+
 
 class GROQ(Provider):
     """
@@ -31,7 +32,7 @@ class GROQ(Provider):
         "llama-3.2-1b-preview",
         # "whisper-large-v3-turbo",
         "llama-3.1-8b-instant",
-        "llama-guard-3-8b"
+        "llama-guard-3-8b",
     ]
 
     def __init__(
@@ -74,7 +75,9 @@ class GROQ(Provider):
             system_prompt (str, optional): System prompt to guide the conversation. Defaults to None.
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -85,7 +88,7 @@ class GROQ(Provider):
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.top_p = top_p
-        self.chat_endpoint = "https://api.groq.com/openai/v1/chat/completions" 
+        self.chat_endpoint = "https://api.groq.com/openai/v1/chat/completions"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
@@ -170,7 +173,7 @@ class GROQ(Provider):
             "stream": stream,
             "temperature": self.temperature,
             "top_p": self.top_p,
-            "tools": tools  # Include tools in the payload
+            "tools": tools,  # Include tools in the payload
         }
 
         def for_stream():
@@ -202,20 +205,28 @@ class GROQ(Provider):
                     pass
 
             # Handle tool calls if any
-            if 'tool_calls' in self.last_response.get('choices', [{}])[0].get('message', {}):
-                tool_calls = self.last_response['choices'][0]['message']['tool_calls']
+            if "tool_calls" in self.last_response.get("choices", [{}])[0].get(
+                "message", {}
+            ):
+                tool_calls = self.last_response["choices"][0]["message"]["tool_calls"]
                 for tool_call in tool_calls:
-                    function_name = tool_call.get('function', {}).get('name')
-                    arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                    function_name = tool_call.get("function", {}).get("name")
+                    arguments = json.loads(
+                        tool_call.get("function", {}).get("arguments", "{}")
+                    )
                     if function_name in self.available_functions:
-                        tool_response = self.available_functions[function_name](**arguments)
-                        messages.append({
-                            "tool_call_id": tool_call['id'],
-                            "role": "tool",
-                            "name": function_name,
-                            "content": tool_response
-                        })
-                        payload['messages'] = messages
+                        tool_response = self.available_functions[function_name](
+                            **arguments
+                        )
+                        messages.append(
+                            {
+                                "tool_call_id": tool_call["id"],
+                                "role": "tool",
+                                "name": function_name,
+                                "content": tool_response,
+                            }
+                        )
+                        payload["messages"] = messages
                         # Make a second call to get the final response
                         second_response = self.session.post(
                             self.chat_endpoint, json=payload, timeout=self.timeout
@@ -245,20 +256,26 @@ class GROQ(Provider):
             resp = response.json()
 
             # Handle tool calls if any
-            if 'tool_calls' in resp.get('choices', [{}])[0].get('message', {}):
-                tool_calls = resp['choices'][0]['message']['tool_calls']
+            if "tool_calls" in resp.get("choices", [{}])[0].get("message", {}):
+                tool_calls = resp["choices"][0]["message"]["tool_calls"]
                 for tool_call in tool_calls:
-                    function_name = tool_call.get('function', {}).get('name')
-                    arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                    function_name = tool_call.get("function", {}).get("name")
+                    arguments = json.loads(
+                        tool_call.get("function", {}).get("arguments", "{}")
+                    )
                     if function_name in self.available_functions:
-                        tool_response = self.available_functions[function_name](**arguments)
-                        messages.append({
-                            "tool_call_id": tool_call['id'],
-                            "role": "tool",
-                            "name": function_name,
-                            "content": tool_response
-                        })
-                        payload['messages'] = messages
+                        tool_response = self.available_functions[function_name](
+                            **arguments
+                        )
+                        messages.append(
+                            {
+                                "tool_call_id": tool_call["id"],
+                                "role": "tool",
+                                "name": function_name,
+                                "content": tool_response,
+                            }
+                        )
+                        payload["messages"] = messages
                         # Make a second call to get the final response
                         second_response = self.session.post(
                             self.chat_endpoint, json=payload, timeout=self.timeout
@@ -277,7 +294,6 @@ class GROQ(Provider):
             return resp
 
         return for_stream() if stream else for_non_stream()
-
 
     def chat(
         self,
@@ -300,7 +316,11 @@ class GROQ(Provider):
 
         def for_stream():
             for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally, tools=tools
+                prompt,
+                True,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                tools=tools,
             ):
                 yield self.get_message(response)
 
@@ -311,7 +331,7 @@ class GROQ(Provider):
                     False,
                     optimizer=optimizer,
                     conversationally=conversationally,
-                    tools=tools
+                    tools=tools,
                 )
             )
 
@@ -356,7 +376,7 @@ class AsyncGROQ(AsyncProvider):
         "llama-3.2-1b-preview",
         # "whisper-large-v3-turbo",
         "llama-3.1-8b-instant",
-        "llama-guard-3-8b"
+        "llama-guard-3-8b",
     ]
 
     def __init__(
@@ -399,7 +419,9 @@ class AsyncGROQ(AsyncProvider):
             system_prompt (str, optional): System prompt to guide the conversation. Defaults to None.
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
 
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -491,7 +513,7 @@ class AsyncGROQ(AsyncProvider):
             "stream": stream,
             "temperature": self.temperature,
             "top_p": self.top_p,
-            "tools": tools
+            "tools": tools,
         }
 
         async def for_stream():
@@ -522,20 +544,30 @@ class AsyncGROQ(AsyncProvider):
                         pass
 
                 # Handle tool calls if any (in streaming mode)
-                if 'tool_calls' in self.last_response.get('choices', [{}])[0].get('message', {}):
-                    tool_calls = self.last_response['choices'][0]['message']['tool_calls']
+                if "tool_calls" in self.last_response.get("choices", [{}])[0].get(
+                    "message", {}
+                ):
+                    tool_calls = self.last_response["choices"][0]["message"][
+                        "tool_calls"
+                    ]
                     for tool_call in tool_calls:
-                        function_name = tool_call.get('function', {}).get('name')
-                        arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                        function_name = tool_call.get("function", {}).get("name")
+                        arguments = json.loads(
+                            tool_call.get("function", {}).get("arguments", "{}")
+                        )
                         if function_name in self.available_functions:
-                            tool_response = self.available_functions[function_name](**arguments)
-                            messages.append({
-                                "tool_call_id": tool_call['id'],
-                                "role": "tool",
-                                "name": function_name,
-                                "content": tool_response
-                            })
-                            payload['messages'] = messages
+                            tool_response = self.available_functions[function_name](
+                                **arguments
+                            )
+                            messages.append(
+                                {
+                                    "tool_call_id": tool_call["id"],
+                                    "role": "tool",
+                                    "name": function_name,
+                                    "content": tool_response,
+                                }
+                            )
+                            payload["messages"] = messages
                             # Make a second call to get the final response
                             second_response = await self.session.post(
                                 self.chat_endpoint, json=payload, timeout=self.timeout
@@ -562,20 +594,26 @@ class AsyncGROQ(AsyncProvider):
             resp = response.json()
 
             # Handle tool calls if any (in non-streaming mode)
-            if 'tool_calls' in resp.get('choices', [{}])[0].get('message', {}):
-                tool_calls = resp['choices'][0]['message']['tool_calls']
+            if "tool_calls" in resp.get("choices", [{}])[0].get("message", {}):
+                tool_calls = resp["choices"][0]["message"]["tool_calls"]
                 for tool_call in tool_calls:
-                    function_name = tool_call.get('function', {}).get('name')
-                    arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                    function_name = tool_call.get("function", {}).get("name")
+                    arguments = json.loads(
+                        tool_call.get("function", {}).get("arguments", "{}")
+                    )
                     if function_name in self.available_functions:
-                        tool_response = self.available_functions[function_name](**arguments)
-                        messages.append({
-                            "tool_call_id": tool_call['id'],
-                            "role": "tool",
-                            "name": function_name,
-                            "content": tool_response
-                        })
-                        payload['messages'] = messages
+                        tool_response = self.available_functions[function_name](
+                            **arguments
+                        )
+                        messages.append(
+                            {
+                                "tool_call_id": tool_call["id"],
+                                "role": "tool",
+                                "name": function_name,
+                                "content": tool_response,
+                            }
+                        )
+                        payload["messages"] = messages
                         # Make a second call to get the final response
                         second_response = await self.session.post(
                             self.chat_endpoint, json=payload, timeout=self.timeout
@@ -616,7 +654,11 @@ class AsyncGROQ(AsyncProvider):
 
         async def for_stream():
             async_ask = await self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally, tools=tools
+                prompt,
+                True,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                tools=tools,
             )
             async for response in async_ask:
                 yield await self.get_message(response)
@@ -628,7 +670,7 @@ class AsyncGROQ(AsyncProvider):
                     False,
                     optimizer=optimizer,
                     conversationally=conversationally,
-                    tools=tools
+                    tools=tools,
                 )
             )
 

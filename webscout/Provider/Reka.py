@@ -5,11 +5,11 @@ import json
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import  Provider, AsyncProvider
-from webscout import exceptions
+from webscout.AIutel import AwesomePrompts
+from webscout.AIbase import Provider
 
-#-----------------------------------------------REKA-----------------------------------------------
+
+# -----------------------------------------------REKA-----------------------------------------------
 class REKA(Provider):
     def __init__(
         self,
@@ -117,11 +117,12 @@ class REKA(Provider):
 
         self.session.headers.update(self.headers)
         payload = {
-
             "conversation_history": [
-                {"type": "human", "text": f"## SYSTEM PROMPT: {self.system_prompt}\n\n## QUERY: {conversation_prompt}"},
+                {
+                    "type": "human",
+                    "text": f"## SYSTEM PROMPT: {self.system_prompt}\n\n## QUERY: {conversation_prompt}",
+                },
             ],
-
             "stream": stream,
             "use_search_engine": self.use_search_engine,
             "use_code_interpreter": self.use_code_interpreter,
@@ -131,7 +132,9 @@ class REKA(Provider):
         }
 
         def for_stream():
-            response = self.session.post(self.api_endpoint, json=payload, stream=True, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint, json=payload, stream=True, timeout=self.timeout
+            )
             if not response.ok:
                 raise Exception(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
@@ -205,9 +208,11 @@ class REKA(Provider):
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response.get("text")
+
+
 if __name__ == "__main__":
-    
     from rich import print
+
     ai = REKA(api_key="YOUR_API_KEY", timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

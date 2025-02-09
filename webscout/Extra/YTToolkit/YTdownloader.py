@@ -6,18 +6,17 @@ from time import sleep
 import requests
 from tqdm import tqdm
 from colorama import Fore
-from os import makedirs, path, getcwd, remove
+from os import makedirs, path, getcwd
 from threading import Thread
-from sys import stdout
 import os
 import subprocess
 import sys
 import tempfile
-from webscout.version import __prog__, __version__
-from webscout.swiftcli import CLI, option, argument, group
+from webscout.version import __prog__
+from webscout.swiftcli import CLI, option, argument
 
 # Define cache directory using tempfile
-user_cache_dir = os.path.join(tempfile.gettempdir(), 'webscout')
+user_cache_dir = os.path.join(tempfile.gettempdir(), "webscout")
 if not os.path.exists(user_cache_dir):
     os.makedirs(user_cache_dir)
 
@@ -43,10 +42,7 @@ if not path.isdir(appdir):
     try:
         makedirs(appdir)
     except Exception as e:
-        print(
-            f"Error : {get_excep(e)}  while creating site directory - "
-            + appdir
-        )
+        print(f"Error : {get_excep(e)}  while creating site directory - " + appdir)
 
 history_path = path.join(appdir, "history.json")
 
@@ -61,9 +57,9 @@ class utils:
                 try:
                     try:
                         return func(*args, **kwargs)
-                    except KeyboardInterrupt as e:
+                    except KeyboardInterrupt:
                         print()
-                        logging.info(f"^KeyboardInterrupt quitting. Goodbye!")
+                        logging.info("^KeyboardInterrupt quitting. Goodbye!")
                         exit(1)
                 except Exception as e:
                     if log:
@@ -93,7 +89,7 @@ class utils:
 
     @staticmethod
     def add_history(data: dict) -> None:
-        f"""Adds entry to history
+        """Adds entry to history
         :param data: Response of `third query`
         :type data: dict
         :rtype: None
@@ -273,9 +269,9 @@ class second_query:
         if self.query_one.is_link:
             return {"v": self.query_one.vid, "t": self.query_one.title}
         all_items = self.query_one.vitems
-        assert (
-            self.item_no < len(all_items) - 1
-        ), "The item_no  is greater than largest item's index -  try lower value"
+        assert self.item_no < len(all_items) - 1, (
+            "The item_no  is greater than largest item's index -  try lower value"
+        )
 
         return self.query_one.vitems[item_no or self.item_no]
 
@@ -395,13 +391,13 @@ class third_query:
             resolver = "mp4" if format == "mp4" else "mp3"
         if format == "mp3" and quality == "auto":
             quality = "128kbps"
-        assert (
-            format in self.formats
-        ), f"'{format}' is not in supported formats - {self.formats}"
+        assert format in self.formats, (
+            f"'{format}' is not in supported formats - {self.formats}"
+        )
 
-        assert (
-            quality in self.qualities[format]
-        ), f"'{quality}' is not in supported qualities - {self.qualities[format]}"
+        assert quality in self.qualities[format], (
+            f"'{quality}' is not in supported qualities - {self.qualities[format]}"
+        )
 
         items = self.query_two.video if format == "mp4" else self.query_two.audio
         hunted = []
@@ -431,7 +427,7 @@ class third_query:
                             return (False, {})
                         else:
                             logging.debug(
-                                f"Converting video  : sleeping for 5s - round {repeat_count+1}"
+                                f"Converting video  : sleeping for 5s - round {repeat_count + 1}"
                             )
                             sleep(5)
                             repeat_count += 1
@@ -510,7 +506,7 @@ class Handler:
         return self.run(*args, **kwargs)
 
     def __filter_videos(self, entries: list) -> list:
-        f"""Filter videos based on keyword
+        """Filter videos based on keyword
         :param entries: List containing dict of video id and their titles
         :type entries: list
         :rtype: list
@@ -543,13 +539,13 @@ class Handler:
                 return False, "Duplicate"
             if self.confirm:
                 choice = confirm_from_user(
-                    f">> Re-download : {Fore.GREEN+video_title+Fore.RESET} by {Fore.YELLOW+video_author+Fore.RESET}"
+                    f">> Re-download : {Fore.GREEN + video_title + Fore.RESET} by {Fore.YELLOW + video_author + Fore.RESET}"
                 )
                 print("\n[*] Ok processing...", end="\r")
                 return choice, "User's choice"
         if self.confirm:
             choice = confirm_from_user(
-                f">> Download : {Fore.GREEN+video_title+Fore.RESET} by {Fore.YELLOW+video_author+Fore.RESET}"
+                f">> Download : {Fore.GREEN + video_title + Fore.RESET} by {Fore.YELLOW + video_author + Fore.RESET}"
             )
             print("\n[*] Ok processing...", end="\r")
             return choice, "User's choice"
@@ -566,16 +562,16 @@ class Handler:
                 if query_2.processed:
                     if query_2.vid in self.dropped:
                         continue
-                    if self.author and not self.author.lower() in query_2.a.lower():
+                    if self.author and self.author.lower() not in query_2.a.lower():
                         logging.warning(
-                            f"Dropping {Fore.YELLOW+query_2.title+Fore.RESET} by  {Fore.RED+query_2.a+Fore.RESET}"
+                            f"Dropping {Fore.YELLOW + query_2.title + Fore.RESET} by  {Fore.RED + query_2.a + Fore.RESET}"
                         )
                         continue
                     else:
                         yes_download, reason = self.__verify_item(query_2)
                         if not yes_download:
                             logging.warning(
-                                f"Skipping {Fore.YELLOW+query_2.title+Fore.RESET} by {Fore.MAGENTA+query_2.a+Fore.RESET} -  Reason : {Fore.BLUE+reason+Fore.RESET}"
+                                f"Skipping {Fore.YELLOW + query_2.title + Fore.RESET} by {Fore.MAGENTA + query_2.a + Fore.RESET} -  Reason : {Fore.BLUE + reason + Fore.RESET}"
                             )
                             self.dropped.append(query_2.vid)
                             continue
@@ -604,17 +600,17 @@ class Handler:
                         if query_2.processed:
                             if (
                                 self.author
-                                and not self.author.lower() in query_2.a.lower()
+                                and self.author.lower() not in query_2.a.lower()
                             ):
                                 logging.warning(
-                                    f"Dropping {Fore.YELLOW+query_2.title+Fore.RESET} by  {Fore.RED+query_2.a+Fore.RESET}"
+                                    f"Dropping {Fore.YELLOW + query_2.title + Fore.RESET} by  {Fore.RED + query_2.a + Fore.RESET}"
                                 )
                                 continue
                             else:
                                 yes_download, reason = self.__verify_item(query_2)
                                 if not yes_download:
                                     logging.warning(
-                                        f"Skipping {Fore.YELLOW+query_2.title+Fore.RESET} by {Fore.MAGENTA+query_2.a+Fore.RESET} -  Reason : {Fore.BLUE+reason+Fore.RESET}"
+                                        f"Skipping {Fore.YELLOW + query_2.title + Fore.RESET} by {Fore.MAGENTA + query_2.a + Fore.RESET} -  Reason : {Fore.BLUE + reason + Fore.RESET}"
                                     )
                                     self.dropped.append(query_2.vid)
                                     continue
@@ -810,9 +806,9 @@ class Handler:
         :rtype: None
         """
         if third_dict:
-            assert third_dict.get(
-                "dlink"
-            ), "The video selected does not support that quality, try lower qualities."
+            assert third_dict.get("dlink"), (
+                "The video selected does not support that quality, try lower qualities."
+            )
             if third_dict.get("mess"):
                 logging.warning(third_dict.get("mess"))
 
@@ -848,9 +844,9 @@ class Handler:
                     )
 
             if resume:
-                assert (
-                    size_in_bytes != current_downloaded_size
-                ), f"Download completed for the file in path - '{save_to}'"
+                assert size_in_bytes != current_downloaded_size, (
+                    f"Download completed for the file in path - '{save_to}'"
+                )
 
             size_in_mb = (
                 round(size_in_bytes / 1000000, 2) + current_downloaded_size_in_mb
@@ -914,17 +910,18 @@ mp3_qualities = ["mp3", "m4a", ".m4a", "128kbps", "192kbps", "328kbps"]
 resolvers = ["m4a", "3gp", "mp4", "mp3"]
 media_qualities = mp4_qualities + mp3_qualities
 
+
 def launch_media(filepath):
     """
     Launch media file using default system application
     """
     try:
-        if sys.platform.startswith('darwin'):  # macOS
-            subprocess.call(('open', filepath))
-        elif sys.platform.startswith('win'):  # Windows
+        if sys.platform.startswith("darwin"):  # macOS
+            subprocess.call(("open", filepath))
+        elif sys.platform.startswith("win"):  # Windows
             os.startfile(filepath)
-        elif sys.platform.startswith('linux'):  # Linux
-            subprocess.call(('xdg-open', filepath))
+        elif sys.platform.startswith("linux"):  # Linux
+            subprocess.call(("xdg-open", filepath))
     except Exception as e:
         print(f"Error launching media: {e}")
 
@@ -933,19 +930,18 @@ def confirm_from_user(message, default=False):
     """
     Prompt user for confirmation
     """
-    valid = {"yes": True, "y": True, "ye": True,
-             "no": False, "n": False}
-    
+    valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
+
     if default is None:
         prompt = " [y/n] "
     elif default:
         prompt = " [Y/n] "
     else:
         prompt = " [y/N] "
-    
+
     while True:
         choice = input(message + prompt).lower()
-        if default is not None and choice == '':
+        if default is not None and choice == "":
             return default
         elif choice in valid:
             return valid[choice]
@@ -955,6 +951,7 @@ def confirm_from_user(message, default=False):
 
 # Create CLI app
 app = CLI(name="ytdownloader", help="YouTube Video Downloader CLI")
+
 
 @app.command()
 @option("--author", help="Specify video author/channel")
@@ -967,30 +964,29 @@ app = CLI(name="ytdownloader", help="YouTube Video Downloader CLI")
 @option("--limit", type=int, default=1, help="Total videos to download")
 @option("--keyword", help="Filter videos by keyword")
 @argument("query", help="Video name or YouTube link")
-def download(query, author, timeout, confirm, unique, thread, format, quality, limit, keyword):
+def download(
+    query, author, timeout, confirm, unique, thread, format, quality, limit, keyword
+):
     """Download YouTube videos with advanced options"""
 
     # Create handler with parsed arguments
     handler = Handler(
-        query=query, 
-        author=author, 
-        timeout=timeout, 
-        confirm=confirm, 
-        unique=unique, 
-        thread=thread
+        query=query,
+        author=author,
+        timeout=timeout,
+        confirm=confirm,
+        unique=unique,
+        thread=thread,
     )
 
     # Run download process
-    handler.auto_save(
-        format=format, 
-        quality=quality, 
-        limit=limit, 
-        keyword=keyword
-    )
+    handler.auto_save(format=format, quality=quality, limit=limit, keyword=keyword)
+
 
 # Replace get_args function with swiftcli's argument parsing
 def main():
     app.run()
+
 
 if __name__ == "__main__":
     main()

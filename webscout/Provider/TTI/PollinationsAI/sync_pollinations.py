@@ -3,14 +3,14 @@
 Examples:
     >>> from webscout import PollinationsAI
     >>> provider = PollinationsAI()
-    >>> 
+    >>>
     >>> # Generate a single image
     >>> images = provider.generate("A cool cyberpunk city at night")
     >>> provider.save(images, dir="my_images")
-    >>> 
+    >>>
     >>> # Generate multiple images with different settings
     >>> images = provider.generate(
-    ...     prompt="A majestic dragon", 
+    ...     prompt="A majestic dragon",
     ...     amount=3,
     ...     width=1024,
     ...     height=1024,
@@ -35,11 +35,12 @@ from webscout.litagent import LitAgent
 logger = LitLogger(
     name="PollinationsAI",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    color_scheme=ColorScheme.CYBERPUNK,
 )
 
 # Get a fresh user agent! 🔄
 agent = LitAgent()
+
 
 class PollinationsAI(ImageProvider):
     """Your homie for generating fire images using pollinations.ai! 🎨
@@ -52,7 +53,7 @@ class PollinationsAI(ImageProvider):
         >>> # Generate one image with default model
         >>> image = provider.generate("A futuristic city")
         >>> provider.save(image, "city.jpg")
-        >>> 
+        >>>
         >>> # Generate multiple with specific model
         >>> images = provider.generate(
         ...     prompt="Space station",
@@ -94,15 +95,11 @@ class PollinationsAI(ImageProvider):
         "flux-3d",
         "any-dark",
         "flux-pro",
-        "turbo"
+        "turbo",
     ]
     DEFAULT_MODEL = "flux"
 
-    def __init__(
-        self, 
-        timeout: int = 60, 
-        proxies: Optional[dict] = None
-    ):
+    def __init__(self, timeout: int = 60, proxies: Optional[dict] = None):
         """Initialize your PollinationsAI provider with custom settings
 
         Examples:
@@ -124,7 +121,7 @@ class PollinationsAI(ImageProvider):
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(proxies)
-            
+
         self.timeout = timeout
         self.prompt: str = "AI-generated image - webscout"
         self.image_extension: str = "jpeg"
@@ -173,18 +170,16 @@ class PollinationsAI(ImageProvider):
 
         # Function to add random characters for variety
         def add_variety():
-            return "" if not additives else "".join(choice(punctuation) for _ in range(5))
+            return (
+                "" if not additives else "".join(choice(punctuation) for _ in range(5))
+            )
 
         self.prompt = prompt
         response = []
-        
+
         # Build base URL with parameters
-        base_params = {
-            "width": width,
-            "height": height,
-            "model": model
-        }
-        
+        base_params = {"width": width, "height": height, "model": model}
+
         if negative_prompt:
             base_params["negative"] = negative_prompt
         if seed is not None:
@@ -193,11 +188,15 @@ class PollinationsAI(ImageProvider):
         for _ in range(amount):
             current_prompt = f"{prompt}{add_variety()}"
             params_str = "&".join(f"{k}={v}" for k, v in base_params.items())
-            url = f"{self.image_gen_endpoint.format(prompt=current_prompt)}?{params_str}"
-            
+            url = (
+                f"{self.image_gen_endpoint.format(prompt=current_prompt)}?{params_str}"
+            )
+
             for attempt in range(max_retries):
                 try:
-                    logger.info(f"Generating image {_ + 1}/{amount} with prompt: {current_prompt[:50]}...")
+                    logger.info(
+                        f"Generating image {_ + 1}/{amount} with prompt: {current_prompt[:50]}..."
+                    )
                     resp = self.session.get(url, timeout=self.timeout)
                     resp.raise_for_status()
                     response.append(resp.content)
@@ -205,9 +204,13 @@ class PollinationsAI(ImageProvider):
                     break
                 except RequestException as e:
                     if attempt == max_retries - 1:
-                        logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
+                        logger.error(
+                            f"Failed to generate image after {max_retries} attempts: {e} 😢"
+                        )
                         raise
-                    logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+                    logger.warning(
+                        f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄"
+                    )
                     time.sleep(retry_delay)
 
         return response
@@ -250,18 +253,18 @@ class PollinationsAI(ImageProvider):
 
         saved_paths = []
         timestamp = int(time.time())
-        
+
         for i, image_bytes in enumerate(response):
             if name:
                 filename = f"{filenames_prefix}{name}_{i}.{self.image_extension}"
             else:
                 filename = f"{filenames_prefix}pollinations_{timestamp}_{i}.{self.image_extension}"
-            
+
             filepath = os.path.join(save_dir, filename)
-            
+
             with open(filepath, "wb") as f:
                 f.write(image_bytes)
-            
+
             saved_paths.append(filepath)
             logger.success(f"Saved image to: {filepath} 💾")
 
@@ -277,7 +280,7 @@ if __name__ == "__main__":
             amount=2,
             width=1024,
             height=1024,
-            model="sdxl"
+            model="sdxl",
         )
         paths = provider.save(images, dir="generated_images")
         print(f"Successfully saved images to: {paths}")

@@ -5,18 +5,16 @@ import base64
 
 from httpx import stream
 
-from .model import Model
 
 from .utils import (
     InferenceLock,
-    download_model,
     print_verbose,
     SPECIAL_STYLE,
     assert_type,
     ERROR_STYLE,
     USER_STYLE,
     BOT_STYLE,
-    RESET_ALL
+    RESET_ALL,
 )
 
 from .thread import Thread
@@ -26,7 +24,7 @@ from datetime import datetime, timedelta, UTC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from flask import Flask, logging, render_template, request, Response
+from flask import Flask, render_template, request, Response
 from cryptography.hazmat.primitives.serialization import Encoding
 
 # Color codes for console output
@@ -67,19 +65,22 @@ SSL_CERT_FIRST_TIME_WARNING = (
 ASSETS_FOLDER = os.path.join(os.path.dirname(__file__), "assets")
 MAX_LENGTH_INPUT = 100_000  # Maximum input length (characters)
 
+
 def generate_self_signed_ssl_cert() -> None:
     """Generates a self-signed SSL certificate and key."""
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     public_key = private_key.public_key()
 
     # Certificate details
-    name = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, "XY"),
-        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "DUMMY_STATE"),
-        x509.NameAttribute(NameOID.LOCALITY_NAME, "DUMMY_LOCALITY"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "EZLLAMA LLC"),
-        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-    ])
+    name = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "XY"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "DUMMY_STATE"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "DUMMY_LOCALITY"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "EZLLAMA LLC"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+        ]
+    )
 
     # Certificate builder
     builder = x509.CertificateBuilder(
@@ -98,29 +99,38 @@ def generate_self_signed_ssl_cert() -> None:
     # Sign and save the certificate and key
     certificate = builder.sign(private_key=private_key, algorithm=hashes.SHA256())
     with open(f"{ASSETS_FOLDER}/key.pem", "wb") as f:
-        f.write(private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption(),
-        ))
+        f.write(
+            private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
     with open(f"{ASSETS_FOLDER}/cert.pem", "wb") as f:
         f.write(certificate.public_bytes(Encoding.PEM))
 
+
 def check_for_ssl_cert() -> bool:
     """Checks if SSL certificate and key exist."""
-    return all(os.path.exists(f"{ASSETS_FOLDER}/{file}.pem") for file in ["cert", "key"])
+    return all(
+        os.path.exists(f"{ASSETS_FOLDER}/{file}.pem") for file in ["cert", "key"]
+    )
+
 
 def newline() -> None:
     """Prints a newline to stderr."""
     print("", end="\n", file=sys.stderr, flush=True)
 
+
 def encode(text: str) -> str:
     """Encodes a string to base64."""
     return base64.b64encode(text.encode("utf-8")).decode("utf-8")
 
+
 def decode(text: str) -> str:
     """Decodes a base64 encoded string."""
     return base64.b64decode(text).decode("utf-8")
+
 
 def assert_max_length(text: str) -> None:
     """Asserts that the length of the text is within the allowed limit."""
@@ -129,14 +139,13 @@ def assert_max_length(text: str) -> None:
             f"Input text exceeds maximum length of {MAX_LENGTH_INPUT} characters."
         )
 
+
 def _print_inference_string(text: str) -> None:
     """Prints the inference string to stderr."""
     print(
-        f"{'#' * 80}\n"
-        f"{YELLOW}'''{RESET}{text}{YELLOW}'''{RESET}\n"
-        f"{'#' * 80}",
+        f"{'#' * 80}\n{YELLOW}'''{RESET}{text}{YELLOW}'''{RESET}\n{'#' * 80}",
         file=sys.stderr,
-        flush=True
+        flush=True,
     )
 
 
@@ -177,7 +186,7 @@ class WebUI:
                 f"{YELLOW}{self._log_host}{RESET}:"
                 f"{YELLOW}{self._log_port}{RESET}: {text}",
                 file=sys.stderr,
-                flush=True
+                flush=True,
             )
 
     def _get_context_string(self) -> str:
@@ -203,7 +212,7 @@ class WebUI:
         self._log_host = host
         self._log_port = port
 
-        self.log(f"Starting WebUI instance:")
+        self.log("Starting WebUI instance:")
         self.log(f"   thread.uuid == {self.thread.uuid}")
         self.log(f"   host        == {host}")
         self.log(f"   port        == {port}")
@@ -224,8 +233,10 @@ class WebUI:
 
         @self.app.route("/convo", methods=["GET"])
         def convo():
-            msgs_dict = {i: {encode(msg["role"]): encode(msg["content"])}
-                         for i, msg in enumerate(self.thread.messages)}
+            msgs_dict = {
+                i: {encode(msg["role"]): encode(msg["content"])}
+                for i, msg in enumerate(self.thread.messages)
+            }
             json_convo = json.dumps(msgs_dict)
             return json_convo, 200, {"ContentType": "application/json"}
 
@@ -247,7 +258,7 @@ class WebUI:
                 return "", 200
 
             # Pass the stream variable to the generate function
-            def generate(stream=stream): 
+            def generate(stream=stream):
                 with self.lock:
                     self.thread.add_message("user", prompt)
                     print(f"{GREEN}{prompt}{RESET}", file=sys.stderr)
@@ -258,7 +269,7 @@ class WebUI:
                         token_generator = self.thread.model.stream(
                             inf_str,
                             stops=self.thread.format["stops"],
-                            sampler=self.thread.sampler
+                            sampler=self.thread.sampler,
                         )
                         response = ""
                         for token in token_generator:
@@ -267,21 +278,26 @@ class WebUI:
                                 self.log("Canceling generation from /submit.")
                                 self._cancel_flag = False
                                 return "", 418  # I'm a teapot
-                            
-                            tok_text = token['choices'][0]['text']
+
+                            tok_text = token["choices"][0]["text"]
                             response += tok_text
-                            print(f'{BLUE}{tok_text}{RESET}', end='', flush=True, file=sys.stderr)
+                            print(
+                                f"{BLUE}{tok_text}{RESET}",
+                                end="",
+                                flush=True,
+                                file=sys.stderr,
+                            )
                             yield encode(tok_text) + "\n"
                     else:
                         response = self.thread.model.generate(
                             inf_str,
                             stops=self.thread.format["stops"],
-                            sampler=self.thread.sampler
+                            sampler=self.thread.sampler,
                         )
                         # Simulate streaming by yielding chunks of the content
                         chunk_size = self.stream_chunk_size
                         for i in range(0, len(response), chunk_size):
-                            chunk = response[i:i + chunk_size]
+                            chunk = response[i : i + chunk_size]
                             yield encode(chunk) + "\n"
 
                     self._cancel_flag = False
@@ -298,7 +314,11 @@ class WebUI:
 
         @self.app.route("/get_context_string", methods=["GET"])
         def get_context_string():
-            return json.dumps({"text": encode(self._get_context_string())}), 200, {"ContentType": "application/json"}
+            return (
+                json.dumps({"text": encode(self._get_context_string())}),
+                200,
+                {"ContentType": "application/json"},
+            )
 
         @self.app.route("/remove", methods=["POST"])
         def remove():
@@ -331,7 +351,7 @@ class WebUI:
                         token_generator = self.thread.model.stream(
                             inf_str,
                             stops=self.thread.format["stops"],
-                            sampler=self.thread.sampler
+                            sampler=self.thread.sampler,
                         )
                         response = ""
                         for token in token_generator:
@@ -343,18 +363,18 @@ class WebUI:
 
                             tok_text = token["choices"][0]["text"]
                             response += tok_text
-                            print(f"{BLUE}{tok_text}{RESET}", end='', flush=True)
+                            print(f"{BLUE}{tok_text}{RESET}", end="", flush=True)
                             yield encode(tok_text) + "\n"
                     else:
                         response = self.thread.model.generate(
                             inf_str,
                             stops=self.thread.format["stops"],
-                            sampler=self.thread.sampler
+                            sampler=self.thread.sampler,
                         )
                         # Simulate streaming by yielding chunks of the content
                         chunk_size = self.stream_chunk_size
                         for i in range(0, len(response), chunk_size):
-                            chunk = response[i:i + chunk_size]
+                            chunk = response[i : i + chunk_size]
                             yield encode(chunk) + "\n"
 
                     self._cancel_flag = False
@@ -398,4 +418,3 @@ class WebUI:
             newline()
             self._log_host = None
             self._log_port = None
-

@@ -3,14 +3,14 @@ HFimager - Your go-to provider for generating fire images with HuggingFace! 🔥
 
 Examples:
     >>> from webscout import HFimager
-    >>> 
+    >>>
     >>> # Initialize with your API key
     >>> provider = HFimager(api_token="your-hf-token")
-    >>> 
+    >>>
     >>> # Generate a single image
     >>> images = provider.generate("A shiny red sports car", model="stabilityai/stable-diffusion-xl-base-1.0")
     >>> paths = provider.save(images)
-    >>> 
+    >>>
     >>> # Generate multiple images with parameters
     >>> images = provider.generate(
     ...     prompt="Epic dragon in cyberpunk city",
@@ -27,8 +27,6 @@ Examples:
 
 import os
 import requests
-import io
-from PIL import Image
 from typing import Any, List, Optional, Dict
 from webscout.AIbase import ImageProvider
 from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
@@ -36,11 +34,10 @@ from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
 logger = LitLogger(
-    "HuggingFace",
-    format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+    "HuggingFace", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK
 )
 agent = LitAgent()
+
 
 class HFimager(ImageProvider):
     """Your go-to provider for generating fire images with HuggingFace! 🔥"""
@@ -50,7 +47,7 @@ class HFimager(ImageProvider):
         api_token: str = None,
         timeout: int = 60,
         proxies: dict = {},
-        logging: bool = True
+        logging: bool = True,
     ):
         """Initialize your HuggingFace provider with custom settings! ⚙️
 
@@ -65,7 +62,7 @@ class HFimager(ImageProvider):
         self.headers = {
             "Authorization": f"Bearer {self.api_token}",
             "User-Agent": agent.random(),
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -108,7 +105,9 @@ class HFimager(ImageProvider):
             List[bytes]: Your generated images as bytes
         """
         assert bool(prompt), "Yo fam, prompt can't be empty! 🚫"
-        assert isinstance(amount, int), f"Amount gotta be an integer, not {type(amount)} 🤔"
+        assert isinstance(amount, int), (
+            f"Amount gotta be an integer, not {type(amount)} 🤔"
+        )
         assert amount > 0, "Amount gotta be greater than 0! 📈"
 
         self.prompt = prompt
@@ -138,7 +137,9 @@ class HFimager(ImageProvider):
                 payload["parameters"] = parameters
 
             try:
-                resp = self.session.post(url, headers=self.headers, json=payload, timeout=self.timeout)
+                resp = self.session.post(
+                    url, headers=self.headers, json=payload, timeout=self.timeout
+                )
                 resp.raise_for_status()
                 response.append(resp.content)
                 if self.logging:
@@ -168,7 +169,9 @@ class HFimager(ImageProvider):
         Returns:
             List[str]: Where your images were saved
         """
-        assert isinstance(response, list), f"Response gotta be a list, not {type(response)} 🤔"
+        assert isinstance(response, list), (
+            f"Response gotta be a list, not {type(response)} 🤔"
+        )
         name = self.prompt if name is None else name
 
         filenames = []
@@ -177,9 +180,12 @@ class HFimager(ImageProvider):
             logger.info(f"Saving {len(response)} images... 💾")
 
         for image_bytes in response:
+
             def complete_path():
                 count_value = "" if count == 0 else f"_{count}"
-                return os.path.join(dir, name + count_value + "." + self.image_extension)
+                return os.path.join(
+                    dir, name + count_value + "." + self.image_extension
+                )
 
             while os.path.isfile(complete_path()):
                 count += 1

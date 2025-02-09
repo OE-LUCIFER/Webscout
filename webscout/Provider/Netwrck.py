@@ -1,11 +1,6 @@
-import time
-import uuid
 import requests
-import json
 
 from typing import Any, Dict, Optional, Generator, Union
-from dataclasses import dataclass, asdict
-from datetime import date
 
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
@@ -18,6 +13,7 @@ class Netwrck(Provider):
     """
     A class to interact with the Netwrck.com API. Supports streaming.
     """
+
     greeting = """An unknown multiverse phenomenon occurred, and you found yourself in a dark space. You looked around and found a source of light in a distance. You approached the light and *whoosh*....\nChoose your origin:\na) As a baby who just got birthed, your fate unknown\nb) As an amnesic stranded on an uninhabited island with mysterious ruins\nc) As an abandoned product of a forbidden experiment\nd) As a slave being sold at an auction\ne) Extremely Chaotic Randomizer\nOr, dive into your own fantasy."""
 
     AVAILABLE_MODELS = {
@@ -47,11 +43,13 @@ class Netwrck(Provider):
         system_prompt: str = "You are a helpful assistant.",
         temperature: float = 0.7,
         top_p: float = 0.8,
-        logging: bool = False
+        logging: bool = False,
     ):
         """Initializes the Netwrck API client."""
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {list(self.AVAILABLE_MODELS.keys())}")
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {list(self.AVAILABLE_MODELS.keys())}"
+            )
 
         self.model = model
         self.model_name = self.AVAILABLE_MODELS[model]
@@ -63,28 +61,32 @@ class Netwrck(Provider):
         self.last_response: Dict[str, Any] = {}
         self.temperature = temperature
         self.top_p = top_p
-        
+
         # Initialize LitAgent for user agent generation
         self.agent = LitAgent()
 
         self.headers = {
-            'authority': 'netwrck.com',
-            'accept': '*/*',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/json',
-            'origin': 'https://netwrck.com',
-            'referer': 'https://netwrck.com/',
-            'user-agent': self.agent.random()
+            "authority": "netwrck.com",
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            "origin": "https://netwrck.com",
+            "referer": "https://netwrck.com/",
+            "user-agent": self.agent.random(),
         }
         self.session.headers.update(self.headers)
         self.proxies = proxies or {}
 
         Conversation.intro = (
-            AwesomePrompts().get_act(act, raise_not_found=True, default=None, case_insensitive=True)
+            AwesomePrompts().get_act(
+                act, raise_not_found=True, default=None, case_insensitive=True
+            )
             if act
             else intro or Conversation.intro
         )
-        self.conversation = Conversation(is_conversation, max_tokens, filepath, update_file)
+        self.conversation = Conversation(
+            is_conversation, max_tokens, filepath, update_file
+        )
         self.conversation.history_offset = history_offset
         self.__available_optimizers = (
             method
@@ -93,7 +95,15 @@ class Netwrck(Provider):
         )
 
         # Initialize logger
-        self.logger = LitLogger(name="Netwrck", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+        self.logger = (
+            LitLogger(
+                name="Netwrck",
+                format=LogFormat.MODERN_EMOJI,
+                color_scheme=ColorScheme.CYBERPUNK,
+            )
+            if logging
+            else None
+        )
 
     def ask(
         self,
@@ -106,7 +116,7 @@ class Netwrck(Provider):
         """Sends a prompt to the Netwrck API and returns the response."""
 
         if self.logger:
-             self.logger.debug(f"ask() called with prompt: {prompt}")
+            self.logger.debug(f"ask() called with prompt: {prompt}")
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -125,7 +135,7 @@ class Netwrck(Provider):
             "context": self.system_prompt,
             "examples": [],
             "model_name": self.model_name,
-            "greeting": self.greeting
+            "greeting": self.greeting,
         }
 
         def for_stream():
@@ -144,7 +154,7 @@ class Netwrck(Provider):
                 streaming_text = ""
                 for line in response.iter_lines():
                     if line:
-                        decoded_line = line.decode('utf-8').strip('"')
+                        decoded_line = line.decode("utf-8").strip('"')
                         streaming_text += decoded_line  # Accumulate the text
                         yield {"text": decoded_line}  # Yield each chunk
 
@@ -154,12 +164,16 @@ class Netwrck(Provider):
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"Error communicating with Netwrck: {e}")
-                raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
+                raise exceptions.ProviderConnectionError(
+                    f"Error communicating with Netwrck: {e}"
+                ) from e
 
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"Error communicating with Netwrck: {e}")
-                raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
+                raise exceptions.ProviderConnectionError(
+                    f"Error communicating with Netwrck: {e}"
+                ) from e
 
         def for_non_stream():
             try:
@@ -180,7 +194,9 @@ class Netwrck(Provider):
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"Error communicating with Netwrck: {e}")
-                raise exceptions.ProviderConnectionError(f"Error communicating with Netwrck: {e}") from e
+                raise exceptions.ProviderConnectionError(
+                    f"Error communicating with Netwrck: {e}"
+                ) from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -193,14 +209,14 @@ class Netwrck(Provider):
     ) -> str:
         """Generates a response from the Netwrck API."""
         if self.logger:
-             self.logger.debug(f"chat() called with prompt: {prompt}")
+            self.logger.debug(f"chat() called with prompt: {prompt}")
 
         def for_stream():
             for response in self.ask(
                 prompt,
                 stream=True,
                 optimizer=optimizer,
-                conversationally=conversationally
+                conversationally=conversationally,
             ):
                 yield self.get_message(response)
 
@@ -220,6 +236,7 @@ class Netwrck(Provider):
         """Retrieves message only from response"""
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
+
 
 # Example Usage:
 if __name__ == "__main__":

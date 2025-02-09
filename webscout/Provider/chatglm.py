@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Optional, Generator, List, Union
+from typing import Any, Dict, Generator
 import uuid
 
 from webscout.AIutel import Optimizers
@@ -38,16 +38,16 @@ class ChatGLM(Provider):
         self.last_response = {}
         self.model = model
         self.headers = {
-            'Accept-Language': 'en-US,en;q=0.9',
-            'App-Name': 'chatglm',
-            'Authorization': 'undefined',
-            'Content-Type': 'application/json',
-            'Origin': 'https://chatglm.cn',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-            'X-App-Platform': 'pc',
-            'X-App-Version': '0.0.1',
-            'X-Device-Id': '', #Will be generated each time
-            'Accept': 'text/event-stream',
+            "Accept-Language": "en-US,en;q=0.9",
+            "App-Name": "chatglm",
+            "Authorization": "undefined",
+            "Content-Type": "application/json",
+            "Origin": "https://chatglm.cn",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            "X-App-Platform": "pc",
+            "X-App-Version": "0.0.1",
+            "X-Device-Id": "",  # Will be generated each time
+            "Accept": "text/event-stream",
         }
         self.__available_optimizers = (
             method
@@ -96,8 +96,8 @@ class ChatGLM(Provider):
                 raise exceptions.FailedToGenerateResponseError(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
-        device_id = str(uuid.uuid4()).replace('-', '')
-        self.session.headers.update({'X-Device-Id': device_id})
+        device_id = str(uuid.uuid4()).replace("-", "")
+        self.session.headers.update({"X-Device-Id": device_id})
         payload = {
             "assistant_id": "65940acff94777010aa6b796",
             "conversation_id": "",
@@ -124,25 +124,31 @@ class ChatGLM(Provider):
                     self.api_endpoint, json=payload, stream=True, timeout=self.timeout
                 ) as response:
                     response.raise_for_status()
-                    
+
                     streaming_text = ""
-                    last_processed_content = "" # Track the last processed content
+                    last_processed_content = ""  # Track the last processed content
                     for chunk in response.iter_lines():
                         if chunk:
-                            decoded_chunk = chunk.decode('utf-8')
-                            if decoded_chunk.startswith('data: '):
+                            decoded_chunk = chunk.decode("utf-8")
+                            if decoded_chunk.startswith("data: "):
                                 try:
                                     json_data = json.loads(decoded_chunk[6:])
-                                    parts = json_data.get('parts', [])
+                                    parts = json_data.get("parts", [])
                                     if parts:
-                                        content = parts[0].get('content', [])
+                                        content = parts[0].get("content", [])
                                         if content:
-                                            text = content[0].get('text', '')
-                                            new_text = text[len(last_processed_content):]
+                                            text = content[0].get("text", "")
+                                            new_text = text[
+                                                len(last_processed_content) :
+                                            ]
                                             if new_text:  # Check for new content
                                                 streaming_text += new_text
                                                 last_processed_content = text
-                                                yield new_text if raw else dict(text=new_text)
+                                                yield (
+                                                    new_text
+                                                    if raw
+                                                    else dict(text=new_text)
+                                                )
                                 except json.JSONDecodeError:
                                     continue
 
@@ -156,12 +162,15 @@ class ChatGLM(Provider):
             except json.JSONDecodeError as e:
                 raise exceptions.InvalidResponseError(f"Failed to decode JSON: {e}")
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred: {e}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An unexpected error occurred: {e}"
+                )
 
         def for_non_stream():
             for _ in for_stream():
                 pass
             return self.last_response
+
         return for_stream() if stream else for_non_stream()
 
     def chat(
@@ -199,6 +208,7 @@ class ChatGLM(Provider):
 
 if __name__ == "__main__":
     from rich import print
+
     ai = ChatGLM()
     response = ai.chat(input(">>> "), stream=True)
     for chunk in response:

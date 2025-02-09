@@ -1,5 +1,4 @@
 import requests
-import json
 from typing import Dict, Any
 
 from webscout.AIutel import Optimizers
@@ -7,6 +6,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
+
 
 class AI21(Provider):
     """
@@ -28,7 +28,7 @@ class AI21(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful and informative AI assistant."
+        system_prompt: str = "You are a helpful and informative AI assistant.",
     ):
         """
         Initializes the AI21 Studio API with given parameters.
@@ -46,21 +46,21 @@ class AI21(Provider):
         self.timeout = timeout
         self.last_response = {}
         self.headers = {
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Authorization': f"Bearer {self.api_key}",
-            'Content-Type': 'application/json',
-            'DNT': '1',
-            'Origin': 'https://studio.ai21.com',
-            'Referer': 'https://studio.ai21.com/',
-            'Sec-CH-UA': '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-            'Sec-CH-UA-Mobile': '?0',
-            'Sec-CH-UA-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0',
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "DNT": "1",
+            "Origin": "https://studio.ai21.com",
+            "Referer": "https://studio.ai21.com/",
+            "Sec-CH-UA": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
         }
 
         self.__available_optimizers = (
@@ -107,7 +107,7 @@ class AI21(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "n": 1,
             "max_tokens": self.max_tokens,
@@ -118,7 +118,9 @@ class AI21(Provider):
             "documents": [],
         }
 
-        response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout)
+        response = self.session.post(
+            self.api_endpoint, headers=self.headers, json=payload, timeout=self.timeout
+        )
 
         if not response.ok:
             raise exceptions.FailedToGenerateResponseError(
@@ -166,11 +168,13 @@ class AI21(Provider):
         Extracts the message from the API response.
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response['choices'][0]['message']['content']
+        return response["choices"][0]["message"]["content"]
+
 
 # Example usage
 if __name__ == "__main__":
     from rich import print
+
     ai = AI21(api_key="api_key")
     response = ai.chat(input(">>> "))
     for line in response:

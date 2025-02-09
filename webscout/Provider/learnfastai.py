@@ -36,7 +36,7 @@ class LearnFast(Provider):
         self.session = cloudscraper.create_scraper()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = 'https://autosite.erweima.ai/api/v1/chat'
+        self.api_endpoint = "https://autosite.erweima.ai/api/v1/chat"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
@@ -108,10 +108,7 @@ class LearnFast(Provider):
                 raise Exception(f"Failed to upload image to 0x0.st: {e}") from e
 
     def create_payload(
-        self,
-        session_id: str,
-        conversation_prompt: str,
-        image_url: Optional[str] = None
+        self, session_id: str, conversation_prompt: str, image_url: Optional[str] = None
     ) -> dict:
         """
         Creates the JSON payload for the request.
@@ -122,11 +119,7 @@ class LearnFast(Provider):
         }
         if image_url:
             payload["attachments"] = [
-                {
-                    "fileType": "image/jpeg",
-                    "file": {},
-                    "fileContent": image_url
-                }
+                {"fileType": "image/jpeg", "file": {}, "fileContent": image_url}
             ]
         return payload
 
@@ -177,7 +170,9 @@ class LearnFast(Provider):
             try:
                 image_url = self.upload_image_to_0x0(image_path)
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"Error uploading image: {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Error uploading image: {e}"
+                ) from e
 
         # Create the payload
         payload = self.create_payload(session_id, conversation_prompt, image_url)
@@ -187,7 +182,13 @@ class LearnFast(Provider):
 
         try:
             # Send the POST request with streaming enabled
-            response = self.session.post(self.api_endpoint, headers=self.headers, data=data, stream=True, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint,
+                headers=self.headers,
+                data=data,
+                stream=True,
+                timeout=self.timeout,
+            )
             response.raise_for_status()  # Check for HTTP errors
 
             # Process the streamed response
@@ -198,7 +199,7 @@ class LearnFast(Provider):
                         break
                     try:
                         json_response = json.loads(line)
-                        message = json_response.get('data', {}).get('message', '')
+                        message = json_response.get("data", {}).get("message", "")
                         if message:
                             full_response += message
                             # print(message, end='', flush=True)
@@ -230,7 +231,13 @@ class LearnFast(Provider):
         Returns:
             str: Response generated
         """
-        response = self.ask(prompt, stream, optimizer=optimizer, conversationally=conversationally, image_path=image_path)
+        response = self.ask(
+            prompt,
+            stream,
+            optimizer=optimizer,
+            conversationally=conversationally,
+            image_path=image_path,
+        )
         return self.get_message(response)
 
     def get_message(self, response: dict) -> str:
@@ -245,8 +252,10 @@ class LearnFast(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
+
 if __name__ == "__main__":
     from rich import print
+
     ai = LearnFast()
     response = ai.chat(input(">>> "), image_path=None)
     for chunk in response:

@@ -13,17 +13,18 @@ from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 # Initialize our fire logger 🚀
 logger = LitLogger("DeepInfraImager")
 
+
 class DeepInfraImager(ImageProvider):
     """
     DeepInfra Image Provider - Your go-to for fire AI art! 🎨
-    
+
     >>> # Generate some fire art! 🔥
     >>> imager = DeepInfraImager(logging=True)
     >>> images = imager.generate("Epic dragon breathing fire", amount=2)
     >>> paths = imager.save(images)
     >>> print(paths)
     ['epic_dragon_0.png', 'epic_dragon_1.png']
-    
+
     >>> # Turn off logging for stealth mode 🥷
     >>> quiet_imager = DeepInfraImager(logging=False)
     >>> images = quiet_imager.generate("Cyberpunk city at night")
@@ -35,7 +36,7 @@ class DeepInfraImager(ImageProvider):
         model: str = "black-forest-labs/FLUX-1-schnell",
         timeout: int = 60,
         proxies: dict = {},
-        logging: bool = True
+        logging: bool = True,
     ):
         """Initialize your DeepInfra provider with custom settings! ⚙️
 
@@ -59,7 +60,7 @@ class DeepInfraImager(ImageProvider):
             "Sec-CH-UA-Platform": '"Windows"',
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-site"
+            "Sec-Fetch-Site": "same-site",
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -69,12 +70,20 @@ class DeepInfraImager(ImageProvider):
         self.image_extension: str = "png"
         self.logging = logging
         if self.logging:
-            logger.info("DeepInfraImager initialized! Ready to create some fire art! 🚀")
+            logger.info(
+                "DeepInfraImager initialized! Ready to create some fire art! 🚀"
+            )
 
     def generate(
-        self, prompt: str, amount: int = 1, additives: bool = True, 
-        num_inference_steps: int = 25, guidance_scale: float = 7.5, 
-        width: int = 1024, height: int = 1024, seed: int = None
+        self,
+        prompt: str,
+        amount: int = 1,
+        additives: bool = True,
+        num_inference_steps: int = 25,
+        guidance_scale: float = 7.5,
+        width: int = 1024,
+        height: int = 1024,
+        seed: int = None,
     ) -> List[bytes]:
         """Generate some fire images from your prompt! 🎨
 
@@ -92,7 +101,9 @@ class DeepInfraImager(ImageProvider):
             List[bytes]: Your generated images as bytes
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int), f"Amount should be an integer only not {type(amount)}"
+        assert isinstance(amount, int), (
+            f"Amount should be an integer only not {type(amount)}"
+        )
         assert amount > 0, "Amount should be greater than 0"
 
         ads = lambda: (
@@ -117,13 +128,15 @@ class DeepInfraImager(ImageProvider):
                 "guidance_scale": guidance_scale,
                 "width": width,
                 "height": height,
-                "seed": seed if seed is not None else randint(1, 10000), 
+                "seed": seed if seed is not None else randint(1, 10000),
             }
             try:
-                resp = self.session.post(url=self.image_gen_endpoint, json=payload, timeout=self.timeout)
+                resp = self.session.post(
+                    url=self.image_gen_endpoint, json=payload, timeout=self.timeout
+                )
                 resp.raise_for_status()
                 # Extract base64 encoded image data and decode it
-                image_data = resp.json()['images'][0].split(",")[1]
+                image_data = resp.json()["images"][0].split(",")[1]
                 image_bytes = base64.b64decode(image_data)
                 response.append(image_bytes)
                 if self.logging:
@@ -155,7 +168,9 @@ class DeepInfraImager(ImageProvider):
         Returns:
             List[str]: List of saved filenames
         """
-        assert isinstance(response, list), f"Response should be of {list} not {type(response)}"
+        assert isinstance(response, list), (
+            f"Response should be of {list} not {type(response)}"
+        )
         name = self.prompt if name is None else name
 
         if not os.path.exists(dir):
@@ -169,9 +184,12 @@ class DeepInfraImager(ImageProvider):
         filenames = []
         count = 0
         for image in response:
+
             def complete_path():
                 count_value = "" if count == 0 else f"_{count}"
-                return os.path.join(dir, name + count_value + "." + self.image_extension)
+                return os.path.join(
+                    dir, name + count_value + "." + self.image_extension
+                )
 
             while os.path.isfile(complete_path()):
                 count += 1
@@ -192,7 +210,9 @@ class DeepInfraImager(ImageProvider):
 if __name__ == "__main__":
     bot = DeepInfraImager()
     try:
-        resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+        resp = bot.generate(
+            "A shiny red sports car speeding down a scenic mountain road", 1
+        )
         print(bot.save(resp))
     except Exception as e:
         if bot.logging:

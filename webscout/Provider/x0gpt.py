@@ -10,6 +10,7 @@ from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.litagent import LitAgent
 
+
 class X0GPT(Provider):
     """
     A class to interact with the x0-gpt.devwtf.in API.
@@ -36,7 +37,7 @@ class X0GPT(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful assistant."
+        system_prompt: str = "You are a helpful assistant.",
     ):
         """
         Initializes the X0GPT API with given parameters.
@@ -86,7 +87,7 @@ class X0GPT(Provider):
             "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
-            "user-agent": self.agent.random()  # Use LitAgent to generate a random user agent
+            "user-agent": self.agent.random(),  # Use LitAgent to generate a random user agent
         }
 
         self.__available_optimizers = (
@@ -149,14 +150,20 @@ class X0GPT(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "chatId": uuid4().hex,
-            "namespace": None
+            "namespace": None,
         }
 
         def for_stream():
-            response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint,
+                headers=self.headers,
+                json=payload,
+                stream=True,
+                timeout=self.timeout,
+            )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
@@ -243,11 +250,13 @@ class X0GPT(Provider):
             'Why did the scarecrow win an award? Because he was outstanding in his field!'
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        formatted_text = response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        formatted_text = response["text"].replace("\\n", "\n").replace("\\n\\n", "\n\n")
         return formatted_text
+
 
 if __name__ == "__main__":
     from rich import print
+
     ai = X0GPT(timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

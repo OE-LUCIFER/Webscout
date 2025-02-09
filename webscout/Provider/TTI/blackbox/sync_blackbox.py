@@ -1,5 +1,4 @@
 import requests
-import json
 import uuid
 import os
 import time
@@ -13,17 +12,18 @@ from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
 # Initialize our fire logger 🚀
 logger = LitLogger("BlackboxAIImager")
 
+
 class BlackboxAIImager(ImageProvider):
     """
     BlackboxAI Image Provider - Your go-to for fire AI art! 🎨
-    
+
     >>> # Generate some fire art! 🔥
     >>> imager = BlackboxAIImager(logging=True)
     >>> images = imager.generate("Epic dragon breathing fire", amount=2)
     >>> paths = imager.save(images)
     >>> print(paths)
     ['epic_dragon_0.jpg', 'epic_dragon_1.jpg']
-    
+
     >>> # Turn off logging for stealth mode 🥷
     >>> quiet_imager = BlackboxAIImager(logging=False)
     >>> images = quiet_imager.generate("Cyberpunk city at night")
@@ -43,7 +43,7 @@ class BlackboxAIImager(ImageProvider):
             "Content-Type": "application/json",
             "User-Agent": LitAgent().random(),  # Using our fire random agent! 🔥
             "Origin": "https://www.blackbox.ai",
-            "Referer": "https://www.blackbox.ai/agent/ImageGenerationLV45LJp"
+            "Referer": "https://www.blackbox.ai/agent/ImageGenerationLV45LJp",
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -53,11 +53,12 @@ class BlackboxAIImager(ImageProvider):
         self.image_extension: str = "jpg"
         self.logging = logging
         if self.logging:
-            logger.info("BlackboxAIImager initialized! Ready to create some fire art! 🚀")
+            logger.info(
+                "BlackboxAIImager initialized! Ready to create some fire art! 🚀"
+            )
 
     def generate(
-        self, prompt: str, amount: int = 1,
-        max_retries: int = 3, retry_delay: int = 5
+        self, prompt: str, amount: int = 1, max_retries: int = 3, retry_delay: int = 5
     ) -> List[bytes]:
         """Generate some fire images from your prompt! 🎨
 
@@ -71,7 +72,9 @@ class BlackboxAIImager(ImageProvider):
             List[bytes]: Your generated images as bytes
         """
         assert bool(prompt), "Prompt cannot be null"
-        assert isinstance(amount, int), f"Amount should be an integer only not {type(amount)}"
+        assert isinstance(amount, int), (
+            f"Amount should be an integer only not {type(amount)}"
+        )
         assert amount > 0, "Amount should be greater than 0"
 
         self.prompt = prompt
@@ -83,13 +86,7 @@ class BlackboxAIImager(ImageProvider):
         for _ in range(amount):
             message_id = str(uuid.uuid4())
             payload = {
-                "messages": [
-                    {
-                        "id": message_id,
-                        "content": prompt,
-                        "role": "user"
-                    }
-                ],
+                "messages": [{"id": message_id, "content": prompt, "role": "user"}],
                 "id": message_id,
                 "previewToken": None,
                 "userId": None,
@@ -97,7 +94,7 @@ class BlackboxAIImager(ImageProvider):
                 "agentMode": {
                     "mode": True,
                     "id": "ImageGenerationLV45LJp",
-                    "name": "Image Generation"
+                    "name": "Image Generation",
                 },
                 "trendingAgentMode": {},
                 "isMicMode": False,
@@ -108,12 +105,14 @@ class BlackboxAIImager(ImageProvider):
                 "clickedAnswer3": False,
                 "clickedForceWebSearch": False,
                 "visitFromDelta": False,
-                "mobileClient": False
+                "mobileClient": False,
             }
 
             for attempt in range(max_retries):
                 try:
-                    resp = self.session.post(self.url, json=payload, timeout=self.timeout)
+                    resp = self.session.post(
+                        self.url, json=payload, timeout=self.timeout
+                    )
                     resp.raise_for_status()
                     response_data = resp.text
                     image_url = response_data.split("(")[1].split(")")[0]
@@ -126,11 +125,15 @@ class BlackboxAIImager(ImageProvider):
                 except RequestException as e:
                     if attempt == max_retries - 1:
                         if self.logging:
-                            logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
+                            logger.error(
+                                f"Failed to generate image after {max_retries} attempts: {e} 😢"
+                            )
                         raise
                     else:
                         if self.logging:
-                            logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+                            logger.warning(
+                                f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄"
+                            )
                         time.sleep(retry_delay)
 
         if self.logging:
@@ -155,7 +158,9 @@ class BlackboxAIImager(ImageProvider):
         Returns:
             List[str]: List of saved filenames
         """
-        assert isinstance(response, list), f"Response should be of {list} not {type(response)}"
+        assert isinstance(response, list), (
+            f"Response should be of {list} not {type(response)}"
+        )
         name = self.prompt if name is None else name
 
         if not os.path.exists(dir):
@@ -169,9 +174,12 @@ class BlackboxAIImager(ImageProvider):
         filenames = []
         count = 0
         for image in response:
+
             def complete_path():
                 count_value = "" if count == 0 else f"_{count}"
-                return os.path.join(dir, name + count_value + "." + self.image_extension)
+                return os.path.join(
+                    dir, name + count_value + "." + self.image_extension
+                )
 
             while os.path.isfile(complete_path()):
                 count += 1
@@ -192,7 +200,9 @@ class BlackboxAIImager(ImageProvider):
 if __name__ == "__main__":
     bot = BlackboxAIImager()
     try:
-        resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
+        resp = bot.generate(
+            "A shiny red sports car speeding down a scenic mountain road", 1
+        )
         print(bot.save(resp))
     except Exception as e:
         if bot.logging:
