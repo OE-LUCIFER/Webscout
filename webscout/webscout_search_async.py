@@ -144,13 +144,13 @@ class AsyncWEBS:
             raise RatelimitE(f"{url} {resp.status_code} Ratelimit - Please wait a few minutes before retrying")
         raise WebscoutE(f"{url} return None. {params=} {content=} {data=}")
 
-    async def achat(self, keywords: str, model: str = "gpt-3.5") -> str:
+    async def achat(self, keywords: str, model: str = "gpt-4o-mini") -> str:
         """Initiates async chat session with webscout AI.
 
         Args:
             keywords (str): The initial message or question to send to the AI.
-            model (str): The model to use: "gpt-3.5", "claude-3-haiku", "llama-3-70b", "mixtral-8x7b".
-                Defaults to "gpt-3.5".
+            model (str): The model to use: "gpt-4o-mini", "claude-3-haiku", "llama-3-70b", "mixtral-8x7b", "o3-mini".
+                Defaults to "gpt-4o-mini".
 
         Returns:
             str: The response from the AI.
