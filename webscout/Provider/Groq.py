@@ -16,18 +16,22 @@ class GROQ(Provider):
     """
 
     AVAILABLE_MODELS = [
-        "llama-3.1-405b-reasoning",
-        "llama-3.1-70b-versatile",
-        "llama-3.1-8b-instant",
-        "llama3-groq-70b-8192-tool-use-preview",
-        "llama3-groq-8b-8192-tool-use-preview",
-        "llama-guard-3-8b",
+        # "whisper-large-v3",
         "llama3-70b-8192",
-        "llama3-8b-8192",
-        "mixtral-8x7b-32768",
-        "gemma-7b-it",
+        "llama-3.2-3b-preview",
         "gemma2-9b-it",
-        "whisper-large-v3"
+        "llama-3.2-11b-vision-preview",
+        "llama3-8b-8192",
+        "llama-3.3-70b-versatile",
+        "deepseek-r1-distill-llama-70b",
+        # "distil-whisper-large-v3-en",
+        "mixtral-8x7b-32768",
+        "llama-3.3-70b-specdec",
+        "llama-3.2-90b-vision-preview",
+        "llama-3.2-1b-preview",
+        # "whisper-large-v3-turbo",
+        "llama-3.1-8b-instant",
+        "llama-guard-3-8b"
     ]
 
     def __init__(
@@ -337,18 +341,22 @@ class AsyncGROQ(AsyncProvider):
     """
 
     AVAILABLE_MODELS = [
-        "llama-3.1-405b-reasoning",
-        "llama-3.1-70b-versatile",
-        "llama-3.1-8b-instant",
-        "llama3-groq-70b-8192-tool-use-preview",
-        "llama3-groq-8b-8192-tool-use-preview",
-        "llama-guard-3-8b",
+        # "whisper-large-v3",
         "llama3-70b-8192",
-        "llama3-8b-8192",
-        "mixtral-8x7b-32768",
-        "gemma-7b-it",
+        "llama-3.2-3b-preview",
         "gemma2-9b-it",
-        "whisper-large-v3"
+        "llama-3.2-11b-vision-preview",
+        "llama3-8b-8192",
+        "llama-3.3-70b-versatile",
+        "deepseek-r1-distill-llama-70b",
+        # "distil-whisper-large-v3-en",
+        "mixtral-8x7b-32768",
+        "llama-3.3-70b-specdec",
+        "llama-3.2-90b-vision-preview",
+        "llama-3.2-1b-preview",
+        # "whisper-large-v3-turbo",
+        "llama-3.1-8b-instant",
+        "llama-guard-3-8b"
     ]
 
     def __init__(
