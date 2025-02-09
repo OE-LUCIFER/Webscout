@@ -2,8 +2,24 @@
 apt-get update
 apt-get install -y pkg-config libcairo2-dev
 
-# Fix pygetwindow import
-sed -i 's/import pygetwindow as gw/try:\n    import pygetwindow as gw\nexcept NotImplementedError:\n    gw = None/' webscout/Extra/autocoder/rawdog.py
+# Fix pygetwindow imports in both files
+cat > webscout/Extra/autocoder/rawdog.py.new << 'EOF'
+try:
+    import pygetwindow as gw
+except NotImplementedError:
+    gw = None
+EOF
+cat webscout/Extra/autocoder/rawdog.py | grep -v "import pygetwindow" >> webscout/Extra/autocoder/rawdog.py.new
+mv webscout/Extra/autocoder/rawdog.py.new webscout/Extra/autocoder/rawdog.py
+
+cat > webscout/Extra/autocoder/autocoder_utiles.py.new << 'EOF'
+try:
+    import pygetwindow as gw
+except NotImplementedError:
+    gw = None
+EOF
+cat webscout/Extra/autocoder/autocoder_utiles.py | grep -v "import pygetwindow" >> webscout/Extra/autocoder/autocoder_utiles.py.new
+mv webscout/Extra/autocoder/autocoder_utiles.py.new webscout/Extra/autocoder/autocoder_utiles.py
 
 # Install Python dependencies
 pip3 install setuptools wheel pip
