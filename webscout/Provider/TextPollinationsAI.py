@@ -47,7 +47,7 @@ class TextPollinationsAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "openai",
+        model: str = "openai-large",
         system_prompt: str = "You are a helpful AI assistant.",
     ):
         """Initializes the TextPollinationsAI API client."""

@@ -1,3 +1,4 @@
+
 import cloudscraper
 import json
 import re
@@ -7,7 +8,7 @@ from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
-from typing import Dict, Union, Any
+from typing import Dict, Union, Any, Optional
 from webscout import LitAgent
 from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
 
@@ -35,26 +36,6 @@ class PiAI(Provider):
     ):
         """
         Initializes the PiAI provider with specified parameters.
-
-        Args:
-            is_conversation (bool): Whether to maintain conversation history
-            max_tokens (int): Maximum number of tokens in response
-            timeout (int): Request timeout in seconds
-            intro (str): Custom introduction message
-            filepath (str): Path to save conversation history
-            update_file (bool): Whether to update conversation history file
-            proxies (dict): Proxy configuration
-            history_offset (int): Conversation history limit
-            act (str): Custom personality/act for the AI
-            logging (bool): Enable debug logging
-
-        Examples:
-            >>> ai = PiAI(logging=True)
-            >>> ai.ask("What's the weather today?", "Alice")
-            Sends a prompt to Pi.ai and returns the response.
-
-            >>> ai.chat("Tell me a joke", voice_name="William")
-            Initiates a chat with Pi.ai using the provided prompt.
         """
         self.scraper = cloudscraper.create_scraper()
         self.url = 'https://pi.ai/api/chat'
@@ -115,30 +96,19 @@ class PiAI(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
-        # Initialize logger
         self.logger = LitLogger(name="PiAI", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
         
         self.knowledge_cutoff = "December 2023"
         
-        # Initialize conversation ID
         if self.is_conversation:
             self.start_conversation()
 
         if self.logger:
-            self.logger.debug("PiAI instance initialized")
+            self.logger.info("PiAI instance initialized successfully")
 
     def start_conversation(self) -> str:
         """
         Initializes a new conversation and returns the conversation ID.
-
-        Returns:
-            str: The conversation ID from Pi.ai
-
-        Examples:
-            >>> ai = PiAI()
-            >>> conversation_id = ai.start_conversation()
-            >>> print(conversation_id)
-            'abc123xyz'
         """
         if self.logger:
             self.logger.debug("Starting new conversation")
@@ -151,52 +121,34 @@ class PiAI(Provider):
             timeout=self.timeout
         )
         
-        if not response.ok and self.logger:
-            self.logger.error(f"Failed to start conversation: {response.status_code}")
+        if not response.ok:
+            if self.logger:
+                self.logger.error(f"Failed to start conversation. Status code: {response.status_code}")
+            raise Exception(f"Failed to start conversation: {response.status_code}")
             
         data = response.json()
         self.conversation_id = data['conversations'][0]['sid']
         
         if self.logger:
-            self.logger.debug(f"Conversation started with ID: {self.conversation_id}")
+            self.logger.info(f"Conversation started successfully with ID: {self.conversation_id}")
             
         return self.conversation_id
 
     def ask(
         self,
         prompt: str,
-        voice_name:str,
+        voice_name: Optional[str] = None,
         stream: bool = False,
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-        verbose:bool = None,
-        output_file:str = None
+        output_file: str = None
     ) -> dict:
         """
         Interact with Pi.ai by sending a prompt and receiving a response.
-
-        Args:
-            prompt (str): The prompt to be sent to Pi.ai
-            voice_name (str): The name of the voice to use for audio responses
-            stream (bool): Flag for streaming response
-            raw (bool): If True, returns the raw response as received
-            optimizer (str): Name of the prompt optimizer to use
-            conversationally (bool): If True, chat conversationally when using optimizer
-            verbose (bool): If True, provides detailed output
-            output_file (str): File path to save the output
-
-        Returns:
-            dict: A dictionary containing the AI's response
-
-        Examples:
-            >>> ai = PiAI(logging=True)
-            >>> response = ai.ask("Hello!", "Alice", verbose=True)
-            >>> print(response['text'])
-            'Hi! How can I help you today?'
         """
         if self.logger:
-            self.logger.debug(f"ask() called with prompt: {prompt}, voice: {voice_name}")
+            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}... Voice: {voice_name}")
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -206,7 +158,7 @@ class PiAI(Provider):
                 )
             else:
                 if self.logger:
-                    self.logger.error(f"Invalid optimizer: {optimizer}")
+                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
@@ -217,25 +169,44 @@ class PiAI(Provider):
         }
 
         def for_stream():
-            response = self.scraper.post(self.url, headers=self.headers, cookies=self.cookies, json=data, stream=True, timeout=self.timeout)
+            response = self.scraper.post(
+                self.url, 
+                headers=self.headers, 
+                cookies=self.cookies, 
+                json=data, 
+                stream=True, 
+                timeout=self.timeout
+            )
+            
+            if not response.ok:
+                if self.logger:
+                    self.logger.error(f"API request failed. Status code: {response.status_code}")
+                raise Exception(f"API request failed: {response.status_code}")
+
             output_str = response.content.decode('utf-8')
             sids = re.findall(r'"sid":"(.*?)"', output_str)
             second_sid = sids[1] if len(sids) >= 2 else None
-            #Start the audio download in a separate thread
-            threading.Thread(target=self.download_audio_threaded, args=(voice_name, second_sid, verbose, output_file)).start()
+
+            if voice_name and second_sid:
+                threading.Thread(
+                    target=self.download_audio_threaded, 
+                    args=(voice_name, second_sid, output_file)
+                ).start()
 
             streaming_text = ""
             for line in response.iter_lines(decode_unicode=True):
                 if line.startswith("data: "):
-                    json_data = line[6:]
                     try:
-                        parsed_data = json.loads(json_data)
+                        parsed_data = json.loads(line[6:])
                         if 'text' in parsed_data:
                             streaming_text += parsed_data['text']
                             resp = dict(text=streaming_text)
                             self.last_response.update(resp)
                             yield parsed_data if raw else resp
-                    except:continue
+                    except json.JSONDecodeError:
+                        if self.logger:
+                            self.logger.warning("Failed to parse JSON from stream")
+                        continue
 
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -251,44 +222,30 @@ class PiAI(Provider):
     def chat(
         self,
         prompt: str,
-        voice_name: str = "Alice",
+        voice_name: Optional[str] = None,
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-        verbose:bool = True,
-        output_file:str = "PiAi.mp3"
+        output_file: str = "PiAi.mp3"
     ) -> str:
         """
         Generates a response based on the provided prompt.
-
-        Args:
-            prompt (str): Input prompt for generating response
-            voice_name (str): Voice to use for audio response
-            stream (bool): Enable response streaming
-            optimizer (str): Prompt optimizer to use
-            conversationally (bool): Enable conversational mode with optimizer
-            verbose (bool): Enable verbose output
-            output_file (str): Audio output file path
-
-        Returns:
-            str: The generated response
-
-        Examples:
-            >>> ai = PiAI(logging=True)
-            >>> response = ai.chat("Tell me a joke", voice_name="William")
-            >>> print(response)
-            'Why did the scarecrow win an award? Because he was outstanding in his field!'
         """
         if self.logger:
-            self.logger.debug(f"chat() called with prompt: {prompt}, voice: {voice_name}")
+            self.logger.debug(f"Chat request initiated - Prompt: {prompt[:50]}...")
 
-        assert (
-            voice_name in self.AVAILABLE_VOICES
-        ), f"Voice '{voice_name}' not one of [{', '.join(self.AVAILABLE_VOICES.keys())}]"
+        if voice_name and voice_name not in self.AVAILABLE_VOICES:
+            if self.logger:
+                self.logger.error(f"Invalid voice requested: {voice_name}")
+            raise ValueError(f"Voice '{voice_name}' not one of [{', '.join(self.AVAILABLE_VOICES.keys())}]")
+
         def for_stream():
             for response in self.ask(
-                prompt, voice_name, True, optimizer=optimizer, conversationally=conversationally,
-                verbose=verbose,
+                prompt, 
+                voice_name, 
+                True, 
+                optimizer=optimizer, 
+                conversationally=conversationally,
                 output_file=output_file
             ):
                 yield self.get_message(response).encode('utf-8').decode('utf-8')
@@ -301,7 +258,6 @@ class PiAI(Provider):
                     False,
                     optimizer=optimizer,
                     conversationally=conversationally,
-                    verbose=verbose,
                     output_file=output_file
                 )
             ).encode('utf-8').decode('utf-8')
@@ -309,51 +265,50 @@ class PiAI(Provider):
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
-        """Retrieves message only from response
-
-        Args:
-            response (dict): Response generated by `self.ask`
-
-        Returns:
-            str: Message extracted
-        """
+        """Retrieves message only from response"""
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
-    def download_audio_threaded(self, voice_name: str, second_sid: str, verbose:bool, output_file:str) -> None:
-        """Downloads audio in a separate thread.
-
-        Args:
-            voice_name (str): The name of the desired voice.
-            second_sid (str): The message SID for the audio request.
-            verbose (bool): Flag to indicate if verbose output is desired.
-            output_file (str): The file path where the audio will be saved.
-        """
+    def download_audio_threaded(self, voice_name: str, second_sid: str, output_file: str) -> None:
+        """Downloads audio in a separate thread."""
         if self.logger:
-            self.logger.debug(f"Downloading audio with voice: {voice_name}")
+            self.logger.debug(f"Starting audio download - Voice: {voice_name}, SID: {second_sid}")
 
         params = {
             'mode': 'eager',
             'voice': f'voice{self.AVAILABLE_VOICES[voice_name]}',
             'messageSid': second_sid,
         }
+        
         try:
-            audio_response = self.scraper.get('https://pi.ai/api/chat/voice', params=params, cookies=self.cookies, headers=self.headers, timeout=self.timeout)
-            if not audio_response.ok and self.logger:
-                self.logger.error(f"Audio download failed: {audio_response.status_code}")
+            audio_response = self.scraper.get(
+                'https://pi.ai/api/chat/voice', 
+                params=params, 
+                cookies=self.cookies, 
+                headers=self.headers, 
+                timeout=self.timeout
+            )
+            
+            if not audio_response.ok:
+                if self.logger:
+                    self.logger.error(f"Audio download failed. Status code: {audio_response.status_code}")
+                return
                 
-            audio_response.raise_for_status()  # Raise an exception for bad status codes
+            audio_response.raise_for_status()
+            
             with open(output_file, "wb") as file:
                 file.write(audio_response.content)
-            if verbose:print("\nAudio file downloaded successfully.")
+                
+            if self.logger:
+                self.logger.info(f"Audio file successfully downloaded to: {output_file}")
+                
         except requests.exceptions.RequestException as e:
             if self.logger:
-                self.logger.error(f"Audio download failed: {e}")
-            if verbose:print(f"\nFailed to download audio file. Error: {e}")
+                self.logger.error(f"Audio download failed: {str(e)}")
 
 if __name__ == '__main__':
     from rich import print
-    ai = PiAI()  
-    response = ai.chat(input(">>> "), stream=True, verbose=False)
+    ai = PiAI(logging=True)
+    response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

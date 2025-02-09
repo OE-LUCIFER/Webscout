@@ -257,6 +257,6 @@ if __name__ == "__main__":
 
     ai = YEPCHAT(logging=False)
 
-    response = ai.chat("hi", stream=True)
+    response = ai.chat("how many r in 'strawberry'", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
