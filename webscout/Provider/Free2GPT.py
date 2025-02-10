@@ -1,19 +1,35 @@
-import requests
-import uuid
-import json
+
+#!/usr/bin/env python3
+"""
+A merged API client for Free2GPT that supports both GPT and Claude variants
+in a non-streaming manner. The client sends requests to the appropriate endpoint
+based on the chosen variant and returns the complete response as text.
+
+Usage:
+    python Free2GPT.py
+
+Select the variant by passing the 'variant' parameter in the constructor:
+    variant="claude"  --> Uses https://claude3.free2gpt.xyz/api/generate
+    variant="gpt"     --> Uses https://chat1.free2gpt.com/api/generate
+"""
+
+from typing import Optional, Dict
 import time
+import json
+import requests
 from hashlib import sha256
 
-from webscout.AIutel import Optimizers
-from webscout.AIutel import Conversation
-from webscout.AIutel import AwesomePrompts
+from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
+from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
 from webscout import LitAgent
+
 
 class Free2GPT(Provider):
     """
-    A class to interact with the Free2GPT API.
+    A class to interact with the Free2GPT API in a non-streaming way.
+    Supports both GPT and Claude variants via the 'variant' parameter.
     """
 
     def __init__(
@@ -21,35 +37,43 @@ class Free2GPT(Provider):
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         system_prompt: str = "You are a helpful AI assistant.",
+        variant: str = "claude"  # "claude" or "gpt"
     ):
         """
-        Initializes the Free2GPT API with given parameters.
+        Initializes the Free2GPT API client.
 
         Args:
-            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
-            max_tokens (int, optional): Maximum number of tokens to be generated upon completion. Defaults to 600.
-            timeout (int, optional): Http request timeout. Defaults to 30.
-            intro (str, optional): Conversation introductory prompt. Defaults to None.
-            filepath (str, optional): Path to file containing conversation history. Defaults to None.
-            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
-            proxies (dict, optional): Http request proxies. Defaults to {}.
-            history_offset (int, optional): Limit conversation history to this number of last texts. Defaults to 10250.
-            act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
-            system_prompt (str, optional): System prompt for Free2GPT. 
-                                   Defaults to "You are a helpful AI assistant.".
+            is_conversation (bool): Enable conversational mode. Defaults to True.
+            max_tokens (int): Maximum tokens to generate. Defaults to 600.
+            timeout (int): HTTP request timeout. Defaults to 30.
+            intro (str, optional): Introductory prompt for the conversation. Defaults to None.
+            filepath (str, optional): Path to conversation history file. Defaults to None.
+            update_file (bool): Whether to update the conversation file. Defaults to True.
+            proxies (dict): HTTP proxy settings. Defaults to empty dict.
+            history_offset (int): Limit for conversation history. Defaults to 10250.
+            act (str, optional): Awesome prompt key/index. Defaults to None.
+            system_prompt (str): System prompt. Defaults to "You are a helpful AI assistant.".
+            variant (str): Select API variant: "claude" or "gpt". Defaults to "claude".
         """
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://chat1.free2gpt.com/api/generate"
-        self.stream_chunk_size = 64
+
+        # Select API endpoint and header origins based on variant.
+        if variant.lower() == "gpt":
+            self.api_endpoint = "https://chat1.free2gpt.com/api/generate"
+            origin = "https://chat1.free2gpt.co"
+        else:
+            self.api_endpoint = "https://claude3.free2gpt.xyz/api/generate"
+            origin = "https://claude3.free2gpt.xyz"
+
         self.timeout = timeout
         self.last_response = {}
         self.system_prompt = system_prompt
@@ -59,8 +83,8 @@ class Free2GPT(Provider):
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "text/plain;charset=UTF-8",
             "dnt": "1",
-            "origin": "https://chat1.free2gpt.co",
-            "referer": "https://chat1.free2gpt.co",
+            "origin": origin,
+            "referer": origin,
             "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
@@ -69,13 +93,16 @@ class Free2GPT(Provider):
             "sec-fetch-site": "same-origin",
             "user-agent": LitAgent().random(),
         }
+        self.session.headers.update(self.headers)
+        self.session.proxies = proxies
 
+        # Prepare available optimizers from Optimizers module.
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        self.session.headers.update(self.headers)
+
         Conversation.intro = (
             AwesomePrompts().get_act(
                 act, raise_not_found=True, default=None, case_insensitive=True
@@ -83,39 +110,48 @@ class Free2GPT(Provider):
             if act
             else intro or Conversation.intro
         )
-        self.conversation = Conversation(
-            is_conversation, self.max_tokens_to_sample, filepath, update_file
-        )
+        self.conversation = Conversation(is_conversation, self.max_tokens_to_sample, filepath, update_file)
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
 
-    def generate_signature(self, time: int, text: str, secret: str = ""):
-        message = f"{time}:{text}:{secret}"
+    def generate_signature(self, time_val: int, text: str, secret: str = "") -> str:
+        """
+        Generates a signature for the request.
+
+        Args:
+            time_val (int): Timestamp value.
+            text (str): Text to sign.
+            secret (str, optional): Optional secret. Defaults to "".
+
+        Returns:
+            str: Hexadecimal signature.
+        """
+        message = f"{time_val}:{text}:{secret}"
         return sha256(message.encode()).hexdigest()
 
     def ask(
         self,
         prompt: str,
-        stream: bool = False,
+        stream: bool = False,  # Ignored; always non-streaming.
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> dict:
-        """Chat with AI
+    ) -> Dict[str, any]:
+        """
+        Sends a prompt to the API in a non-streaming manner.
 
         Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            raw (bool, optional): Stream back raw response as received. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            prompt (str): The prompt text.
+            stream (bool): Ignored; response is always non-streamed.
+            raw (bool): Whether to return the raw response. Defaults to False.
+            optimizer (str, optional): Optimizer name. Defaults to None.
+            conversationally (bool): Whether to use conversational optimization. Defaults to False.
+
         Returns:
-           dict : {}
-        ```json
-        {
-           "text" : "How may I assist you today?"
-        }
-        ```
+            dict: A dictionary containing the generated text.
+                  Example:
+                  {
+                      "text": "How may I assist you today?"
+                  }
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -124,111 +160,82 @@ class Free2GPT(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {list(self.__available_optimizers)}")
 
-        # Generate timestamp
+        # Generate timestamp and signature.
         timestamp = int(time.time() * 1e3)
-
-        # Generate signature
         signature = self.generate_signature(timestamp, conversation_prompt)
 
         payload = {
             "messages": [
-                {
-                    "role": "system",
-                    "content": self.system_prompt
-                },
-                {
-                    "role": "user",
-                    "content": conversation_prompt
-                }
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": conversation_prompt},
             ],
             "time": timestamp,
             "pass": None,
-            "sign": signature
+            "sign": signature,
         }
 
-        def for_stream():
-            try:
-                # Send the POST request with streaming enabled
-                with requests.post(self.api_endpoint, headers=self.headers, data=json.dumps(payload), stream=True) as response:
-                    response.raise_for_status()
-                    
-                    full_response = ""
-                    for chunk in response.iter_content(chunk_size=self.stream_chunk_size):
-                        if chunk:
-                            full_response += chunk.decode('utf-8')
-                            yield chunk.decode('utf-8') if raw else dict(text=chunk.decode('utf-8'))
-
-                    self.last_response.update(dict(text=full_response))
-                    self.conversation.update_chat_history(
-                        prompt, self.get_message(self.last_response)
-                    )
-
-            except requests.exceptions.RequestException as e:
-                raise exceptions.FailedToGenerateResponseError(f"An error occurred: {e}") 
-        
-        def for_non_stream():
-            for _ in for_stream():
-                pass
+        try:
+            response = requests.post(
+                self.api_endpoint,
+                headers=self.headers,
+                data=json.dumps(payload),
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            full_response = response.text
+            self.last_response.update(dict(text=full_response))
+            self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
             return self.last_response
-
-        return for_stream() if stream else for_non_stream()
+        except requests.exceptions.RequestException as e:
+            raise exceptions.FailedToGenerateResponseError(f"An error occurred: {e}")
 
     def chat(
         self,
         prompt: str,
-        stream: bool = False,
-        optimizer: str = None,
+        stream: bool = False,  # Ignored; always non-streaming.
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
     ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
         """
-
-        def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                )
-            )
-
-        return for_stream() if stream else for_non_stream()
-
-    def get_message(self, response: dict) -> str:
-        """Retrieves message only from response
+        Sends a prompt and returns the generated response as a string.
 
         Args:
-            response (dict): Response generated by `self.ask`
+            prompt (str): The prompt to send.
+            stream (bool): Ignored; response is always non-streamed.
+            optimizer (str, optional): Optimizer name. Defaults to None.
+            conversationally (bool): Whether to use conversational optimization. Defaults to False.
 
         Returns:
-            str: Message extracted
+            str: Generated response.
         """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+        response = self.ask(
+            prompt,
+            stream=False,
+            optimizer=optimizer,
+            conversationally=conversationally,
+        )
+        return self.get_message(response)
+
+    def get_message(self, response: Dict[str, any]) -> str:
+        """
+        Extracts the message text from the API response.
+
+        Args:
+            response (dict): The API response.
+
+        Returns:
+            str: Extracted message text.
+        """
+        assert isinstance(response, dict), "Response should be a dictionary"
         return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
 
 
 if __name__ == "__main__":
     from rich import print
-
-    ai = Free2GPT(timeout=5000)
-    response = ai.chat("write a poem about AI", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    prompt_input = input(">>> ")
+    # Choose variant: "claude" or "gpt"
+    client = Free2GPT(variant="gpt")
+    result = client.chat(prompt_input)
+    print(result)
