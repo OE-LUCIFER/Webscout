@@ -64,8 +64,10 @@ from .hermes import *
 from .TextPollinationsAI import *
 from .Glider import *
 from .dgaf import *
+from .ChatGPTGratis import *
 __all__ = [
     'LLAMA',
+    'ChatGPTGratis',
     'DGAFAI',
     'TextPollinationsAI',
     'GliderAI',
