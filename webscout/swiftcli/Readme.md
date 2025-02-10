@@ -185,48 +185,41 @@ def process(input: str, output: str):
 ## 🎮 Pro Tips
 
 1. **Auto Help Text**: Use docstrings for automatic help messages
-   ```python
-   @app.command()
-   def awesome():
-       """
-       Does something awesome
-       
-       Options:
-           --format: Output format (json/yaml)
-       """
-       pass
-   ```
+
+```python
+@app.command()
+def awesome():
+    """
+    Does something awesome
+    
+    Options:
+        --format: Output format (json/yaml)
+    """
+    pass
+```
 
 2. **Rich Output**: Use rich console for fancy output
-   ```python
-   from rich.console import Console
-   console = Console()
-   
-   @app.command()
-   def fancy():
-       """Print fancy output"""
-       console.print("[bold red]Error![/] Something went wrong!")
-   ```
+
+```python
+
+from rich.console import Console
+console = Console()
+
+@app.command()
+def fancy():
+    """Print fancy output"""
+    console.print("[bold red]Error![/] Something went wrong!")
+```
 
 3. **Dynamic Completion**: Add shell completion
-   ```python
-   @app.command()
-   def complete():
-       """Command with completion"""
-       pass
-   
-   @complete.completion()
-   def complete_options(ctx, incomplete):
-       return ["option1", "option2"]
-   ```
 
-## 🔥 Why SwiftCLI?
+```python
+@app.command()
+def complete():
+    """Command with completion"""
+    pass
 
-- ⚡ Lightning fast development
-- 🎨 Beautiful output out of the box
-- 🧠 Smart command organization
-- 🔌 Extensible plugin system
-- 💪 Type hints and validation
-- 🚀 Modern Python practices
-
-Made with 💖 by the HelpingAI team
+@complete.completion()
+def complete_options(ctx, incomplete):
+    return ["option1", "option2"]
+```

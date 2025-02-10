@@ -61,7 +61,6 @@ setup(
             "pyreqwest_impersonate",
             "gradio_client",
             "psutil",
-            "yaspin",
             "pygetwindow",
         ],
 
