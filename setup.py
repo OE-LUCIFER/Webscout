@@ -47,7 +47,7 @@ setup(
             "PyYAML",
             "tls_client",
             "clipman",
-            "playsound",
+            "playsound==1.2.2",
             "ollama",
             "pillow",
             "bson",
