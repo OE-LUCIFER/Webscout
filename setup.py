@@ -62,6 +62,7 @@ setup(
             "gradio_client",
             "psutil",
             "pygetwindow",
+            "aiohttp",
         ],
 
     entry_points={
