@@ -65,8 +65,10 @@ from .TextPollinationsAI import *
 from .Glider import *
 from .dgaf import *
 from .ChatGPTGratis import *
+from .QwenLM import *
 __all__ = [
     'LLAMA',
+    'QwenLM',
     'ChatGPTGratis',
     'DGAFAI',
     'TextPollinationsAI',
