@@ -66,8 +66,10 @@ from .Glider import *
 from .dgaf import *
 from .ChatGPTGratis import *
 from .QwenLM import *
+from .granite import *
 __all__ = [
     'LLAMA',
+    'IBMGranite',
     'QwenLM',
     'ChatGPTGratis',
     'DGAFAI',
