@@ -82,13 +82,18 @@ class QwenLM(Provider):
             "content-type": "application/json",
             "origin": "https://chat.qwenlm.ai",
             "referer": "https://chat.qwenlm.ai/",
-            "user-agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                           "AppleWebKit/537.36 (KHTML, like Gecko) "
-                           "Chrome/106.0.0.0 Safari/537.36"),
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
             "authorization": f"Bearer {self.token}" if self.token else '',
         }
         self.session.headers.update(self.headers)
         self.session.proxies = proxies
+        self.chat_type = "t2t"  # search - used WEB, t2t - chatbot, t2i - image_gen
+        if self.chat_type != "t2t":
+            AVAILABLE_MODELS = [
+                'qwen-plus-latest', 'qvq-72b-preview',
+                'qvq-32b-preview', 'qwen-turbo-latest',
+                'qwen-max-latest'
+            ]
 
         self.__available_optimizers = (
             method
@@ -168,6 +173,7 @@ class QwenLM(Provider):
                 )
 
         payload = {
+            'chat_type': self.chat_type,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": conversation_prompt}
@@ -234,13 +240,35 @@ class QwenLM(Provider):
                 self.logger.debug("Finished processing stream response")
 
         def for_non_stream() -> Dict[str, Any]:
+            """
+            Handles non-streaming responses by aggregating all streamed chunks into a single string.
+            """
             if self.logger:
                 self.logger.debug("Processing non-streaming request")
-            for _ in for_stream():
-                pass
-            return self.last_response
+
+            # Initialize an empty string to accumulate the full response
+            full_response = ""
+
+            # Iterate through the stream generator and accumulate the text
+            for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):
+                if isinstance(response, dict):  # Check if the response is a dictionary
+                    full_response += response.get("text", "")  # Extract and append the "text" field
+                elif isinstance(response, str):  # If the response is a string, directly append it
+                    full_response += response
+
+            # Ensure last_response is updated with the aggregated text
+            self.last_response.update({"text": full_response})
+
+            # Update conversation history with the final response
+            self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
+
+            if self.logger:
+                self.logger.debug(f"Non-streaming response: {full_response}")
+
+            return {"text": full_response}  # Return the dictionary containing the full response
 
         return for_stream() if stream else for_non_stream()
+
 
     def chat(
         self,
@@ -271,7 +299,9 @@ class QwenLM(Provider):
 if __name__ == "__main__":
     from rich import print
     # Enable logging for a test run
-    ai = QwenLM(cookies_path="cookies.json", logging=True)
-    response = ai.chat(input(">>> "), stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    ai = QwenLM(cookies_path="cookies.json", logging=False)
+    response = ai.chat(input(">>> "), stream=False)
+    ai.chat_type = "search"
+    print(response)
+    # for chunk in response:
+    #     print(chunk, end="", flush=True)
