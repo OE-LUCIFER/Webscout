@@ -250,11 +250,15 @@ class QwenLM(Provider):
             full_response = ""
 
             # Iterate through the stream generator and accumulate the text
-            for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):
-                if isinstance(response, dict):  # Check if the response is a dictionary
-                    full_response += response.get("text", "")  # Extract and append the "text" field
-                elif isinstance(response, str):  # If the response is a string, directly append it
-                    full_response += response
+            try:
+                for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):
+                    if isinstance(response, dict):  # Check if the response is a dictionary
+                        full_response += response.get("text", "")  # Extract and append the "text" field
+                    elif isinstance(response, str):  # If the response is a string, directly append it
+                        full_response += response
+            except Exception as e:
+                self.logger.error(f"Error processing response: {str(e)}")
+                raise
 
             # Ensure last_response is updated with the aggregated text
             self.last_response.update({"text": full_response})
