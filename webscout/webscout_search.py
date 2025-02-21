@@ -178,7 +178,8 @@ class WEBS:
         """
         models_deprecated = {
             "gpt-3.5": "gpt-4o-mini",
-            "llama-3.1-70b": "llama-3.3-70b"
+            "llama-3.1-70b": "llama-3.3-70b",
+            "mixtral-8x7b": "mistral-24B"
         }
         if model in models_deprecated:
             # logger.info(f"{model=} is deprecated, using {models_deprecated[model]}")
@@ -187,8 +188,8 @@ class WEBS:
             "claude-3-haiku": "claude-3-haiku-20240307",
             "gpt-4o-mini": "gpt-4o-mini",
             "llama-3.3-70b": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-            "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-            "o3-mini":"o3-mini"
+            "o3-mini":"o3-mini",
+            "mistral-24B": "mistralai/Mistral-Small-24B-Instruct-2501"
         }
         # vqd
         if not self._chat_vqd:

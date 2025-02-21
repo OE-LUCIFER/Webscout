@@ -1,11 +1,9 @@
-"""Wassup fam! 🔥 This module is your go-to for getting those YouTube transcripts! 
-
+"""
 >>> from webscout import YTTranscriber
 >>> transcript = YTTranscriber.get_transcript('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
 >>> print(transcript)
 {'text': 'Never gonna give you up', 'start': 0.0, 'duration': 4.5}
 
-Built different by @HelpingAI 👑
 """
 
 import requests  # For making those HTTP requests like a boss 🌐
@@ -175,8 +173,7 @@ class TranscriptListFetcher:
 
 
 class TranscriptList:
-    """Yo fam! This class is all about managing those YouTube transcript lists! 🎯
-    
+    """   
     >>> transcript_list = TranscriptList.build(http_client, video_id, captions_json)
     >>> transcript = transcript_list.find_transcript(['en'])
     >>> print(transcript)
