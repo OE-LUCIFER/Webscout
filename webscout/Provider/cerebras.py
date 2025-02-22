@@ -1,3 +1,4 @@
+
 import re
 import requests
 import json
@@ -12,6 +13,13 @@ class Cerebras(Provider):
     """
     A class to interact with the Cerebras API using a cookie for authentication.
     """
+    
+    AVAILABLE_MODELS = [
+        "llama3.1-8b",
+        "llama-3.3-70b",
+        "deepseek-r1-distill-llama-70b"
+    ]
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -27,6 +35,12 @@ class Cerebras(Provider):
         model: str = "llama3.1-8b",
         system_prompt: str = "You are a helpful assistant.",
     ):
+        # Validate model choice
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(
+                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
+            )
+
         # Initialize basic settings first
         self.timeout = timeout
         self.model = model
@@ -61,6 +75,7 @@ class Cerebras(Provider):
         )
         self.conversation.history_offset = history_offset
 
+    # Rest of the class implementation remains the same...
     @staticmethod
     def extract_query(text: str) -> str:
         """Extracts the first code block from the given text."""
@@ -216,7 +231,7 @@ if __name__ == "__main__":
     
     # Example usage
     cerebras = Cerebras(
-        cookie_path=r'C:\Users\koula\OneDrive\Desktop\Webscout\cookie.json',
+        cookie_path='cookie.json',
         model='llama3.1-8b',
         system_prompt="You are a helpful AI assistant."
     )

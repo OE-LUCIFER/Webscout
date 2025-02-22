@@ -305,7 +305,7 @@ if __name__ == "__main__":
     # Enable logging for a test run
     ai = QwenLM(cookies_path="cookies.json", logging=False)
     response = ai.chat(input(">>> "), stream=False)
-    ai.chat_type = "search"
+    ai.chat_type = "search" # search - used WEB, t2t - chatbot, t2i - image_gen
     print(response)
     # for chunk in response:
     #     print(chunk, end="", flush=True)
