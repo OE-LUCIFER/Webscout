@@ -1,61 +1,90 @@
-from ..AIutel import Optimizers
-from ..AIutel import Conversation
-from ..AIutel import AwesomePrompts, sanitize_stream
-from ..AIbase import  Provider, AsyncProvider
-from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
-import logging 
-from ..Bard import Chatbot
-import logging
+
 from os import path
-from json import load
-from json import dumps
+from json import load, dumps
 import warnings
-logging.getLogger("httpx").setLevel(logging.ERROR)
+from typing import Any, Dict
+
+# Import internal modules and dependencies
+from ..AIutel import Optimizers, Conversation, AwesomePrompts, sanitize_stream
+from ..AIbase import Provider, AsyncProvider
+from ..Bard import Chatbot, Model
+
+# Import LitLogger and related classes (assumed similar to what is in yep.py)
+from webscout import LitLogger, LogFormat, ColorScheme
+
 warnings.simplefilter("ignore", category=UserWarning)
+
+# Define model aliases for easy usage
+MODEL_ALIASES: Dict[str, Model] = {
+    "unspecified": Model.UNSPECIFIED,
+    "flash": Model.G_2_0_FLASH,
+    "flash-exp": Model.G_2_0_FLASH_EXP,
+    "thinking": Model.G_2_0_FLASH_THINKING,
+    "thinking-with-apps": Model.G_2_0_FLASH_THINKING_WITH_APPS,
+    "exp-advanced": Model.G_2_0_EXP_ADVANCED,
+    "1.5-flash": Model.G_1_5_FLASH,
+    "1.5-pro": Model.G_1_5_PRO,
+    "1.5-pro-research": Model.G_1_5_PRO_RESEARCH,
+}
+
+# List of available models (friendly names)
+AVAILABLE_MODELS = list(MODEL_ALIASES.keys())
+
 class GEMINI(Provider):
     def __init__(
         self,
         cookie_file: str,
+        model,  # Accepts either a Model enum or a str alias.
         proxy: dict = {},
         timeout: int = 30,
+        logging: bool = False  # Flag to enable LitLogger debugging.
     ):
-        """Initializes GEMINI
+        """
+        Initializes GEMINI with model support and optional debugging.
 
         Args:
-            cookie_file (str): Path to `bard.google.com.cookies.json` file
-            proxy (dict, optional): Http request proxy. Defaults to {}.
-            timeout (int, optional): Http request timeout. Defaults to 30.
+            cookie_file (str): Path to the cookies JSON file.
+            model (Model or str): Selected model for the session. Can be a Model enum
+                or a string alias. Available aliases: flash, flash-exp, thinking, thinking-with-apps,
+                exp-advanced, 1.5-flash, 1.5-pro, 1.5-pro-research.
+            proxy (dict, optional): HTTP request proxy. Defaults to {}.
+            timeout (int, optional): HTTP request timeout in seconds. Defaults to 30.
+            logging (bool, optional): Flag to enable LitLogger debugging. Defaults to False.
         """
         self.conversation = Conversation(False)
-        self.session_auth1 = None
-        self.session_auth2 = None
-        assert isinstance(
-            cookie_file, str
-        ), f"cookie_file should be of {str} only not '{type(cookie_file)}'"
-        if path.isfile(cookie_file):
-            # let's assume auth is a path to exported .json cookie-file
-            with open(cookie_file) as fh:
-                entries = load(fh)
-            for entry in entries:
-                if entry["name"] == "__Secure-1PSID":
-                    self.session_auth1 = entry["value"]
-                elif entry["name"] == "__Secure-1PSIDTS":
-                    self.session_auth2 = entry["value"]
 
-            assert all(
-                [self.session_auth1, self.session_auth2]
-            ), f"Failed to extract the required cookie value from file '{cookie_file}'"
-        else:
+        # Initialize LitLogger only if logging is enabled; otherwise, set to None.
+        self.logger = LitLogger(name="GEMINI", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+
+        # Ensure cookie_file existence.
+        if not isinstance(cookie_file, str):
+            raise TypeError(f"cookie_file should be of type str, not '{type(cookie_file)}'")
+        if not path.isfile(cookie_file):
             raise Exception(f"{cookie_file} is not a valid file path")
 
-        self.session = Chatbot(self.session_auth1, self.session_auth2, proxy, timeout)
+        # If model is provided as alias (str), convert to Model enum.
+        if isinstance(model, str):
+            alias = model.lower()
+            if alias in MODEL_ALIASES:
+                selected_model = MODEL_ALIASES[alias]
+            else:
+                raise Exception(f"Unknown model alias: '{model}'. Available aliases: {', '.join(AVAILABLE_MODELS)}")
+        elif isinstance(model, Model):
+            selected_model = model
+        else:
+            raise TypeError("model must be a string alias or an instance of Model")
+
+        # Initialize the Chatbot session using the cookie file.
+        self.session = Chatbot(cookie_file, proxy, timeout, selected_model)
         self.last_response = {}
         self.__available_optimizers = (
-            method
-            for method in dir(Optimizers)
-            if callable(getattr(Optimizers, method)) and not method.startswith("__")
+            method for method in dir(Optimizers) if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
+        if self.logger:
+            self.logger.debug("GEMINI initialized with model: {}".format(selected_model.model_name))
+        # Store cookies from Chatbot for later use (e.g. image generation)
+        self.session_auth1 = self.session.secure_1psid
+        self.session_auth2 = self.session.secure_1psidts
 
     def ask(
         self,
@@ -65,53 +94,17 @@ class GEMINI(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
-        """Chat with AI
+        """Chat with AI.
 
-            Args:
-                prompt (str): Prompt to be send.
-                stream (bool, optional): Flag for streaming response. Defaults to False.
-                raw (bool, optional): Stream back raw response as received. Defaults to False.
-                optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defeaults to None
-                conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            Returns:
-               dict : {}
-            ```json
-            {
-                "content": "General Kenobi! \n\n(I couldn't help but respond with the iconic Star Wars greeting since you used it first. )\n\nIs there anything I can help you with today?\n[Image of Hello there General Kenobi]",
-                "conversation_id": "c_f13f6217f9a997aa",
-                "response_id": "r_d3665f95975c368f",
-                "factualityQueries": null,
-                "textQuery": [
-                    "hello there",
-                    1
-                    ],
-                "choices": [
-                    {
-                        "id": "rc_ea075c9671bfd8cb",
-                        "content": [
-                            "General Kenobi! \n\n(I couldn't help but respond with the iconic Star Wars greeting since you used it first. )\n\nIs there anything I can help you with today?\n[Image of Hello there General Kenobi]"
-                        ]
-                    },
-                    {
-                        "id": "rc_de6dd3fb793a5402",
-                        "content": [
-                            "General Kenobi! (or just a friendly hello, whichever you prefer!). \n\nI see you're a person of culture as well. *Star Wars* references are always appreciated.  \n\nHow can I help you today?\n"
-                            ]
-                    },
-                {
-                    "id": "rc_a672ac089caf32db",
-                    "content": [
-                        "General Kenobi! (or just a friendly hello if you're not a Star Wars fan!). \n\nHow can I help you today? Feel free to ask me anything, or tell me what you'd like to chat about. I'm here to assist in any way I can.\n[Image of Obi-Wan Kenobi saying hello there]"
-                    ]
-                }
-            ],
+        Args:
+            prompt (str): Prompt to be sent.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            raw (bool, optional): Stream back raw response as received. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name (e.g., 'code', 'shell_command'). Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
 
-            "images": [
-                "https://i.pinimg.com/originals/40/74/60/407460925c9e419d82b93313f0b42f71.jpg"
-            ]
-        }
-
-            ```
+        Returns:
+            dict: Response generated by the underlying Chatbot.
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -120,24 +113,21 @@ class GEMINI(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {', '.join(self.__available_optimizers)}")
 
         def for_stream():
             response = self.session.ask(prompt)
             self.last_response.update(response)
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+            self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
             yield dumps(response) if raw else response
 
         def for_non_stream():
-            # let's make use of stream
             for _ in for_stream():
                 pass
             return self.last_response
 
+        if self.logger:
+            self.logger.debug(f"Request sent: {prompt}")
         return for_stream() if stream else for_non_stream()
 
     def chat(
@@ -147,48 +137,43 @@ class GEMINI(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
-        """
+        """Generate response text.
 
+        Args:
+            prompt (str): Prompt to be sent.
+            stream (bool, optional): Flag for streaming response. Defaults to False.
+            optimizer (str, optional): Prompt optimizer name. Defaults to None.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+
+        Returns:
+            str: Response generated.
+        """
         def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
-            ):
+            for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):
                 yield self.get_message(response)
 
         def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                )
-            )
+            return self.get_message(self.ask(prompt, False, optimizer=optimizer, conversationally=conversationally))
 
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
-        """Retrieves message only from response
+        """Retrieves message content from the response.
 
         Args:
-            response (dict): Response generated by `self.ask`
+            response (dict): Response generated by `self.ask`.
 
         Returns:
-            str: Message extracted
+            str: Extracted message content.
         """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+        if not isinstance(response, dict):
+            raise TypeError("Response should be of type dict")
         return response["content"]
 
     def reset(self):
-        """Reset the current conversation"""
+        """Reset the current conversation."""
         self.session.async_chatbot.conversation_id = ""
         self.session.async_chatbot.response_id = ""
         self.session.async_chatbot.choice_id = ""
+        if self.logger:
+            self.logger.debug("Conversation reset")
