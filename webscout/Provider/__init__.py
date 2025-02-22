@@ -67,8 +67,10 @@ from .dgaf import *
 from .ChatGPTGratis import *
 from .QwenLM import *
 from .granite import *
+from .WiseCat import *
 __all__ = [
     'LLAMA',
+    'WiseCat',
     'IBMGranite',
     'QwenLM',
     'ChatGPTGratis',
