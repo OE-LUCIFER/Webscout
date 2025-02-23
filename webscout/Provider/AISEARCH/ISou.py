@@ -54,8 +54,10 @@ class Isou:
                                  "siliconflow:Qwen/Qwen2.5-72B-Instruct-128K",
                                  "deepseek-reasoner"]
         self.session = requests.Session()
-        if self.session:
-            self.session.close()
+        def close(self):
+            """Close the session and release resources"""
+            if self.session:
+                self.session.close()
         self.chat_endpoint = "https://isou.chat/api/search"
         self.stream_chunk_size = 64
         self.timeout = timeout
