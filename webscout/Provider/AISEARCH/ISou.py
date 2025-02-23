@@ -17,9 +17,13 @@ class Response:
         return self.text
 
 def extract_content(data_lines):
+    if not data_lines:
+        return []
     content_list = []
     for line in data_lines:
         try:
+            if not isinstance(line, (str, bytes)):
+                continue
             if line.startswith("data:"):
                 line = line[len("data:"):].strip()
             data = json.loads(line)
@@ -50,6 +54,8 @@ class Isou:
                                  "siliconflow:Qwen/Qwen2.5-72B-Instruct-128K",
                                  "deepseek-reasoner"]
         self.session = requests.Session()
+        if self.session:
+            self.session.close()
         self.chat_endpoint = "https://isou.chat/api/search"
         self.stream_chunk_size = 64
         self.timeout = timeout
