@@ -6,8 +6,8 @@ from datetime import datetime
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
-from webscout.litagent import LitAgent
+from webscout.Litlogger import Logger, LogFormat
+from webscout.litagent import LitAgent 
 
 # Model configurations
 MODEL_CONFIGS = {
@@ -73,10 +73,10 @@ class MultiChatAI(Provider):
     ):
         """Initializes the MultiChatAI API client with logging capabilities."""
         # Initialize logger first
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="MultiChatAI",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
+
         ) if logging else None
 
         if self.logger:

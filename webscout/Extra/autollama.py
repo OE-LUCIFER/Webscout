@@ -9,7 +9,7 @@ import sys
 import subprocess
 import psutil
 from huggingface_hub import hf_hub_download
-from ..Litlogger import LitLogger, LogFormat, ColorScheme
+from ..Litlogger import Logger, LogFormat
 from ..swiftcli import CLI, option
 # import ollama
 
@@ -19,10 +19,10 @@ warnings.filterwarnings(
 )
 
 # Initialize LitLogger with custom format and colors
-logger = LitLogger(
+logger = Logger(
     name="AutoLlama",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.OCEAN
+
 )
 
 def show_art():

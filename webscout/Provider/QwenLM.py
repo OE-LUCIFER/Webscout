@@ -12,7 +12,7 @@ from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 
 # Import logging tools from our internal modules
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 
 class QwenLM(Provider):
@@ -55,10 +55,10 @@ class QwenLM(Provider):
             )
 
         # Setup logger if logging is enabled
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="QwenLM",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
+
         ) if logging else None
 
         if self.logger:

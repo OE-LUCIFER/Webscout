@@ -31,14 +31,14 @@ import io
 from PIL import Image
 from typing import Any, List, Optional, Dict
 from webscout.AIbase import ImageProvider
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
-logger = LitLogger(
+logger = Logger(
     "HuggingFace",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+
 )
 agent = LitAgent()
 

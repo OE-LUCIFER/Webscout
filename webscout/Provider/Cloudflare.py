@@ -9,12 +9,12 @@ from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
 import cloudscraper
 from webscout import LitAgent
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 
 class Cloudflare(Provider):
     """
     Cloudflare provider to interact with Cloudflare's text generation API.
-    Includes logging capabilities using LitLogger and uses LitAgent for user-agent.
+    Includes logging capabilities using Logger and uses LitAgent for user-agent.
     """
 
     # Updated AVAILABLE_MODELS from given JSON data
@@ -145,10 +145,9 @@ class Cloudflare(Provider):
         self.conversation.history_offset = history_offset
 
         # Initialize logger if logging is enabled
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="Cloudflare",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
         ) if logging else None
 
         if self.logger:

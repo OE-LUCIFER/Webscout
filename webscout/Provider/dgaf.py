@@ -9,7 +9,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 
 class DGAFAI(Provider):
     """
@@ -77,10 +77,9 @@ class DGAFAI(Provider):
         self.conversation.history_offset = history_offset
 
         # Initialize logger if enabled
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="DGAFAI",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
         ) if logging else None
 
         if self.logger:

@@ -8,7 +8,7 @@ from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.litagent import LitAgent
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 
 class JadveOpenAI(Provider):
     """
@@ -53,10 +53,10 @@ class JadveOpenAI(Provider):
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="JadveOpenAI",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
+
         ) if logging else None
 
         if self.logger:

@@ -8,7 +8,7 @@ from datetime import date
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
 class Netwrck(Provider):
@@ -49,10 +49,10 @@ class Netwrck(Provider):
     ):
         """Initializes the Netwrck API client."""
         # Initialize logger first for initialization logging
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="Netwrck",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
+
         ) if logging else None
 
         if model not in self.AVAILABLE_MODELS:

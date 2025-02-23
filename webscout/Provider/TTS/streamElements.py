@@ -6,7 +6,7 @@ from typing import Union, Generator
 from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 from . import utils
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -238,10 +238,10 @@ class StreamElements(TTSProvider):
         if proxies:
             self.session.proxies.update(proxies)
         self.timeout = timeout
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="StreamElementsTTS",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.AURORA
+
         )
 
     def tts(self, text: str, voice: str = "Mathieu", verbose: bool = True) -> str:

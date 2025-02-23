@@ -8,10 +8,10 @@ import aiofiles
 
 from webscout.AIbase import AsyncImageProvider
 from webscout.litagent import LitAgent  # Import our fire user agent generator 🔥
-from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
+from webscout.Litlogger import Logger  # For that cyberpunk logging swag ⚡
 
 # Initialize our fire logger 🚀
-logger = LitLogger("AsyncBlackboxAIImager")
+logger = Logger("AsyncBlackboxAIImager")
 
 class AsyncBlackboxAIImager(AsyncImageProvider):
     """

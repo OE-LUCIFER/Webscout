@@ -7,10 +7,10 @@ from typing import Any, Dict, List, Optional
 from webscout.AIbase import ImageProvider
 from webscout import exceptions
 from webscout.litagent import agent  # Import our fire user agent generator 🔥
-from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
+from webscout.Litlogger import Logger  # For that cyberpunk logging swag ⚡
 
 # Initialize our fire logger 🚀
-logger = LitLogger("TalkaiImager")
+logger = Logger("TalkaiImager")
 
 class TalkaiImager(ImageProvider):
     """

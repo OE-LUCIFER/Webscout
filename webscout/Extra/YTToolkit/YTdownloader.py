@@ -1,6 +1,6 @@
 from datetime import datetime
 import json
-from webscout.Litlogger import LitLogger
+from webscout.Litlogger import Logger
 from webscout.litagent import LitAgent
 from time import sleep
 import requests
@@ -21,7 +21,7 @@ user_cache_dir = os.path.join(tempfile.gettempdir(), 'webscout')
 if not os.path.exists(user_cache_dir):
     os.makedirs(user_cache_dir)
 
-logging = LitLogger(name="YTDownloader")
+logging = Logger(name="YTDownloader")
 
 session = requests.session()
 

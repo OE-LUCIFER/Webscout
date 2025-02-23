@@ -25,14 +25,14 @@ from pathlib import Path
 from typing import AsyncGenerator
 
 from webscout.AIbase import AsyncImageProvider
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
 # Set up logging with cyberpunk style! 🎨
-logger = LitLogger(
+logger = Logger(
     name="AsyncPollinationsAI",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+
 )
 
 # Get a fresh user agent! 🔄

@@ -8,7 +8,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 
 class LLMChat(Provider):
@@ -43,10 +43,9 @@ class LLMChat(Provider):
         """
         Initializes the LLMChat API with given parameters and logging capabilities.
         """
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="LLMChat",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
         ) if logging else None
 
         if self.logger:

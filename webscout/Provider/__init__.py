@@ -68,8 +68,10 @@ from .ChatGPTGratis import *
 from .QwenLM import *
 from .granite import *
 from .WiseCat import *
+from .DeepSeek import *
 __all__ = [
     'LLAMA',
+    'DeepSeek',
     'WiseCat',
     'IBMGranite',
     'QwenLM',

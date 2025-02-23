@@ -36,14 +36,14 @@ import aiofiles
 import asyncio
 from typing import Any, List, Optional, Dict
 from webscout.AIbase import AsyncImageProvider
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
-logger = LitLogger(
+logger = Logger(
     "AsyncHuggingFace",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+
 )
 agent = LitAgent()
 

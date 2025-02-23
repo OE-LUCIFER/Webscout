@@ -9,8 +9,8 @@ from ..AIutel import Optimizers, Conversation, AwesomePrompts, sanitize_stream
 from ..AIbase import Provider, AsyncProvider
 from ..Bard import Chatbot, Model
 
-# Import LitLogger and related classes (assumed similar to what is in yep.py)
-from webscout import LitLogger, LogFormat, ColorScheme
+# Import Logger and related classes (assumed similar to what is in yep.py)
+from webscout import Logger, LogFormat
 
 warnings.simplefilter("ignore", category=UserWarning)
 
@@ -37,7 +37,7 @@ class GEMINI(Provider):
         model,  # Accepts either a Model enum or a str alias.
         proxy: dict = {},
         timeout: int = 30,
-        logging: bool = False  # Flag to enable LitLogger debugging.
+        logging: bool = False  # Flag to enable Logger debugging.
     ):
         """
         Initializes GEMINI with model support and optional debugging.
@@ -49,12 +49,12 @@ class GEMINI(Provider):
                 exp-advanced, 1.5-flash, 1.5-pro, 1.5-pro-research.
             proxy (dict, optional): HTTP request proxy. Defaults to {}.
             timeout (int, optional): HTTP request timeout in seconds. Defaults to 30.
-            logging (bool, optional): Flag to enable LitLogger debugging. Defaults to False.
+            logging (bool, optional): Flag to enable Logger debugging. Defaults to False.
         """
         self.conversation = Conversation(False)
 
-        # Initialize LitLogger only if logging is enabled; otherwise, set to None.
-        self.logger = LitLogger(name="GEMINI", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+        # Initialize Logger only if logging is enabled; otherwise, set to None.
+        self.logger = Logger(name="GEMINI", format=LogFormat.MODERN_EMOJI) if logging else None
 
         # Ensure cookie_file existence.
         if not isinstance(cookie_file, str):

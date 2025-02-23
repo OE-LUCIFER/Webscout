@@ -15,7 +15,7 @@ import requests
 from packaging import version
 import re
 
-from webscout import LitLogger, ColorScheme
+from webscout.Litlogger import Logger
 from importlib.metadata import version as get_package_version
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import metadata as get_package_metadata
@@ -23,19 +23,9 @@ from importlib.metadata import metadata as get_package_metadata
 # Setting up that clean logger format, no cap! 💯
 CUSTOM_FORMAT = """{message}"""
 
-logger = LitLogger(
+logger = Logger(
     name="WebscoutUpdate",
     format=CUSTOM_FORMAT,
-    color_scheme=ColorScheme.OCEAN,
-    level_styles={
-        "TRACE": "DIM",
-        "DEBUG": "NORMAL", 
-        "INFO": "BOLD",
-        "SUCCESS": "BOLD",
-        "WARNING": "BOLD",
-        "ERROR": "BOLD",
-        "CRITICAL": "BOLD"
-    }
 )
 
 def get_installed_version() -> Optional[str]:

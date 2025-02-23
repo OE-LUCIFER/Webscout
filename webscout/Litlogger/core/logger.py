@@ -1,3 +1,4 @@
+
 import asyncio
 import json
 from datetime import datetime
@@ -8,6 +9,15 @@ from ..styles.formats import LogFormat
 from .level import LogLevel
 
 class Logger:
+    # Emoji mappings for different log levels
+    LEVEL_EMOJIS = {
+        LogLevel.DEBUG: "🔍",
+        LogLevel.INFO: "ℹ️",
+        LogLevel.WARNING: "⚠️",
+        LogLevel.ERROR: "❌",
+        LogLevel.CRITICAL: "🔥"
+    }
+
     def __init__(
         self,
         name: str = "LitLogger",
@@ -27,12 +37,15 @@ class Logger:
         self._metrics = {}
 
     def _format_message(self, level: LogLevel, message: str, **kwargs) -> str:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.now()
         log_data = {
-            "timestamp": timestamp,
+            "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "time": now.strftime("%H:%M:%S"),  # Add time field
+            "date": now.strftime("%Y-%m-%d"),  # Add date field
             "level": level.name,
             "name": self.name,
             "message": message,
+            "emoji": self.LEVEL_EMOJIS.get(level, ""),
             **self._context_data,
             **kwargs
         }
@@ -40,7 +53,13 @@ class Logger:
         if self.format == LogFormat.JSON:
             return json.dumps(log_data)
         
-        formatted = self.format.format(**log_data)
+        try:
+            formatted = self.format.format(**log_data)
+        except KeyError as e:
+            # Fallback to a basic format if the specified format fails
+            basic_format = "[{time}] {level}: {message}"
+            formatted = basic_format.format(**log_data)
+        
         if self.enable_colors:
             color = LogColors.LEVEL_COLORS.get(level, LogColors.RESET)
             return f"{color}{formatted}{LogColors.RESET}"

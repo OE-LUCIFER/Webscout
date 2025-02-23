@@ -17,14 +17,14 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.panel import Panel
 from rich.table import Table
-from ..Litlogger import LitLogger, LogFormat, ColorScheme
+from ..Litlogger import Logger, LogFormat
 from ..swiftcli import CLI, option
 
 # Initialize LitLogger with ocean vibes
-logger = LitLogger(
+logger = Logger(
     name="GGUFConverter",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.OCEAN
+
 )
 
 console = Console()

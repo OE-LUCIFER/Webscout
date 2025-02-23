@@ -5,7 +5,7 @@ from typing import Any, Dict, Generator
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 class TextPollinationsAI(Provider):
     """
@@ -38,10 +38,9 @@ class TextPollinationsAI(Provider):
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="TextPollinationsAI",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
         ) if logging else None
 
         if self.logger:

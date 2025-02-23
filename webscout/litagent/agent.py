@@ -2,13 +2,12 @@
 
 import random
 from typing import List
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent.constants import BROWSERS, OS_VERSIONS, DEVICES
 
-logger = LitLogger(
+logger = Logger(
     name="LitAgent",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
 )
 
 class LitAgent:

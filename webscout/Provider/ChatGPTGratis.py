@@ -5,7 +5,7 @@ import json
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 
 
@@ -41,10 +41,9 @@ class ChatGPTGratis(Provider):
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="ChatGPTGratis",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK,
         ) if logging else None
 
         if self.logger:

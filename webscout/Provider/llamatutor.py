@@ -8,7 +8,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 
 class LlamaTutor(Provider):
     """
@@ -32,10 +32,10 @@ class LlamaTutor(Provider):
         """
         Initializes the LlamaTutor API with given parameters and logging capabilities.
         """
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="LlamaTutor",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
+
         ) if logging else None
 
         if self.logger:

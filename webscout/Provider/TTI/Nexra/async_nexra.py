@@ -8,14 +8,14 @@ from pathlib import Path
 from aiohttp import ClientError
 
 from webscout.AIbase import AsyncImageProvider
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
 # Initialize our fire logger and agent 🔥
-logger = LitLogger(
+logger = Logger(
     "AsyncNexra",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+
 )
 agent = LitAgent()
 

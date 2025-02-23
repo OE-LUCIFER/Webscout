@@ -8,8 +8,8 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent
-from webscout import LitLogger
-from webscout import LogFormat, ColorScheme
+from webscout import Logger
+from webscout import LogFormat
 
 
 
@@ -62,7 +62,7 @@ class WiseCat(Provider):
         self.session.proxies = proxies
 
         # Initialize logger
-        self.logger = LitLogger(name="WISECAT", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+        self.logger = Logger(name="WISECAT", format=LogFormat.MODERN_EMOJI) if logging else None
 
         self.__available_optimizers = (
             method

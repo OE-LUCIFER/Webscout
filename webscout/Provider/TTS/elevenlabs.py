@@ -5,7 +5,7 @@ from io import BytesIO
 from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from . import utils
@@ -29,10 +29,10 @@ class ElevenlabsTTS(TTSProvider):
             self.session.proxies.update(proxies)
         self.timeout = timeout
         self.params = {'allow_unauthenticated': '1'}
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="ElevenlabsTTS",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.AURORA
+
         )
 
     def tts(self, text: str, voice: str = "Brian", verbose:bool = True) -> str:

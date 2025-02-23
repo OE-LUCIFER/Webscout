@@ -11,8 +11,7 @@ import json
 import os
 from datetime import datetime, timedelta
 from functools import lru_cache
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
-
+from webscout.Litlogger import Logger, LogFormat
 class GoogleS:
     """A Python interface for Google search with advanced features
 
@@ -140,11 +139,9 @@ class GoogleS:
         
         # Setup enhanced logging with LitLogger if enabled
         if self.use_litlogger:
-            self.logger = LitLogger(
+            self.logger = Logger(
                 name="GoogleS",
                 format=LogFormat.MODERN_EMOJI,
-                color_scheme=ColorScheme.CYBERPUNK,
-                console_output=True
             )
 
     def _respect_rate_limit(self):

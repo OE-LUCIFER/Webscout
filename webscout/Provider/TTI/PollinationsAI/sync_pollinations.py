@@ -28,14 +28,14 @@ from requests.exceptions import RequestException
 from pathlib import Path
 
 from webscout.AIbase import ImageProvider
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
 # Set up logging with cyberpunk style! 🎨
-logger = LitLogger(
+logger = Logger(
     name="PollinationsAI",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+
 )
 
 # Get a fresh user agent! 🔄

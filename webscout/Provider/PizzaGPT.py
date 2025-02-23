@@ -6,7 +6,7 @@ from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 
 class PIZZAGPT(Provider):
     """
@@ -68,10 +68,9 @@ class PIZZAGPT(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
         
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="PIZZAGPT",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
         ) if logging else None
 
         if self.logger:

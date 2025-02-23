@@ -1,13 +1,12 @@
 import os
 import logging
 from typing import Optional
-from .Litlogger import LitLogger, LogFormat, ColorScheme
+from .Litlogger import Logger, LogFormat
 
 # Create a logger instance for this module
-logger = LitLogger(
+logger = Logger(
     name="Conversation",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
 )
 
 class Conversation:

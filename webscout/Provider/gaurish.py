@@ -9,7 +9,7 @@ from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 from webscout import LitAgent
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 
 class GaurishCerebras(Provider):
     """
@@ -31,10 +31,9 @@ class GaurishCerebras(Provider):
         logging: bool = False
     ):
         """Initializes the Gaurish Cerebras API client with logging capabilities."""
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="GaurishCerebras",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
         ) if logging else None
 
         if self.logger:

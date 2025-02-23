@@ -7,7 +7,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 
 class Marcus(Provider):
@@ -30,10 +30,9 @@ class Marcus(Provider):
         logging: bool = False
     ):
         """Initializes the Marcus API with logging capabilities."""
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="Marcus",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
         ) if logging else None
 
         if self.logger:

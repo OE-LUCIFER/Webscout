@@ -1,4 +1,15 @@
+# Terminal Color Management System
+# Provides extensive ANSI color support with themes, gradients, and animations
+
 class LogColors:
+    """
+    Comprehensive terminal color and styling system with support for:
+    - Basic and bright colors (foreground/background)
+    - RGB and 256-color modes
+    - Text styles (bold, italic, etc.)
+    - Gradients and animations
+    - Predefined themes
+    """
     # Basic foreground colors
     BLACK = "\033[30m"
     RED = "\033[31m"
@@ -96,7 +107,6 @@ class LogColors:
     BG_NAVY = "\033[48;2;0;0;128m"
     BG_OLIVE = "\033[48;2;128;128;0m"
 
-    # RGB color support (True color)
     @staticmethod
     def rgb(r: int, g: int, b: int, background: bool = False) -> str:
         """Create RGB color code."""
@@ -104,7 +114,6 @@ class LogColors:
             return f"\033[48;2;{r};{g};{b}m"
         return f"\033[38;2;{r};{g};{b}m"
 
-    # 256 color support
     @staticmethod
     def color_256(code: int, background: bool = False) -> str:
         """Create 256-color code."""
@@ -117,61 +126,6 @@ class LogColors:
         """Combine multiple color and style codes."""
         return "".join(styles)
 
-    class Theme:
-        """Pre-defined color themes and combinations."""
-        
-        @staticmethod
-        def get_theme(name: str) -> str:
-            themes = {
-                # Status themes
-                "success": LogColors.combine(LogColors.BRIGHT_GREEN, LogColors.BOLD),
-                "error": LogColors.combine(LogColors.BRIGHT_RED, LogColors.BOLD),
-                "warning": LogColors.combine(LogColors.BRIGHT_YELLOW, LogColors.BOLD),
-                "info": LogColors.combine(LogColors.BRIGHT_BLUE, LogColors.BOLD),
-                "debug": LogColors.combine(LogColors.DIM, LogColors.WHITE),
-                "critical": LogColors.combine(LogColors.BG_RED, LogColors.WHITE, LogColors.BOLD),
-                
-                # Special themes
-                "header": LogColors.combine(LogColors.BRIGHT_WHITE, LogColors.BOLD, LogColors.UNDERLINE),
-                "highlight": LogColors.combine(LogColors.BLACK, LogColors.BG_BRIGHT_YELLOW),
-                "important": LogColors.combine(LogColors.BRIGHT_RED, LogColors.BOLD, LogColors.UNDERLINE),
-                "subtle": LogColors.combine(LogColors.DIM, LogColors.BRIGHT_BLACK),
-                
-                # UI themes
-                "title": LogColors.combine(LogColors.BRIGHT_WHITE, LogColors.BOLD, LogColors.UNDERLINE),
-                "subtitle": LogColors.combine(LogColors.BRIGHT_WHITE, LogColors.DIM),
-                "link": LogColors.combine(LogColors.BLUE, LogColors.UNDERLINE),
-                "code": LogColors.combine(LogColors.BRIGHT_BLACK, LogColors.BG_WHITE),
-                
-                # Data themes
-                "number": LogColors.combine(LogColors.BRIGHT_CYAN, LogColors.BOLD),
-                "string": LogColors.combine(LogColors.BRIGHT_GREEN),
-                "boolean": LogColors.combine(LogColors.BRIGHT_YELLOW, LogColors.BOLD),
-                "null": LogColors.combine(LogColors.DIM, LogColors.ITALIC),
-                
-                # Custom themes
-                "fire": LogColors.combine(LogColors.FIRE, LogColors.BOLD),
-                "ice": LogColors.combine(LogColors.ICE, LogColors.BOLD),
-                "nature": LogColors.combine(LogColors.GRASS, LogColors.BOLD),
-                "royal": LogColors.combine(LogColors.PURPLE, LogColors.BOLD),
-                "precious": LogColors.combine(LogColors.GOLD, LogColors.BOLD),
-                
-                # Gradient themes
-                "sunset": LogColors.combine(LogColors.SUNSET_START, LogColors.SUNSET_END),
-                "ocean": LogColors.combine(LogColors.OCEAN_START, LogColors.OCEAN_END),
-                "forest": LogColors.combine(LogColors.FOREST_START, LogColors.FOREST_END),
-            }
-            return themes.get(name, LogColors.RESET)
-
-    # Level-specific color combinations
-    LEVEL_COLORS = {
-        "DEBUG": Theme.get_theme("debug"),
-        "INFO": Theme.get_theme("info"),
-        "WARNING": Theme.get_theme("warning"),
-        "ERROR": Theme.get_theme("error"),
-        "CRITICAL": Theme.get_theme("critical")
-    }
-
     @staticmethod
     def gradient(text: str, start_rgb: tuple, end_rgb: tuple) -> str:
         """Create a gradient effect across text."""
@@ -180,11 +134,9 @@ class LogColors:
             
         result = []
         for i, char in enumerate(text):
-            # Calculate color for this character
             r = int(start_rgb[0] + (end_rgb[0] - start_rgb[0]) * i / (len(text) - 1))
             g = int(start_rgb[1] + (end_rgb[1] - start_rgb[1]) * i / (len(text) - 1))
             b = int(start_rgb[2] + (end_rgb[2] - start_rgb[2]) * i / (len(text) - 1))
-            
             result.append(f"{LogColors.rgb(r, g, b)}{char}")
             
         return "".join(result) + LogColors.RESET
@@ -220,3 +172,60 @@ class LogColors:
             "encircle_blink": LogColors.combine(LogColors.ENCIRCLE, LogColors.BLINK)
         }
         return effects.get(effect, LogColors.BLINK) + text + LogColors.RESET
+
+
+class LogTheme:
+    """Pre-defined color themes and combinations."""
+    
+    @staticmethod
+    def get_theme(name: str) -> str:
+        themes = {
+            # Status themes
+            "success": LogColors.combine(LogColors.BRIGHT_GREEN, LogColors.BOLD),
+            "error": LogColors.combine(LogColors.BRIGHT_RED, LogColors.BOLD),
+            "warning": LogColors.combine(LogColors.BRIGHT_YELLOW, LogColors.BOLD),
+            "info": LogColors.combine(LogColors.BRIGHT_BLUE, LogColors.BOLD),
+            "debug": LogColors.combine(LogColors.DIM, LogColors.WHITE),
+            "critical": LogColors.combine(LogColors.BG_RED, LogColors.WHITE, LogColors.BOLD),
+            
+            # Special themes
+            "header": LogColors.combine(LogColors.BRIGHT_WHITE, LogColors.BOLD, LogColors.UNDERLINE),
+            "highlight": LogColors.combine(LogColors.BLACK, LogColors.BG_BRIGHT_YELLOW),
+            "important": LogColors.combine(LogColors.BRIGHT_RED, LogColors.BOLD, LogColors.UNDERLINE),
+            "subtle": LogColors.combine(LogColors.DIM, LogColors.BRIGHT_BLACK),
+            
+            # UI themes
+            "title": LogColors.combine(LogColors.BRIGHT_WHITE, LogColors.BOLD, LogColors.UNDERLINE),
+            "subtitle": LogColors.combine(LogColors.BRIGHT_WHITE, LogColors.DIM),
+            "link": LogColors.combine(LogColors.BLUE, LogColors.UNDERLINE),
+            "code": LogColors.combine(LogColors.BRIGHT_BLACK, LogColors.BG_WHITE),
+            
+            # Data themes
+            "number": LogColors.combine(LogColors.BRIGHT_CYAN, LogColors.BOLD),
+            "string": LogColors.combine(LogColors.BRIGHT_GREEN),
+            "boolean": LogColors.combine(LogColors.BRIGHT_YELLOW, LogColors.BOLD),
+            "null": LogColors.combine(LogColors.DIM, LogColors.ITALIC),
+            
+            # Custom themes
+            "fire": LogColors.combine(LogColors.FIRE, LogColors.BOLD),
+            "ice": LogColors.combine(LogColors.ICE, LogColors.BOLD),
+            "nature": LogColors.combine(LogColors.GRASS, LogColors.BOLD),
+            "royal": LogColors.combine(LogColors.PURPLE, LogColors.BOLD),
+            "precious": LogColors.combine(LogColors.GOLD, LogColors.BOLD),
+            
+            # Gradient themes
+            "sunset": LogColors.combine(LogColors.SUNSET_START, LogColors.SUNSET_END),
+            "ocean": LogColors.combine(LogColors.OCEAN_START, LogColors.OCEAN_END),
+            "forest": LogColors.combine(LogColors.FOREST_START, LogColors.FOREST_END),
+        }
+        return themes.get(name, LogColors.RESET)
+
+
+# Define level colors after both classes are defined
+LogColors.LEVEL_COLORS = {
+    "DEBUG": LogTheme.get_theme("debug"),
+    "INFO": LogTheme.get_theme("info"),
+    "WARNING": LogTheme.get_theme("warning"),
+    "ERROR": LogTheme.get_theme("error"),
+    "CRITICAL": LogTheme.get_theme("critical")
+}

@@ -12,7 +12,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import WEBS, exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
 
@@ -107,7 +107,7 @@ class YEPCHAT(Provider):
         self.knowledge_cutoff = "December 2023"
 
         # Initialize logger
-        self.logger = LitLogger(name="YEPCHAT", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+        self.logger = Logger(name="YEPCHAT", format=LogFormat.MODERN_EMOJI) if logging else None
 
     def ask(
         self,

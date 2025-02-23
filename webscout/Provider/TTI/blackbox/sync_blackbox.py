@@ -8,10 +8,10 @@ from requests.exceptions import RequestException
 
 from webscout.AIbase import ImageProvider
 from webscout.litagent import LitAgent  # Import our fire user agent generator 🔥
-from webscout.Litlogger import LitLogger  # For that cyberpunk logging swag ⚡
+from webscout.Litlogger import Logger  # For that cyberpunk logging swag ⚡
 
 # Initialize our fire logger 🚀
-logger = LitLogger("BlackboxAIImager")
+logger = Logger("BlackboxAIImager")
 
 class BlackboxAIImager(ImageProvider):
     """

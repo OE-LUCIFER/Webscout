@@ -4,7 +4,7 @@ from typing import Generator
 from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from gradio_client import Client
 import os
 
@@ -20,10 +20,9 @@ class ParlerTTS(TTSProvider):
         self.client = Client("parler-tts/parler_tts")  # Initialize the Gradio client
         self.timeout = timeout
         self.audio_cache_dir = Path("./audio_cache")
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="ParlerTTS",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.AURORA
         )
 
     def tts(self, text: str, description: str = "", use_large: bool = False, verbose: bool = True) -> str:

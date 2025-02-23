@@ -22,15 +22,14 @@ from rich.status import Status
 from rich.rule import Rule
 from typing import Optional, Dict, Any, Generator, List, Tuple
 from webscout.AIutel import run_system_command, default_path
-from webscout import LitLogger, LogFormat, ColorScheme
-from webscout.litprinter import LitPrinter
+from webscout import Logger, LogFormat
 from .autocoder_utiles import EXAMPLES, get_intro_prompt
 
 # Initialize LitLogger with custom format and colors 
-logger = LitLogger(
+logger = Logger(
     name="RawDog",
     format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK
+
 )
 
 # Custom theme for consistent styling
@@ -97,11 +96,10 @@ class AutoCoder:
         self.ai_instance = ai_instance
 
         # Initialize logger with modern format and cyberpunk colors
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="AutoCoder",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK,
-            console_output=not quiet
+
         )
         
         # Get Python version with enhanced logging

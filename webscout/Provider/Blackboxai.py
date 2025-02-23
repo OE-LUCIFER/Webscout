@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union, Generator, List
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 
 class BLACKBOXAI(Provider):
     """
@@ -46,10 +46,10 @@ class BLACKBOXAI(Provider):
         system_message: str = "You are a helpful AI assistant."
     ):
         """Initialize BlackboxAI with enhanced configuration options."""
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="BlackboxAI",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
+
         ) if logging else None
 
         self.session = requests.Session()

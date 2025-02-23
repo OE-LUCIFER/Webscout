@@ -5,7 +5,7 @@ from typing import Any, Dict, Generator
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 class IBMGranite(Provider):
     """
@@ -36,10 +36,10 @@ class IBMGranite(Provider):
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
         # Setup logging if enabled
-        self.logger = LitLogger(
+        self.logger = Logger(
             name="IBMGranite",
             format=LogFormat.MODERN_EMOJI,
-            color_scheme=ColorScheme.CYBERPUNK
+
         ) if logging else None
 
         if self.logger:

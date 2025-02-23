@@ -10,7 +10,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from typing import Dict, Union, Any, Optional
 from webscout import LitAgent
-from webscout.Litlogger import LitLogger, LogFormat, ColorScheme
+from webscout.Litlogger import Logger, LogFormat
 
 class PiAI(Provider):
     """
@@ -96,7 +96,7 @@ class PiAI(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
-        self.logger = LitLogger(name="PiAI", format=LogFormat.MODERN_EMOJI, color_scheme=ColorScheme.CYBERPUNK) if logging else None
+        self.logger = Logger(name="PiAI", format=LogFormat.MODERN_EMOJI) if logging else None
         
         self.knowledge_cutoff = "December 2023"
         

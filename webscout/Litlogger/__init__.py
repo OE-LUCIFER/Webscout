@@ -24,10 +24,6 @@ from .handlers.network import NetworkHandler
 from .utils.detectors import LevelDetector
 from .utils.formatters import MessageFormatter
 
-__version__ = "1.0.0"
-__author__ = "LitLogger Contributors"
-__license__ = "MIT"
-
 # Create a default logger instance
 default_logger = Logger(
     name="LitLogger",
@@ -67,9 +63,5 @@ __all__ = [
     "warning",
     "error",
     "critical",
-    
-    # Package info
-    "__version__",
-    "__author__",
-    "__license__"
+
 ]
