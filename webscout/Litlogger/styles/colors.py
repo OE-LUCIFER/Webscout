@@ -1,6 +1,10 @@
 # Terminal Color Management System
 # Provides extensive ANSI color support with themes, gradients, and animations
 
+from typing import Optional
+from webscout.Litlogger.core.level import LogLevel
+
+
 class LogColors:
     """
     Comprehensive terminal color and styling system with support for:
@@ -107,6 +111,28 @@ class LogColors:
     BG_NAVY = "\033[48;2;0;0;128m"
     BG_OLIVE = "\033[48;2;128;128;0m"
 
+    # Enhanced color palette
+    LEVEL_COLORS = {
+        LogLevel.DEBUG: "\033[38;5;246m",     # Gray
+        LogLevel.INFO: "\033[38;5;39m",       # Blue
+        LogLevel.WARNING: "\033[38;5;214m",   # Orange
+        LogLevel.ERROR: "\033[38;5;196m",     # Red
+        LogLevel.CRITICAL: "\033[48;5;196m\033[38;5;231m",  # White on Red
+        LogLevel.NOTSET: "\033[38;5;250m",    # Light gray
+    }
+
+    # Add style combinations
+    STYLES = {
+        "bold": "\033[1m",
+        "dim": "\033[2m",
+        "italic": "\033[3m",
+        "underline": "\033[4m",
+        "blink": "\033[5m",
+        "reverse": "\033[7m",
+        "hidden": "\033[8m",
+        "strike": "\033[9m",
+    }
+
     @staticmethod
     def rgb(r: int, g: int, b: int, background: bool = False) -> str:
         """Create RGB color code."""
@@ -172,6 +198,26 @@ class LogColors:
             "encircle_blink": LogColors.combine(LogColors.ENCIRCLE, LogColors.BLINK)
         }
         return effects.get(effect, LogColors.BLINK) + text + LogColors.RESET
+
+    @staticmethod
+    def style_text(text: str, *styles: str, color: Optional[str] = None) -> str:
+        """Apply multiple styles and color to text."""
+        style_codes = "".join(LogColors.STYLES.get(style, "") for style in styles)
+        color_code = color if color else ""
+        return f"{style_codes}{color_code}{text}{LogColors.RESET}"
+
+    @staticmethod
+    def level_style(level: LogLevel, text: str) -> str:
+        """Style text according to log level with enhanced formatting."""
+        color = LogColors.LEVEL_COLORS.get(level, LogColors.RESET)
+        if level == LogLevel.CRITICAL:
+            return LogColors.style_text(text, "bold", color=color)
+        elif level == LogLevel.ERROR:
+            return LogColors.style_text(text, "bold", color=color)
+        elif level == LogLevel.WARNING:
+            return LogColors.style_text(text, color=color)
+        else:
+            return f"{color}{text}{LogColors.RESET}"
 
 
 class LogTheme:

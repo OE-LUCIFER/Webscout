@@ -1,6 +1,7 @@
 from enum import Enum
 
 class LogLevel(Enum):
+    NOTSET = 0
     DEBUG = 10
     INFO = 20
     WARNING = 30
@@ -9,6 +10,8 @@ class LogLevel(Enum):
 
     @staticmethod
     def get_level(level_str: str) -> 'LogLevel':
+        if not level_str:
+            return LogLevel.NOTSET
         try:
             return LogLevel[level_str.upper()]
         except KeyError:

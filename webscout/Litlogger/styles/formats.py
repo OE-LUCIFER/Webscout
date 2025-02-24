@@ -245,6 +245,22 @@ Log Entry
     <span class="message">{message}</span>
 </div>"""
 
+    # Add new Rich-like formats
+    RICH = """[{time}] {level_colored} {name} {thread_info} {message}
+    {context}{exception}"""
+    
+    RICH_DETAILED = """╭──────────────── {name} ────────────────╮
+│ Time: {time}
+│ Level: {level_colored}
+│ Thread: {thread_info}
+├─────────────────────────────────────────
+│ {message}
+{context}{exception}╰─────────────────────────────────────────╯"""
+
+    RICH_MINIMAL = "{time} {level_colored} {message}"
+    
+    RICH_COMPACT = "[{time}] {level_colored} {name}: {message}"
+
     # Template registry
     TEMPLATES = {
         # Basic formats
@@ -327,6 +343,12 @@ Log Entry
         "markdown": MARKDOWN,
         "rst": RST,
         "html": HTML,
+
+        # Rich-like formats
+        "rich": RICH,
+        "rich_detailed": RICH_DETAILED,
+        "rich_minimal": RICH_MINIMAL,
+        "rich_compact": RICH_COMPACT,
     }
 
     @staticmethod

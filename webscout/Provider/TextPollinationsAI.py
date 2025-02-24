@@ -226,3 +226,4 @@ if __name__ == "__main__":
     response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
+

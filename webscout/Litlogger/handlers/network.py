@@ -125,25 +125,24 @@ class NetworkHandler:
             
     async def async_emit(self, message: str, level: LogLevel):
         """Asynchronously send log message to remote server."""
-        if level.value < self.level.value:
-            return
+        # Fix: Allow all messages if level is NOTSET
+        if self.level == LogLevel.NOTSET or level.value >= self.level.value:
+            log_data = {
+                "message": message,
+                "level": level.name,
+                **self.custom_fields
+            }
             
-        log_data = {
-            "message": message,
-            "level": level.name,
-            **self.custom_fields
-        }
-        
-        if self.batch_size > 0:
-            self._batch.append(log_data)
-            if len(self._batch) >= self.batch_size:
-                await self._send_batch()
-        else:
-            if self.protocol in ["http", "https"]:
-                await self._send_http(log_data)
+            if self.batch_size > 0:
+                self._batch.append(log_data)
+                if len(self._batch) >= self.batch_size:
+                    await self._send_batch()
             else:
-                await self._send_tcp(log_data)
-                
+                if self.protocol in ["http", "https"]:
+                    await self._send_http(log_data)
+                else:
+                    await self._send_tcp(log_data)
+                    
     async def _send_batch(self):
         """Send batched log messages."""
         if not self._batch:
