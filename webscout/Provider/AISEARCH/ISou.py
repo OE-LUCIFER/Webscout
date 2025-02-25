@@ -155,21 +155,22 @@ class Isou:
 
         return for_stream()
 
-def replace_links_with_numbers(text, links):
-    link_map = {f"citation:{i}]]": f"[{i}]" for i, link in enumerate(links, start=1)}
-    pattern = r"citation:\d+]]"
 
-    def replace_func(match):
-        for key in link_map:
-            if key in match.group(0):
-                return link_map[key]
-        return match.group(0)
+    def replace_links_with_numbers(self, text, links):
+        link_map = {f"citation:{i}]]": f"[{i}]" for i, link in enumerate(links, start=1)}
+        pattern = r"citation:\d+]]"
 
-    result_text = re.sub(pattern, replace_func, text)
-    result_text = result_text.replace("[[[", "[")
+        def replace_func(match):
+            for key in link_map:
+                if key in match.group(0):
+                    return link_map[key]
+            return match.group(0)
 
-    link_list = "\n".join([f"{i}. {link}" for i, link in enumerate(links, start=1)])
-    return f"{result_text}\n\nСсылки:\n{link_list}"
+        result_text = re.sub(pattern, replace_func, text)
+        result_text = result_text.replace("[[[", "[")
+
+        link_list = "\n".join([f"{i}. {link}" for i, link in enumerate(links, start=1)])
+        return f"{result_text}\n\nСсылки:\n{link_list}"
 
 if __name__ == "__main__":
     from rich import print

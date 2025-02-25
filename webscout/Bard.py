@@ -16,7 +16,7 @@ import httpx
 from httpx import AsyncClient, HTTPStatusError
 
 # For image models using validation. Adjust based on organization internal pydantic.
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, validator
 
 # Rich is retained for logging within image methods.
 from rich.console import Console
@@ -463,7 +463,7 @@ class GeneratedImage(Image):
     """
     cookies: Dict[str, str]
 
-    @field_validator("cookies")
+    @validator("cookies")
     def validate_cookies(cls, v):
         if not v:
             raise ValueError("GeneratedImage requires cookies from GeminiClient.")
