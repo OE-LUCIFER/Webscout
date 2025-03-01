@@ -69,6 +69,7 @@ from .QwenLM import *
 from .granite import *
 from .WiseCat import *
 from .DeepSeek import *
+from .freeaichat import FreeAIChat
 __all__ = [
     'LLAMA',
     'DeepSeek',
@@ -141,4 +142,5 @@ __all__ = [
     'JadveOpenAI',
     'ChatGLM',
     'NousHermes',
+    'FreeAIChat',
 ]
