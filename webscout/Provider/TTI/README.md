@@ -13,6 +13,7 @@ Welcome to WebScout's Text-to-Image providers - your ultimate collection of AI a
 * **[PollinationsAI](PollinationsAI/README.md):** Nature-inspired AI art generation with specialized models for organic and natural imagery
 * **[Artbit](artbit/README.md):** Bit-perfect AI art creation with precise control over generation parameters
 * **[HuggingFace](huggingface/README.md):** Direct integration with HuggingFace's powerful models for research-grade image generation
+* **[FreeAIPlayground](FreeAIPlayground/README.md):** Premium image generation with DALL-E 3 and Flux series models including Pro Ultra, Realism, and Aurora variants
 
 ## 🚀 Features
 
@@ -115,28 +116,3 @@ imager = Provider(
 )
 ```
 
-## 🔐 Security Best Practices
-
-1. Use proxies for privacy
-2. Enable stealth mode when needed
-3. Don't expose API keys
-4. Use custom timeouts
-5. Handle errors gracefully
-
-## 🚀 Performance Tips
-
-1. Use async for multiple images
-2. Enable retry mechanisms
-3. Configure appropriate timeouts
-4. Use chunked downloads
-5. Implement parallel saving
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Follow the provider template
-4. Add comprehensive tests
-5. Submit a pull request
-
-Made with 💖 by the HelpingAI Team! Keep it real fam! 🔥👑
