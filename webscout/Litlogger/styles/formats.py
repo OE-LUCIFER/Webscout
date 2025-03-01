@@ -2,21 +2,51 @@ from enum import Enum
 from typing import Dict
 
 class LogFormat:
-    # Basic formats
-    MINIMAL = "[{time}] {level} {message}"
-    STANDARD = "[{time}] {level} {name}: {message}"
-    DETAILED = "[{time}] {level} {name} [{file}:{line}] >>> {message}"
-    SIMPLE = "{message}"
-    COMPACT = "{time} {level}: {message}"
+    # Basic formats with improved styling
+    MINIMAL = "│ {time} │ {level} │ {message}"
+    STANDARD = "┌─ {time} ─┐\n│ {level} │ {name}: {message}"
+    DETAILED = """╭──────────────────────╮
+│ {time}
+│ {level} • {name}
+│ {file}:{line}
+├──────────────────────┤
+│ {message}
+╰──────────────────────╯"""
+    SIMPLE = "• {message}"
+    COMPACT = "⟦{time}⟧ {level} ⟫ {message}"
     
-    # Modern Styles
-    MODERN = " {time} | {level} | {name} | {message}"
-    MODERN_EMOJI = "{emoji} [{time}] {level} {message}"
-    MODERN_CLEAN = "{time} {level} {message}"
-    MODERN_BRACKET = "【{time}】「{level}」{message}"
-    MODERN_PLUS = "⊕ {time} ⊕ {level} ⊕ {message}"
-    MODERN_DOT = "• {time} • {level} • {message}"
-    MODERN_ARROW = "→ {time} → {level} → {message}"
+    # Modern Styles with Unicode
+    MODERN = """┌────────────────────┐
+│ {time}
+├────────────────────┤
+│ {level} • {name}
+│ {message}
+└────────────────────┘"""
+    
+    MODERN_EMOJI = """╭─ {emoji} {time} ─╮
+│ {level}
+├───────────────────
+│ {message}
+╰───────────────────"""
+    
+    MODERN_CLEAN = """• {time} •
+┌─ {level}
+└→ {message}"""
+    
+    MODERN_BRACKET = """【{time}】
+「{level}」{message}"""
+    
+    MODERN_PLUS = """⊕ {time}
+├─ {level}
+└─ {message}"""
+    
+    MODERN_DOT = """● {time}
+├● {level}
+└● {message}"""
+    
+    MODERN_ARROW = """➤ {time}
+├➤ {level}
+└➤ {message}"""
     
     # Boxed Styles
     BOXED = """
@@ -86,36 +116,53 @@ class LogFormat:
 💬 Message: {message}
 """
 
-    # Error Formats
-    ERROR = "!!! {level} !!! [{time}] {name} - {message}"
-    ERROR_DETAILED = """
- {level} ALERT 
-Time: {time}
-Component: {name}
-Location: {file}:{line}
-Message: {message}"""
+    # Enhanced Error Formats
+    ERROR = """╔══ ERROR ══╗
+║ Time: {time}
+║ Level: {level}
+║ Component: {name}
+╟──────────────
+║ {message}
+╚════════════╝"""
 
-    ERROR_COMPACT = " [{time}] {level}: {message}"
-    ERROR_EMOJI = "❌ {time} | {level} | {message}"
-    ERROR_BLOCK = """
-█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+    ERROR_DETAILED = """┏━━ ALERT ━━┓
+┃ Time: {time}
+┃ Level: {level}
+┃ Component: {name}
+┃ Location: {file}:{line}
+┣━━━━━━━━━━━
+┃ {message}
+┗━━━━━━━━━━━┛"""
+
+    ERROR_COMPACT = "‼ [{time}] {level}: {message}"
+    
+    ERROR_EMOJI = """❌ ERROR REPORT
+⏰ {time}
+⚠️ {level}
+📝 {message}"""
+
+    ERROR_BLOCK = """█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
 █  ERROR @ {time}
+█  {level}
 █  {message}
-█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█"""
+█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█"""
 
-    # Status & Progress
-    STATUS = """
-Status Update:
- Time: {time}
- Level: {level}
- Component: {name}
- Message: {message}"""
+    # Status & Progress with Better Visual Hierarchy
+    STATUS = """┌─── Status Update ───┐
+│ Time: {time}
+│ Level: {level}
+│ Component: {name}
+├───────────────────┤
+│ {message}
+└───────────────────┘"""
 
-    PROGRESS = """
-[{time}] Progress Report
-├─ Level: {level}
-├─ Component: {name}
-└─ Status: {message}"""
+    PROGRESS = """╭── Progress Report ──╮
+│ Time: {time}
+│ Level: {level}
+├────────────────────
+│ Component: {name}
+│ Status: {message}
+╰────────────────────"""
 
     PROGRESS_SIMPLE = "► {time} | {level} | {message}"
     PROGRESS_BAR = "[{progress_bar}] {percentage}% - {message}"
@@ -141,28 +188,29 @@ Response: {message}"""
   Details: {message}"""
 
     API_COMPACT = "{method} {url} - {status_code} ({time})"
-    API_DETAILED = """
-┌── API Call ──────────
+    API_DETAILED = """┌── API Request ──┐
 │ Time: {time}
 │ Method: {method}
 │ URL: {url}
+├─────────────────
 │ Status: {status_code}
-│ Response: {message}
-└────────────────────"""
+│ {message}
+└─────────────────"""
 
     # System & Metrics
-    SYSTEM = """
- System Event
- {time}
- {level}
- {name}
- {message}"""
+    SYSTEM = """┌─── System Status ───┐
+│ {time}
+├───────────────────────
+│ Component: {name}
+│ Status: {level}
+│ Message: {message}
+└───────────────────────"""
 
-    METRIC = """
- Metric Report [{time}]
-Level: {level}
-Source: {name}
-Value: {message}"""
+    METRIC = """┌── Metrics ──┐
+│ Time: {time}
+│ Value: {value}{units}
+│ {message}
+└─────────────"""
 
     METRIC_COMPACT = "[METRIC] {name}={value} {units}"
     METRIC_JSON = '{{"metric":"{name}","value":{value},"time":"{time}"}}'
@@ -182,12 +230,13 @@ Level: {level}
 Component: {name}
 Action: {message}"""
 
-    SECURITY_ALERT = """
-🚨 SECURITY ALERT 🚨
-Time: {time}
-Level: {level}
-Details: {message}
-"""
+    SECURITY_ALERT = """╔═══ SECURITY ALERT ═══╗
+║ Time: {time}
+║ Level: {level}
+║ Component: {name}
+╟───────────────────────
+║ {message}
+╚═══════════════════════"""
 
     # Special Formats
     RAINBOW = " {time}  {level}  {message}"
@@ -200,9 +249,9 @@ Details: {message}
     # Data Formats
     JSON = '{{"time":"{time}","level":"{level}","name":"{name}","message":"{message}"}}'
     JSON_PRETTY = """{
-    "time": "{time}",
+    "timestamp": "{time}",
     "level": "{level}",
-    "name": "{name}",
+    "component": "{name}",
     "message": "{message}"
 }"""
     
@@ -214,20 +263,21 @@ Details: {message}
 </log>"""
 
     YAML = """---
-time: {time}
+timestamp: {time}
 level: {level}
-name: {name}
-message: {message}
+component: {name}
+details:
+  message: {message}
 """
 
-    # Documentation Formats
-    MARKDOWN = """
-## Log Entry
-- **Time:** {time}
-- **Level:** {level}
-- **Component:** {name}
-- **Message:** {message}
-"""
+    # Modern Documentation Formats
+    MARKDOWN = """## Log Entry
+**Time:** `{time}`
+**Level:** `{level}`
+**Component:** `{name}`
+
+> {message}
+---"""
 
     RST = """
 Log Entry
@@ -239,27 +289,38 @@ Log Entry
 """
 
     HTML = """<div class="log-entry">
-    <span class="time">{time}</span>
-    <span class="level">{level}</span>
-    <span class="name">{name}</span>
-    <span class="message">{message}</span>
+    <div class="log-header">
+        <span class="time">{time}</span>
+        <span class="level">{level}</span>
+    </div>
+    <div class="log-body">
+        <span class="name">{name}</span>
+        <span class="message">{message}</span>
+    </div>
 </div>"""
 
-    # Add new Rich-like formats
-    RICH = """[{time}] {level_colored} {name} {thread_info} {message}
-    {context}{exception}"""
-    
-    RICH_DETAILED = """╭──────────────── {name} ────────────────╮
-│ Time: {time}
-│ Level: {level_colored}
-│ Thread: {thread_info}
-├─────────────────────────────────────────
+    # Rich Console Formats
+    RICH = """╭── {name} ──╮
+│ {time} │ {level_colored}
+├──────────┴───────────
 │ {message}
-{context}{exception}╰─────────────────────────────────────────╯"""
-
-    RICH_MINIMAL = "{time} {level_colored} {message}"
+│ {context}{exception}
+╰────────────────────"""
     
-    RICH_COMPACT = "[{time}] {level_colored} {name}: {message}"
+    RICH_DETAILED = """╔══════════════════════════╗
+║ {name}                    
+╟──────────────────────────
+║ Time: {time}
+║ Level: {level_colored}
+║ Thread: {thread_info}
+╟──────────────────────────
+║ {message}
+║ {context}{exception}
+╚══════════════════════════╝"""
+
+    RICH_MINIMAL = "│ {time} │ {level_colored} │ {message}"
+    
+    RICH_COMPACT = "⟦{time}⟧ {level_colored} [{name}] ⟫ {message}"
 
     # Template registry
     TEMPLATES = {

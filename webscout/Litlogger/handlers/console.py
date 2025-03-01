@@ -1,33 +1,23 @@
 import sys
-from typing import TextIO
 from ..core.level import LogLevel
+from ..styles.colors import LogColors
 
 class ConsoleHandler:
-    def __init__(
-        self,
-        level: LogLevel = LogLevel.NOTSET,
-        stream: TextIO = sys.stdout,
-        colors: bool = True
-    ):
+    def __init__(self, level: LogLevel = LogLevel.DEBUG, stream=sys.stdout):
         self.level = level
         self.stream = stream
-        self.colors = colors
+        self.colors = LogColors()
 
     def emit(self, message: str, level: LogLevel):
-        """Write log message to console with enhanced formatting."""
-        if self.level == LogLevel.NOTSET or level.value >= self.level.value:
-            try:
-                # Add a newline if message doesn't end with one
-                if not message.endswith('\n'):
-                    message += '\n'
-                
-                self.stream.write(message)
-                self.stream.flush()
-            except Exception as e:
-                # Fallback to stderr on error
-                sys.stderr.write(f"Error in ConsoleHandler: {e}\n")
-                sys.stderr.write(message)
-                sys.stderr.flush()
+        """Write the colored message to the console."""
+        try:
+            # Apply color based on log level
+            color = LogColors.LEVEL_COLORS.get(level, LogColors.RESET)
+            colored_message = f"{color}{message}{LogColors.RESET}"
+            print(colored_message, file=self.stream, flush=True)
+        except Exception as e:
+            # Fallback to plain printing if coloring fails
+            print(message, file=self.stream, flush=True)
 
     async def async_emit(self, message: str, level: LogLevel):
         """

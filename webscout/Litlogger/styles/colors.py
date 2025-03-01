@@ -2,7 +2,7 @@
 # Provides extensive ANSI color support with themes, gradients, and animations
 
 from typing import Optional
-from webscout.Litlogger.core.level import LogLevel
+from ..core.level import LogLevel
 
 
 class LogColors:
@@ -14,7 +14,10 @@ class LogColors:
     - Gradients and animations
     - Predefined themes
     """
-    # Basic foreground colors
+    # Reset
+    RESET = "\033[0m"
+    
+    # Regular colors
     BLACK = "\033[30m"
     RED = "\033[31m"
     GREEN = "\033[32m"
@@ -23,9 +26,8 @@ class LogColors:
     MAGENTA = "\033[35m"
     CYAN = "\033[36m"
     WHITE = "\033[37m"
-    RESET = "\033[0m"
-
-    # Basic background colors
+    
+    # Background colors
     BG_BLACK = "\033[40m"
     BG_RED = "\033[41m"
     BG_GREEN = "\033[42m"
@@ -34,8 +36,8 @@ class LogColors:
     BG_MAGENTA = "\033[45m"
     BG_CYAN = "\033[46m"
     BG_WHITE = "\033[47m"
-
-    # Bright foreground colors
+    
+    # Bright colors
     BRIGHT_BLACK = "\033[90m"
     BRIGHT_RED = "\033[91m"
     BRIGHT_GREEN = "\033[92m"
@@ -44,7 +46,7 @@ class LogColors:
     BRIGHT_MAGENTA = "\033[95m"
     BRIGHT_CYAN = "\033[96m"
     BRIGHT_WHITE = "\033[97m"
-
+    
     # Bright background colors
     BG_BRIGHT_BLACK = "\033[100m"
     BG_BRIGHT_RED = "\033[101m"
@@ -54,71 +56,40 @@ class LogColors:
     BG_BRIGHT_MAGENTA = "\033[105m"
     BG_BRIGHT_CYAN = "\033[106m"
     BG_BRIGHT_WHITE = "\033[107m"
-
-    # Text styles
+    
+    # Custom theme colors using RGB
+    FIRE = "\033[38;2;255;100;0m"  # Orange-red
+    ICE = "\033[38;2;150;230;255m"  # Light blue
+    GRASS = "\033[38;2;120;200;80m"  # Light green
+    PURPLE = "\033[38;2;147;112;219m"  # Medium purple
+    GOLD = "\033[38;2;255;215;0m"  # Golden
+    
+    # Gradient colors
+    SUNSET_START = "\033[38;2;255;128;0m"  # Orange
+    SUNSET_END = "\033[38;2;255;51;153m"  # Pink
+    
+    OCEAN_START = "\033[38;2;0;204;255m"  # Light blue
+    OCEAN_END = "\033[38;2;0;51;102m"  # Dark blue
+    
+    FOREST_START = "\033[38;2;34;139;34m"  # Forest green
+    FOREST_END = "\033[38;2;0;100;0m"  # Dark green
+    
+    # Bold
     BOLD = "\033[1m"
+    
+    # Styles
     DIM = "\033[2m"
     ITALIC = "\033[3m"
     UNDERLINE = "\033[4m"
-    BLINK = "\033[5m"
-    REVERSE = "\033[7m"
-    HIDDEN = "\033[8m"
-    STRIKE = "\033[9m"
-    DOUBLE_UNDERLINE = "\033[21m"
-
-    # Special effects
-    FRAME = "\033[51m"
-    ENCIRCLE = "\033[52m"
-    OVERLINE = "\033[53m"
-
-    # Extended color combinations
-    FIRE = "\033[38;2;255;100;0m"
-    ICE = "\033[38;2;150;230;255m"
-    GRASS = "\033[38;2;0;200;0m"
-    PURPLE = "\033[38;2;160;32;240m"
-    GOLD = "\033[38;2;255;215;0m"
-    SILVER = "\033[38;2;192;192;192m"
-    BRONZE = "\033[38;2;205;127;50m"
-    PINK = "\033[38;2;255;192;203m"
-    TEAL = "\033[38;2;0;128;128m"
-    ORANGE = "\033[38;2;255;165;0m"
-    BROWN = "\033[38;2;165;42;42m"
-    MAROON = "\033[38;2;128;0;0m"
-    NAVY = "\033[38;2;0;0;128m"
-    OLIVE = "\033[38;2;128;128;0m"
-
-    # Gradient colors
-    SUNSET_START = "\033[38;2;255;128;0m"
-    SUNSET_END = "\033[38;2;255;0;128m"
-    OCEAN_START = "\033[38;2;0;255;255m"
-    OCEAN_END = "\033[38;2;0;0;255m"
-    FOREST_START = "\033[38;2;34;139;34m"
-    FOREST_END = "\033[38;2;0;100;0m"
-
-    # Special background combinations
-    BG_FIRE = "\033[48;2;255;100;0m"
-    BG_ICE = "\033[48;2;150;230;255m"
-    BG_GRASS = "\033[48;2;0;200;0m"
-    BG_PURPLE = "\033[48;2;160;32;240m"
-    BG_GOLD = "\033[48;2;255;215;0m"
-    BG_SILVER = "\033[48;2;192;192;192m"
-    BG_BRONZE = "\033[48;2;205;127;50m"
-    BG_PINK = "\033[48;2;255;192;203m"
-    BG_TEAL = "\033[48;2;0;128;128m"
-    BG_ORANGE = "\033[48;2;255;165;0m"
-    BG_BROWN = "\033[48;2;165;42;42m"
-    BG_MAROON = "\033[48;2;128;0;0m"
-    BG_NAVY = "\033[48;2;0;0;128m"
-    BG_OLIVE = "\033[48;2;128;128;0m"
-
-    # Enhanced color palette
+    
+    # Level color mapping
     LEVEL_COLORS = {
-        LogLevel.DEBUG: "\033[38;5;246m",     # Gray
-        LogLevel.INFO: "\033[38;5;39m",       # Blue
-        LogLevel.WARNING: "\033[38;5;214m",   # Orange
-        LogLevel.ERROR: "\033[38;5;196m",     # Red
-        LogLevel.CRITICAL: "\033[48;5;196m\033[38;5;231m",  # White on Red
-        LogLevel.NOTSET: "\033[38;5;250m",    # Light gray
+        LogLevel.DEBUG: BRIGHT_BLACK,
+        LogLevel.INFO: BRIGHT_BLUE,
+        LogLevel.WARNING: BRIGHT_YELLOW,
+        LogLevel.ERROR: BRIGHT_RED,
+        LogLevel.CRITICAL: BRIGHT_RED + BOLD,
+        LogLevel.NOTSET: WHITE
     }
 
     # Add style combinations
@@ -148,9 +119,8 @@ class LogColors:
         return f"\033[38;5;{code}m"
 
     @staticmethod
-    def combine(*styles: str) -> str:
-        """Combine multiple color and style codes."""
-        return "".join(styles)
+    def combine(*colors):
+        return "".join(colors)
 
     @staticmethod
     def gradient(text: str, start_rgb: tuple, end_rgb: tuple) -> str:
@@ -210,12 +180,14 @@ class LogColors:
     def level_style(level: LogLevel, text: str) -> str:
         """Style text according to log level with enhanced formatting."""
         color = LogColors.LEVEL_COLORS.get(level, LogColors.RESET)
+        
+        # Apply appropriate styling based on level
         if level == LogLevel.CRITICAL:
-            return LogColors.style_text(text, "bold", color=color)
+            return f"{color}{LogColors.STYLES['bold']}{text}{LogColors.RESET}"
         elif level == LogLevel.ERROR:
-            return LogColors.style_text(text, "bold", color=color)
+            return f"{color}{text}{LogColors.RESET}"
         elif level == LogLevel.WARNING:
-            return LogColors.style_text(text, color=color)
+            return f"{color}{text}{LogColors.RESET}"
         else:
             return f"{color}{text}{LogColors.RESET}"
 

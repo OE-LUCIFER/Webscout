@@ -21,7 +21,7 @@ class DirectoryCleaner:
     BUILD_ARTIFACTS = frozenset({
         "build",
         "dist",
-        "webscout.egg-info"
+        "webscout.egg-info",  # Fixed missing comma
         ".qodo"
     })
 
@@ -93,7 +93,7 @@ class DirectoryCleaner:
 
 def main() -> None:
     """Main entry point"""
-    base_dir = Path(r"C:\Users\hp\Desktop\Webscout")
+    base_dir = Path(r"C:\Users\koula\Desktop\Webscout")
     cleaner = DirectoryCleaner(base_dir)
     result = cleaner.cleanup()
     

@@ -9,7 +9,8 @@ from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 from webscout import LitAgent
-from webscout.Litlogger import Logger, LogFormat
+from webscout.Litlogger import Logger, LogFormat, ConsoleHandler
+from webscout.Litlogger.core.level import LogLevel
 
 class DeepInfra(Provider):
     """
@@ -79,15 +80,20 @@ class DeepInfra(Provider):
         )
         self.conversation.history_offset = history_offset
 
-        # Initialize logger if enabled
-        self.logger = Logger(
-            name="DeepInfra",
-            format=LogFormat.MODERN_EMOJI,
-
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info("DeepInfra initialized successfully")
+        # Initialize logger with proper configuration
+        if logging:
+            console_handler = ConsoleHandler(
+                level=LogLevel.DEBUG,
+            )
+            
+            self.logger = Logger(
+                name="DeepInfra",                
+                level=LogLevel.DEBUG,
+                handlers=[console_handler]
+            )
+            self.logger.info("DeepInfra initialized successfully ✨")
+        else:
+            self.logger = None
 
     def ask(
         self,
@@ -97,6 +103,9 @@ class DeepInfra(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Union[Dict[str, Any], Generator]:
+        if self.logger:
+            self.logger.debug(f"Processing request - Stream: {stream}, Optimizer: {optimizer}")
+        
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -104,7 +113,7 @@ class DeepInfra(Provider):
                     conversation_prompt if conversationally else prompt
                 )
                 if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
+                    self.logger.info(f"Applied optimizer: {optimizer} 🔧")
             else:
                 if self.logger:
                     self.logger.error(f"Invalid optimizer requested: {optimizer}")
@@ -120,25 +129,30 @@ class DeepInfra(Provider):
             "stream": stream
         }
 
+        if self.logger:
+            self.logger.debug(f"Sending request to model: {self.model} 🚀")
+
         def for_stream():
             if self.logger:
-                self.logger.debug("Sending streaming request to DeepInfra API...")
+                self.logger.info("Starting stream processing ⚡")
             try:
                 with requests.post(self.url, headers=self.headers, data=json.dumps(payload), stream=True, timeout=self.timeout) as response:
                     if response.status_code != 200:
                         if self.logger:
-                            self.logger.error(f"Request failed with status code {response.status_code}")
-
-                        raise exceptions.FailedToGenerateResponseError(f"Request failed with status code {response.status_code}")
-                    if self.logger:
-                        self.logger.debug(response.text)
+                            self.logger.error(f"Request failed with status {response.status_code} ❌")
+                        raise exceptions.FailedToGenerateResponseError(
+                            f"Request failed with status code {response.status_code}"
+                        )
+                    
                     streaming_text = ""
                     for line in response.iter_lines(decode_unicode=True):
                         if line:
                             line = line.strip()
                             if line.startswith("data: "):
-                                json_str = line[6:]  # Remove "data: " prefix
+                                json_str = line[6:]
                                 if json_str == "[DONE]":
+                                    if self.logger:
+                                        self.logger.info("Stream completed successfully ✅")
                                     break
                                 try:
                                     json_data = json.loads(json_str)
@@ -151,17 +165,19 @@ class DeepInfra(Provider):
                                             yield resp if raw else resp
                                 except json.JSONDecodeError:
                                     if self.logger:
-                                        self.logger.error("JSON decode error in streaming data")
-                                    pass
+                                        self.logger.error("Failed to decode JSON response 🔥")
+                                    continue
+                    
                     self.conversation.update_chat_history(prompt, streaming_text)
-                    if self.logger:
-                        self.logger.info("Streaming response completed successfully")
+                    
             except requests.RequestException as e:
                 if self.logger:
-                    self.logger.error(f"Request failed: {e}")
-                raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
+                    self.logger.error(f"Request failed: {str(e)} 🔥")
+                raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}")
 
         def for_non_stream():
+            if self.logger:
+                self.logger.debug("Processing non-stream request")
             for _ in for_stream():
                 pass
             return self.last_response
