@@ -13,10 +13,30 @@ class TextPollinationsAI(Provider):
     """
 
     AVAILABLE_MODELS = [
-        "openai", "openai-large", "qwen", "qwen-coder", "llama", "mistral",
-        "unity", "midijourney", "rtist", "searchgpt", "evil", "deepseek",
-        "claude-hybridspace", "deepseek-r1", "llamalight", "llamaguard",
-        "gemini", "gemini-thinking", "hormoz"
+        "openai",              # OpenAI GPT-4o-mini
+        "openai-large",        # OpenAI GPT-4o
+        "openai-reasoning",    # OpenAI o1-mini
+        "qwen-coder",          # Qwen 2.5 Coder 32B
+        "llama",               # Llama 3.3 70B
+        "mistral",             # Mistral Nemo
+        "unity",               # Unity with Mistral Large
+        "midijourney",         # Midijourney musical transformer
+        "rtist",               # Rtist image generator
+        "searchgpt",           # SearchGPT with realtime search
+        "evil",                # Evil Mode - Experimental
+        "deepseek",            # DeepSeek-V3
+        "claude-hybridspace",  # Claude Hybridspace
+        "deepseek-r1",         # DeepSeek-R1 Distill Qwen 32B
+        "deepseek-reasoner",   # DeepSeek R1 - Full
+        "llamalight",          # Llama 3.1 8B Instruct
+        "llamaguard",          # Llamaguard 7B AWQ
+        "gemini",              # Gemini 2.0 Flash
+        "gemini-thinking",     # Gemini 2.0 Flash Thinking
+        "hormoz",              # Hormoz 8b
+        "hypnosis-tracy",      # Hypnosis Tracy
+        "sur",                 # Sur AI Assistant
+        "sur-mistral",         # Sur AI Assistant (Mistral)
+        "llama-scaleway"       # Llama (Scaleway)
     ]
 
     def __init__(
