@@ -205,7 +205,38 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+...
 
+### 🔍 `YepSearch` - Search using Yep.com
+
+```python
+from webscout import YepSearch
+
+# Initialize YepSearch
+yep = YepSearch(
+    timeout=20,  # Optional: Set custom timeout
+    proxies=None,  # Optional: Use proxies
+    verify=True   # Optional: SSL verification
+)
+
+# Text Search
+text_results = yep.text(
+    keywords="artificial intelligence",
+    region="all",           # Optional: Region for results
+    safesearch="moderate",  # Optional: "on", "moderate", "off"
+    max_results=10          # Optional: Limit number of results
+)
+print(text_results)
+
+# Image Search
+image_results = yep.images(
+    keywords="nature photography",
+    region="all",
+    safesearch="moderate",
+    max_results=10
+)
+print(image_results)
+```
 
 ## 🔍 GoogleS (formerly DWEBS)
 
@@ -1252,3 +1283,4 @@ Contributions are welcome! If you'd like to contribute to Webscout, please follo
 
 * All the amazing developers who have contributed to the project!
 * The open-source community for their support and inspiration.
+
