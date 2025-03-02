@@ -4,7 +4,6 @@ from webscout.litagent import LitAgent
 from typing import List, Dict, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor
 import json
-from rich import print
 class YepSearch:
     """Yep.com search class to get search results."""
     
@@ -251,8 +250,48 @@ class YepSearch:
         except Exception as e:
             raise Exception(f"Yep image search failed: {str(e)}")
 
+    def suggestions(
+        self,
+        query: str,
+        region: str = "all",
+    ) -> List[str]:
+        """Get search suggestions from Yep.com autocomplete API.
+
+        Args:
+            query: Search query string to get suggestions for.
+            region: Region for suggestions. Defaults to "all".
+
+        Returns:
+            List of suggestion strings.
+
+        Example:
+            >>> yep = YepSearch()
+            >>> suggestions = yep.suggestions("ca")
+            >>> print(suggestions)
+            ['capital one', 'car wash', 'carmax', 'cafe', ...]
+        """
+        params = {
+            "query": query,
+            "type": "web",
+            "gl": region
+        }
+        
+        url = f"https://api.yep.com/ac/?{urlencode(params)}"
+        
+        try:
+            response = self.session.get(url, timeout=self.timeout)
+            response.raise_for_status()
+            data = response.json()
+            # Return suggestions list if response format is valid
+            if isinstance(data, list) and len(data) > 1 and isinstance(data[1], list):
+                return data[1]
+            return []
+        
+        except Exception as e:
+            raise Exception(f"Yep suggestions failed: {str(e)}")
+
 
 if __name__ == "__main__":
     yep = YepSearch()
-    r = yep.text("ai news", region="all", safesearch="moderate", max_results=10)
+    r = yep.suggestions("hi", region="all")
     print(r)

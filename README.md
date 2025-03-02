@@ -16,7 +16,7 @@
 <p align="center">
   <strong>Webscout</strong> is the all-in-one search and AI toolkit you need.
   <br>
-  Discover insights with Google, DuckDuckGo, and Phind; access cutting-edge AI models; transcribe YouTube videos; generate temporary emails and phone numbers; perform text-to-speech conversions; run offline language models; and much more!
+  Discover insights with Yep.com, DuckDuckGo, and Phind; access cutting-edge AI models; transcribe YouTube videos; generate temporary emails and phone numbers; perform text-to-speech conversions; run offline language models; and much more!
 </p>
 
 <div align="center">
@@ -236,6 +236,11 @@ image_results = yep.images(
     max_results=10
 )
 print(image_results)
+
+
+# Suggestions
+suggestions = yep.suggestions("hist")
+print(suggestions)
 ```
 
 ## 🔍 GoogleS (formerly DWEBS)
