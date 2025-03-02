@@ -473,8 +473,21 @@ with WEBS() as WEBS:
         print(r)
 ```
 
+### 9. `weather()` - Weather Information by DuckDuckGo.com
 
-## 🎭 ALL Acts
+```python
+from webscout import WEBS
+
+# Get weather information for a location using DuckDuckGo.com
+with WEBS() as webs:
+    weather_data = webs.weather("New York")
+    print(weather_data)
+
+```
+
+
+
+##  ALL Acts
 
 <details>
   <summary>Expand</summary>

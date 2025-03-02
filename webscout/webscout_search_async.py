@@ -634,3 +634,60 @@ class AsyncWEBS:
             to,
         )
         return result
+
+    async def aweather(
+        self,
+        location: str,
+        language: str = "en",
+    ) -> dict[str, Any]:
+        """Async version of weather information retrieval from DuckDuckGo.
+
+        Args:
+            location: Location to get weather for.
+            language: Language code (e.g. 'en', 'es'). Defaults to "en".
+
+        Returns:
+            Dictionary containing weather data with the following structure:
+            {
+                "location": str,
+                "current": {
+                    "condition": str,
+                    "temperature_c": float,
+                    "feels_like_c": float,
+                    "humidity": float,
+                    "wind_speed_ms": float,
+                    "wind_direction": float,
+                    "visibility_m": float
+                },
+                "daily_forecast": List[{
+                    "date": str,
+                    "condition": str,
+                    "max_temp_c": float,
+                    "min_temp_c": float,
+                    "sunrise": str,
+                    "sunset": str
+                }],
+                "hourly_forecast": List[{
+                    "time": str,
+                    "condition": str,
+                    "temperature_c": float,
+                    "feels_like_c": float,
+                    "humidity": float,
+                    "wind_speed_ms": float,
+                    "wind_direction": float,
+                    "visibility_m": float
+                }]
+            }
+
+        Raises:
+            WebscoutE: Base exception for webscout errors.
+            RatelimitE: Inherits from WebscoutE, raised for exceeding API request rate limits.
+            TimeoutE: Inherits from WebscoutE, raised for API request timeouts.
+        """
+        result = await self._loop.run_in_executor(
+            self._executor,
+            super().weather,
+            location,
+            language,
+        )
+        return result
