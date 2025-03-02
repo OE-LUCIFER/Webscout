@@ -21,7 +21,7 @@ class DirectoryCleaner:
     BUILD_ARTIFACTS = frozenset({
         "build",
         "dist",
-        "webscout.egg-info",  # Fixed missing comma
+        "webscout.egg-info",
         ".qodo"
     })
 

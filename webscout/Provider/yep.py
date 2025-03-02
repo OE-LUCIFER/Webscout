@@ -24,7 +24,7 @@ class YEPCHAT(Provider):
         AVAILABLE_MODELS (list): List of available models for the provider.
     """
 
-    AVAILABLE_MODELS = ["DeepSeek-R1-Distill-Qwen-32B"]
+    AVAILABLE_MODELS = ["DeepSeek-R1-Distill-Qwen-32B", "Mixtral-8x7B-Instruct-v0.1"]
 
     def __init__(
         self,
