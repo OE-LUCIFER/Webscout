@@ -1,3 +1,4 @@
+
 import requests
 import json
 import os
@@ -17,6 +18,42 @@ class DeepInfra(Provider):
     A class to interact with the DeepInfra API with logging and LitAgent user-agent.
     """
 
+    AVAILABLE_MODELS = [
+        "deepseek-ai/DeepSeek-R1-Turbo",
+        "deepseek-ai/DeepSeek-R1",
+        "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+        "deepseek-ai/DeepSeek-V3",
+        "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        "mistralai/Mistral-Small-24B-Instruct-2501",
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+        "microsoft/phi-4",
+        "meta-llama/Meta-Llama-3.1-70B-Instruct",
+        "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        "meta-llama/Meta-Llama-3.1-405B-Instruct",
+        "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "Qwen/Qwen2.5-Coder-32B-Instruct",
+        "nvidia/Llama-3.1-Nemotron-70B-Instruct",
+        "Qwen/Qwen2.5-72B-Instruct",
+        "meta-llama/Llama-3.2-90B-Vision-Instruct",
+        "meta-llama/Llama-3.2-11B-Vision-Instruct",
+        "Gryphe/MythoMax-L2-13b",
+        "NousResearch/Hermes-3-Llama-3.1-405B",
+        "NovaSky-AI/Sky-T1-32B-Preview",
+        "Qwen/Qwen2.5-7B-Instruct",
+        "Sao10K/L3.1-70B-Euryale-v2.2",
+        "Sao10K/L3.3-70B-Euryale-v2.3",
+        "google/gemma-2-27b-it",
+        "google/gemma-2-9b-it",
+        "meta-llama/Llama-3.2-1B-Instruct",
+        "meta-llama/Llama-3.2-3B-Instruct",
+        "meta-llama/Meta-Llama-3-70B-Instruct",
+        "meta-llama/Meta-Llama-3-8B-Instruct",
+        "mistralai/Mistral-Nemo-Instruct-2407",
+        "mistralai/Mistral-7B-Instruct-v0.3",
+        "mistralai/Mixtral-8x7B-Instruct-v0.1"
+    ]
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -28,10 +65,13 @@ class DeepInfra(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "Qwen/Qwen2.5-72B-Instruct",
+        model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo",  # Updated default model
         logging: bool = False
     ):
         """Initializes the DeepInfra API client with logging support."""
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            
         self.url = "https://api.deepinfra.com/v1/openai/chat/completions"
         # Use LitAgent for user-agent instead of hardcoded string.
         self.headers = {
