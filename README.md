@@ -31,6 +31,7 @@
 * **Comprehensive Search:** Leverage Google, DuckDuckGo for diverse search results.
 * **AI Powerhouse:** Access and interact with various AI models, including OpenAI, Cohere, and more.
 * **[YouTube Toolkit](webscout/Extra/YTToolkit):** Advanced YouTube video and transcript management with multi-language support, versatile downloading, and intelligent data extraction
+* **[GitAPI](webscout/Extra/GitToolkit/gitapi):** Powerful GitHub data extraction toolkit for seamless repository and user information retrieval, featuring commit tracking, issue management, and comprehensive user analytics - all without authentication requirements for public data
 * **Tempmail & Temp Number:** Generate temporary email addresses and phone numbers for enhanced privacy.
 * **[Text-to-Speech (TTS)](webscout/Provider/TTS/README.md):** Convert text into natural-sounding speech using multiple AI-powered providers like ElevenLabs, StreamElements, and Voicepods.
 * **Offline LLMs:** Utilize powerful language models offline with GGUF support.
