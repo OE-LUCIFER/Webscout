@@ -7,7 +7,7 @@ from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
-from webscout import exceptions
+from webscout import exceptions, LitAgent
 
 
 class ChatGLM(Provider):
@@ -43,7 +43,7 @@ class ChatGLM(Provider):
             'Authorization': 'undefined',
             'Content-Type': 'application/json',
             'Origin': 'https://chatglm.cn',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+            'User-Agent': LitAgent().random(),
             'X-App-Platform': 'pc',
             'X-App-Version': '0.0.1',
             'X-Device-Id': '', #Will be generated each time
