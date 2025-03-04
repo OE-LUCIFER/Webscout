@@ -12,6 +12,11 @@ class KOALA(Provider):
     A class to interact with the Koala.sh API.
     """
 
+    AVAILABLE_MODELS = [
+        "gpt-4o-mini",
+        "gpt-4o",
+    ]
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -23,7 +28,7 @@ class KOALA(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "gpt-4o-mini",
+        model: str = "gpt-4o",
         web_search: bool = True,
 
     ) -> None:
@@ -44,6 +49,9 @@ class KOALA(Provider):
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
             model (str, optional): AI model to use. Defaults to "gpt-4o-mini".
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
