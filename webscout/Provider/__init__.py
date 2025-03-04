@@ -70,8 +70,10 @@ from .granite import *
 from .WiseCat import *
 from .DeepSeek import *
 from .freeaichat import FreeAIChat
+from .akashgpt import *
 __all__ = [
     'LLAMA',
+    'AkashGPT',
     'DeepSeek',
     'WiseCat',
     'IBMGranite',
