@@ -12,7 +12,6 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import WEBS, exceptions
-from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
 
@@ -39,14 +38,13 @@ class YEPCHAT(Provider):
         act: str = None,
         model: str = "DeepSeek-R1-Distill-Qwen-32B",
         temperature: float = 0.6,
-        top_p: float = 0.7,
-        logging: bool = False,
+        top_p: float = 0.7
     ):
         """
         Initializes the YEPCHAT provider with the specified parameters.
 
         Examples:
-            >>> ai = YEPCHAT(logging=True)
+            >>> ai = YEPCHAT()
             >>> ai.ask("What's the weather today?")
             Sends a prompt to the Yep API and returns the response.
 
@@ -85,7 +83,7 @@ class YEPCHAT(Provider):
             "Sec-CH-UA-Platform": '"Windows"',
             "User-Agent": self.agent.random(),  # Use LitAgent to generate a random user agent
         }
-        self.cookies = {"__Host-session": uuid.uuid4().hex}
+        self.cookies = {"__Host-session": uuid.uuid4().hex, '__cf_bm': uuid.uuid4().hex}
 
         self.__available_optimizers = (
             method
@@ -106,9 +104,6 @@ class YEPCHAT(Provider):
 
         self.knowledge_cutoff = "December 2023"
 
-        # Initialize logger
-        self.logger = Logger(name="YEPCHAT", format=LogFormat.MODERN_EMOJI) if logging else None
-
     def ask(
         self,
         prompt: str,
@@ -128,9 +123,6 @@ class YEPCHAT(Provider):
             >>> ai.ask("Tell me a joke", stream=True)
             Streams the response from the Yep API.
         """
-        if self.logger:
-            self.logger.debug(f"ask() called with prompt: {prompt}")
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -138,8 +130,6 @@ class YEPCHAT(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer: {optimizer}")
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
@@ -157,8 +147,6 @@ class YEPCHAT(Provider):
             try:
                 with self.session.post(self.chat_endpoint, headers=self.headers, cookies=self.cookies, json=data, stream=True, timeout=self.timeout) as response:
                     if not response.ok:
-                        if self.logger:
-                            self.logger.error(f"Failed to generate response: {response.status_code} {response.reason}")
                         raise exceptions.FailedToGenerateResponseError(
                             f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                         )
@@ -183,13 +171,9 @@ class YEPCHAT(Provider):
                                             resp = dict(text=content) 
                                             yield resp if raw else resp
                                 except json.JSONDecodeError:
-                                    if self.logger:
-                                        self.logger.warning("JSONDecodeError encountered.")
                                     pass
                     self.conversation.update_chat_history(prompt, streaming_text)
             except Exception as e:
-                if self.logger:
-                    self.logger.error(f"Request failed: {e}")
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         def for_non_stream():
@@ -217,9 +201,6 @@ class YEPCHAT(Provider):
             >>> ai.chat("What's the weather today?", stream=True)
             Streams the chat response from the Yep API.
         """
-        if self.logger:
-            self.logger.debug(f"chat() called with prompt: {prompt}")
-
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
@@ -255,8 +236,7 @@ class YEPCHAT(Provider):
 if __name__ == "__main__":
     from rich import print
 
-    ai = YEPCHAT(logging=False)
-
+    ai = YEPCHAT(model="DeepSeek-R1-Distill-Qwen-32B")
     response = ai.chat("how many r in 'strawberry'", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

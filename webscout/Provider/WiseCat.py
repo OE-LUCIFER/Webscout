@@ -8,9 +8,6 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent
-from webscout import Logger
-from webscout import LogFormat
-
 
 
 class WiseCat(Provider):
@@ -36,8 +33,7 @@ class WiseCat(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "chat-model-large",
-        system_prompt: str = "You are a helpful AI assistant.",
-        logging: bool = False,
+        system_prompt: str = "You are a helpful AI assistant."
     ):
         """Initializes the WiseCat API client."""
 
@@ -60,9 +56,6 @@ class WiseCat(Provider):
         }
         self.session.headers.update(self.headers)
         self.session.proxies = proxies
-
-        # Initialize logger
-        self.logger = Logger(name="WISECAT", format=LogFormat.MODERN_EMOJI) if logging else None
 
         self.__available_optimizers = (
             method
@@ -90,9 +83,6 @@ class WiseCat(Provider):
         conversationally: bool = False,
     ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
         """Chat with AI"""
-        if self.logger:
-            self.logger.debug(f"ask() called with prompt: {prompt}")
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -100,8 +90,6 @@ class WiseCat(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer: {optimizer}")
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
@@ -127,8 +115,6 @@ class WiseCat(Provider):
             )
             if not response.ok:
                 error_msg = f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                if self.logger:
-                    self.logger.error(error_msg)
                 raise exceptions.FailedToGenerateResponseError(error_msg)
 
             streaming_response = ""
@@ -159,9 +145,6 @@ class WiseCat(Provider):
         conversationally: bool = False,
     ) -> str:
         """Generate response `str`"""
-        if self.logger:
-            self.logger.debug(f"chat() called with prompt: {prompt}")
-
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
