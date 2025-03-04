@@ -436,6 +436,7 @@ class ElectronHub(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "claude-3-7-sonnet-20250219",
+        system_prompt: str = "You're helpful assistant that can help me with my questions.",
         api_key: str = None
     ):
         """Initializes the ElectronHub API client."""
@@ -461,7 +462,7 @@ class ElectronHub(Provider):
         # Add API key if provided
         if api_key:
             self.headers['Authorization'] = f'Bearer {api_key}'
-        
+        self.system_prompt = system_prompt
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         self.session.proxies.update(proxies)
@@ -512,7 +513,7 @@ class ElectronHub(Provider):
 
         # Construct messages for the conversation
         messages = [
-            {"role": "system", "content": "You're helpful assistant that can help me with my questions."},
+            {"role": "system", "content": self.system_prompt},
             {"role": "user", "content": [{"type": "text", "text": conversation_prompt}]}
         ]
 
