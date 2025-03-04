@@ -19,7 +19,6 @@ class FreeAIChat(Provider):
     AVAILABLE_MODELS = [
         "mistral-nemo",
         "mistral-large",
-        "llama3.1-70b-fast",
         "gemini-2.0-flash",
         "gemini-1.5-pro",
         "gemini-1.5-flash",
@@ -35,7 +34,14 @@ class FreeAIChat(Provider):
         "GPT-4o-mini",
         "o1",
         "o1-mini",
-        "GPT-4o"
+        "GPT-4o",
+        "Qwen coder",
+        "Qwen 2.5 72B",
+        "Llama 3.1 405B",
+        "llama3.1-70b-fast",
+        "Llama 3.3 70B",
+        "claude 3.5 haiku",
+        "claude 3.5 sonnet",
     ]
 
     def __init__(
