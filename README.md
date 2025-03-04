@@ -44,6 +44,7 @@
 * **[LitAgent](webscout/litagent/Readme.md):** Powerful and modern user agent generator that keeps your requests fresh and undetectable
 * **[Text-to-Image](webscout/Provider/TTI/README.md):** Generate high-quality images using a wide range of AI art providers
 * **[Scout](webscout/scout/README.md):** Advanced web parsing and crawling library with intelligent HTML/XML parsing, web crawling, and Markdown conversion
+* **[AISearch](webscout/Provider/AISEARCH/README.md):** AI Search Providers offer powerful and flexible AI-powered search Search Engine
 
 ## ⚙️ Installation
 ```python

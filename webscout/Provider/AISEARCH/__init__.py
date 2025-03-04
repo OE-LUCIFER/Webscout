@@ -1,3 +1,4 @@
-from .felo_search import Felo
-from .DeepFind import DeepFind
-from .ISou import Isou
+from .felo_search import *
+from .DeepFind import *
+from .ISou import *
+from .genspark_search import *
