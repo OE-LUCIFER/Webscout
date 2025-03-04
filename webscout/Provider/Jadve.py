@@ -1,4 +1,3 @@
-
 import requests
 import json
 import re
@@ -8,15 +7,13 @@ from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.litagent import LitAgent
-from webscout.Litlogger import Logger, LogFormat
 
 class JadveOpenAI(Provider):
     """
     A class to interact with the OpenAI API through jadve.com using the streaming endpoint.
-    Includes optional logging capabilities.
     """
 
-    AVAILABLE_MODELS = ["gpt-4o", "gpt-4o-mini"]
+    AVAILABLE_MODELS = ["gpt-4o", "gpt-4o-mini", "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20240620", "o1-mini", "deepseek-chat", "o1-mini", "claude-3-5-haiku-20241022"]
 
     def __init__(
         self,
@@ -29,12 +26,11 @@ class JadveOpenAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "gpt-4o-mini",
-        system_prompt: str = "You are a helpful AI assistant.",
-        logging: bool = False
+        model: str = "claude-3-7-sonnet-20250219",
+        system_prompt: str = "You are a helpful AI assistant."
     ):
         """
-        Initializes the JadveOpenAI client with optional logging support.
+        Initializes the JadveOpenAI client.
 
         Args:
             is_conversation (bool, optional): Enable conversational mode. Defaults to True.
@@ -48,24 +44,13 @@ class JadveOpenAI(Provider):
             act (str|int, optional): Act key for AwesomePrompts. Defaults to None.
             model (str, optional): AI model to be used. Defaults to "gpt-4o-mini".
             system_prompt (str, optional): System prompt text. Defaults to "You are a helpful AI assistant."
-            logging (bool, optional): Enable logging functionality. Defaults to False.
         """
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.logger = Logger(
-            name="JadveOpenAI",
-            format=LogFormat.MODERN_EMOJI,
-
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info(f"Initializing JadveOpenAI with model: {model}")
-
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        # Streaming endpoint for jadve.com
         self.api_endpoint = "https://openai.jadve.com/stream"
         self.stream_chunk_size = 64
         self.timeout = timeout
@@ -73,17 +58,17 @@ class JadveOpenAI(Provider):
         self.model = model
         self.system_prompt = system_prompt
 
-        # Updated headers with required x-authorization header.
+        # Headers for API requests
         self.headers = {
             "accept": "*/*",
             "accept-encoding": "gzip, deflate, br, zstd",
-            "accept-language": "en",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "application/json",
             "dnt": "1",
             "origin": "https://jadve.com",
             "priority": "u=1, i",
             "referer": "https://jadve.com/",
-            "sec-ch-ua": '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            "sec-ch-ua": '"Not(A:Brand";v="99", "Microsoft Edge";v="133", "Chromium";v="133"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
@@ -113,9 +98,6 @@ class JadveOpenAI(Provider):
         )
         self.conversation.history_offset = history_offset
 
-        if self.logger:
-            self.logger.info("JadveOpenAI initialized successfully.")
-
     def ask(
         self,
         prompt: str,
@@ -136,21 +118,13 @@ class JadveOpenAI(Provider):
         Returns:
             dict or generator: A dictionary with the generated text or a generator yielding text chunks.
         """
-        if self.logger:
-            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}...")
-            self.logger.debug(f"Stream: {stream}, Optimizer: {optimizer}")
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(
                     f"Optimizer is not one of {list(self.__available_optimizers)}"
                 )
@@ -169,43 +143,59 @@ class JadveOpenAI(Provider):
         }
 
         def for_stream():
-            if self.logger:
-                self.logger.debug("Initiating streaming request to API")
             response = self.session.post(
                 self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout
             )
 
             if not response.ok:
-                if self.logger:
-                    self.logger.error(f"API request failed. Status: {response.status_code}, Reason: {response.reason}")
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
 
-            if self.logger:
-                self.logger.info(f"API connection established successfully. Status: {response.status_code}")
-
-            # Read the entire response text.
-            response_text = response.text
+            # Pattern to match the streaming chunks format: 0:"text"
             pattern = r'0:"(.*?)"'
-            chunks = re.findall(pattern, response_text)
-            streaming_text = ""
-            for content in chunks:
-                streaming_text += content
+            full_response_text = ""
+            
+            # Process the response as it comes in
+            buffer = ""
+            
+            for line in response.iter_lines(decode_unicode=True):
+                if not line:
+                    continue
+                
+                buffer += line
+                
+                # Try to match chunks in the current buffer
+                matches = re.findall(pattern, buffer)
+                if matches:
+                    for chunk in matches:
+                        full_response_text += chunk
+                        # Return the current chunk
+                        yield chunk if raw else dict(text=chunk)
+                    
+                    # Remove matched parts from the buffer
+                    matched_parts = [f'0:"{match}"' for match in matches]
+                    for part in matched_parts:
+                        buffer = buffer.replace(part, '', 1)
+                
+                # Check if we've reached the end of the response
+                if 'e:' in line or 'd:' in line:
+                    # No need to process usage data without logging
+                    break
 
-                yield content if raw else dict(text=content)
-
-            self.last_response.update(dict(text=streaming_text))
+            self.last_response.update(dict(text=full_response_text))
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
 
-            if self.logger:
-                self.logger.debug("Response processing completed.")
-
         def for_non_stream():
-            if self.logger:
-                self.logger.debug("Processing non-streaming request")
-            for _ in for_stream():
-                pass
+            # For non-streaming requests, we collect all chunks and return the complete response
+            collected_text = ""
+            for chunk in for_stream():
+                if raw:
+                    collected_text += chunk
+                else:
+                    collected_text += chunk.get("text", "")
+            
+            self.last_response = {"text": collected_text}
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
@@ -228,9 +218,6 @@ class JadveOpenAI(Provider):
         Returns:
             str or generator: Generated response string or generator yielding response chunks.
         """
-        if self.logger:
-            self.logger.debug(f"Chat request initiated - Prompt: {prompt[:50]}...")
-
         def for_stream():
             for response in self.ask(
                 prompt, stream=True, optimizer=optimizer, conversationally=conversationally
@@ -258,8 +245,7 @@ class JadveOpenAI(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    ai = JadveOpenAI(timeout=5000, logging=False)
-    # For streaming response demonstration.
-    response = ai.chat("yo what's up", stream=True)
+    ai = JadveOpenAI(timeout=5000)
+    response = ai.chat("Who made u?", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
