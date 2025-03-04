@@ -1,3 +1,4 @@
+from uuid import uuid4
 import cloudscraper
 import json
 import re
@@ -9,8 +10,6 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from typing import Dict, Union, Any, Optional
 from webscout import LitAgent
-from webscout.Litlogger import Logger, LogFormat, ConsoleHandler
-from webscout.Litlogger.core.level import LogLevel
 
 class PiAI(Provider):
     """
@@ -45,45 +44,23 @@ class PiAI(Provider):
         act: str = None,
         voice: bool = False,
         voice_name: str = "voice3",
-        output_file: str = "PiAI.mp3",
-        logging: bool = False
+        output_file: str = "PiAI.mp3"
     ):
         """
-        Initializes PiAI with voice support and enhanced logging.
+        Initializes PiAI with voice support.
         
         Args:
             voice (bool): Enable/disable voice output
             voice_name (str): Name of the voice to use (if None, uses default)
             output_file (str): Path to save voice output (default: PiAI.mp3)
-            logging (bool): Enable logging (default: False)
         """
-        # Initialize logger with proper configuration
-        if logging:
-            console_handler = ConsoleHandler(
-                level=LogLevel.DEBUG,
-            )
-            
-            self.logger = Logger(
-                name="PiAI",
-                level=LogLevel.DEBUG,
-                handlers=[console_handler]
-            )
-            self.logger.info("PiAI initialization started ✨")
-        else:
-            self.logger = None
-
         # Voice settings
         self.voice_enabled = voice
         self.voice_name = voice_name
         self.output_file = output_file
 
         if voice and voice_name and voice_name not in self.AVAILABLE_VOICES:
-            if self.logger:
-                self.logger.error(f"Invalid voice name: {voice_name} ❌")
             raise ValueError(f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}")
-
-        if self.logger:
-            self.logger.debug(f"Voice configuration - Enabled: {voice}, Name: {self.voice_name} 🎤")
 
         # Initialize other attributes
         self.scraper = cloudscraper.create_scraper()
@@ -106,8 +83,7 @@ class PiAI(Provider):
             'X-Api-Version': '3'
         }
         self.cookies = {
-            '__Host-session': 'Ca5SoyAMJEaaB79jj1T69',
-            '__cf_bm': 'g07oaL0jcstNfKDyZv7_YFjN0jnuBZjbMiXOWhy7V7A-1723536536-1.0.1.1-xwukd03L7oIAUqPG.OHbFNatDdHGZ28mRGsbsqfjBlpuy.b8w6UZIk8F3knMhhtNzwo4JQhBVdtYOlG0MvAw8A'
+            '__cf_bm': uuid4().hex
         }
 
         self.session = requests.Session()
@@ -141,16 +117,10 @@ class PiAI(Provider):
         if self.is_conversation:
             self.start_conversation()
 
-        if self.logger:
-            self.logger.info("PiAI initialized successfully ✅")
-
     def start_conversation(self) -> str:
         """
         Initializes a new conversation and returns the conversation ID.
         """
-        if self.logger:
-            self.logger.debug("Starting new conversation")
-            
         response = self.scraper.post(
             "https://pi.ai/api/chat/start",
             headers=self.headers,
@@ -160,16 +130,11 @@ class PiAI(Provider):
         )
         
         if not response.ok:
-            if self.logger:
-                self.logger.error(f"Failed to start conversation. Status code: {response.status_code}")
             raise Exception(f"Failed to start conversation: {response.status_code}")
             
         data = response.json()
         self.conversation_id = data['conversations'][0]['sid']
         
-        if self.logger:
-            self.logger.info(f"Conversation started successfully with ID: {self.conversation_id}")
-            
         return self.conversation_id
 
     def ask(
@@ -196,18 +161,12 @@ class PiAI(Provider):
             voice_name (str): Override default voice name
             output_file (str): Override default output file path
         """
-        if self.logger:
-            self.logger.debug(f"Processing request - Stream: {stream}, Optimizer: {optimizer} 🔄")
-            self.logger.debug(f"Prompt: {prompt[:50]}... 💭")
-
         # Voice configuration
         voice = self.voice_enabled if voice is None else voice
         voice_name = self.voice_name if voice_name is None else voice_name
         output_file = self.output_file if output_file is None else output_file
 
         if voice and voice_name and voice_name not in self.AVAILABLE_VOICES:
-            if self.logger:
-                self.logger.error(f"Invalid voice requested: {voice_name} ❌")
             raise ValueError(f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}")
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -216,11 +175,7 @@ class PiAI(Provider):
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.info(f"Applied optimizer: {optimizer} 🔧")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         data = {
@@ -239,8 +194,6 @@ class PiAI(Provider):
             )
             
             if not response.ok:
-                if self.logger:
-                    self.logger.error(f"API request failed. Status code: {response.status_code}")
                 raise Exception(f"API request failed: {response.status_code}")
 
             output_str = response.content.decode('utf-8')
@@ -264,8 +217,6 @@ class PiAI(Provider):
                             self.last_response.update(resp)
                             yield parsed_data if raw else resp
                     except json.JSONDecodeError:
-                        if self.logger:
-                            self.logger.warning("Failed to parse JSON from stream")
                         continue
 
             self.conversation.update_chat_history(
@@ -302,17 +253,12 @@ class PiAI(Provider):
             voice_name (str): Override default voice name
             output_file (str): Override default output file path
         """
-        if self.logger:
-            self.logger.debug(f"Chat request initiated - Prompt: {prompt[:50]}...")
-
         # Use instance defaults if not specified
         voice = self.voice_enabled if voice is None else voice
         voice_name = self.voice_name if voice_name is None else voice_name
         output_file = self.output_file if output_file is None else output_file
 
         if voice and voice_name and voice_name not in self.AVAILABLE_VOICES:
-            if self.logger:
-                self.logger.error(f"Invalid voice requested: {voice_name}")
             raise ValueError(f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}")
 
         if stream:
@@ -347,9 +293,6 @@ class PiAI(Provider):
 
     def download_audio_threaded(self, voice_name: str, second_sid: str, output_file: str) -> None:
         """Downloads audio in a separate thread."""
-        if self.logger:
-            self.logger.debug(f"Starting audio download - Voice: {voice_name}, SID: {second_sid}")
-
         params = {
             'mode': 'eager',
             'voice': f'voice{self.AVAILABLE_VOICES[voice_name]}',
@@ -366,8 +309,6 @@ class PiAI(Provider):
             )
             
             if not audio_response.ok:
-                if self.logger:
-                    self.logger.error(f"Audio download failed. Status code: {audio_response.status_code}")
                 return
                 
             audio_response.raise_for_status()
@@ -375,12 +316,8 @@ class PiAI(Provider):
             with open(output_file, "wb") as file:
                 file.write(audio_response.content)
                 
-            if self.logger:
-                self.logger.info(f"Audio file successfully downloaded to: {output_file}")
-                
-        except requests.exceptions.RequestException as e:
-            if self.logger:
-                self.logger.error(f"Audio download failed: {str(e)}")
+        except requests.exceptions.RequestException:
+            pass
 
 if __name__ == '__main__':
     from rich import print

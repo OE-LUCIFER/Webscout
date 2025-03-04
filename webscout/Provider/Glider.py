@@ -5,12 +5,11 @@ from typing import Any, Dict, Generator, Optional
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 
 class GliderAI(Provider):
     """
-    A class to interact with the Glider.so API with comprehensive logging.
+    A class to interact with the Glider.so API.
     """
 
     AVAILABLE_MODELS = {
@@ -32,22 +31,12 @@ class GliderAI(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         model: str = "chat-llama-3-1-70b",
-        system_prompt: str = "You are a helpful AI assistant.",
-        logging: bool = False
+        system_prompt: str = "You are a helpful AI assistant."
     ):
-        """Initializes the GliderAI API client with logging capabilities."""
+        """Initializes the GliderAI API client."""
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {', '.join(self.AVAILABLE_MODELS)}")
         
-        self.logger = Logger(
-            name="GliderAI",
-            format=LogFormat.MODERN_EMOJI,
-
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info(f"Initializing GliderAI with model: {model}")
-
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -85,9 +74,6 @@ class GliderAI(Provider):
         )
         self.conversation.history_offset = history_offset
 
-        if self.logger:
-            self.logger.info("GliderAI initialized successfully")
-
     def ask(
         self,
         prompt: str,
@@ -96,7 +82,7 @@ class GliderAI(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
     ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
-        """Chat with AI with logging capabilities.
+        """Chat with AI.
 
         Args:
             prompt (str): Prompt to be sent.
@@ -107,21 +93,13 @@ class GliderAI(Provider):
         Returns:
             dict or Generator[dict, None, None]: The response from the API.
         """
-        if self.logger:
-            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}...")
-            self.logger.debug(f"Stream: {stream}, Optimizer: {optimizer}")
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(f"Optimizer is not one of {list(self.__available_optimizers)}")
 
         payload = {
@@ -133,16 +111,10 @@ class GliderAI(Provider):
         }
 
         def for_stream():
-            if self.logger:
-                self.logger.debug("Initiating streaming request to API")
             response = self.session.post(
                 self.api_endpoint, json=payload, stream=True, timeout=self.timeout
             )
             if not response.ok:
-                if self.logger:
-                    self.logger.error(
-                        f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                    )
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
@@ -161,12 +133,8 @@ class GliderAI(Provider):
                                 break
             self.last_response.update(dict(text=streaming_text))
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
-            if self.logger:
-                self.logger.debug("Response processing completed")
 
         def for_non_stream():
-            if self.logger:
-                self.logger.debug("Processing non-streaming request")
             for _ in for_stream():
                 pass
             return self.last_response
@@ -180,7 +148,7 @@ class GliderAI(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
     ) -> str | Generator[str, None, None]:
-        """Generate response as a string with logging.
+        """Generate response as a string.
 
         Args:
             prompt (str): Prompt to be sent.
@@ -190,8 +158,6 @@ class GliderAI(Provider):
         Returns:
             str or Generator[str, None, None]: The response generated.
         """
-        if self.logger:
-            self.logger.debug(f"Chat request initiated - Prompt: {prompt[:50]}...")
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
@@ -215,8 +181,8 @@ class GliderAI(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    # For testing with logging enabled
-    ai = GliderAI(model="chat-llama-3-1-70b", logging=True)
+    # For testing
+    ai = GliderAI(model="chat-llama-3-1-70b")
     response = ai.chat("Meaning of Life", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
