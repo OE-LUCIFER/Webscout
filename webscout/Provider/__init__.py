@@ -74,8 +74,10 @@ from .akashgpt import *
 from .Perplexitylabs import *
 from .AllenAI import *
 from .HeckAI import *
+from .TwoAI import *
 __all__ = [
     'LLAMA',
+    'TwoAI',
     'HeckAI',
     'AllenAI',
     'PerplexityLabs',
