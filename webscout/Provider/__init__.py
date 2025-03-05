@@ -72,8 +72,10 @@ from .DeepSeek import *
 from .freeaichat import FreeAIChat
 from .akashgpt import *
 from .Perplexitylabs import *
+from .AllenAI import *
 __all__ = [
     'LLAMA',
+    'AllenAI',
     'PerplexityLabs',
     'AkashGPT',
     'DeepSeek',
