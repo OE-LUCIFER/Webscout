@@ -75,8 +75,10 @@ from .Perplexitylabs import *
 from .AllenAI import *
 from .HeckAI import *
 from .TwoAI import *
+from .Venice import *
 __all__ = [
     'LLAMA',
+    'Venice',
     'TwoAI',
     'HeckAI',
     'AllenAI',

@@ -1,65 +1,78 @@
 import requests
 import json
-import os
-from typing import Any, Dict, Optional, Generator, Union
+from typing import Generator, Dict, Any, List, Union
+from uuid import uuid4
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent
 
-class TwoAI(Provider):
+class Venice(Provider):
     """
-    A class to interact with the Two AI API with LitAgent user-agent.
+    A class to interact with the Venice AI API.
     """
-
+    
     AVAILABLE_MODELS = [
-        "sutra-light",
-    ]
+        "llama-3.3-70b",
+        "llama-3.2-3b-akash",
+        "qwen2dot5-coder-32b"
 
+
+    ]
+    
     def __init__(
         self,
-        api_key: str = None,
         is_conversation: bool = True,
-        max_tokens: int = 1024,
+        max_tokens: int = 2000,
         timeout: int = 30,
+        temperature: float = 0.8,
+        top_p: float = 0.9,
         intro: str = None,
         filepath: str = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "sutra-light",
-        temperature: float = 0.6,
-        system_message: str = "You are a helpful assistant."
+        model: str = "llama-3.3-70b",
+        system_prompt: str = "You are a helpful AI assistant."
     ):
-        """Initializes the TwoAI API client."""
+        """Initialize Venice AI client"""
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
-        self.url = "https://api.two.app/v1/sutra-light/completion"
-        self.headers = {
-            'User-Agent': LitAgent().random(),
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-Session-Token': api_key,
-            'Origin': 'https://chat.two.ai',
-            'Referer': 'https://api.two.app/'
-        }
-        
+            
+        self.api_endpoint = "https://venice.ai/api/inference/chat"
         self.session = requests.Session()
-        self.session.headers.update(self.headers)
-        self.session.proxies.update(proxies)
-
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.timeout = timeout
-        self.last_response = {}
-        self.model = model
         self.temperature = temperature
-        self.system_message = system_message
-
+        self.top_p = top_p
+        self.timeout = timeout
+        self.model = model
+        self.system_prompt = system_prompt
+        self.last_response = {}
+        
+        # Headers for the request
+        self.headers = {
+            "User-Agent": LitAgent().random(),
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            "origin": "https://venice.ai",
+            "referer": "https://venice.ai/chat/",
+            "sec-ch-ua": '"Google Chrome";v="133", "Chromium";v="133", "Not?A_Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin"
+        }
+        
+        self.session.headers.update(self.headers)
+        self.session.proxies.update(proxies)
+        
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
@@ -81,12 +94,10 @@ class TwoAI(Provider):
     def ask(
         self,
         prompt: str,
-        stream: bool = True,
+        stream: bool = False,
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-        online_search: bool = True,
-        reasoning_on: bool = False,
     ) -> Union[Dict[str, Any], Generator]:
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -99,49 +110,60 @@ class TwoAI(Provider):
 
         # Payload construction
         payload = {
-            "messages": [
-                {"role": "system", "content": self.system_message},
-                {"role": "user", "content": conversation_prompt},
-            ],
-            "model": self.model,
+            "requestId": str(uuid4())[:7],
+            "modelId": self.model,
+            "prompt": [{"content": conversation_prompt, "role": "user"}],
+            "systemPrompt": self.system_prompt,
+            "conversationType": "text",
             "temperature": self.temperature,
-            "max_tokens": self.max_tokens_to_sample,
-            "reasoningOn": reasoning_on,
-            "onlineSearch": online_search
+            "webEnabled": True,
+            "topP": self.top_p,
+            "includeVeniceSystemPrompt": False,
+            "isCharacter": False,
+            "clientProcessingTime": 2000
         }
 
         def for_stream():
             try:
-                with self.session.post(self.url, json=payload, stream=True, timeout=self.timeout) as response:
+                with self.session.post(
+                    self.api_endpoint, 
+                    json=payload, 
+                    stream=True, 
+                    timeout=self.timeout
+                ) as response:
                     if response.status_code != 200:
                         raise exceptions.FailedToGenerateResponseError(
                             f"Request failed with status code {response.status_code}"
                         )
                     
                     streaming_text = ""
-                    for line in response.iter_lines(decode_unicode=True):
-                        if line:
-                            try:
-                                chunk = json.loads(line)
-                                if chunk["typeName"] == "LLMChunk":
-                                    content = chunk["content"]
+                    for line in response.iter_lines():
+                        if not line:
+                            continue
+                        
+                        try:
+                            # Decode bytes to string
+                            line_data = line.decode('utf-8').strip()
+                            if '"kind":"content"' in line_data:
+                                data = json.loads(line_data)
+                                if 'content' in data:
+                                    content = data['content']
                                     streaming_text += content
                                     resp = dict(text=content)
                                     yield resp if raw else resp
-                            except json.JSONDecodeError:
-                                continue
+                        except json.JSONDecodeError:
+                            continue
+                        except UnicodeDecodeError:
+                            continue
                     
-                    self.last_response = {"text": streaming_text}
                     self.conversation.update_chat_history(prompt, streaming_text)
                     
             except requests.RequestException as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}")
 
         def for_non_stream():
-            streaming_text = ""
-            for resp in for_stream():
-                streaming_text += resp["text"]
-            self.last_response = {"text": streaming_text}
+            for _ in for_stream():
+                pass
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
@@ -149,35 +171,17 @@ class TwoAI(Provider):
     def chat(
         self,
         prompt: str,
-        stream: bool = True,
+        stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-        online_search: bool = True,
-        reasoning_on: bool = False,
-    ) -> str:
+    ) -> Union[str, Generator]:
         def for_stream():
-            for response in self.ask(
-                prompt, 
-                True, 
-                optimizer=optimizer, 
-                conversationally=conversationally,
-                online_search=online_search,
-                reasoning_on=reasoning_on
-            ):
+            for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):
                 yield self.get_message(response)
-        
         def for_non_stream():
             return self.get_message(
-                self.ask(
-                    prompt, 
-                    False, 
-                    optimizer=optimizer, 
-                    conversationally=conversationally,
-                    online_search=online_search,
-                    reasoning_on=reasoning_on
-                )
+                self.ask(prompt, False, optimizer=optimizer, conversationally=conversationally)
             )
-        
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
@@ -186,15 +190,11 @@ class TwoAI(Provider):
 
 if __name__ == "__main__":
     from rich import print
-
-    api_key = ""
     
-    ai = TwoAI(
-        api_key=api_key,
-        timeout=60,
-        system_message="You are an intelligent AI assistant. Be concise and helpful."
-    )
+    # Initialize Venice AI
+    ai = Venice(model="qwen2dot5-coder-32b", timeout=50)
     
-    response = ai.chat("666+444=?", stream=True, reasoning_on=True)
+    # Test chat with streaming
+    response = ai.chat("Write a short story about an AI assistant", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
