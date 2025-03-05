@@ -37,6 +37,7 @@ setup(
             "tenacity",
             "curl_cffi",
             "nest-asyncio",
+            'websocket-client',
             "rich",
             "markdownify",
             "requests",

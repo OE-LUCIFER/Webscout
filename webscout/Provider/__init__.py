@@ -73,8 +73,10 @@ from .freeaichat import FreeAIChat
 from .akashgpt import *
 from .Perplexitylabs import *
 from .AllenAI import *
+from .HeckAI import *
 __all__ = [
     'LLAMA',
+    'HeckAI',
     'AllenAI',
     'PerplexityLabs',
     'AkashGPT',

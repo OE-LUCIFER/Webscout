@@ -1,4 +1,4 @@
-
+[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/official_helpingai)
   [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/official_helpingai)
   [![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/oevortex/)
   [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/oe-vortex-29a407265/)
@@ -1079,7 +1079,7 @@ print(a.chat("HelpingAI-9B"))
 ```
 
 
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, TypeGPT, Mhystical, Netwrck, MultiChatAI, JadveOpenAI, ChatGLM, Deepfind, NousHermes, TextPollinationsAI, GliderAI, DGAFAI, ChatGPTGratis, QwenLM, IBMGranite, WiseCat, DeepSeek, FreeAIChat, AkashGPT, PerplexityLabs, AllenAI
+###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, TypeGPT, Mhystical, Netwrck, MultiChatAI, JadveOpenAI, ChatGLM, Deepfind, NousHermes, TextPollinationsAI, GliderAI, DGAFAI, ChatGPTGratis, QwenLM, IBMGranite, WiseCat, DeepSeek, FreeAIChat, AkashGPT, PerplexityLabs, AllenAI, HeckAI
 
 Code is similar to other providers.
 
