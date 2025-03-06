@@ -8,3 +8,4 @@ from .huggingface import *
 from .artbit import *
 from .imgninza import *
 from .talkai import *
+from .piclumen import *

@@ -1,4 +1,3 @@
-
 import requests
 import json
 from typing import Any, Dict, Generator
@@ -36,7 +35,9 @@ class TextPollinationsAI(Provider):
         "hypnosis-tracy",      # Hypnosis Tracy
         "sur",                 # Sur AI Assistant
         "sur-mistral",         # Sur AI Assistant (Mistral)
-        "llama-scaleway"       # Llama (Scaleway)
+        "llama-scaleway",      # Llama (Scaleway)
+        "phi",                 # Phi model
+        "openai-audio"         # OpenAI Audio model
     ]
 
     def __init__(

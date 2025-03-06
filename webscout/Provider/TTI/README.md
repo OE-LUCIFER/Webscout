@@ -14,6 +14,7 @@ Welcome to WebScout's Text-to-Image providers - your ultimate collection of AI a
 * **[Artbit](artbit/README.md):** Bit-perfect AI art creation with precise control over generation parameters
 * **[HuggingFace](huggingface/README.md):** Direct integration with HuggingFace's powerful models for research-grade image generation
 * **[FreeAIPlayground](FreeAIPlayground/README.md):** Premium image generation with DALL-E 3 and Flux series models including Pro Ultra, Realism, and Aurora variants
+* **[PiclumenImager](piclumen/README.md):** Professional photorealistic image generation with advanced concurrent processing, optimized for macro photography, underwater scenes, and architectural visualization
 
 ## 🚀 Features
 

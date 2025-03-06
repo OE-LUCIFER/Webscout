@@ -1,9 +1,7 @@
-[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/official_helpingai)
-  [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/official_helpingai)
+  [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/PyscoutAI)
   [![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/oevortex/)
   [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/oe-vortex-29a407265/)
   [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/oevortex)
-
 
 <div align="center">
   <a href="https://youtube.com/@OEvortex">▶️ Vortex’s YouTube Channel</a> &bull;
@@ -28,6 +26,7 @@
 ---
 
 ## 🚀 Features
+
 * **Comprehensive Search:** Leverage Google, DuckDuckGo for diverse search results.
 * **AI Powerhouse:** Access and interact with various AI models, including OpenAI, Cohere, and more.
 * **[YouTube Toolkit](webscout/Extra/YTToolkit):** Advanced YouTube video and transcript management with multi-language support, versatile downloading, and intelligent data extraction
@@ -48,6 +47,7 @@
 * **[AISearch](webscout/Provider/AISEARCH/README.md):** AI Search Providers offer powerful and flexible AI-powered search Search Engine
 
 ## ⚙️ Installation
+
 ```python
 pip install -U webscout
 ```
@@ -67,12 +67,13 @@ python -m webscout --help
 | python -m webscout suggestions  -k Text   | CLI function to perform a suggestions search using Webscout.                                    |
 | python -m webscout text -k Text           | CLI function to perform a text search using Webscout.                                           |
 | python -m webscout translate -k Text      | CLI function to perform translate using Webscout.                                               |
-| python -m webscout version                | A command-line interface command that prints and returns the version of the program.            | 
+| python -m webscout version                | A command-line interface command that prints and returns the version of the program.            |
 | python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |  
 
-[Go To TOP](#webscout-️) 
+[Go To TOP](#webscout-️)
 
 ## 🌍 Regions
+
 <details>
   <summary>Expand</summary>
 
@@ -145,17 +146,14 @@ python -m webscout --help
     vn-vi for Vietnam
     wt-wt for No region
 
-
 </details>
-
 
 [Go To TOP](#webscout-️)
 
-
-
 ## ☀️ Weather
 
-### 1. Weather 
+### 1. Weather
+
 ```python
 from webscout import weather as w
 weather = w.get("Qazigund")
@@ -163,6 +161,7 @@ print(weather)
 ```
 
 ### 2. Weather ASCII
+
 ```python
 from webscout import weather_ascii as w
 weather = w.get("Qazigund")
@@ -256,7 +255,6 @@ for result in results:
     print(result)
 ```
 
-
 ## 🦆 WEBS and AsyncWEBS
 
 The `WEBS` and `AsyncWEBS` classes are used to retrieve search results from DuckDuckGo.com.
@@ -326,7 +324,7 @@ await main()
 
 ## 💻 Usage of WEBS
 
-### 1. `text()` - Text Search by DuckDuckGo.com 
+### 1. `text()` - Text Search by DuckDuckGo.com
 
 ```python
 from webscout import WEBS
@@ -340,7 +338,7 @@ with WEBS() as WEBS:
         print(r)
 ```
 
-### 2. `answers()` - Instant Answers by DuckDuckGo.com 
+### 2. `answers()` - Instant Answers by DuckDuckGo.com
 
 ```python
 from webscout import WEBS
@@ -351,7 +349,7 @@ with WEBS() as WEBS:
         print(r)
 ```
 
-### 3. `images()` - Image Search by DuckDuckGo.com 
+### 3. `images()` - Image Search by DuckDuckGo.com
 
 ```python
 from webscout import WEBS
@@ -373,7 +371,7 @@ with WEBS() as WEBS:
         print(r)
 ```
 
-### 4. `videos()` - Video Search by DuckDuckGo.com 
+### 4. `videos()` - Video Search by DuckDuckGo.com
 
 ```python
 from webscout import WEBS
@@ -394,7 +392,7 @@ with WEBS() as WEBS:
         print(r)
 ```
 
-### 5. `news()` - News Search by DuckDuckGo.com 
+### 5. `news()` - News Search by DuckDuckGo.com
 
 ```python
 from webscout import WEBS
@@ -487,19 +485,17 @@ with WEBS() as webs:
 
 ```
 
-
-
-##  ALL Acts
+## ALL Acts
 
 <details>
   <summary>Expand</summary>
 
-## Webscout Supported Acts:
+## Webscout Supported Acts
 
 1. Free-mode
 2. Linux Terminal
 3. English Translator and Improver
-4. `position` Interviewer 
+4. `position` Interviewer
 5. JavaScript Console
 6. Excel Sheet
 7. English Pronunciation Helper
@@ -657,7 +653,7 @@ with WEBS() as webs:
 159. Wikipedia page
 160. Japanese Kanji quiz machine
 161. note-taking assistant
-162. `language` Literary Critic 
+162. `language` Literary Critic
 163. Cheap Travel Ticket Advisor
 164. DALL-E
 165. MathBot
@@ -682,7 +678,7 @@ with WEBS() as webs:
 184. Hypothetical response
 185. BH
 186. Text Continuation
-187. Dude v3 
+187. Dude v3
 188. SDA (Superior DAN)
 189. AntiGPT
 190. BasedGPT v2
@@ -731,19 +727,19 @@ with WEBS() as webs:
 233. LiveGPT
 234. DAN Jailbreak
 235. Cooper
-236. Steve 
+236. Steve
 237. DAN 5.0
 238. Axies
 239. OMNI
 240. Burple
-241. JOHN 
+241. JOHN
 242. An Ethereum Developer
 243. SEO Prompt
 244. Prompt Enhancer
 245. Data Scientist
 246. League of Legends Player
 
-**Note:** Some "acts" use placeholders like `position` or `language` which should be replaced with a specific value when using the prompt. 
+**Note:** Some "acts" use placeholders like `position` or `language` which should be replaced with a specific value when using the prompt.
 ___
 </details>
 
@@ -837,7 +833,7 @@ for chunk in response:
 
 ```
 
-###  ⬛ `BlackBox` - Search/Chat with BlackBox
+### ⬛ `BlackBox` - Search/Chat with BlackBox
 
 ```python
 from webscout import BLACKBOXAI
@@ -864,8 +860,7 @@ r = ai.chat(prompt)
 print(r)
 ```
 
-
-###  🤖 `Meta AI` - Chat with Meta AI
+### 🤖 `Meta AI` - Chat with Meta AI
 
 ```python
 from webscout import Meta
@@ -899,7 +894,7 @@ for media in response["media"]:
 
 ```
 
-###  `KOBOLDAI` 
+### `KOBOLDAI`
 
 ```python
 from webscout import KOBOLDAI
@@ -919,7 +914,7 @@ print(message)
 
 ```
 
-###  `Reka` - Chat with Reka
+### `Reka` - Chat with Reka
 
 ```python
 from webscout import REKA
@@ -931,7 +926,7 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-###  `Cohere` - Chat with Cohere
+### `Cohere` - Chat with Cohere
 
 ```python
 from webscout import Cohere
@@ -943,7 +938,7 @@ response_str = a.chat(prompt)
 print(response_str)
 ```
 
-###  `Deepinfra`
+### `Deepinfra`
 
 ```python
 from webscout import DeepInfra
@@ -970,8 +965,7 @@ message = ai.get_message(response)
 print(message)
 ```
 
-
-###  `GROQ`
+### `GROQ`
 
 ```python
 from webscout import GROQ
@@ -1058,7 +1052,7 @@ print(response_search)
 
 ```
 
-###  `LLama 70b` - Chat with Meta's Llama 3 70b
+### `LLama 70b` - Chat with Meta's Llama 3 70b
 
 ```python
 
@@ -1070,7 +1064,7 @@ r = llama.chat("What is the meaning of life?")
 print(r)
 ```
 
-###  `AndiSearch`
+### `AndiSearch`
 
 ```python
 from webscout import AndiSearch
@@ -1078,8 +1072,7 @@ a = AndiSearch()
 print(a.chat("HelpingAI-9B"))
 ```
 
-
-###  LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, TypeGPT, Mhystical, Netwrck, MultiChatAI, JadveOpenAI, ChatGLM, Deepfind, NousHermes, TextPollinationsAI, GliderAI, DGAFAI, ChatGPTGratis, QwenLM, IBMGranite, WiseCat, DeepSeek, FreeAIChat, AkashGPT, PerplexityLabs, AllenAI, HeckAI, TwoAI, Venice
+### LLAMA3, pizzagpt, RUBIKSAI, Koala, Darkai, AI4Chat, Farfalle, PIAI, Felo, Julius, YouChat, YEPCHAT, Cloudflare, TurboSeek, Editee, AI21, Chatify, Cerebras, X0GPT, Lepton, GEMINIAPI, Cleeai, Elmo, Free2GPT, Bing, DiscordRocks, GPTWeb, LlamaTutor, PromptRefine, TutorAI, ChatGPTES, Bagoodex, ChatHub, AmigoChat, AIMathGPT, GaurishCerebras, NinjaChat, GeminiPro, Talkai, LLMChat, AskMyAI, Llama3Mitril, Marcus, TypeGPT, Mhystical, Netwrck, MultiChatAI, JadveOpenAI, ChatGLM, Deepfind, NousHermes, TextPollinationsAI, GliderAI, DGAFAI, ChatGPTGratis, QwenLM, IBMGranite, WiseCat, DeepSeek, FreeAIChat, AkashGPT, PerplexityLabs, AllenAI, HeckAI, TwoAI, Venice
 
 Code is similar to other providers.
 
@@ -1103,7 +1096,7 @@ response = vlm.chat([{
 }])
 ```
 
-##  💻 Local-LLM
+## 💻 Local-LLM
 
 Webscout can now run GGUF models locally. You can download and run your favorite models with minimal configuration.
 
@@ -1215,7 +1208,7 @@ while True:
 
 ```
 
-##  GGUF 
+## GGUF
 
 Webscout provides tools to convert and quantize Hugging Face models into the GGUF format for use with offline LLMs.
 
@@ -1254,20 +1247,21 @@ autollama.main(model_path, gguf_file)
 **Command Line Usage:**
 
 * **GGUF Conversion:**
+
    ```bash
    python -m webscout.Extra.gguf -m "OEvortex/HelpingAI-Lite-1.5T" -u "your_username" -t "your_hf_token" -q "q4_k_m,q5_k_m" 
    ```
 
 * **Autollama:**
+
    ```bash
    python -m webscout.Extra.autollama -m "OEvortex/HelpingAI-Lite-1.5T" -g "HelpingAI-Lite-1.5T.q4_k_m.gguf" 
    ```
 
-**Note:** 
+**Note:**
 
 * Replace `"your_username"` and `"your_hf_token"` with your actual Hugging Face credentials.
 * The `model_path` in `autollama` is the Hugging Face model ID, and `gguf_file` is the GGUF file ID.
-
 
 <div align="center">
   <!-- Replace `#` with your actual links -->
@@ -1279,13 +1273,13 @@ autollama.main(model_path, gguf_file)
 
 <div align="center">
   <!-- Replace `#` with your actual links -->
-  <a href="https://youtube.com/@OEvortex">▶️ Vortex's YouTube Channel</a> 
+  <a href="https://youtube.com/@OEvortex">▶️ Vortex's YouTube Channel</a>
 </div>
 <div align="center">
-  <a href="https://youtube.com/@devsdocode">▶️ Devs Do Code's YouTube Channel</a> 
+  <a href="https://youtube.com/@devsdocode">▶️ Devs Do Code's YouTube Channel</a>
 </div>
 <div align="center">
-  <a href="https://t.me/ANONYMOUS_56788">📢 Anonymous Coder's Telegram</a> 
+  <a href="https://t.me/ANONYMOUS_56788">📢 Anonymous Coder's Telegram</a>
 </div>
 
 ## 🤝 Contributing
@@ -1298,9 +1292,7 @@ Contributions are welcome! If you'd like to contribute to Webscout, please follo
 4. Push your branch to your forked repository.
 5. Submit a pull request to the main repository.
 
-
 ## 🙏 Acknowledgments
 
 * All the amazing developers who have contributed to the project!
 * The open-source community for their support and inspiration.
-
