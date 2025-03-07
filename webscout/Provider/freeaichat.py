@@ -222,17 +222,10 @@ class FreeAIChat(Provider):
 
     @staticmethod
     def fix_encoding(text: str) -> str:
-        """
-        Перекодирует текст из неправильной кодировки (latin1) в utf-8.
-
-        :param text: Входная строка с неправильной кодировкой.
-        :return: Строка, перекодированная в utf-8.
-        """
         try:
             return text.encode("latin1").decode("utf-8")
         except Exception as e:
-            print(f"Ошибка перекодирования: {e}")
-            return text  # Возвращаем оригинал, если не удалось перекодировать
+            return text
 
 if __name__ == "__main__":
     from rich import print
@@ -243,6 +236,7 @@ if __name__ == "__main__":
     # for chunk in response:
     #     corrected_chunk = ai.fix_encoding(chunk)
     #     full_text += corrected_chunk
+    
     response = ai.chat(input(">>>"), stream=False)
     response = ai.fix_encoding(response)
     print(response)
