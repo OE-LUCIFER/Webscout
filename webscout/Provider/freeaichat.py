@@ -191,9 +191,10 @@ class FreeAIChat(Provider):
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         def for_non_stream():
-            for _ in for_stream():
-                pass
-            return self.last_response
+            full_text = ""
+            for chunk in for_stream():
+                full_text += chunk["text"]
+            return {"text": full_text}
 
         return for_stream() if stream else for_non_stream()
 
@@ -219,9 +220,29 @@ class FreeAIChat(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
+    @staticmethod
+    def fix_encoding(text: str) -> str:
+        """
+        Перекодирует текст из неправильной кодировки (latin1) в utf-8.
+
+        :param text: Входная строка с неправильной кодировкой.
+        :return: Строка, перекодированная в utf-8.
+        """
+        try:
+            return text.encode("latin1").decode("utf-8")
+        except Exception as e:
+            print(f"Ошибка перекодирования: {e}")
+            return text  # Возвращаем оригинал, если не удалось перекодировать
+
 if __name__ == "__main__":
     from rich import print
     ai = FreeAIChat(model="GPT-4o", logging=True)
-    response = ai.chat("Write a hello world program in Python", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    # response = ai.chat(input(">>>"), stream=True)
+    # full_text = ""
+
+    # for chunk in response:
+    #     corrected_chunk = ai.fix_encoding(chunk)
+    #     full_text += corrected_chunk
+    response = ai.chat(input(">>>"), stream=False)
+    response = ai.fix_encoding(response)
+    print(response)
