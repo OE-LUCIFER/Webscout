@@ -221,11 +221,20 @@ class FreeAIChat(Provider):
         return response["text"]
 
     @staticmethod
-    def fix_encoding(text: str) -> str:
-        try:
-            return text.encode("latin1").decode("utf-8")
-        except Exception as e:
-            return text
+    def fix_encoding(text):
+        if isinstance(text, dict) and "text" in text:
+            try:
+                text["text"] = text["text"].encode("latin1").decode("utf-8")
+                return text
+            except (UnicodeError, AttributeError) as e:
+                return text
+        elif isinstance(text, str):
+            try:
+                return text.encode("latin1").decode("utf-8")
+            except (UnicodeError, AttributeError) as e:
+                return text
+        return text
+        
 
 if __name__ == "__main__":
     from rich import print
