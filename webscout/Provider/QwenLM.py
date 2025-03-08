@@ -1,4 +1,3 @@
-
 import requests
 import json
 from typing import Any, Dict, Generator, Optional
@@ -10,10 +9,6 @@ import cloudscraper
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
-
-# Import logging tools from our internal modules
-from webscout.Litlogger import Logger, LogFormat
-from webscout import LitAgent as Lit
 
 class QwenLM(Provider):
     """
@@ -45,24 +40,13 @@ class QwenLM(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         model: str = "qwen-plus-latest",
-        system_prompt: str = "You are a helpful AI assistant.",
-        logging: bool = False  # New parameter to enable logging
+        system_prompt: str = "You are a helpful AI assistant."
     ):
-        """Initializes the QwenLM API client with optional logging."""
+        """Initializes the QwenLM API client."""
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(
                 f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
             )
-
-        # Setup logger if logging is enabled
-        self.logger = Logger(
-            name="QwenLM",
-            format=LogFormat.MODERN_EMOJI,
-
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info(f"Initializing QwenLM with model: {model}")
 
         self.session = cloudscraper.create_scraper()
         self.is_conversation = is_conversation
@@ -91,7 +75,7 @@ class QwenLM(Provider):
         if self.chat_type != "t2t":
             AVAILABLE_MODELS = [
                 'qwen-plus-latest', 'qvq-72b-preview',
-                'qvq-32b-preview', 'qwen-turbo-latest',
+                'qvq-32b', 'qwen-turbo-latest',
                 'qwen-max-latest'
             ]
 
@@ -113,9 +97,6 @@ class QwenLM(Provider):
         )
         self.conversation.history_offset = history_offset
 
-        if self.logger:
-            self.logger.info("QwenLM initialized successfully")
-
     def _load_cookies(self) -> tuple[str, str]:
         """Load cookies from a JSON file and build a cookie header string."""
         try:
@@ -128,18 +109,12 @@ class QwenLM(Provider):
                 (cookie.get("value") for cookie in cookies if cookie.get("name") == "token"),
                 "",
             )
-            if self.logger:
-                self.logger.debug("Cookies loaded successfully")
             return cookie_string, token
         except FileNotFoundError:
-            if self.logger:
-                self.logger.error("cookies.json file not found!")
             raise exceptions.InvalidAuthenticationError(
                 "Error: cookies.json file not found!"
             )
         except json.JSONDecodeError:
-            if self.logger:
-                self.logger.error("Invalid JSON format in cookies.json!")
             raise exceptions.InvalidAuthenticationError(
                 "Error: Invalid JSON format in cookies.json!"
             )
@@ -152,10 +127,7 @@ class QwenLM(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
     ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
-        """Chat with AI and log the steps if logging is enabled."""
-        if self.logger:
-            self.logger.debug(f"Processing ask() request. Prompt: {prompt[:50]}...")
-            self.logger.debug(f"Stream: {stream}, Optimizer: {optimizer}")
+        """Chat with AI."""
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -163,11 +135,7 @@ class QwenLM(Provider):
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer: {optimizer}")
                 raise Exception(
                     f"Optimizer is not one of {list(self.__available_optimizers)}"
                 )
@@ -184,15 +152,10 @@ class QwenLM(Provider):
         }
 
         def for_stream() -> Generator[Dict[str, Any], None, None]:
-            if self.logger:
-                self.logger.debug("Sending streaming request to QwenLM API")
-
             response = self.session.post(
                 self.api_endpoint, json=payload, headers=self.headers, stream=True, timeout=self.timeout
             )
             if not response.ok:
-                if self.logger:
-                    self.logger.error(f"API request failed - Status: {response.status_code}, Reason: {response.reason}")
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
@@ -202,8 +165,6 @@ class QwenLM(Provider):
                 if line and line.startswith("data: "):
                     data = line[6:]
                     if data == "[DONE]":
-                        if self.logger:
-                            self.logger.debug("Stream finished with [DONE] marker")
                         break
                     try:
                         json_data = json.loads(data)
@@ -225,26 +186,18 @@ class QwenLM(Provider):
                         delta = new_content[len(cumulative_text):]
                         cumulative_text = new_content
                         if delta:
-                            if self.logger:
-                                self.logger.debug(f"Yielding delta: {delta}")
                             yield delta if raw else {"text": delta}
                     except json.JSONDecodeError:
-                        if self.logger:
-                            self.logger.error("JSON decode error during streaming")
                         continue
             self.last_response.update(dict(text=cumulative_text))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
-            if self.logger:
-                self.logger.debug("Finished processing stream response")
 
         def for_non_stream() -> Dict[str, Any]:
             """
             Handles non-streaming responses by aggregating all streamed chunks into a single string.
             """
-            if self.logger:
-                self.logger.debug("Processing non-streaming request")
 
             # Initialize an empty string to accumulate the full response
             full_response = ""
@@ -257,7 +210,6 @@ class QwenLM(Provider):
                     elif isinstance(response, str):  # If the response is a string, directly append it
                         full_response += response
             except Exception as e:
-                self.logger.error(f"Error processing response: {str(e)}")
                 raise
 
             # Ensure last_response is updated with the aggregated text
@@ -265,9 +217,6 @@ class QwenLM(Provider):
 
             # Update conversation history with the final response
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
-
-            if self.logger:
-                self.logger.debug(f"Non-streaming response: {full_response}")
 
             return {"text": full_response}  # Return the dictionary containing the full response
 
@@ -281,9 +230,7 @@ class QwenLM(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
     ) -> str | Generator[str, None, None]:
-        """Generate response string from chat, with logging if enabled."""
-        if self.logger:
-            self.logger.debug(f"Processing chat() request. Prompt: {prompt[:50]}...")
+        """Generate response string from chat."""
 
         def for_stream() -> Generator[str, None, None]:
             for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):
@@ -302,8 +249,7 @@ class QwenLM(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    # Enable logging for a test run
-    ai = QwenLM(cookies_path="cookies.json", logging=False)
+    ai = QwenLM(cookies_path="cookies.json")
     response = ai.chat(input(">>> "), stream=False)
     ai.chat_type = "search" # search - used WEB, t2t - chatbot, t2i - image_gen
     print(response)
