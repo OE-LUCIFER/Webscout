@@ -24,7 +24,7 @@ class QwenLM(Provider):
         "qwen-max-latest",
         "qwen-plus-latest",
         "qwen2.5-14b-instruct-1m",
-        "qwq-32b-preview",
+        "qwq-32b",
         "qwen2.5-coder-32b-instruct",
         "qwen-turbo-latest",
         "qwen2.5-72b-instruct",
