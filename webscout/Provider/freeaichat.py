@@ -191,9 +191,10 @@ class FreeAIChat(Provider):
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         def for_non_stream():
-            for _ in for_stream():
-                pass
-            return self.last_response
+            full_text = ""
+            for chunk in for_stream():
+                full_text += chunk["text"]
+            return {"text": full_text}
 
         return for_stream() if stream else for_non_stream()
 
@@ -219,9 +220,32 @@ class FreeAIChat(Provider):
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 
+    @staticmethod
+    def fix_encoding(text):
+        if isinstance(text, dict) and "text" in text:
+            try:
+                text["text"] = text["text"].encode("latin1").decode("utf-8")
+                return text
+            except (UnicodeError, AttributeError) as e:
+                return text
+        elif isinstance(text, str):
+            try:
+                return text.encode("latin1").decode("utf-8")
+            except (UnicodeError, AttributeError) as e:
+                return text
+        return text
+        
+
 if __name__ == "__main__":
     from rich import print
     ai = FreeAIChat(model="GPT-4o", logging=True)
-    response = ai.chat("Write a hello world program in Python", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    # response = ai.chat(input(">>>"), stream=True)
+    # full_text = ""
+
+    # for chunk in response:
+    #     corrected_chunk = ai.fix_encoding(chunk)
+    #     full_text += corrected_chunk
+    
+    response = ai.chat(input(">>>"), stream=False)
+    response = ai.fix_encoding(response)
+    print(response)
