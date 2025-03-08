@@ -26,7 +26,7 @@ class ChatGLM(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "all-tools-230b",
+        plus_model: bool = True,
     ):
         """Initializes the ChatGLM API client."""
         self.session = requests.Session()
@@ -36,7 +36,7 @@ class ChatGLM(Provider):
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
-        self.model = model
+        self.plus_model = plus_model
         self.headers = {
             'Accept-Language': 'en-US,en;q=0.9',
             'App-Name': 'chatglm',
@@ -102,7 +102,7 @@ class ChatGLM(Provider):
             "assistant_id": "65940acff94777010aa6b796",
             "conversation_id": "",
             "meta_data": {
-                "if_plus_model": False,
+                "if_plus_model": self.plus_model,
                 "is_test": False,
                 "input_question_type": "xxxx",
                 "channel": "",
