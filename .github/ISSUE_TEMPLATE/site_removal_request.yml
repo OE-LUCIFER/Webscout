@@ -1,0 +1,71 @@
+name: Site Removal Request
+description: Request to remove your site/service from this repository
+title: "[REMOVAL REQUEST]: "
+labels: ["removal-request"]
+assignees:
+  - OEvortex
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this removal request. We take these requests seriously and will process them as quickly as possible.
+
+  - type: input
+    id: site-name
+    attributes:
+      label: Site/Service Name
+      description: What is the name of your site or service that you want removed?
+      placeholder: "e.g., example.com"
+    validations:
+      required: true
+
+  - type: textarea
+    id: ownership-proof
+    attributes:
+      label: Proof of Ownership
+      description: Please provide proof that you own or represent this site/service. This could be access to the official email domain, control of the site's DNS, or other verifiable proof.
+      placeholder: "Describe your proof of ownership here. You can also provide links to verification..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected-files
+    attributes:
+      label: Affected Files/Components
+      description: If known, please list the files or components in this repository that reference your site/service.
+      placeholder: "e.g., webscout/Provider/YourSite.py"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any additional context or information about your removal request?
+      placeholder: "Add any other context about the removal request here"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Acknowledgment
+      description: By submitting this request, you acknowledge that:
+      options:
+        - label: I am the legitimate owner or representative of the site/service in question
+          required: true
+        - label: I understand that securing my API endpoint is the best way to prevent future unauthorized usage
+          required: true
+        - label: I will provide additional verification if requested by the maintainers
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## What Happens Next?
+        1. A maintainer will review your request within 1-2 business days
+        2. If the proof is verified, the content will be removed promptly
+        3. You may be contacted for additional verification if needed
+        
+        To prevent future unauthorized usage, we recommend securing your API endpoints with proper authentication and rate limiting.

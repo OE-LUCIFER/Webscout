@@ -1,211 +1,146 @@
-# HelpingAI License
-Version 3.0
-Copyright (c) 2024 HelpingAI
-All Rights Reserved.
+Apache License
+                           Version 2.0, March 2025
+                           Webscout License
 
-## PREAMBLE
-The HelpingAI License (the "License") is designed to govern the use, modification, and distribution of HelpingAI's proprietary assets, including but not limited to artificial intelligence models, software, algorithms, weights, documentation, datasets, and associated materials (collectively, the "Content"). This License aims to balance open innovation with the protection of HelpingAI's intellectual property rights while ensuring responsible and ethical use of AI technology.
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
-## 1. DEFINITIONS
-1.1. "Model" means any machine learning model, artificial intelligence system, neural network architecture, or AI-powered solution developed by HelpingAI.
+   1. Definitions.
 
-1.2. "Weights" refers to the trained parameters, embeddings, model checkpoints, and other numerical values that define the behavior and capabilities of the Model.
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
 
-1.3. "Source Code" means the human-readable form of software, documentation, configuration files, and associated resources.
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
 
-1.4. "Derivative Work" means any work that is based upon or derived from the Content, including but not limited to:
-   a) Fine-tuned or adapted versions of the Model
-   b) Modified or enhanced versions of the Source Code
-   c) Products, services, or applications that incorporate the Content
-   d) Adaptations, transformations, or improvements of the Content
-   e) Any output generated using the Model or Content
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
 
-1.5. "Commercial Use" means any use of the Content intended for or directed toward:
-   a) Commercial advantage or monetary compensation
-   b) Revenue generation, either directly or indirectly
-   c) Business operations or commercial services
-   d) Integration into commercial products or offerings
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
 
-1.6. "End User" means any individual or entity that uses the Content or Derivative Works.
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
 
-## 2. GRANT OF RIGHTS
-Subject to the terms and conditions of this License, HelpingAI hereby grants you a limited, non-exclusive, non-transferable, revocable license to:
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
 
-2.1. Access and use the Content for:
-   a) Research and evaluation purposes
-   b) Educational and academic use
-   c) Personal, non-commercial projects
-   d) Open-source contributions (subject to Section 3)
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work.
 
-2.2. Create and use Derivative Works for non-commercial purposes, provided that:
-   a) You comply with all restrictions in Section 3
-   b) You maintain appropriate attribution
-   c) You ensure responsible and ethical use
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship.
 
-2.3. Distribute the Content or Derivative Works to third parties, provided that:
-   a) You maintain all copyright notices and attributions
-   b) You include a complete, unmodified copy of this License
-   c) You clearly document any modifications made
-   d) You comply with all restrictions in Section 3
-   e) You ensure recipients agree to this License
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner.
 
-## 3. RESTRICTIONS AND LIMITATIONS
-3.1. **Commercial Use Restrictions**
-You may not use the Content or any Derivative Works for Commercial Use without:
-   a) Obtaining a separate commercial license from HelpingAI
-   b) Paying applicable fees and royalties
-   c) Receiving written authorization
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
 
-3.2. **Model Usage Restrictions**
-You may not:
-   a) Use the Model to train or develop competing AI models or services
-   b) Extract, reverse engineer, or decompile the Model's architecture or weights
-   c) Remove, disable, or circumvent any access controls or security measures
-   d) Use the Model for military purposes, weapons development, or harmful applications
-   e) Use the Model to generate harmful, discriminatory, or illegal content
-   f) Use the Model in safety-critical applications without explicit written permission
-   g) Use the Model in ways that violate privacy or data protection laws
-   h) Create autonomous systems that could cause harm to individuals or society
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted.
 
-3.3. **Distribution Restrictions**
-You may not:
-   a) Redistribute the Model's weights or checkpoints without explicit permission
-   b) Create hosted APIs or services that provide direct access to the Model
-   c) Bundle or integrate the Content with commercial products or services
-   d) Sublicense or transfer rights to the Content to third parties
-   e) Distribute the Content in ways that could harm HelpingAI's interests
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
 
-3.4. **Branding and Attribution**
-You must:
-   a) Maintain all HelpingAI branding, logos, notices, and watermarks
-   b) Include the following attribution in all Derivative Works:
-      "Powered by HelpingAI technology, licensed under the HelpingAI License v3.0"
-   c) Not use HelpingAI's name, logos, or trademarks to endorse or promote products
-   d) Not suggest any official association with HelpingAI without permission
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
 
-## 4. INTELLECTUAL PROPERTY
-4.1. HelpingAI retains all rights, title, and interest in and to the Content, including:
-   a) All intellectual property rights
-   b) Patents, trademarks, and trade secrets
-   c) Proprietary methods and algorithms
-   d) Future improvements and modifications
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
 
-4.2. This License does not grant you any rights to HelpingAI's:
-   a) Patents or patent applications
-   b) Trademarks or service marks
-   c) Trade secrets or proprietary information
-   d) Other intellectual property except as expressly stated
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work; and
 
-4.3. Derivative Works:
-   a) You retain ownership of original portions of Derivative Works you create
-   b) HelpingAI retains all rights to the underlying Content
-   c) You grant HelpingAI a perpetual license to any improvements or feedback
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file; and
 
-## 5. DATA COLLECTION AND PRIVACY
-5.1. Data Collection:
-   a) HelpingAI may collect usage data and performance metrics
-   b) Analytics may be used to improve the Content
-   c) Collection will comply with applicable privacy laws
+      (e) You must include the following attribution notice prominently 
+          displayed in any Derivative Works:
+          "Based on Webscout (https://github.com/webscout)"
 
-5.2. Privacy Requirements:
-   a) You must comply with all applicable privacy laws and regulations
-   b) You must provide appropriate privacy notices to End Users
-   c) You must obtain necessary consents for data collection
-   d) You must implement appropriate data security measures
+   5. API Usage and Third-Party Services. When using the APIs and services
+      accessed through this Work, you must:
 
-## 6. WARRANTY DISCLAIMER
-THE CONTENT IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
-a) WARRANTIES OF MERCHANTABILITY
-b) FITNESS FOR A PARTICULAR PURPOSE
-c) NON-INFRINGEMENT
-d) ACCURACY OR COMPLETENESS
-e) ABSENCE OF ERRORS OR DEFECTS
-f) COMPATIBILITY WITH OTHER SOFTWARE
-g) SECURITY OR PERFORMANCE
+      (a) Comply with all terms of service of the respective API providers; and
 
-## 7. LIMITATION OF LIABILITY
-7.1. IN NO EVENT SHALL HELPINGAI BE LIABLE FOR ANY:
-   a) DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
-   b) LOSS OF PROFITS OR BUSINESS OPPORTUNITIES
-   c) BUSINESS INTERRUPTION OR LOST DATA
-   d) PERSONAL INJURY OR PROPERTY DAMAGE
-   e) ANY OTHER DAMAGES OR LOSSES
+      (b) Maintain appropriate attribution and licenses for third-party services; and
 
-7.2. THIS LIMITATION APPLIES TO:
-   a) CONTRACT OR TORT CLAIMS
-   b) BREACH OF WARRANTY
-   c) ANY OTHER LEGAL THEORY
-   d) ALL USES OF THE CONTENT
+      (c) Be responsible for obtaining any necessary permissions or licenses; and
 
-## 8. TERMINATION
-8.1. Automatic Termination:
-   a) This License terminates automatically upon any breach
-   b) No notice is required for termination
-   c) All rights granted immediately cease
+      (d) Not use the Work in any way that could damage or overload third-party services.
 
-8.2. Upon Termination:
-   a) Cease all use of the Content
-   b) Destroy all copies and installations
-   c) Stop distribution of Derivative Works
-   d) Certify compliance with termination terms
+   6. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
 
-8.3. Survival:
-   a) Sections 4, 6, 7, 9, and 10 survive termination
-   b) Obligations to protect intellectual property continue
-   c) Liability limitations remain in effect
+   7. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
 
-## 9. GOVERNING LAW AND JURISDICTION
-9.1. This License shall be governed by and construed in accordance with:
-   a) The laws of the United States of America
-   b) The State of California
-   c) Without regard to conflicts of law principles
+   8. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
 
-9.2. Dispute Resolution:
-   a) Exclusive jurisdiction in Santa Clara County, California
-   b) Agreement to personal jurisdiction
-   c) Waiver of jury trial
-   d) Prevailing party entitled to attorney fees
+   9. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, consequential, or exemplary damages of any character
+      arising as a result of this License or out of the use or inability
+      to use the Work.
 
-## 10. EXPORT COMPLIANCE
-10.1. You must comply with all applicable:
-   a) Export control laws and regulations
-   b) Trade sanctions and embargoes
-   c) International trade restrictions
-   d) Anti-boycott regulations
+END OF TERMS AND CONDITIONS
 
-10.2. You may not export the Content to:
-   a) Prohibited countries or regions
-   b) Restricted end users
-   c) Prohibited end uses
+Copyright 2024-2025 Webscout Contributors
 
-## 11. MODIFICATIONS TO LICENSE
-11.1. License Updates:
-   a) HelpingAI may modify this License at any time
-   b) Changes effective upon posting
-   c) Continued use constitutes acceptance
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-11.2. Notification:
-   a) Material changes will be announced
-   b) Users should regularly review terms
-   c) Opt-out requires discontinuing use
+    http://www.apache.org/licenses/LICENSE-2.0
 
-## 12. SUPPORT AND UPDATES
-12.1. No Obligation:
-   a) HelpingAI has no obligation to provide support
-   b) Updates and maintenance are discretionary
-   c) Services may be modified or discontinued
-
-12.2. Available Support:
-   a) Documentation and resources provided "as is"
-   b) Community forums may be available
-   c) Commercial support requires separate agreement
-
-<!-- ## 13. CONTACT INFORMATION
-For licensing inquiries, permissions, or compliance:
-- Website: https://helpingai.co
-- Email: license@helpingai.co
-- Address: [Company Address] -->
-
----
-Last Updated: NOVEMBER 2024
-END OF LICENSE
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
