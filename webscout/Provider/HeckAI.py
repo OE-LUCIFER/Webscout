@@ -170,6 +170,21 @@ class HeckAI(Provider):
 
         return for_stream() if stream else for_non_stream()
 
+    @staticmethod
+    def fix_encoding(text):
+        if isinstance(text, dict) and "text" in text:
+            try:
+                text["text"] = text["text"].encode("latin1").decode("utf-8")
+                return text
+            except (UnicodeError, AttributeError) as e:
+                return text
+        elif isinstance(text, str):
+            try:
+                return text.encode("latin1").decode("utf-8")
+            except (UnicodeError, AttributeError) as e:
+                return text
+        return text
+
     def chat(
         self,
         prompt: str,
@@ -195,6 +210,8 @@ class HeckAI(Provider):
 if __name__ == "__main__":
     from rich import print
     ai = HeckAI(timeout=120)
-    response = ai.chat("Write a short poem about artificial intelligence", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    response = ai.chat("Write a short poem about artificial intelligence", stream=False)
+    print(response)
+    # for chunk in response:
+    #     chunk = ai.fix_encoding(chunk)
+    #     print(chunk, end="", flush=True)
