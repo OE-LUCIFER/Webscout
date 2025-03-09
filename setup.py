@@ -77,13 +77,6 @@ setup(
             "ruff>=0.1.6",
             "pytest>=7.4.2",
         ],
-        "local": [
-            'llama-cpp-python',
-            'colorama',
-            'numpy',
-            'huggingface_hub[cli]',
-            'unicorn',
-        ],
     },
     license="HelpingAI",
     project_urls={

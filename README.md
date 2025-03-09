@@ -14,7 +14,7 @@
 <p align="center">
   <strong>Webscout</strong> is the all-in-one search and AI toolkit you need.
   <br>
-  Discover insights with Yep.com, DuckDuckGo, and Phind; access cutting-edge AI models; transcribe YouTube videos; generate temporary emails and phone numbers; perform text-to-speech conversions; run offline language models; and much more!
+  Discover insights with Yep.com, DuckDuckGo, and Phind; access cutting-edge AI models; transcribe YouTube videos; generate temporary emails and phone numbers; perform text-to-speech conversions; and much more!
 </p>
 
 <div align="center">
@@ -33,9 +33,6 @@
 * **[GitAPI](webscout/Extra/GitToolkit/gitapi):** Powerful GitHub data extraction toolkit for seamless repository and user information retrieval, featuring commit tracking, issue management, and comprehensive user analytics - all without authentication requirements for public data
 * **Tempmail & Temp Number:** Generate temporary email addresses and phone numbers for enhanced privacy.
 * **[Text-to-Speech (TTS)](webscout/Provider/TTS/README.md):** Convert text into natural-sounding speech using multiple AI-powered providers like ElevenLabs, StreamElements, and Voicepods.
-* **Offline LLMs:** Utilize powerful language models offline with GGUF support.
-* **Extensive Provider Ecosystem:** Explore a vast collection of AI providers
-* **Local LLM Execution:** Run GGUF models locally with minimal configuration.
 * **GGUF Conversion & Quantization:** Convert and quantize Hugging Face models to GGUF format.
 * **Autollama:** Download Hugging Face models and automatically convert them for Ollama compatibility.
 * **[SwiftCLI](webscout/swiftcli/Readme.md):** A powerful and elegant CLI framework that makes it easy to create beautiful command-line interfaces.
@@ -1094,118 +1091,6 @@ response = vlm.chat([{
         {"type": "text", "text": "What's in this image?"}
     ]
 }])
-```
-
-## 💻 Local-LLM
-
-Webscout can now run GGUF models locally. You can download and run your favorite models with minimal configuration.
-
-**Example:**
-
-```python
-from webscout.Local import *
-model_path = download_model("Qwen/Qwen2.5-0.5B-Instruct-GGUF", "qwen2.5-0.5b-instruct-q2_k.gguf", token=None)
-model = Model(model_path, n_gpu_layers=0, context_length=2048)
-thread = Thread(model, format=chatml)
-# print(thread.send("hi")) #send a single msg to ai
-
-# thread.interact() # interact with the model in terminal
-# start webui
-# webui = WebUI(thread)
-# webui.start(host="0.0.0.0", port=8080, ssl=True) #Use ssl=True and make cert and key for https
-```
-
-## 🐶 Local-rawdog
-
-Webscout's local raw-dog feature allows you to run Python scripts within your terminal prompt.
-
-**Example:**
-
-```python
-import webscout.Local as ws
-from webscout.Local.rawdog import RawDog
-from webscout.Local.samplers import DefaultSampling
-from webscout.Local.formats import chatml, AdvancedFormat
-from webscout.Local.utils import download_model
-import datetime
-import sys
-import os
-
-repo_id = "YorkieOH10/granite-8b-code-instruct-Q8_0-GGUF" 
-filename = "granite-8b-code-instruct.Q8_0.gguf"
-model_path = download_model(repo_id, filename, token='')
-
-# Load the model using the downloaded path
-model = ws.Model(model_path, n_gpu_layers=10)
-
-rawdog = RawDog()
-
-# Create an AdvancedFormat and modify the system content
-# Use a lambda to generate the prompt dynamically:
-chat_format = AdvancedFormat(chatml)
-#  **Pre-format the intro_prompt string:**
-system_content = f"""
-You are a command-line coding assistant called Rawdog that generates and auto-executes Python scripts.
-
-A typical interaction goes like this:
-1. The user gives you a natural language PROMPT.
-2. You:
-    i. Determine what needs to be done
-    ii. Write a short Python SCRIPT to do it
-    iii. Communicate back to the user by printing to the console in that SCRIPT
-3. The compiler extracts the script and then runs it using exec(). If there will be an exception raised,
- it will be send back to you starting with "PREVIOUS SCRIPT EXCEPTION:".
-4. In case of exception, regenerate error free script.
-
-If you need to review script outputs before completing the task, you can print the word "CONTINUE" at the end of your SCRIPT.
-This can be useful for summarizing documents or technical readouts, reading instructions before
-deciding what to do, or other tasks that require multi-step reasoning.
-A typical 'CONTINUE' interaction looks like this:
-1. The user gives you a natural language PROMPT.
-2. You:
-    i. Determine what needs to be done
-    ii. Determine that you need to see the output of some subprocess call to complete the task
-    iii. Write a short Python SCRIPT to print that and then print the word "CONTINUE"
-3. The compiler
-    i. Checks and runs your SCRIPT
-    ii. Captures the output and appends it to the conversation as "LAST SCRIPT OUTPUT:"
-    iii. Finds the word "CONTINUE" and sends control back to you
-4. You again:
-    i. Look at the original PROMPT + the "LAST SCRIPT OUTPUT:" to determine what needs to be done
-    ii. Write a short Python SCRIPT to do it
-    iii. Communicate back to the user by printing to the console in that SCRIPT
-5. The compiler...
-
-Please follow these conventions carefully:
-- Decline any tasks that seem dangerous, irreversible, or that you don't understand.
-- Always review the full conversation prior to answering and maintain continuity.
-- If asked for information, just print the information clearly and concisely.
-- If asked to do something, print a concise summary of what you've done as confirmation.
-- If asked a question, respond in a friendly, conversational way. Use programmatically-generated and natural language responses as appropriate.
-- If you need clarification, return a SCRIPT that prints your question. In the next interaction, continue based on the user's response.
-- Assume the user would like something concise. For example rather than printing a massive table, filter or summarize it to what's likely of interest.
-- Actively clean up any temporary processes or files you use.
-- When looking through files, use git as available to skip files, and skip hidden files (.env, .git, etc) by default.
-- You can plot anything with matplotlib.
-- ALWAYS Return your SCRIPT inside of a single pair of ``` delimiters. Only the console output of the first such SCRIPT is visible to the user, so make sure that it's complete and don't bother returning anything else.
-"""
-chat_format.override('system_content', lambda: system_content)
-
-thread = ws.Thread(model, format=chat_format, sampler=DefaultSampling)
-
-while True:
-    prompt = input(">: ")
-    if prompt.lower() == "q":
-        break
-
-    response = thread.send(prompt)
-
-    # Process the response using RawDog
-    script_output = rawdog.main(response)
-
-    if script_output:
-        print(script_output)
-
 ```
 
 ## GGUF
