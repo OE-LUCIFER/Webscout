@@ -19,8 +19,6 @@ class Venice(Provider):
         "llama-3.3-70b",
         "llama-3.2-3b-akash",
         "qwen2dot5-coder-32b"
-
-
     ]
     
     def __init__(
@@ -162,9 +160,10 @@ class Venice(Provider):
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}")
 
         def for_non_stream():
-            for _ in for_stream():
-                pass
-            return self.last_response
+            full_text = ""
+            for chunk in for_stream():
+                full_text += chunk["text"]
+            return {"text": full_text}
 
         return for_stream() if stream else for_non_stream()
 
@@ -195,6 +194,7 @@ if __name__ == "__main__":
     ai = Venice(model="qwen2dot5-coder-32b", timeout=50)
     
     # Test chat with streaming
-    response = ai.chat("Write a short story about an AI assistant", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    response = ai.chat("Write a short story about an AI assistant", stream=False)
+    print(response)
+    # for chunk in response:
+    #     print(chunk, end="", flush=True)
