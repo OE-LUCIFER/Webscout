@@ -78,6 +78,7 @@ from .TwoAI import *
 from .Venice import *
 from .ElectronHub import *
 from .HuggingFaceChat import *
+from .GithubChat import *
 __all__ = [
     'LLAMA',
     'Venice',
@@ -159,4 +160,5 @@ __all__ = [
     'NousHermes',
     'FreeAIChat',
     'ElectronHub'
+    'GithubChat',
 ]
