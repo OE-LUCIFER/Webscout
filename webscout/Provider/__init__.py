@@ -77,9 +77,11 @@ from .HeckAI import *
 from .TwoAI import *
 from .Venice import *
 from .ElectronHub import *
+from .HuggingFaceChat import *
 __all__ = [
     'LLAMA',
     'Venice',
+    'HuggingFaceChat',
     'TwoAI',
     'HeckAI',
     'AllenAI',
