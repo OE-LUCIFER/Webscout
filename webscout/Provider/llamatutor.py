@@ -1,4 +1,3 @@
-
 import requests
 import json
 
@@ -8,11 +7,10 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
-from webscout.Litlogger import Logger, LogFormat
 
 class LlamaTutor(Provider):
     """
-    A class to interact with the LlamaTutor API (Together.ai) with comprehensive logging.
+    A class to interact with the LlamaTutor API (Together.ai)
     """
 
     def __init__(
@@ -26,20 +24,11 @@ class LlamaTutor(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful AI assistant.",
-        logging: bool = False
+        system_prompt: str = "You are a helpful AI assistant."
     ):
         """
-        Initializes the LlamaTutor API with given parameters and logging capabilities.
+        Initializes the LlamaTutor API with given parameters.
         """
-        self.logger = Logger(
-            name="LlamaTutor",
-            format=LogFormat.MODERN_EMOJI,
-
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info("Initializing LlamaTutor API")
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -74,9 +63,6 @@ class LlamaTutor(Provider):
         )
         
         self.session.headers.update(self.headers)
-        
-        if self.logger:
-            self.logger.debug("Headers configured and session updated")
 
         Conversation.intro = (
             AwesomePrompts().get_act(
@@ -92,9 +78,6 @@ class LlamaTutor(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
-        if self.logger:
-            self.logger.info("LlamaTutor initialized successfully")
-
     def ask(
         self,
         prompt: str,
@@ -103,10 +86,7 @@ class LlamaTutor(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> dict:
-        """Chat with LlamaTutor with logging capabilities"""
-        if self.logger:
-            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}...")
-            self.logger.debug(f"Stream: {stream}, Optimizer: {optimizer}")
+        """Chat with LlamaTutor"""
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -114,11 +94,7 @@ class LlamaTutor(Provider):
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
         
         payload = {
@@ -136,8 +112,6 @@ class LlamaTutor(Provider):
 
         def for_stream():
             try:
-                if self.logger:
-                    self.logger.debug("Initiating streaming request to API")
 
                 response = requests.post(
                     self.api_endpoint,
@@ -147,9 +121,6 @@ class LlamaTutor(Provider):
                     timeout=self.timeout
                 )
                 response.raise_for_status()
-                
-                if self.logger:
-                    self.logger.info(f"API connection established successfully. Status: {response.status_code}")
                 
                 full_response = ''
                 for line in response.iter_lines(decode_unicode=True):
@@ -162,8 +133,6 @@ class LlamaTutor(Provider):
                                     full_response += json_data["text"]
                                     yield json_data["text"] if raw else dict(text=json_data["text"])
                         except json.JSONDecodeError as e:
-                            if self.logger:
-                                self.logger.warning(f"Failed to parse response line: {e}")
                             continue
 
                 self.last_response.update(dict(text=full_response))
@@ -172,17 +141,11 @@ class LlamaTutor(Provider):
                 )
 
             except requests.exceptions.HTTPError as http_err:
-                if self.logger:
-                    self.logger.error(f"HTTP error occurred: {http_err}")
                 raise exceptions.FailedToGenerateResponseError(f"HTTP error occurred: {http_err}")
             except requests.exceptions.RequestException as err:
-                if self.logger:
-                    self.logger.error(f"Request error occurred: {err}")
                 raise exceptions.FailedToGenerateResponseError(f"An error occurred: {err}")
 
         def for_non_stream():
-            if self.logger:
-                self.logger.debug("Processing non-streaming request")
             for _ in for_stream():
                 pass
             return self.last_response
@@ -196,9 +159,7 @@ class LlamaTutor(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        """Generate response with logging capabilities"""
-        if self.logger:
-            self.logger.debug(f"Chat request initiated - Prompt: {prompt[:50]}...")
+        """Generate response"""
 
         def for_stream():
             for response in self.ask(
@@ -225,8 +186,7 @@ class LlamaTutor(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    # Enable logging for testing
-    ai = LlamaTutor(logging=True)
+    ai = LlamaTutor()
     response = ai.chat("Write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

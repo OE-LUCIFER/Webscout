@@ -7,13 +7,11 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import Logger, LogFormat
-from webscout import LitAgent as Lit
 
 class Marcus(Provider):
     """
     This class provides methods for interacting with the AskMarcus API.
-    Improved to match webscout provider standards with comprehensive logging.
+    Improved to match webscout provider standards.
     """
 
     def __init__(
@@ -26,18 +24,9 @@ class Marcus(Provider):
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
-        logging: bool = False
+        act: str = None
     ):
-        """Initializes the Marcus API with logging capabilities."""
-        self.logger = Logger(
-            name="Marcus",
-            format=LogFormat.MODERN_EMOJI,
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info("Initializing Marcus API")
-
+        """Initializes the Marcus API."""
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -50,7 +39,7 @@ class Marcus(Provider):
             'accept': '*/*',
             'origin': 'https://www.askmarcus.app',
             'referer': 'https://www.askmarcus.app/chat',
-            'user-agent': Lit().random(),
+            'user-agent': 'Mozilla/5.0',
         }
 
         self.__available_optimizers = (
@@ -73,9 +62,6 @@ class Marcus(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
-        if self.logger:
-            self.logger.info("Marcus API initialized successfully")
-
     def ask(
         self,
         prompt: str,
@@ -84,22 +70,14 @@ class Marcus(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> Dict[str, Any] | Generator[str, None, None]:
-        """Sends a prompt to the AskMarcus API and returns the response with logging."""
-        if self.logger:
-            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}...")
-            self.logger.debug(f"Stream: {stream}, Optimizer: {optimizer}")
-
+        """Sends a prompt to the AskMarcus API and returns the response."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise exceptions.FailedToGenerateResponseError(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
@@ -108,9 +86,6 @@ class Marcus(Provider):
 
         def for_stream():
             try:
-                if self.logger:
-                    self.logger.debug("Initiating streaming request to API")
-
                 with requests.post(
                     self.api_endpoint,
                     headers=self.headers,
@@ -119,35 +94,21 @@ class Marcus(Provider):
                     timeout=self.timeout
                 ) as response:
                     response.raise_for_status()
-                    
-                    if self.logger:
-                        self.logger.info(f"API connection established successfully. Status: {response.status_code}")
-
                     for line in response.iter_lines():
                         if line:
                             yield line.decode('utf-8')
-                    
                     self.conversation.update_chat_history(
                         prompt, self.get_message(self.last_response)
                     )
 
             except requests.exceptions.RequestException as e:
-                if self.logger:
-                    self.logger.error(f"API request failed: {str(e)}")
                 raise exceptions.ProviderConnectionError(f"Error connecting to Marcus: {str(e)}")
 
         def for_non_stream():
-            if self.logger:
-                self.logger.debug("Processing non-streaming request")
-            
             full_response = ""
             for line in for_stream():
                 full_response += line
             self.last_response = {"text": full_response}
-            
-            if self.logger:
-                self.logger.debug("Response processing completed")
-            
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
@@ -159,10 +120,7 @@ class Marcus(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str | Generator[str, None, None]:
-        """Generates a response from the AskMarcus API with logging."""
-        if self.logger:
-            self.logger.debug(f"Chat request initiated - Prompt: {prompt[:50]}...")
-
+        """Generates a response from the AskMarcus API."""
         def for_stream():
             for response_chunk in self.ask(
                 prompt, stream=True, optimizer=optimizer, conversationally=conversationally
@@ -184,8 +142,7 @@ class Marcus(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    # Enable logging for testing
-    ai = Marcus(logging=True)
+    ai = Marcus()
     response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

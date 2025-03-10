@@ -13,7 +13,17 @@ from typing import Any, AsyncGenerator, Dict
 
 #------------------------------------------------------phind-------------------------------------------------------------
 class PhindSearch:
-    # default_model = "Phind Model"
+    # Available models for Phind
+    AVAILABLE_MODELS = [
+        "Phind Model",
+        "Claude 3.7 Sonnet",
+        "Claude Opus",
+        "GPT-4o",
+        "o3-mini",
+        "Phind-405B",
+        "Phind-70B"
+    ]
+    
     def __init__(
         self,
         is_conversation: bool = True,
@@ -43,6 +53,9 @@ class PhindSearch:
             model (str, optional): Model name. Defaults to "Phind Model".
             quiet (bool, optional): Ignore web search-results and yield final response only. Defaults to False.
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            
         self.session = requests.Session()
         self.max_tokens_to_sample = max_tokens
         self.is_conversation = is_conversation
@@ -256,6 +269,16 @@ class PhindSearch:
             )
 
 class Phindv2(Provider):
+    # Available models for Phindv2
+    AVAILABLE_MODELS = [
+        "Claude 3.7 Sonnet",
+        "Claude Opus",
+        "GPT-4o",
+        "o3-mini",
+        "Phind-405B",
+        "Phind-70B"
+    ]
+    
     def __init__(
         self,
         is_conversation: bool = True,
@@ -267,7 +290,7 @@ class Phindv2(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "Phind Instant",
+        model: str = "Claude 3.7 Sonnet",
         quiet: bool = False,
         system_prompt: str = "Be Helpful and Friendly",
     ):
@@ -287,6 +310,9 @@ class Phindv2(Provider):
             quiet (bool, optional): Ignore web search-results and yield final response only. Defaults to False.
             system_prompt (str, optional): System prompt for Phindv2. Defaults to "Be Helpful and Friendly".
         """
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            
         self.session = requests.Session()
         self.max_tokens_to_sample = max_tokens
         self.is_conversation = is_conversation
@@ -505,5 +531,5 @@ if __name__ == "__main__":
     from rich import print
 
     ai = Phindv2() 
-    print(ai.chat("Tell me a joke"))
+    print(ai.chat("Who are u"))
     # Returns the chat response from the Phindv2 API.

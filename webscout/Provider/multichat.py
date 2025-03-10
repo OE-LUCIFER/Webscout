@@ -6,7 +6,6 @@ from datetime import datetime
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent 
 
 # Model configurations
@@ -21,14 +20,18 @@ MODEL_CONFIGS = {
     },
     "cohere": {
         "endpoint": "https://www.multichatai.com/api/chat/cohere",
-        "models": {"command-r": {"contextLength": 128000}},
+        "models": {
+            "command-r": {"contextLength": 128000},
+            "command": {"contextLength": 4096},
+        },
     },
     "google": {
         "endpoint": "https://www.multichatai.com/api/chat/google",
         "models": {
             "gemini-1.5-flash-002": {"contextLength": 1048576},
             "gemma2-9b-it": {"contextLength": 8192},
-        },
+            "gemini-2.0-flash": {"contextLength": 128000},
+                    },
         "message_format": "parts",
     },
     "deepinfra": {
@@ -38,6 +41,9 @@ MODEL_CONFIGS = {
             "Gryphe/MythoMax-L2-13b": {"contextLength": 8192},
             "nvidia/Llama-3.1-Nemotron-70B-Instruct": {"contextLength": 131072},
             "deepseek-ai/DeepSeek-V3": {"contextLength": 32000},
+            "meta-llama/Meta-Llama-3.1-405B-Instruct": {"contextLength": 131072},
+            "NousResearch/Hermes-3-Llama-3.1-405B": {"contextLength": 131072},
+            "gemma-2-27b-it": {"contextLength": 8192},
         },
     },
     "mistral": {
@@ -47,6 +53,14 @@ MODEL_CONFIGS = {
             "codestral-latest": {"contextLength": 32000},
             "open-mistral-7b": {"contextLength": 8000},
             "open-mixtral-8x7b": {"contextLength": 8000},
+        },
+    },
+    "alibaba": {
+        "endpoint": "https://www.multichatai.com/api/chat/alibaba",
+        "models": {
+            "Qwen/Qwen2.5-72B-Instruct": {"contextLength": 32768},
+            "Qwen/Qwen2.5-Coder-32B-Instruct": {"contextLength": 32768},
+            "Qwen/QwQ-32B-Preview": {"contextLength": 32768},
         },
     },
 }
@@ -68,20 +82,9 @@ class MultiChatAI(Provider):
         temperature: float = 0.5,
         presence_penalty: int = 0,
         frequency_penalty: int = 0,
-        top_p: float = 1,
-        logging: bool = False,
+        top_p: float = 1
     ):
-        """Initializes the MultiChatAI API client with logging capabilities."""
-        # Initialize logger first
-        self.logger = Logger(
-            name="MultiChatAI",
-            format=LogFormat.MODERN_EMOJI,
-
-        ) if logging else None
-
-        if self.logger:
-            self.logger.debug("Initializing MultiChatAI")
-
+        """Initializes the MultiChatAI API client."""
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -106,9 +109,6 @@ class MultiChatAI(Provider):
             "user-agent": self.agent.random(),
         }
         
-        if self.logger:
-            self.logger.debug(f"Setting up session with headers: {self.headers}")
-        
         self.session.headers.update(self.headers)
         self.session.proxies = proxies
         self.session.cookies.update({"session": uuid.uuid4().hex})
@@ -131,24 +131,17 @@ class MultiChatAI(Provider):
         )
         self.conversation.history_offset = history_offset
 
-        # Get provider after logger initialization
         self.provider = self._get_provider_from_model(self.model)
         self.model_name = self.model
 
-        if self.logger:
-            self.logger.info(f"MultiChatAI initialized with model: {self.model}")
-
     def _get_endpoint(self) -> str:
         """Get the API endpoint for the current provider."""
-        endpoint = MODEL_CONFIGS[self.provider]["endpoint"]
-        if self.logger:
-            self.logger.debug(f"Using endpoint: {endpoint}")
-        return endpoint
+        return MODEL_CONFIGS[self.provider]["endpoint"]
 
     def _get_chat_settings(self) -> Dict[str, Any]:
         """Get chat settings for the current model."""
         base_settings = MODEL_CONFIGS[self.provider]["models"][self.model_name]
-        settings = {
+        return {
             "model": self.model,
             "prompt": self.system_prompt,
             "temperature": self.temperature,
@@ -157,45 +150,30 @@ class MultiChatAI(Provider):
             "includeWorkspaceInstructions": True,
             "embeddingsProvider": "openai"
         }
-        if self.logger:
-            self.logger.debug(f"Chat settings: {settings}")
-        return settings
 
     def _get_system_message(self) -> str:
         """Generate system message with current date."""
         current_date = datetime.now().strftime("%d/%m/%Y")
-        message = f"Today is {current_date}.\n\nUser Instructions:\n{self.system_prompt}"
-        if self.logger:
-            self.logger.debug(f"System message: {message}")
-        return message
+        return f"Today is {current_date}.\n\nUser Instructions:\n{self.system_prompt}"
 
     def _build_messages(self, conversation_prompt: str) -> list:
         """Build messages array based on provider type."""
         if self.provider == "google":
-            messages = [
+            return [
                 {"role": "user", "parts": self._get_system_message()},
                 {"role": "model", "parts": "I will follow your instructions."},
                 {"role": "user", "parts": conversation_prompt}
             ]
         else:
-            messages = [
+            return [
                 {"role": "system", "content": self._get_system_message()},
                 {"role": "user", "content": conversation_prompt}
             ]
-        
-        if self.logger:
-            self.logger.debug(f"Built messages: {messages}")
-        return messages
 
     def _get_provider_from_model(self, model: str) -> str:
         """Determine the provider based on the model name."""
-        if self.logger:
-            self.logger.debug(f"Getting provider for model: {model}")
-            
         for provider, config in MODEL_CONFIGS.items():
             if model in config["models"]:
-                if self.logger:
-                    self.logger.info(f"Found provider: {provider} for model: {model}")
                 return provider
         
         available_models = []
@@ -204,16 +182,10 @@ class MultiChatAI(Provider):
                 available_models.append(f"{provider}/{model_name}")
         
         error_msg = f"Invalid model: {model}\nAvailable models: {', '.join(available_models)}"
-        if self.logger:
-            self.logger.error(error_msg)
         raise ValueError(error_msg)
 
     def _make_request(self, payload: Dict[str, Any]) -> requests.Response:
-        """Make the API request with proper error handling and logging."""
-        if self.logger:
-            self.logger.debug(f"Making request to endpoint: {self._get_endpoint()}")
-            self.logger.debug(f"Request payload: {json.dumps(payload, indent=2)}")
-
+        """Make the API request with proper error handling."""
         try:
             response = self.session.post(
                 self._get_endpoint(),
@@ -222,15 +194,8 @@ class MultiChatAI(Provider):
                 timeout=self.timeout,
             )
             response.raise_for_status()
-            
-            if self.logger:
-                self.logger.info(f"Request successful: {response.status_code}")
-                self.logger.debug(f"Response content: {response.text[:200]}...")
-                
             return response
         except requests.exceptions.RequestException as e:
-            if self.logger:
-                self.logger.error(f"Request failed: {str(e)}")
             raise exceptions.FailedToGenerateResponseError(f"API request failed: {e}") from e
 
     def ask(
@@ -241,21 +206,14 @@ class MultiChatAI(Provider):
         conversationally: bool = False,
     ) -> Dict[str, Any]:
         """Sends a prompt to the MultiChatAI API and returns the response."""
-        if self.logger:
-            self.logger.debug(f"ask() called with prompt: {prompt}")
-            
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
-                if self.logger:
-                    self.logger.info(f"Applying optimizer: {optimizer}")
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
             else:
                 error_msg = f"Optimizer is not one of {self.__available_optimizers}"
-                if self.logger:
-                    self.logger.error(error_msg)
                 raise exceptions.FailedToGenerateResponseError(error_msg)
 
         payload = {
@@ -269,15 +227,8 @@ class MultiChatAI(Provider):
             full_response = response.text.strip()
             self.last_response = {"text": full_response}
             self.conversation.update_chat_history(prompt, full_response)
-            
-            if self.logger:
-                self.logger.info("Successfully processed response")
-                self.logger.debug(f"Final response: {full_response[:200]}...")
-                
             return self.last_response
         except json.JSONDecodeError as e:
-            if self.logger:
-                self.logger.error(f"Failed to decode JSON response: {e}")
             raise exceptions.FailedToGenerateResponseError(f"Invalid JSON response: {e}") from e
 
     def chat(
@@ -286,17 +237,10 @@ class MultiChatAI(Provider):
         optimizer: str = None,
         conversationally: bool = False,
     ) -> str:
-        """Generate response with logging."""
-        if self.logger:
-            self.logger.debug(f"chat() called with prompt: {prompt}")
-            
+        """Generate response."""
         response = self.ask(
             prompt, optimizer=optimizer, conversationally=conversationally
         )
-        
-        if self.logger:
-            self.logger.info("Chat response generated successfully")
-            
         return self.get_message(response)
 
     def get_message(self, response: Dict[str, Any] | str) -> str:
@@ -309,21 +253,15 @@ class MultiChatAI(Provider):
         Returns:
             str: The extracted message text
         """
-        if self.logger:
-            self.logger.debug(f"Extracting message from response type: {type(response)}")
-            
         if isinstance(response, dict):
-            message = response.get("text", "")
-            if self.logger:
-                self.logger.debug(f"Extracted message from dict: {message[:200]}...")
-            return message
+            return response.get("text", "")
         return str(response)
 
 if __name__ == "__main__":
     from rich import print
 
-    # Example usage with logging enabled
-    ai = MultiChatAI(model="deepseek-r1-distill-llama-70b", logging=False)
+    # Example usage
+    ai = MultiChatAI(model="Qwen/QwQ-32B-Preview")
     try:
         response = ai.chat("What is quantum computing?")
         print(response)
