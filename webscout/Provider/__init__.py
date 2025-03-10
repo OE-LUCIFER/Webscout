@@ -159,6 +159,6 @@ __all__ = [
     'ChatGLM',
     'NousHermes',
     'FreeAIChat',
-    'ElectronHub'
+    'ElectronHub',
     'GithubChat',
 ]

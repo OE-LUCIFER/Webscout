@@ -222,25 +222,6 @@ class GithubChat(Provider):
             self.last_response = {"text": full_text}
             self.conversation.update_chat_history(prompt, full_text)
     
-    def format_prompt(self, messages: List[Dict[str, str]]) -> str:
-        """Format a list of messages into a single prompt string."""
-        formatted_prompt = ""
-        
-        for message in messages:
-            role = message.get("role", "")
-            content = message.get("content", "")
-            
-            if role == "system":
-                formatted_prompt += f"Instructions: {content}\n\n"
-            elif role == "user":
-                formatted_prompt += f"User: {content}\n\n"
-            elif role == "assistant":
-                formatted_prompt += f"Assistant: {content}\n\n"
-            else:
-                formatted_prompt += f"{content}\n\n"
-                
-        return formatted_prompt.strip()
-    
     def ask(
         self,
         prompt: str,
