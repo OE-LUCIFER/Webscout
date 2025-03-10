@@ -33,6 +33,7 @@ setup(
             "setuptools",
             "wheel",
             "pip",
+            "nodriver",
             "mistune",
             "tenacity",
             "curl_cffi",
