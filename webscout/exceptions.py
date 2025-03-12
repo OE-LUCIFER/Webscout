@@ -21,6 +21,16 @@ class APIConnectionError(Exception):
     pass
 
 
+class AuthenticationError(Exception):
+    """
+    Exception raised when authentication to a service fails.
+
+    This exception is raised when the provided credentials are invalid or expired.
+    It indicates that the application cannot authenticate with the service.
+    """
+    pass
+
+
 class RatelimitE(Exception):
     """
     Exception raised when an API rate limit is exceeded.
