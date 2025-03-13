@@ -32,11 +32,13 @@ class AkashGPT(Provider):
         "Meta-Llama-3-3-70B-Instruct",
         "DeepSeek-R1",
         "Meta-Llama-3-1-405B-Instruct-FP8",
-        "Meta-Llama-3-2-3B-Instruct",
-        "Meta-Llama-3-1-8B-Instruct-FP8",
-        "mistral",
-        "nous-hermes2-mixtral",
-        "dolphin-mixtral"
+        # "Meta-Llama-3-2-3B-Instruct",
+        # "Meta-Llama-3-1-8B-Instruct-FP8",
+        # "mistral",
+        # "nous-hermes2-mixtral",
+        # "dolphin-mixtral",
+        "Qwen-QwQ-32B"
+
     ]
 
     def __init__(
@@ -186,6 +188,7 @@ class AkashGPT(Provider):
             ],
             "model": self.model,
             "temperature": self.temperature,
+            "system": self.system_prompt,
             "topP": self.top_p
         }
 
