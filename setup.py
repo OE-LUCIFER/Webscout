@@ -49,7 +49,7 @@ setup(
             "PyYAML",
             "tls_client",
             "clipman",
-            "playsound==1.2.2",
+            "playsound==1.3.0",
             "ollama",
             "pillow",
             "bson",
