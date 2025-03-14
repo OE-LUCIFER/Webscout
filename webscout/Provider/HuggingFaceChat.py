@@ -45,6 +45,7 @@ class HuggingFaceChat(Provider):
         model: str = "Qwen/QwQ-32B",
         cookie_path: str = "cookies.json",
         assistantId: str = None,
+        system_prompt: str = "You are a helpful assistant. Please answer the following question.",
     ):
         """Initialize the HuggingFaceChat client."""
         self.url = "https://huggingface.co/chat"
@@ -52,6 +53,7 @@ class HuggingFaceChat(Provider):
         self.session = requests.Session()
         self.session.proxies.update(proxies)
         self.assistantId = assistantId
+        self.system_prompt = system_prompt
         # Load cookies for authentication
         self.cookies = self.load_cookies()
         
@@ -154,7 +156,7 @@ class HuggingFaceChat(Provider):
     def create_conversation(self, model: str):
         """Create a new conversation with the specified model."""
         url = "https://huggingface.co/chat/conversation"
-        payload = {"model": model, "assistantId": self.assistantId}
+        payload = {"model": model, "assistantId": self.assistantId, "preprompt": self.system_prompt}
         
         # Update referer for this specific request
         headers = self.headers.copy()
@@ -451,7 +453,7 @@ if __name__ == "__main__":
     from rich import print
     
     try:
-        ai = HuggingFaceChat(assistantId="6767f1683f41e599981375d9")
+        ai = HuggingFaceChat(cookie_path="cookies.json", system_prompt="You are a helpful assistant. Please answer the following question.")
         response = ai.chat("how many r in strawberry", stream=True, web_search=False)
         for chunk in response:
             print(chunk, end="", flush=True)
