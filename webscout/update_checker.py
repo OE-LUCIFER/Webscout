@@ -1,43 +1,28 @@
 """
-Ayy, check it out! 👀
+Webscout Update Checker
 >>> from webscout import check_for_updates
->>> check_for_updates()
-'Yo, new Webscout version just dropped: 2.0.0! 🔥
-Level up with: `pip install --upgrade webscout`'
+>>> result = check_for_updates()
+>>> print(result)
+'New Webscout version available: 2.0.0 - Update with: pip install --upgrade webscout'
 """
 
-import subprocess
 import sys
 import os
-from typing import Optional
+from typing import Optional, Tuple, Dict, Any, Literal, Union
 
 import requests
 from packaging import version
-import re
-
-from webscout.Litlogger import Logger
 from importlib.metadata import version as get_package_version
 from importlib.metadata import PackageNotFoundError
-from importlib.metadata import metadata as get_package_metadata
 
-# Setting up that clean logger format, no cap! 💯
-CUSTOM_FORMAT = """{message}"""
-
-logger = Logger(
-    name="WebscoutUpdate",
-    format=CUSTOM_FORMAT,
-)
+# Version comparison result type
+VersionCompareResult = Literal[-1, 0, 1]
 
 def get_installed_version() -> Optional[str]:
-    """Yo, let's check what version you're running! 🔍
-
-    What this function's all about:
-    - Checking your setup real quick 💨
-    - Getting them version deets 📱
-    - Handling any problems like a boss 💪
+    """Get the currently installed version of webscout.
 
     Returns:
-        Optional[str]: Your version number or None if we can't find it
+        Optional[str]: The installed version string or None if not found
 
     Examples:
         >>> version = get_installed_version()
@@ -48,19 +33,14 @@ def get_installed_version() -> Optional[str]:
         return get_package_version('webscout')
     except PackageNotFoundError:
         return None
-    except Exception as e:
+    except Exception:
         return None
 
 def get_pypi_version() -> Optional[str]:
-    """Let's see what's fresh on PyPI! 🚀
-
-    This function's vibe:
-    - Hitting up PyPI for the latest drop 🌐
-    - Keeping it smooth with timeout handling ⚡
-    - Making sure we get good data fr fr 💯
+    """Get the latest version available on PyPI.
 
     Returns:
-        Optional[str]: Latest version or None if something's not right
+        Optional[str]: The latest version string or None if retrieval failed
 
     Examples:
         >>> latest = get_pypi_version()
@@ -73,24 +53,20 @@ def get_pypi_version() -> Optional[str]:
             timeout=10
         )
         response.raise_for_status()
-        return response.json()['info']['version']
-    except requests.RequestException as e:
-        pass
-    except (KeyError, ValueError) as e:
-        pass
-    except Exception as e:
-        pass
-    return None
+        data: Dict[str, Any] = response.json()
+        return data['info']['version']
+    except (requests.RequestException, KeyError, ValueError, Exception):
+        return None
 
-def version_compare(v1: str, v2: str) -> int:
-    """Time to compare these versions! 💪
+def version_compare(v1: str, v2: str) -> VersionCompareResult:
+    """Compare two version strings.
 
     Args:
-        v1: First version we checking
-        v2: Second version to compare with
+        v1: First version string
+        v2: Second version string to compare with
 
     Returns:
-        int: -1 if v1's older, 1 if v1's newer, 0 if they twins
+        VersionCompareResult: -1 if v1 < v2, 1 if v1 > v2, 0 if equal
 
     Examples:
         >>> version_compare('1.0.0', '2.0.0')
@@ -104,71 +80,57 @@ def version_compare(v1: str, v2: str) -> int:
         if version1 > version2:
             return 1
         return 0
-    except version.InvalidVersion as e:
-        pass
-        return 0
-    except Exception as e:
-        pass
+    except (version.InvalidVersion, Exception):
         return 0
 
-def display_version_info(installed: Optional[str], latest: Optional[str]) -> None:
-    """Let's break down your version status! 📱
-
-    What we doing here:
-    - Comparing your version with the latest drop 🔄
-    - Letting you know if you need to level up ⬆️
-    - Keeping you in the loop with style 💯
+def get_update_message(installed: str, latest: str) -> Optional[str]:
+    """Generate appropriate update message based on version comparison.
 
     Args:
-        installed: What you running rn
-        latest: What's fresh out there
+        installed: Currently installed version
+        latest: Latest available version
+
+    Returns:
+        Optional[str]: Update message if needed, None if already on latest version
 
     Examples:
-        >>> display_version_info('1.0.0', '2.0.0')
-        'Yo, new Webscout version just dropped: 2.0.0! 🔥'
+        >>> get_update_message('1.0.0', '2.0.0')
+        'New Webscout version available: 2.0.0 - Update with: pip install --upgrade webscout'
     """
-    if installed:
-        pass
-    
-    if latest and installed:
-        comparison_result = version_compare(installed, latest)
-        if comparison_result < 0:
-            logger.warning(
-                f"Yo, new Webscout version just dropped: {latest}! 🔥\n"
-                f"Level up with: `pip install --upgrade webscout`"
-            )
-        elif comparison_result > 0:
-            logger.success("You already got the latest version, no cap! 💯")
+    comparison_result = version_compare(installed, latest)
+    if comparison_result < 0:
+        return f"New Webscout version available: {latest} - Update with: pip install --upgrade webscout"
+    elif comparison_result > 0:
+        return f"You're running a development version ({installed}) ahead of latest release ({latest})"
+    return None  # Already on the latest version
 
-def check_for_updates() -> None:
-    """Time to check if you're running the latest! 🚀
+def check_for_updates() -> Optional[str]:
+    """Check if a newer version of Webscout is available.
 
-    What we doing:
-    - Peeking at your current setup 📱
-    - Checking what's new out there 🌐
-    - Keeping you updated fr fr ⚡
+    Returns:
+        Optional[str]: Update message if newer version exists, None otherwise
 
     Examples:
-        >>> check_for_updates()
-        # We got you with them version checks fam!
+        >>> result = check_for_updates()
+        >>> print(result)
+        'New Webscout version available: 2.0.0 - Update with: pip install --upgrade webscout'
     """
     installed_version = get_installed_version()
-    latest_version = get_pypi_version()
-    
     if not installed_version:
-        pass
-        return
+        return None
         
+    latest_version = get_pypi_version()
     if not latest_version:
-        pass
-        return
+        return None
     
-    display_version_info(installed_version, latest_version)
+    return get_update_message(installed_version, latest_version)
 
 if __name__ == "__main__":
     try:
-        check_for_updates()
+        update_message = check_for_updates()
+        if update_message:
+            print(update_message)
     except KeyboardInterrupt:
-        logger.warning("Update check got cancelled, no worries fam! 🤚")
+        print("Update check canceled")
     except Exception as e:
-        logger.error(f"Uh oh, something went wrong: {str(e)} 😔")
+        print(f"Update check failed: {str(e)}")

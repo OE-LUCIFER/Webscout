@@ -80,8 +80,10 @@ from .ElectronHub import *
 from .HuggingFaceChat import *
 from .GithubChat import *
 from .copilot import *
+from .C4ai import *
 __all__ = [
     'LLAMA',
+    'C4ai',
     'Venice',
     'Copilot',
     'HuggingFaceChat',
