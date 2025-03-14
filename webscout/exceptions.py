@@ -11,7 +11,7 @@ class WebscoutE(Exception):
     pass
 
 
-class APIConnectionError(Exception):
+class APIConnectionError(WebscoutE):
     """
     Exception raised when there are issues connecting to an API.
 
@@ -21,7 +21,7 @@ class APIConnectionError(Exception):
     pass
 
 
-class AuthenticationError(Exception):
+class AuthenticationError(WebscoutE):
     """
     Exception raised when authentication to a service fails.
 
@@ -31,7 +31,7 @@ class AuthenticationError(Exception):
     pass
 
 
-class RatelimitE(Exception):
+class RatelimitE(WebscoutE):
     """
     Exception raised when an API rate limit is exceeded.
 
@@ -41,7 +41,7 @@ class RatelimitE(Exception):
     pass
 
 
-class ConversationLimitException(Exception):
+class ConversationLimitException(WebscoutE):
     """
     Exception raised when a conversation limit is exceeded.
 
@@ -51,7 +51,7 @@ class ConversationLimitException(Exception):
     pass
 
 
-class TimeoutE(Exception):
+class TimeoutE(WebscoutE):
     """
     Exception raised when a request to an API times out.
 
@@ -61,7 +61,7 @@ class TimeoutE(Exception):
     pass
 
 
-class FailedToGenerateResponseError(Exception):
+class FailedToGenerateResponseError(WebscoutE):
     """
     Exception raised when a provider fails to generate a response.
 
@@ -71,7 +71,7 @@ class FailedToGenerateResponseError(Exception):
     pass
 
 
-class AllProvidersFailure(Exception):
+class AllProvidersFailure(WebscoutE):
     """
     Exception raised when all providers fail to generate a response.
 
@@ -81,7 +81,7 @@ class AllProvidersFailure(Exception):
     pass
 
 
-class FacebookInvalidCredentialsException(Exception):
+class FacebookInvalidCredentialsException(WebscoutE):
     """
     Exception raised when Facebook credentials are invalid.
 
@@ -91,7 +91,7 @@ class FacebookInvalidCredentialsException(Exception):
     pass
 
 
-class FacebookRegionBlocked(Exception):
+class FacebookRegionBlocked(WebscoutE):
     """
     Exception raised when Facebook access is blocked due to region restrictions.
 
@@ -101,7 +101,7 @@ class FacebookRegionBlocked(Exception):
     pass
 
 
-class ModelUnloadedException(Exception):
+class ModelUnloadedException(WebscoutE):
     """
     Exception raised when a model is unloaded.
 
