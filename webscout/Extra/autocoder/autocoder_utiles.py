@@ -3,7 +3,6 @@
 import os
 import platform
 import datetime
-import pygetwindow as gw
 import sys
 from typing import List, Optional
 
