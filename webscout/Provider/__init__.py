@@ -80,8 +80,10 @@ from .HuggingFaceChat import *
 from .GithubChat import *
 from .copilot import *
 from .C4ai import *
+from .flowith import *
 __all__ = [
     'LLAMA',
+    'Flowith',
     'C4ai',
     'Venice',
     'Copilot',

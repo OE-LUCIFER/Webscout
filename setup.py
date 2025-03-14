@@ -63,7 +63,7 @@ setup(
             "pyreqwest_impersonate",
             "gradio_client",
             "psutil",
-            "pygetwindow",
+            # "pygetwindow",
             "aiohttp",
         ],
 
