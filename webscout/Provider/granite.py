@@ -5,15 +5,15 @@ from typing import Any, Dict, Generator
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
+
 class IBMGranite(Provider):
     """
     A class to interact with the IBM Granite API (accessed via d18n68ssusgr7r.cloudfront.net)
-    with comprehensive logging and using Lit agent for the user agent.
+    using Lit agent for the user agent.
     """
 
-    AVAILABLE_MODELS = ["granite-3-8b-instruct"]
+    AVAILABLE_MODELS = ["granite-3-8b-instruct", "granite-3-2-8b-instruct"]
 
     def __init__(
         self,
@@ -27,23 +27,13 @@ class IBMGranite(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "granite-3-8b-instruct",
+        model: str = "granite-3-2-8b-instruct",
         system_prompt: str = "You are a helpful AI assistant.",
-        logging: bool = False
+        thinking: bool = False,
     ):
-        """Initializes the IBM Granite API client with logging and Lit agent for the user agent."""
+        """Initializes the IBMGranite API client using Lit agent for the user agent."""
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
-
-        # Setup logging if enabled
-        self.logger = Logger(
-            name="IBMGranite",
-            format=LogFormat.MODERN_EMOJI,
-
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info(f"Initializing IBMGranite with model: {model}")
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -54,6 +44,7 @@ class IBMGranite(Provider):
         self.last_response = {}
         self.model = model
         self.system_prompt = system_prompt
+        self.thinking = thinking
 
         # Use Lit agent to generate a random User-Agent
         self.headers = {
@@ -101,20 +92,13 @@ class IBMGranite(Provider):
         Returns:
             Union[Dict, Generator[Dict, None, None]]: Response generated
         """
-        if self.logger:
-            self.logger.debug(f"Ask method initiated - Prompt (first 50 chars): {prompt[:50]}")
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         payload = {
@@ -123,20 +107,17 @@ class IBMGranite(Provider):
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": conversation_prompt},
             ],
-            "stream": stream
+            "stream": stream,
+            "thinking": self.thinking,
         }
 
         def for_stream():
             try:
-                if self.logger:
-                    self.logger.debug(f"Sending POST request to {self.api_endpoint} with payload: {payload}")
                 response = self.session.post(
                     self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout
                 )
                 if not response.ok:
                     msg = f"Request failed with status code {response.status_code}: {response.text}"
-                    if self.logger:
-                        self.logger.error(msg)
                     raise exceptions.FailedToGenerateResponseError(msg)
 
                 streaming_text = ""
@@ -149,28 +130,17 @@ class IBMGranite(Provider):
                                 streaming_text += content
                                 yield content if raw else dict(text=content)
                             else:
-                                if self.logger:
-                                    self.logger.debug(f"Skipping unrecognized line: {line}")
-                        except json.JSONDecodeError as e:
-                            if self.logger:
-                                self.logger.error(f"JSON decode error: {e}")
+                                # Skip unrecognized lines
+                                pass
+                        except json.JSONDecodeError:
                             continue
                 self.last_response.update(dict(text=streaming_text))
                 self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
-                if self.logger:
-                    self.logger.info("Stream processing completed.")
-
             except requests.exceptions.RequestException as e:
-                if self.logger:
-                    self.logger.error(f"Request exception: {e}")
                 raise exceptions.ProviderConnectionError(f"Request failed: {e}")
             except json.JSONDecodeError as e:
-                if self.logger:
-                    self.logger.error(f"Invalid JSON received: {e}")
                 raise exceptions.InvalidResponseError(f"Failed to decode JSON response: {e}")
             except Exception as e:
-                if self.logger:
-                    self.logger.error(f"Unexpected error: {e}")
                 raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred: {e}")
 
         def for_non_stream():
@@ -189,20 +159,14 @@ class IBMGranite(Provider):
         conversationally: bool = False,
     ) -> str | Generator[str, None, None]:
         """Generate response as a string using chat method"""
-        if self.logger:
-            self.logger.debug(f"Chat method initiated - Prompt (first 50 chars): {prompt[:50]}")
-
         def for_stream():
             for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):
                 yield self.get_message(response)
 
         def for_non_stream():
-            result = self.get_message(
+            return self.get_message(
                 self.ask(prompt, False, optimizer=optimizer, conversationally=conversationally)
             )
-            if self.logger:
-                self.logger.info("Chat method completed.")
-            return result
 
         return for_stream() if stream else for_non_stream()
 
@@ -213,10 +177,10 @@ class IBMGranite(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    # Example usage: Initialize with logging enabled.
+    # Example usage: Initialize without logging.
     ai = IBMGranite(
-        api_key="", # press f12 to see the API key
-        logging=True
+        api_key="",  # press f12 to see the API key
+        thinking=True,
     )
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:

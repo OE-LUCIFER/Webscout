@@ -1,13 +1,11 @@
-
 import requests
 import json
-from typing import Any, Dict, Optional, Generator
+from typing import Any, Dict, Generator
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 
 class DeepSeek(Provider):
@@ -33,23 +31,13 @@ class DeepSeek(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "deepseek-r1",  # Default model
-        system_prompt: str = "You are a helpful AI assistant.",
-        logging: bool = False
+        system_prompt: str = "You are a helpful AI assistant."
     ):
         """
         Initializes the DeepSeek AI API with given parameters.
         """
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS.keys()}")
-
-        # Initialize logging
-        self.logger = Logger(
-            name="DeepSeek",
-            format=LogFormat.MODERN_EMOJI,
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info(f"Initializing DeepSeek with model: {model}")
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -93,20 +81,13 @@ class DeepSeek(Provider):
         conversationally: bool = False,
     ) -> Dict[str, Any]:
         """Chat with AI"""
-        if self.logger:
-            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}...")
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer: {optimizer}")
                 raise Exception(
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
@@ -122,13 +103,9 @@ class DeepSeek(Provider):
         }
 
         def for_stream():
-            if self.logger:
-                self.logger.debug("Sending streaming request to DeepInfra API...")
             try:
                 with requests.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
                     if response.status_code != 200:
-                        if self.logger:
-                            self.logger.error(f"Request failed with status code {response.status_code}")
                         raise exceptions.FailedToGenerateResponseError(
                             f"Request failed with status code {response.status_code}"
                         )
@@ -151,18 +128,12 @@ class DeepSeek(Provider):
                                             resp = {"text": content}
                                             yield resp if raw else resp
                                 except json.JSONDecodeError:
-                                    if self.logger:
-                                        self.logger.error("JSON decode error in streaming data")
                                     continue
                     
                     self.last_response = {"text": streaming_text}
                     self.conversation.update_chat_history(prompt, streaming_text)
-                    if self.logger:
-                        self.logger.info("Streaming response completed successfully")
                         
             except requests.RequestException as e:
-                if self.logger:
-                    self.logger.error(f"Request failed: {e}")
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         def for_non_stream():
@@ -207,7 +178,7 @@ if __name__ == "__main__":
     from rich import print
 
     # Example usage
-    ai = DeepSeek(system_prompt="You are an expert AI assistant.", logging=True)
+    ai = DeepSeek(system_prompt="You are an expert AI assistant.")
 
     try:
         # Send a prompt and stream the response

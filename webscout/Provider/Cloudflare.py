@@ -9,12 +9,10 @@ from webscout import exceptions
 from typing import Any, AsyncGenerator, Dict
 import cloudscraper
 from webscout import LitAgent
-from webscout.Litlogger import Logger, LogFormat
 
 class Cloudflare(Provider):
     """
     Cloudflare provider to interact with Cloudflare's text generation API.
-    Includes logging capabilities using Logger and uses LitAgent for user-agent.
     """
 
     # Updated AVAILABLE_MODELS from given JSON data
@@ -72,7 +70,6 @@ class Cloudflare(Provider):
         act: str = None,
         model: str = "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
         system_prompt: str = "You are a helpful assistant.",
-        logging: bool = False
     ):
         """Instantiates Cloudflare Provider
 
@@ -145,13 +142,13 @@ class Cloudflare(Provider):
         self.conversation.history_offset = history_offset
 
         # Initialize logger if logging is enabled
-        self.logger = Logger(
-            name="Cloudflare",
-            format=LogFormat.MODERN_EMOJI,
-        ) if logging else None
+        # self.logger = Logger(
+        #     name="Cloudflare",
+        #     format=LogFormat.MODERN_EMOJI,
+        # ) if logging else None
 
-        if self.logger:
-            self.logger.info("Cloudflare initialized successfully")
+        # if self.logger:
+        #     self.logger.info("Cloudflare initialized successfully")
 
     def ask(
         self,
@@ -178,11 +175,11 @@ class Cloudflare(Provider):
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
+                # if self.logger:
+                #     self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
+                # if self.logger:
+                #     self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(f"Optimizer is not one of {list(self.__available_optimizers)}")
         
         payload = {
@@ -192,13 +189,13 @@ class Cloudflare(Provider):
             ],
             "lora": None,
             "model": self.model,
-            "max_tokens": 512,
+            "max_tokens": self.max_tokens_to_sample,
             "stream": True
         }
 
         def for_stream():
-            if self.logger:
-                self.logger.debug("Sending streaming request to Cloudflare API...")
+            # if self.logger:
+            #     self.logger.debug("Sending streaming request to Cloudflare API...")
             response = self.scraper.post(
                 self.chat_endpoint,
                 headers=self.headers,
@@ -208,8 +205,8 @@ class Cloudflare(Provider):
                 timeout=self.timeout
             )
             if not response.ok:
-                if self.logger:
-                    self.logger.error(f"Request failed: ({response.status_code}, {response.reason})")
+                # if self.logger:
+                #     self.logger.error(f"Request failed: ({response.status_code}, {response.reason})")
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason})"
                 )
@@ -222,8 +219,8 @@ class Cloudflare(Provider):
                     yield content if raw else dict(text=content)
             self.last_response.update(dict(text=streaming_response))
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
-            if self.logger:
-                self.logger.info("Streaming response completed successfully")
+            # if self.logger:
+            #     self.logger.info("Streaming response completed successfully")
 
         def for_non_stream():
             for _ in for_stream():
@@ -269,7 +266,7 @@ class Cloudflare(Provider):
 
 if __name__ == '__main__':
     from rich import print
-    ai = Cloudflare(timeout=5000, logging=True)
+    ai = Cloudflare(timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
