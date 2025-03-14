@@ -1,0 +1,31 @@
+name: 'Dependency Review'
+on:
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+      
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: high
+          
+      - name: 'Python Dependency Check'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: 'Install safety'
+        run: pip install safety
+          
+      - name: 'Check for vulnerabilities'
+        run: safety check -r requirements.txt || true
