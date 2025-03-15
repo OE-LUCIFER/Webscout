@@ -1,19 +1,13 @@
 from webscout.AIbase import Provider
-from webscout.g4f import GPT4FREE, TestProviders
 from webscout.exceptions import AllProvidersFailure
-from webscout.Litlogger import Litlogger, LogFormat, ColorScheme
 from typing import Union, Any, Dict, Generator
 import importlib
 import pkgutil
 import random
 import inspect
 
-# Initialize LitLogger with cyberpunk theme
-logger = Litlogger(
-    name="AIauto",
-    format=LogFormat.DETAILED,
-    color_scheme=ColorScheme.CYBERPUNK
-)
+# Import models module
+from webscout.models import LLMModels
 
 def load_providers():
     provider_map = {}
@@ -30,13 +24,8 @@ def load_providers():
                     # Check if the provider needs an API key
                     if 'api_key' in inspect.signature(attr.__init__).parameters:
                         api_key_providers.add(attr_name.upper())
-                        logger.debug(f"Provider {attr_name} requires API key")
-            logger.success(f"Loaded provider module: {module_name}")
-        except Exception as e:
-            logger.error(f"Failed to load provider {module_name}: {str(e)}")
-    
-    logger.info(f"Total providers loaded: {len(provider_map)}")
-    logger.info(f"API key providers: {len(api_key_providers)}")
+        except Exception:
+            pass
     return provider_map, api_key_providers
 
 provider_map, api_key_providers = load_providers()
@@ -106,7 +95,6 @@ class AUTO(Provider):
         for provider_name, provider_class in available_providers:
             try:
                 self.provider_name = f"webscout-{provider_name}"
-                logger.info(f"Trying provider: {self.provider_name}")
                 
                 self.provider = provider_class(
                     is_conversation=self.is_conversation,
@@ -120,44 +108,11 @@ class AUTO(Provider):
                     act=self.act,
                 )
                 response = self.provider.ask(**ask_kwargs)
-                logger.success(f"Successfully used provider: {self.provider_name}")
                 return response
-            except Exception as e:
-                logger.warning(f"Provider {self.provider_name} failed: {str(e)}")
-                continue
-
-        # Try GPT4FREE providers
-        gpt4free_providers = TestProviders(timeout=self.timeout).get_results(run=run_new_test)
-        random.shuffle(gpt4free_providers)
-        
-        for provider_info in gpt4free_providers:
-            if provider_info["name"].upper() in self.exclude:
-                continue
-            try:
-                self.provider_name = f"g4f-{provider_info['name']}"
-                logger.info(f"Trying provider: {self.provider_name}")
-                
-                self.provider = GPT4FREE(
-                    provider=provider_info["name"],
-                    is_conversation=self.is_conversation,
-                    max_tokens=self.max_tokens,
-                    intro=self.intro,
-                    filepath=self.filepath,
-                    update_file=self.update_file,
-                    proxies=self.proxies,
-                    history_offset=self.history_offset,
-                    act=self.act,
-                )
-
-                response = self.provider.ask(**ask_kwargs)
-                logger.success(f"Successfully used provider: {self.provider_name}")
-                return response
-            except Exception as e:
-                logger.warning(f"Provider {self.provider_name} failed: {str(e)}")
+            except Exception:
                 continue
 
         # If we get here, all providers failed
-        logger.error("All providers failed to process the request")
         raise AllProvidersFailure("All providers failed to process the request")
 
     def chat(
@@ -167,7 +122,7 @@ class AUTO(Provider):
         optimizer: str = None,
         conversationally: bool = False,
         run_new_test: bool = False,
-    ) -> Union[str, Generator[str, None, None]]:
+    ) -> Union[str, Generator[str, None, None]]: 
         response = self.ask(
             prompt,
             stream,
@@ -184,8 +139,14 @@ class AUTO(Provider):
     def get_message(self, response: dict) -> str:
         assert self.provider is not None, "Chat with AI first"
         return self.provider.get_message(response)
+    
 if __name__ == "__main__":
+    # Example of using the new models API
+    all_models = LLMModels.list()
+    print("Available models:")
+    for provider, models in all_models.items():
+        print(f"{provider}: {', '.join(models if isinstance(models, list) else [str(models)])}")
+    
     auto = AUTO()
-
     response = auto.chat("Hello, how are you?")
     print(response)

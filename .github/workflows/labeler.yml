@@ -1,0 +1,12 @@
+name: Labeler
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  add-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Labeler
+        uses: actions/labeler@v5.0.0

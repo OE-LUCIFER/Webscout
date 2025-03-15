@@ -5,7 +5,7 @@ with open("README.md", encoding="utf-8") as f:
     README = f.read()
 
 setup(
-    name="webscout",
+    name=__prog__,
     version=__version__,
     description="Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, webai (terminal gpt and open interpreter) and offline LLMs and more",
     long_description=README,
@@ -25,6 +25,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
         "Topic :: Software Development :: Libraries :: Python Modules",
@@ -81,8 +82,8 @@ setup(
     },
     license="HelpingAI",
     project_urls={
-        "Source": "https://github.com/HelpingAI/Webscout",
-        "Tracker": "https://github.com/HelpingAI/Webscout/issues",
+        "Source": "https://github.com/OE-LUCIFER/Webscout",
+        "Tracker": "https://github.com/OE-LUCIFER/Webscout/issues",
         "YouTube": "https://youtube.com/@OEvortex",
     },
 )

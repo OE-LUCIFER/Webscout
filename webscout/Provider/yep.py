@@ -102,8 +102,6 @@ class YEPCHAT(Provider):
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
 
-        self.knowledge_cutoff = "December 2023"
-
     def ask(
         self,
         prompt: str,

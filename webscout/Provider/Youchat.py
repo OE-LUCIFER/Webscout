@@ -2,6 +2,7 @@ from uuid import uuid4
 from re import findall
 import json
 
+
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
@@ -11,6 +12,7 @@ from typing import Any, AsyncGenerator, Dict
 
 import cloudscraper
 
+
 class YouChat(Provider):
     """
     This class provides methods for interacting with the You.com chat API in a consistent provider structure.
@@ -18,31 +20,36 @@ class YouChat(Provider):
 
     # Updated available models based on provided "aiModels" list
     AVAILABLE_MODELS = [
-        "openai_o3_mini_high",
-        "openai_o3_mini_medium",
-        "openai_o1",
-        "openai_o1_preview",
-        "openai_o1_mini",
+        # "gpt_4_5_preview", #isProOnly": true,
+        # "openai_o3_mini_high", #isProOnly": true,
+        # "openai_o3_mini_medium", #isProOnly": true,
+        # "openai_o1", #isProOnly": true,
+        # "openai_o1_preview", #isProOnly": true,
+        # "openai_o1_mini", #isProOnly": true,
         "gpt_4o_mini",
         "gpt_4o",
         "gpt_4_turbo",
-        "gpt_4",
-        "grok_2",
-        "claude_3_5_sonnet",
-        "claude_3_opus",
+        # "gpt_4", #isProOnly": true,
+        # "claude_3_7_sonnet_thinking", #isProOnly": true,
+        # "claude_3_7_sonnet", #isProOnly": true,
+        # "claude_3_5_sonnet", #isProOnly": true,
+        # "claude_3_opus", #isProOnly": true,
         "claude_3_sonnet",
         "claude_3_5_haiku",
-        "deepseek_r1",
-        "deepseek_v3",
-        "llama3_3_70b",
-        "llama3_2_90b",
+        # "qwq_32b", #isProOnly": true,
+        "qwen2p5_72b",
+        "qwen2p5_coder_32b",
+        # "deepseek_r1", #isProOnly": true,
+        # "deepseek_v3", #isProOnly": true,
+        "grok_2",
+        # "llama3_3_70b", #isProOnly": false, "isAllowedForUserChatModes": false,
+        # "llama3_2_90b", #isProOnly": false, "isAllowedForUserChatModes": false,
         "llama3_1_405b",
         "mistral_large_2",
+        "gemini_2_flash",
         "gemini_1_5_flash",
         "gemini_1_5_pro",
         "databricks_dbrx_instruct",
-        "qwen2p5_72b",
-        "qwen2p5_coder_32b",
         "command_r_plus",
         "solar_1_mini",
         "dolphin_2_5"
@@ -59,7 +66,7 @@ class YouChat(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "claude_3_5_haiku",  # Default model set to claude_3_5_haiku
+        model: str = "gemini_2_flash",
     ):
         """Instantiates YouChat
 
@@ -157,30 +164,44 @@ class YouChat(Provider):
                     f"Optimizer is not one of {self.__available_optimizers}"
                 )
 
-        payload = {
-            "q": conversation_prompt,
+        trace_id = str(uuid4())
+        conversation_turn_id = str(uuid4())
+        
+        # Updated query parameters to match the new API format
+        params = {
             "page": 1,
             "count": 10,
             "safeSearch": "Moderate",
             "mkt": "en-IN",
-            "enable_workflow_generation_ux": "true",
+            "enable_worklow_generation_ux": "true",
             "domain": "youchat",
-            "use_personalization_extraction": "false",
-            "enable_agent_clarification_questions": "true",
-            "queryTraceId": str(uuid4()),
-            "chatId": str(uuid4()),
-            "conversationTurnId": str(uuid4()),
+            "use_personalization_extraction": "true",
+            "queryTraceId": trace_id,
+            "chatId": trace_id,
+            "conversationTurnId": conversation_turn_id,
             "pastChatLength": 0,
-            "isSmallMediumDevice": "true",
-            "selectedChatMode": self.model,
-            "use_nested_youchat_updates": "true",
-            "traceId": str(uuid4()),
+            "selectedChatMode": "custom",
+            "selectedAiModel": self.model,
+            "enable_agent_clarification_questions": "true",
+            "traceId": f"{trace_id}|{conversation_turn_id}|{uuid4()}",
+            "use_nested_youchat_updates": "true"
+        }
+        
+        # New payload format is JSON
+        payload = {
+            "query": conversation_prompt,
             "chat": "[]"
         }
 
         def for_stream():
-            response = self.session.get(
-                self.chat_endpoint, headers=self.headers, cookies=self.cookies, params=payload, stream=True, timeout=self.timeout
+            response = self.session.post(
+                self.chat_endpoint, 
+                headers=self.headers, 
+                cookies=self.cookies, 
+                params=params,
+                data=json.dumps(payload),
+                stream=True, 
+                timeout=self.timeout
             )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
@@ -188,6 +209,8 @@ class YouChat(Provider):
                 )
 
             streaming_text = ""
+            found_marker = False  # Flag to track if we've passed the '####' marker
+            
             for value in response.iter_lines(
                 decode_unicode=True,
                 chunk_size=self.stream_chunk_size,
@@ -197,11 +220,19 @@ class YouChat(Provider):
                     if bool(value) and value.startswith('data: ') and 'youChatToken' in value:
                         data = json.loads(value[6:])
                         token = data.get('youChatToken', '')
-                        if token:
+                        
+                        # Check if this is the marker with '####'
+                        if token == '####':
+                            found_marker = True
+                            continue  # Skip the marker itself
+                        
+                        # Only process tokens after the marker has been found
+                        if found_marker and token:
                             streaming_text += token
                             yield token if raw else dict(text=token)
                 except json.decoder.JSONDecodeError:
                     pass
+
             self.last_response.update(dict(text=streaming_text))
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
@@ -252,10 +283,6 @@ class YouChat(Provider):
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response
 
-        Args:
-            response (dict): Response generated by `self.ask`
-
-        Returns:
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
@@ -264,6 +291,6 @@ class YouChat(Provider):
 if __name__ == '__main__':
     from rich import print
     ai = YouChat(timeout=5000)
-    response = ai.chat(input(">>> "), stream=True)
+    response = ai.chat("hi", stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)

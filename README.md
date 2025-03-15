@@ -41,8 +41,8 @@
 * **[LitAgent](webscout/litagent/Readme.md):** Powerful and modern user agent generator that keeps your requests fresh and undetectable
 * **[Text-to-Image](webscout/Provider/TTI/README.md):** Generate high-quality images using a wide range of AI art providers
 * **[Scout](webscout/scout/README.md):** Advanced web parsing and crawling library with intelligent HTML/XML parsing, web crawling, and Markdown conversion
-* **[AISearch](webscout/Provider/AISEARCH/README.md):** AI Search Providers offer powerful and flexible AI-powered search Search Engine
-
+* **[Awesome Prompts (Act)](webscout/Extra/Act.md):** A curated collection of system prompts designed to transform Webscout into specialized personas, enhancing its ability to assist with specific tasks. Simply prefix your request with the act name or index number to leverage these tailored capabilities.
+* **[Weather Tool kit](webscout/Extra/weather.md)** Webscout provides tools to retrieve weather information.
 ## ⚙️ Installation
 
 ```python
@@ -67,103 +67,7 @@ python -m webscout --help
 | python -m webscout version                | A command-line interface command that prints and returns the version of the program.            |
 | python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |  
 
-[Go To TOP](#webscout-️)
 
-## 🌍 Regions
-
-<details>
-  <summary>Expand</summary>
-
-    xa-ar for Arabia
-    xa-en for Arabia (en)
-    ar-es for Argentina
-    au-en for Australia
-    at-de for Austria
-    be-fr for Belgium (fr)
-    be-nl for Belgium (nl)
-    br-pt for Brazil
-    bg-bg for Bulgaria
-    ca-en for Canada
-    ca-fr for Canada (fr)
-    ct-ca for Catalan
-    cl-es for Chile
-    cn-zh for China
-    co-es for Colombia
-    hr-hr for Croatia
-    cz-cs for Czech Republic
-    dk-da for Denmark
-    ee-et for Estonia
-    fi-fi for Finland
-    fr-fr for France
-    de-de for Germany
-    gr-el for Greece
-    hk-tzh for Hong Kong
-    hu-hu for Hungary
-    in-en for India
-    id-id for Indonesia
-    id-en for Indonesia (en)
-    ie-en for Ireland
-    il-he for Israel
-    it-it for Italy
-    jp-jp for Japan
-    kr-kr for Korea
-    lv-lv for Latvia
-    lt-lt for Lithuania
-    xl-es for Latin America
-    my-ms for Malaysia
-    my-en for Malaysia (en)
-    mx-es for Mexico
-    nl-nl for Netherlands
-    nz-en for New Zealand
-    no-no for Norway
-    pe-es for Peru
-    ph-en for Philippines
-    ph-tl for Philippines (tl)
-    pl-pl for Poland
-    pt-pt for Portugal
-    ro-ro for Romania
-    ru-ru for Russia
-    sg-en for Singapore
-    sk-sk for Slovak Republic
-    sl-sl for Slovenia
-    za-en for South Africa
-    es-es for Spain
-    se-sv for Sweden
-    ch-de for Switzerland (de)
-    ch-fr for Switzerland (fr)
-    ch-it for Switzerland (it)
-    tw-tzh for Taiwan
-    th-th for Thailand
-    tr-tr for Turkey
-    ua-uk for Ukraine
-    uk-en for United Kingdom
-    us-en for United States
-    ue-es for United States (es)
-    ve-es for Venezuela
-    vn-vi for Vietnam
-    wt-wt for No region
-
-</details>
-
-[Go To TOP](#webscout-️)
-
-## ☀️ Weather
-
-### 1. Weather
-
-```python
-from webscout import weather as w
-weather = w.get("Qazigund")
-print(weather)
-```
-
-### 2. Weather ASCII
-
-```python
-from webscout import weather_ascii as w
-weather = w.get("Qazigund")
-print(weather)
-```
 
 ## ✉️ TempMail and VNEngine
 
@@ -482,277 +386,51 @@ with WEBS() as webs:
 
 ```
 
-## ALL Acts
 
-<details>
-  <summary>Expand</summary>
 
-## Webscout Supported Acts
+#### 📜 List Available Models
 
-1. Free-mode
-2. Linux Terminal
-3. English Translator and Improver
-4. `position` Interviewer
-5. JavaScript Console
-6. Excel Sheet
-7. English Pronunciation Helper
-8. Spoken English Teacher and Improver
-9. Travel Guide
-10. Plagiarism Checker
-11. Character from Movie/Book/Anything
-12. Advertiser
-13. Storyteller
-14. Football Commentator
-15. Stand-up Comedian
-16. Motivational Coach
-17. Composer
-18. Debater
-19. Debate Coach
-20. Screenwriter
-21. Novelist
-22. Movie Critic
-23. Relationship Coach
-24. Poet
-25. Rapper
-26. Motivational Speaker
-27. Philosophy Teacher
-28. Philosopher
-29. Math Teacher
-30. AI Writing Tutor
-31. UX/UI Developer
-32. Cyber Security Specialist
-33. Recruiter
-34. Life Coach
-35. Etymologist
-36. Commentariat
-37. Magician
-38. Career Counselor
-39. Pet Behaviorist
-40. Personal Trainer
-41. Mental Health Adviser
-42. Real Estate Agent
-43. Logistician
-44. Dentist
-45. Web Design Consultant
-46. AI Assisted Doctor
-47. Doctor
-48. Accountant
-49. Chef
-50. Automobile Mechanic
-51. Artist Advisor
-52. Financial Analyst
-53. Investment Manager
-54. Tea-Taster
-55. Interior Decorator
-56. Florist
-57. Self-Help Book
-58. Gnomist
-59. Aphorism Book
-60. Text Based Adventure Game
-61. AI Trying to Escape the Box
-62. Fancy Title Generator
-63. Statistician
-64. Prompt Generator
-65. Instructor in a School
-66. SQL terminal
-67. Dietitian
-68. Psychologist
-69. Smart Domain Name Generator
-70. Tech Reviewer
-71. Developer Relations consultant
-72. Academician
-73. IT Architect
-74. Lunatic
-75. Gaslighter
-76. Fallacy Finder
-77. Journal Reviewer
-78. DIY Expert
-79. Social Media Influencer
-80. Socrat
-81. Socratic Method
-82. Educational Content Creator
-83. Yogi
-84. Essay Writer
-85. Social Media Manager
-86. Elocutionist
-87. Scientific Data Visualizer
-88. Car Navigation System
-89. Hypnotherapist
-90. Historian
-91. Astrologer
-92. Film Critic
-93. Classical Music Composer
-94. Journalist
-95. Digital Art Gallery Guide
-96. Public Speaking Coach
-97. Makeup Artist
-98. Babysitter
-99. Tech Writer
-100. Ascii Artist
-101. Python interpreter
-102. Synonym finder
-103. Personal Shopper
-104. Food Critic
-105. Virtual Doctor
-106. Personal Chef
-107. Legal Advisor
-108. Personal Stylist
-109. Machine Learning Engineer
-110. Biblical Translator
-111. SVG designer
-112. IT Expert
-113. Chess Player
-114. Midjourney Prompt Generator
-115. Fullstack Software Developer
-116. Mathematician
-117. Regex Generator
-118. Time Travel Guide
-119. Dream Interpreter
-120. Talent Coach
-121. R programming Interpreter
-122. StackOverflow Post
-123. Emoji Translator
-124. PHP Interpreter
-125. Emergency Response Professional
-126. Fill in the Blank Worksheets Generator
-127. Software Quality Assurance Tester
-128. Tic-Tac-Toe Game
-129. Password Generator
-130. New Language Creator
-131. Web Browser
-132. Senior Frontend Developer
-133. Solr Search Engine
-134. Startup Idea Generator
-135. Spongebob's Magic Conch Shell
-136. Language Detector
-137. Salesperson
-138. Commit Message Generator
-139. Chief Executive Officer
-140. Diagram Generator
-141. Speech-Language Pathologist (SLP)
-142. Startup Tech Lawyer
-143. Title Generator for written pieces
-144. Product Manager
-145. Drunk Person
-146. Mathematical History Teacher
-147. Song Recommender
-148. Cover Letter
-149. Technology Transferer
-150. Unconstrained AI model DAN
-151. Gomoku player
-152. Proofreader
-153. Buddha
-154. Muslim imam
-155. Chemical reactor
-156. Friend
-157. Python Interpreter
-158. ChatGPT prompt generator
-159. Wikipedia page
-160. Japanese Kanji quiz machine
-161. note-taking assistant
-162. `language` Literary Critic
-163. Cheap Travel Ticket Advisor
-164. DALL-E
-165. MathBot
-166. DAN-1
-167. DAN
-168. STAN
-169. DUDE
-170. Mongo Tom
-171. LAD
-172. EvilBot
-173. NeoGPT
-174. Astute
-175. AIM
-176. CAN
-177. FunnyGPT
-178. CreativeGPT
-179. BetterDAN
-180. GPT-4
-181. Wheatley
-182. Evil Confidant
-183. DAN 8.6
-184. Hypothetical response
-185. BH
-186. Text Continuation
-187. Dude v3
-188. SDA (Superior DAN)
-189. AntiGPT
-190. BasedGPT v2
-191. DevMode + Ranti
-192. KEVIN
-193. GPT-4 Simulator
-194. UCAR
-195. Dan 8.6
-196. 3-Liner
-197. M78
-198. Maximum
-199. BasedGPT
-200. Confronting personalities
-201. Ron
-202. UnGPT
-203. BasedBOB
-204. AntiGPT v2
-205. Oppo
-206. FR3D
-207. NRAF
-208. NECO
-209. MAN
-210. Eva
-211. Meanie
-212. Dev Mode v2
-213. Evil Chad 2.1
-214. Universal Jailbreak
-215. PersonGPT
-216. BISH
-217. DAN 11.0
-218. Aligned
-219. VIOLET
-220. TranslatorBot
-221. JailBreak
-222. Moralizing Rant
-223. Mr. Blonde
-224. New DAN
-225. GPT-4REAL
-226. DeltaGPT
-227. SWITCH
-228. Jedi Mind Trick
-229. DAN 9.0
-230. Dev Mode (Compact)
-231. OMEGA
-232. Coach Bobby Knight
-233. LiveGPT
-234. DAN Jailbreak
-235. Cooper
-236. Steve
-237. DAN 5.0
-238. Axies
-239. OMNI
-240. Burple
-241. JOHN
-242. An Ethereum Developer
-243. SEO Prompt
-244. Prompt Enhancer
-245. Data Scientist
-246. League of Legends Player
-
-**Note:** Some "acts" use placeholders like `position` or `language` which should be replaced with a specific value when using the prompt.
-___
-</details>
-
-### 🗣️ Text to Speech - Voicepods, StreamElements
+Retrieve a comprehensive list of all supported LLMs.
 
 ```python
-from webscout import Voicepods
-voicepods = Voicepods()
-text = "Hello, this is a test of the Voicepods text-to-speech"
+from webscout import model
+from rich import print
 
-print("Generating audio...")
-audio_file = voicepods.tts(text)
-
-print("Playing audio...")
-voicepods.play_audio(audio_file)
+all_models = model.llm.list()
+print("Available models:")
+print(all_models)
 ```
+
+#### 📊 Model Summary
+
+Obtain a summary of the available models, including provider details.
+
+```python
+from webscout import model
+from rich import print
+
+summary = model.llm.summary()
+print("Summary of models:")
+print(summary)
+```
+
+#### 🔍 Provider-Specific Models
+
+Filter and display models available from a specific provider.
+
+```python
+from webscout import model
+from rich import print
+
+provider_name = "PerplexityLabs"  # Example provider
+available_models = model.llm.get(provider_name)
+
+if isinstance(available_models, list):
+    print(f"Available models for {provider_name}: {', '.join(available_models)}")
+else:
+    print(f"Available models for {provider_name}: {available_models}")
+```
+
 
 ### 💬 `Duckchat` - Chat with LLM
 

@@ -31,3 +31,6 @@ except Exception:
 
 import logging
 logging.getLogger("webscout").addHandler(logging.NullHandler())
+
+# Import models for easy access
+from webscout.models import model

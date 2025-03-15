@@ -13,11 +13,11 @@ class DeepSeek(Provider):
     A class to interact with the DeepSeek AI API.
     """
 
-    AVAILABLE_MODELS = {
-        "deepseek-v3": "deepseek-v3",
-        "deepseek-r1": "deepseek-r1",
-        "deepseek-llm-67b-chat": "deepseek-llm-67b-chat"
-    }
+    AVAILABLE_MODELS = [
+        "deepseek-v3",
+        "deepseek-r1",
+        "deepseek-llm-67b-chat"
+    ]
 
     def __init__(
         self,

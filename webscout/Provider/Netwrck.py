@@ -16,22 +16,22 @@ class Netwrck(Provider):
     """
     greeting = """Hello! I'm a helpful assistant. How can I help you today?"""
 
-    AVAILABLE_MODELS = {
-        "lumimaid": "neversleep/llama-3-lumimaid-8b:extended",
-        "grok": "x-ai/grok-2",
-        "claude": "anthropic/claude-3-7-sonnet-20250219",
-        "euryale": "sao10k/l3-euryale-70b",
-        "gpt4mini": "openai/gpt-4o-mini",
-        "mythomax": "gryphe/mythomax-l2-13b",
-        "gemini": "google/gemini-pro-1.5",
-        "nemotron": "nvidia/llama-3.1-nemotron-70b-instruct",
-        "deepseek-r1": "deepseek/deepseek-r1",
-        "deepseek": "deepseek/deepseek-chat",
-    }
+    AVAILABLE_MODELS = [
+        "neversleep/llama-3-lumimaid-8b:extended",
+        "x-ai/grok-2",
+        "anthropic/claude-3-7-sonnet-20250219",
+        "sao10k/l3-euryale-70b",
+        "openai/gpt-4o-mini",
+        "gryphe/mythomax-l2-13b",
+        "google/gemini-pro-1.5",
+        "nvidia/llama-3.1-nemotron-70b-instruct",
+        "deepseek-r1",
+        "deepseek",
+    ]
 
     def __init__(
         self,
-        model: str = "claude",
+        model: str = "anthropic/claude-3-7-sonnet-20250219",
         is_conversation: bool = True,
         max_tokens: int = 4096,
         timeout: int = 30,
@@ -200,5 +200,6 @@ class Netwrck(Provider):
 if __name__ == "__main__":
     from rich import print
 
-    netwrck = Netwrck(model="claude")
-    print(netwrck.chat("Hello! How are you?"))
+
+    netwrck = Netwrck(model="deepseek-r1")
+    print(netwrck.ask("Hello! How are you?"))
