@@ -13,6 +13,8 @@ class TurboSeek(Provider):
     """
     This class provides methods for interacting with the TurboSeek API.
     """
+    AVAILABLE_MODELS = ["Llama 3.1 70B"]
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -24,6 +26,7 @@ class TurboSeek(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
+        model: str = "Llama 3.1 70B"
     ):
         """Instantiates TurboSeek
 

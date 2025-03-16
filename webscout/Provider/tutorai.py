@@ -15,6 +15,7 @@ class TutorAI(Provider):
     """
     A class to interact with the TutorAI.me API.
     """
+    AVAILABLE_MODELS = ["gpt-4o"]
 
     def __init__(
         self,
@@ -28,6 +29,7 @@ class TutorAI(Provider):
         history_offset: int = 10250,
         act: str = None,
         system_prompt: str = "You are a helpful AI assistant.",
+        model: str = "gpt-4o"
     ):
         """
         Initializes the TutorAI.me API with given parameters.

@@ -9,6 +9,7 @@ from webscout.AIutel import AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout.litagent import LitAgent
+
 class Talkai(Provider):
     """
     A class to interact with the Talkai.info API.

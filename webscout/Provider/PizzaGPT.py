@@ -6,14 +6,14 @@ from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
 from webscout import LitAgent as Lit
-from webscout.Litlogger import Logger, LogFormat
 
 class PIZZAGPT(Provider):
     """
     PIZZAGPT is a provider class for interacting with the PizzaGPT API.
     Supports web search integration and handles responses using regex.
     """
-
+    AVAILABLE_MODELS = ["gpt-4o-mini"]
+    
     def __init__(
         self,
         is_conversation: bool = True,
@@ -25,10 +25,12 @@ class PIZZAGPT(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        logging: bool = False,
         model: str = "gpt-4o-mini"
     ) -> None:
         """Initialize PizzaGPT with enhanced configuration options."""
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -45,7 +47,9 @@ class PIZZAGPT(Provider):
             "origin": "https://www.pizzagpt.it",
             "referer": "https://www.pizzagpt.it/en",
             "user-agent": Lit().random(),
-            "x-secret": "Marinara"
+            "x-secret": "Marinara",
+            "sec-ch-ua": '"Chromium";v="134", "Not:A-Brand";v="24"',
+            "sec-ch-ua-platform": '"Windows"'
         }
 
         self.__available_optimizers = (
@@ -67,28 +71,15 @@ class PIZZAGPT(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
-        
-        self.logger = Logger(
-            name="PIZZAGPT",
-            format=LogFormat.MODERN_EMOJI,
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info(f"PIZZAGPT initialized with model: {self.model}")
 
     def _extract_content(self, text: str) -> Dict[str, Any]:
         """
         Extract content from response text using regex.
         """
-        if self.logger:
-            self.logger.debug("Extracting content from response text")
-            
         try:
             # Look for content pattern
             content_match = re.search(r'"content"\s*:\s*"(.*?)"(?=\s*[,}])', text, re.DOTALL)
             if not content_match:
-                if self.logger:
-                    self.logger.error("Content pattern not found in response")
                 raise exceptions.FailedToGenerateResponseError("Content not found in response")
                 
             content = content_match.group(1)
@@ -108,8 +99,6 @@ class PIZZAGPT(Provider):
             }
             
         except Exception as e:
-            if self.logger:
-                self.logger.error(f"Failed to extract content: {str(e)}")
             raise exceptions.FailedToGenerateResponseError(f"Failed to extract content: {str(e)}")
 
     def ask(
@@ -124,21 +113,13 @@ class PIZZAGPT(Provider):
         """
         Send a prompt to PizzaGPT API with optional web search capability.
         """
-        if self.logger:
-            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}...")
-            self.logger.debug(f"Web search enabled: {web_search}")
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer: {optimizer}")
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         payload = {
@@ -147,9 +128,6 @@ class PIZZAGPT(Provider):
             "searchEnabled": web_search
         }
 
-        if self.logger:
-            self.logger.debug(f"Sending payload: {json.dumps(payload, indent=2)}")
-
         try:
             response = self.session.post(
                 self.api_endpoint,
@@ -157,26 +135,17 @@ class PIZZAGPT(Provider):
                 timeout=self.timeout
             )
             
-            if self.logger:
-                self.logger.debug(f"Response status: {response.status_code}")
-            
             if not response.ok:
-                if self.logger:
-                    self.logger.error(f"API request failed: {response.status_code} - {response.reason}")
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason})"
                 )
 
             response_text = response.text
             if not response_text:
-                if self.logger:
-                    self.logger.error("Empty response received from API")
                 raise exceptions.FailedToGenerateResponseError("Empty response received from API")
 
             try:
                 resp = self._extract_content(response_text)
-                if self.logger:
-                    self.logger.debug("Response parsed successfully")
                     
                 self.last_response.update(dict(text=resp['content']))
                 self.conversation.update_chat_history(
@@ -185,14 +154,9 @@ class PIZZAGPT(Provider):
                 return self.last_response
 
             except Exception as e:
-                if self.logger:
-                    self.logger.error(f"Failed to parse response: {str(e)}")
-                    self.logger.debug(f"Raw response text: {response_text[:500]}")
                 raise exceptions.FailedToGenerateResponseError(f"Failed to parse response: {str(e)}")
 
         except requests.exceptions.RequestException as e:
-            if self.logger:
-                self.logger.error(f"Request failed: {str(e)}")
             raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}")
 
     def chat(
@@ -206,9 +170,6 @@ class PIZZAGPT(Provider):
         """
         Chat with PizzaGPT with optional web search capability.
         """
-        if self.logger:
-            self.logger.debug(f"Chat request initiated with web_search={web_search}")
-            
         try:
             response = self.ask(
                 prompt,
@@ -218,8 +179,6 @@ class PIZZAGPT(Provider):
             )
             return self.get_message(response)
         except Exception as e:
-            if self.logger:
-                self.logger.error(f"Chat failed: {str(e)}")
             raise
 
     def get_message(self, response: dict) -> str:
@@ -231,9 +190,9 @@ if __name__ == "__main__":
     from rich import print
     
     # Example usage with web search enabled
-    ai = PIZZAGPT(logging=True)
+    ai = PIZZAGPT()
     try:
-        response = ai.chat("Who is Founder and CEO of HelpingAI??", web_search=True)
+        response = ai.chat("hi")
         print(response)
     except Exception as e:
         print(f"Error: {str(e)}")

@@ -1,10 +1,8 @@
 import time
+import tempfile
 from pathlib import Path
-from typing import Generator
-from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
-from webscout.Litlogger import Logger, LogFormat
 from gradio_client import Client
 import os
 
@@ -19,11 +17,7 @@ class ParlerTTS(TTSProvider):
         self.api_endpoint = "/gen_tts"
         self.client = Client("parler-tts/parler_tts")  # Initialize the Gradio client
         self.timeout = timeout
-        self.audio_cache_dir = Path("./audio_cache")
-        self.logger = Logger(
-            name="ParlerTTS",
-            format=LogFormat.MODERN_EMOJI,
-        )
+        self.temp_dir = tempfile.mkdtemp(prefix="webscout_tts_")
 
     def tts(self, text: str, description: str = "", use_large: bool = False, verbose: bool = True) -> str:
         """
@@ -41,11 +35,11 @@ class ParlerTTS(TTSProvider):
         Raises:
             exceptions.FailedToGenerateResponseError: If there is an error generating or saving the audio.
         """
-        filename = self.audio_cache_dir / f"{int(time.time())}.wav"
+        filename = Path(tempfile.mktemp(suffix=".wav", dir=self.temp_dir))
 
         try:
             if verbose:
-                self.logger.info(f"Generating TTS with description: {description} 🎙️")
+                print(f"[debug] Generating TTS with description: {description}")
             
             result = self.client.predict(
                 text=text,
@@ -62,57 +56,42 @@ class ParlerTTS(TTSProvider):
             else:
                 raise ValueError(f"Unexpected response from API: {result}")
 
-            self._save_audio(audio_bytes, filename)
+            self._save_audio(audio_bytes, filename, verbose)
             
             if verbose:
-                self.logger.success(f"Audio generated successfully: {filename} 🔊")
+                print(f"[debug] Audio generated successfully: {filename}")
             
             return filename.as_posix()
 
         except Exception as e:
-            self.logger.critical(f"Error generating audio: {e} 🚨")
+            if verbose:
+                print(f"[debug] Error generating audio: {e}")
             raise exceptions.FailedToGenerateResponseError(
                 f"Error generating audio after multiple retries: {e}"
             ) from e
 
-    def _save_audio(self, audio_data: bytes, filename: Path):
+    def _save_audio(self, audio_data: bytes, filename: Path, verbose: bool = True):
         """
-        Saves the audio data to a WAV file in the audio cache directory.
+        Saves the audio data to a WAV file.
 
         Args:
             audio_data (bytes): Audio data to save
             filename (Path): Path to save the audio file
+            verbose (bool): Whether to print debug information
 
         Raises:
             exceptions.FailedToGenerateResponseError: If there is an error saving the audio.
         """
         try:
-            self.audio_cache_dir.mkdir(parents=True, exist_ok=True)
             with open(filename, "wb") as f:
                 f.write(audio_data)
-            self.logger.debug(f"Audio saved to {filename} 💾")
+            if verbose:
+                print(f"[debug] Audio saved to {filename}")
 
         except Exception as e:
-            self.logger.error(f"Error saving audio: {e} 🔇")
+            if verbose:
+                print(f"[debug] Error saving audio: {e}")
             raise exceptions.FailedToGenerateResponseError(f"Error saving audio: {e}")
-
-    def play_audio(self, filename: str):
-        """
-        Plays an audio file using playsound.
-
-        Args:
-            filename (str): The path to the audio file.
-
-        Raises:
-            RuntimeError: If there is an error playing the audio.
-        """
-        try:
-            self.logger.info(f"Playing audio: {filename} 🎵")
-            playsound(filename)
-        except Exception as e:
-            self.logger.error(f"Error playing audio: {e} 🔇")
-            raise RuntimeError(f"Error playing audio: {e}")
-
 
 # Example usage
 if __name__ == "__main__":
@@ -127,8 +106,6 @@ if __name__ == "__main__":
         "recording that almost has no background noise."
     )
 
-    parlertts.logger.info("Generating audio...")
+    print("[debug] Generating audio...")
     audio_file = parlertts.tts(text, description=voice_description, use_large=False)
-
-    parlertts.logger.info("Playing audio...")
-    parlertts.play_audio(audio_file)
+    print(f"Audio saved to: {audio_file}")

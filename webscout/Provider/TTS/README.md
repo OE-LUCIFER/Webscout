@@ -10,7 +10,7 @@ Webscout's TTS Providers offer a versatile and powerful text-to-speech conversio
 - **Concurrent Audio Generation**: Efficiently process long texts
 - **Flexible Voice Selection**: Choose from a wide range of voices
 - **Robust Error Handling**: Comprehensive logging and error management
-- **Caching Mechanism**: Automatically cache generated audio files
+- **Temporary File Management**: Automatically manages temporary audio files
 - **Cross-Platform Compatibility**: Works seamlessly across different environments
 
 ## 📦 Supported TTS Providers
@@ -21,7 +21,7 @@ Webscout's TTS Providers offer a versatile and powerful text-to-speech conversio
 4. **ParlerTTS**
 5. **DeepgramTTS**
 6. **StreamElementsTTS**
-7. **VoicepodsTTS**
+8. **SpeechMaTTS**
 
 ## 🚀 Installation
 
@@ -90,9 +90,11 @@ audio_file = tts.tts(text, verbose=True)
 ### StreamElementsTTS
 - Wide range of international voices
 
-### VoicepodsTTS
-- Simple and straightforward API
-- Efficient audio caching
+
+### SpeechMaTTS
+- Multilingual voices (Ava, Emma, Andrew, Brian)
+- Adjustable pitch and speech rate
+- Fast audio generation
 
 ## 🛡️ Error Handling
 

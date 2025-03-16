@@ -24,6 +24,7 @@ class X0GPT(Provider):
         >>> print(response)
         'The weather today is sunny with a high of 75°F.'
     """
+    AVAILABLE_MODELS = ["UNKNOWN"]
 
     def __init__(
         self,
@@ -36,7 +37,8 @@ class X0GPT(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        system_prompt: str = "You are a helpful assistant."
+        system_prompt: str = "You are a helpful assistant.",
+        model: str = "UNKNOWN"
     ):
         """
         Initializes the X0GPT API with given parameters.

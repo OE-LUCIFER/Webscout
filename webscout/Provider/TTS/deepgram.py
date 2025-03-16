@@ -2,12 +2,11 @@ import time
 import requests
 import pathlib
 import base64
+import tempfile
 from io import BytesIO
-from playsound import playsound
 from webscout import exceptions
 from webscout.AIbase import TTSProvider
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 from . import utils 
 
@@ -19,7 +18,6 @@ class DeepgramTTS(TTSProvider):
     headers: dict[str, str] = {
         "User-Agent": LitAgent().random()
     }
-    cache_dir = pathlib.Path("./audio_cache")
     all_voices: dict[str, str] = {
         "Asteria": "aura-asteria-en", "Arcas": "aura-arcas-en", "Luna": "aura-luna-en",
         "Zeus": "aura-zeus-en", "Orpheus": "aura-orpheus-en", "Angus": "aura-angus-en",
@@ -34,11 +32,7 @@ class DeepgramTTS(TTSProvider):
         if proxies:
             self.session.proxies.update(proxies)
         self.timeout = timeout
-        self.logger = Logger(
-            name="DeepgramTTS",
-            format=LogFormat.MODERN_EMOJI,
-
-        )
+        self.temp_dir = tempfile.mkdtemp(prefix="webscout_tts_")
 
     def tts(self, text: str, voice: str = "Brian", verbose: bool = True) -> str:
         """
@@ -62,13 +56,13 @@ class DeepgramTTS(TTSProvider):
         ), f"Voice '{voice}' not one of [{', '.join(self.all_voices.keys())}]"
 
         url = "https://deepgram.com/api/ttsAudioGeneration"
-        filename = self.cache_dir / f"{int(time.time())}.mp3"  
+        filename = pathlib.Path(tempfile.mktemp(suffix=".mp3", dir=self.temp_dir))
 
         # Split text into sentences using the utils module
         sentences = utils.split_sentences(text)
         if verbose:
             for index, sen in enumerate(sentences):
-                self.logger.debug(f"Sentence {index}: {sen}")
+                print(f"[debug] Sentence {index}: {sen}")
 
         def generate_audio_for_chunk(part_text: str, part_number: int):
             """
@@ -103,15 +97,15 @@ class DeepgramTTS(TTSProvider):
                     if response_data:
                         audio_data = base64.b64decode(response_data)
                         if verbose:
-                            self.logger.success(f"Chunk {part_number} processed successfully 🎉")
+                            print(f"[debug] Chunk {part_number} processed successfully")
                         return part_number, audio_data
                     
                     if verbose:
-                        self.logger.warning(f"No data received for chunk {part_number}. Attempt {retry_count + 1}/{max_retries} ⚠️")
+                        print(f"[debug] No data received for chunk {part_number}. Attempt {retry_count + 1}/{max_retries}")
                     
                 except requests.RequestException as e:
                     if verbose:
-                        self.logger.error(f"Error processing chunk {part_number}: {str(e)}. Attempt {retry_count + 1}/{max_retries} 🚨")
+                        print(f"[debug] Error processing chunk {part_number}: {str(e)}. Attempt {retry_count + 1}/{max_retries}")
                     if retry_count == max_retries - 1:
                         raise
                 
@@ -121,9 +115,6 @@ class DeepgramTTS(TTSProvider):
             raise RuntimeError(f"Failed to generate audio for chunk {part_number} after {max_retries} attempts")
 
         try:
-            # Create the audio_cache directory if it doesn't exist
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
-
             # Using ThreadPoolExecutor to handle requests concurrently
             with ThreadPoolExecutor() as executor:
                 futures = {
@@ -148,36 +139,18 @@ class DeepgramTTS(TTSProvider):
                         f.write(audio_chunks[chunk_num])
 
                 if verbose:
-                    self.logger.success(f"Audio saved to {filename} 🎉")
+                    print(f"[debug] Audio saved to {filename}")
                 return str(filename)
 
         except Exception as e:
-            self.logger.critical(f"Failed to generate audio: {str(e)} 🚨")
+            print(f"[debug] Failed to generate audio: {str(e)}") if verbose else None
             raise RuntimeError(f"Failed to generate audio: {str(e)}")
-
-    def play_audio(self, filename: str):
-        """
-        Plays an audio file using playsound.
-
-        Args:
-            filename (str): The path to the audio file.
-
-        Raises:
-            RuntimeError: If there is an error playing the audio.
-        """
-        try:
-            playsound(filename)
-        except Exception as e:
-            self.logger.error(f"Failed to play audio: {str(e)} 🚨")
-            raise RuntimeError(f"Failed to play audio: {str(e)}")
 
 # Example usage
 if __name__ == "__main__":
     deepgram = DeepgramTTS()
     text = "This is a test of the DeepgramTTS text-to-speech API. It supports multiple sentences. Let's see how it works!"
 
-    deepgram.logger.info("Generating audio...")
-    audio_file = deepgram.tts(text, voice="Brian") 
-
-    deepgram.logger.info("Playing audio...")
-    deepgram.play_audio(audio_file)
+    print("[debug] Generating audio...")
+    audio_file = deepgram.tts(text, voice="Asteria") 
+    print(f"Audio saved to: {audio_file}")

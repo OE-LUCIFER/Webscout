@@ -141,12 +141,6 @@ class AUTO(Provider):
         return self.provider.get_message(response)
     
 if __name__ == "__main__":
-    # Example of using the new models API
-    all_models = LLMModels.list()
-    print("Available models:")
-    for provider, models in all_models.items():
-        print(f"{provider}: {', '.join(models if isinstance(models, list) else [str(models)])}")
-    
     auto = AUTO()
     response = auto.chat("Hello, how are you?")
     print(response)

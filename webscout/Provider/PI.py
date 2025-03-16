@@ -18,8 +18,9 @@ class PiAI(Provider):
     Attributes:
         knowledge_cutoff (str): The knowledge cutoff date for the model
         AVAILABLE_VOICES (Dict[str, int]): Available voice options for audio responses
+        AVAILABLE_MODELS (List[str]): Available model options for the API
     """
-
+    AVAILABLE_MODELS = ["inflection_3_pi"]
     AVAILABLE_VOICES: Dict[str, int] = {
         "voice1": 1,
         "voice2": 2,
@@ -44,7 +45,8 @@ class PiAI(Provider):
         act: str = None,
         voice: bool = False,
         voice_name: str = "voice3",
-        output_file: str = "PiAI.mp3"
+        output_file: str = "PiAI.mp3",
+        model: str = "inflection_3_pi",
     ):
         """
         Initializes PiAI with voice support.
