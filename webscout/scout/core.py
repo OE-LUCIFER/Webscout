@@ -4,19 +4,16 @@ A powerful, flexible, and performant HTML parsing library.
 Enhanced with advanced features and intelligent parsing.
 """
 
-import sys
 import re
-import warnings
 import json
 import hashlib
 import unicodedata
-import os
 import requests
 from markdownify import MarkdownConverter
 import concurrent.futures
 import urllib.parse
-from collections import Counter, defaultdict
-from typing import Union, List, Dict, Optional, Callable, Any, Tuple, Iterator, Set
+from collections import Counter
+from typing import Union, List, Dict, Optional, Callable, Any, Iterator, Set
 
 from .parsers.html_parser import HTMLParser
 from .parsers.lxml_parser import LXMLParser

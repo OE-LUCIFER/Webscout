@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum
 import requests
 import json
 import re
 import uuid
-from typing import List, Dict, Generator, Optional, Any, TypedDict, Literal, Union, Final
+from typing import List, Dict, Generator, Optional, Any, TypedDict, Final
 
 # Type definitions
 class Role(Enum):

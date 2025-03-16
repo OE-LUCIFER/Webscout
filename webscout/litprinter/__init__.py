@@ -5,11 +5,8 @@ import time
 import threading
 import re
 from typing import Any, Optional, TextIO, Union, Sequence, Dict, List
-from datetime import datetime
 import textwrap
-from collections import defaultdict
 import shutil
-import inspect
 from .colors import Colors
 import ctypes
 

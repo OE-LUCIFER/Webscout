@@ -1,5 +1,3 @@
-from enum import Enum
-from typing import Dict
 
 class LogFormat:
     # Basic formats with improved styling

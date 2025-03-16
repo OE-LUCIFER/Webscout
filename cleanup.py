@@ -93,8 +93,7 @@ class DirectoryCleaner:
 
 def main() -> None:
     """Main entry point"""
-    base_dir = Path(r"C:\Users\koula\Desktop\Webscout")
-    cleaner = DirectoryCleaner(base_dir)
+    cleaner = DirectoryCleaner(os.getcwd())
     result = cleaner.cleanup()
     
     print(f"\nCleanup Summary:")

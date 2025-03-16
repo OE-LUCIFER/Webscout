@@ -6,23 +6,22 @@
 
 """
 
-import requests  # For making those HTTP requests like a boss 🌐
-import http.cookiejar as cookiejar  # Handling cookies and stuff 🍪
-import json  # JSON parsing - keeping it clean! 📝
-from xml.etree import ElementTree  # XML parsing magic ✨
-import re  # Regex for pattern matching 🎯
-import html  # HTML stuff made easy 💪
-from typing import List, Dict, Union, Optional  # Type hints for that clean code 💯
-from functools import lru_cache  # Cache that data for speed! ⚡
-from concurrent.futures import ThreadPoolExecutor  # Parallel processing gang 🚀
-import asyncio  # Async/await swag 😎
-from webscout.exceptions import *  # All our custom exceptions 🛠️
+import requests 
+import http.cookiejar as cookiejar  
+import json  
+from xml.etree import ElementTree  
+import re 
+import html  
+from typing import List, Dict, Union, Optional  
+from functools import lru_cache  #
+from concurrent.futures import ThreadPoolExecutor  
+from webscout.exceptions import *  
 
 WATCH_URL = 'https://www.youtube.com/watch?v={video_id}'
-MAX_WORKERS = 4  # Keeping it optimal fam! 💪
+MAX_WORKERS = 4 
 
 class YTTranscriber:
-    """Your boy for getting those YouTube transcripts! 🎥
+    """Transcribe YouTube videos with style! 🎤
     
     >>> transcript = YTTranscriber.get_transcript('https://youtu.be/dQw4w9WgXcQ')
     >>> print(transcript[0]['text'])

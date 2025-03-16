@@ -4,9 +4,6 @@ import os
 import platform
 import datetime
 import sys
-from typing import List, Optional
-
-from webscout.optimizers import Optimizers
 import os
 import platform
 import subprocess

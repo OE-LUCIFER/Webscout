@@ -1,6 +1,6 @@
 import aiohttp
 from dataclasses import dataclass
-from typing import ClassVar, NoReturn, List, Dict, Any
+from typing import NoReturn, List, Dict, Any
 import requests
 
 @dataclass

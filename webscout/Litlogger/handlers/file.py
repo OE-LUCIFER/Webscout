@@ -2,7 +2,7 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 from ..core.level import LogLevel
 
 class FileHandler:

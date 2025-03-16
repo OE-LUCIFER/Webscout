@@ -3,7 +3,7 @@ Scout Element Module - Advanced HTML Element Representation
 """
 
 import re
-from typing import Optional, List, Dict, Union, Any, Callable, Iterable
+from typing import Optional, List, Dict, Union, Any
 
 class NavigableString(str):
     """

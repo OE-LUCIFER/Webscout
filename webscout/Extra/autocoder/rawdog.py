@@ -5,32 +5,22 @@ import re
 import sys
 import queue
 import threading
-import platform
-import datetime
 import subprocess
 import pygetwindow as gw
-from rich import print as rprint
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.console import Console, Group
 from rich.markdown import Markdown
 from rich.table import Table
-from rich.style import Style
 from rich.theme import Theme
 from rich.live import Live
-from rich.status import Status
 from rich.rule import Rule
-from typing import Optional, Dict, Any, Generator, List, Tuple
+from typing import Optional, Generator, List, Tuple
 from webscout.AIutel import run_system_command, default_path
-from webscout import Logger, LogFormat
 from .autocoder_utiles import EXAMPLES, get_intro_prompt
 
 # Initialize LitLogger with custom format and colors 
-logger = Logger(
-    name="RawDog",
-    format=LogFormat.MODERN_EMOJI,
 
-)
 
 # Custom theme for consistent styling
 CUSTOM_THEME = Theme({
@@ -96,11 +86,6 @@ class AutoCoder:
         self.ai_instance = ai_instance
 
         # Initialize logger with modern format and cyberpunk colors
-        self.logger = Logger(
-            name="AutoCoder",
-            format=LogFormat.MODERN_EMOJI,
-
-        )
         
         # Get Python version with enhanced logging
         self.logger.info("Initializing AutoCoder...")
@@ -454,19 +439,19 @@ Please fix the code to handle this error. Provide only the corrected code withou
         """
         missing_package = str(error).split("'")[1] if "'" in str(error) else str(error).split()[3]
         try:
-            logger.info(f"Installing missing package: {missing_package}")
+            print(f"Installing missing package: {missing_package}")
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "install", missing_package],
                 capture_output=True,
                 text=True
             )
             if result.returncode == 0:
-                logger.success(f"Successfully installed {missing_package}")
+                print(f"Successfully installed {missing_package}")
                 return code  # Retry with same code after installing package
             else:
                 raise Exception(f"Failed to install {missing_package}: {result.stderr}")
         except Exception as e:
-            logger.error(f"Error installing package: {str(e)}")
+            print(f"Error installing package: {str(e)}")
             return None
 
     def _is_similar_solution(self, new_code: str, threshold: float = 0.8) -> bool:
@@ -514,7 +499,7 @@ Please fix the code to handle this error. Provide only the corrected code withou
         ai_instance = self.ai_instance or globals().get('ai')
         
         if not ai_instance:
-            logger.warning("AI instance not found, error correction disabled")
+            print("AI instance not found, error correction disabled")
             try:
                 if self.path_to_script:
                     script_dir = os.path.dirname(self.path_to_script)
@@ -524,10 +509,10 @@ Please fix the code to handle this error. Provide only the corrected code withou
                         f.write(code)
                     
                 if self.internal_exec:
-                    logger.info("Executing code internally")
+                    print("[INFO] Executing code internally")
                     exec(code, globals())
                 else:
-                    logger.info("Executing code as external process")
+                    print("[INFO] Executing code as external process")
                     result = subprocess.run(
                         [self.interpreter, self.path_to_script],
                         capture_output=True,
@@ -537,7 +522,7 @@ Please fix the code to handle this error. Provide only the corrected code withou
                         raise Exception(result.stderr or result.stdout)
                 return None
             except Exception as e:
-                return str(e)
+                print(f"Execution error: {str(e)}")
         
         return self._execute_with_retry(code, ai_instance)
 
@@ -562,9 +547,9 @@ Please fix the code to handle this error. Provide only the corrected code withou
 
         message = "[Webscout] - " + message
         if category == "error":
-            logger.error(message)
+            print(f"[ERROR] {message}")
         else:
-            logger.info(message)
+            print(message)
 
     def stdout(self, message: str, style: str = "info") -> None:
         """Enhanced stdout with Rich formatting.

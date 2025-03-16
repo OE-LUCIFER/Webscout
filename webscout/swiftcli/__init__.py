@@ -30,15 +30,13 @@ For more examples, check out the documentation!
 import importlib
 import os
 import sys
-import json
 import inspect
-from typing import Any, Dict, List, Optional, Type, Union, Callable
+from typing import Any, Dict, List, Optional, Callable
 from functools import wraps
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.theme import Theme
 
 # Console setup
 console = Console()

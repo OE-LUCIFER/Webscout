@@ -1,17 +1,11 @@
-"""
-HAI's Awesome Prompts! 🔥
-The most fire prompts collection you'll ever see! 💯
-Created by the legendary HAI squad! 👑
-"""
+# -*- coding: utf-8 -*-
 
 import os
 import json
-import logging
 import requests
-from typing import Optional, Dict, Union, List
+from typing import Optional, Dict, Union
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
 from datetime import datetime
 
 console = Console()

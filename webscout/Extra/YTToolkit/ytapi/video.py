@@ -1,7 +1,6 @@
 import re
 import json
 from .https import video_data
-from typing import Dict, Any
 
 
 class Video:

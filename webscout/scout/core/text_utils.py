@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple, Set, Optional, Pattern
+from typing import List, Dict, Tuple, Set, Pattern
 import re
 
 

@@ -9,23 +9,16 @@
 import subprocess
 import os 
 import sys
-import shutil
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict
 from webscout.zeroart import figlet_format
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.panel import Panel
 from rich.table import Table
-from ..Litlogger import Logger, LogFormat
 from ..swiftcli import CLI, option
 
 # Initialize LitLogger with ocean vibes
-logger = Logger(
-    name="GGUFConverter",
-    format=LogFormat.MODERN_EMOJI,
-
-)
 
 console = Console()
 
@@ -99,16 +92,13 @@ class ModelConverter:
         
         with console.status("[bold green]Setting up llama.cpp...") as status:
             if not llama_path.exists():
-                logger.info("Cloning llama.cpp repository...")
                 subprocess.run(['git', 'clone', 'https://github.com/ggerganov/llama.cpp'], check=True)
             
             os.chdir(llama_path)
-            logger.info("Installing requirements...")
             subprocess.run(['pip3', 'install', '-r', 'requirements.txt'], check=True)
             
             has_cuda = subprocess.run(['nvcc', '--version'], capture_output=True).returncode == 0
             
-            logger.info("Building llama.cpp...")
             subprocess.run(['make', 'clean'], check=True)
             if has_cuda:
                 status.update("[bold green]Building with CUDA support...")
@@ -191,11 +181,11 @@ class ModelConverter:
                         break
                     if output:
                         progress.update(task, description=output.strip())
-                        logger.info(output.strip())
+                        print(output.strip())
                 
                 stderr = process.stderr.read()
                 if stderr:
-                    logger.warning(stderr)
+                    print(stderr)
                 
                 if process.returncode != 0:
                     raise ConversionError(f"Conversion failed with return code {process.returncode}")
@@ -414,10 +404,8 @@ def convert_command(model_id: str, username: Optional[str] = None,
         )
         converter.convert()
     except (ConversionError, ValueError) as e:
-        logger.error(f"Conversion failed: {str(e)}")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
         sys.exit(1)
 
 def main():

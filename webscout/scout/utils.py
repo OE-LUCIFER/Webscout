@@ -2,7 +2,6 @@
 Utility functions - making life easier! 🛠️
 """
 
-import re
 from typing import Union, Optional
 
 def decode_markup(markup: Union[str, bytes], encoding: Optional[str] = None) -> str:

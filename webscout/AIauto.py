@@ -6,9 +6,6 @@ import pkgutil
 import random
 import inspect
 
-# Import models module
-from webscout.models import LLMModels
-
 def load_providers():
     provider_map = {}
     api_key_providers = set()

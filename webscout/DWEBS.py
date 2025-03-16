@@ -2,11 +2,10 @@ import requests
 from typing import Dict, List, Optional, Union, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from webscout.scout import Scout
-from urllib.parse import quote, urljoin
+from urllib.parse import urljoin
 from webscout.litagent import LitAgent
 
 import time
-import random
 import json
 import os
 from datetime import datetime, timedelta

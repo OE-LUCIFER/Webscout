@@ -1,15 +1,12 @@
 """
 Scout Main Module - HTML Parsing and Traversal
 """
-import sys
 import re
-import warnings
 import json
 import hashlib
 import unicodedata
-import os
 import urllib.parse
-from typing import Union, List, Dict, Optional, Callable, Any, Tuple
+from typing import List, Dict, Optional, Any
 
 from ..parsers import ParserRegistry
 from ..element import Tag, NavigableString

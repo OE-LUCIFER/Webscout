@@ -1,6 +1,5 @@
 import re
 import sys
-import traceback
 from typing import Optional
 from ..core.level import LogLevel
 

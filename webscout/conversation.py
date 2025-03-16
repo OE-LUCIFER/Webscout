@@ -1,13 +1,6 @@
 import os
-import logging
 from typing import Optional
-from .Litlogger import Logger, LogFormat
 
-# Create a logger instance for this module
-logger = Logger(
-    name="Conversation",
-    format=LogFormat.MODERN_EMOJI,
-)
 
 class Conversation:
     """Handles prompt generation based on history and maintains chat context.
@@ -79,11 +72,9 @@ class Conversation:
         ), f"File '{filepath}' does not exist"
 
         if not os.path.isfile(filepath):
-            logging.debug(f"Creating new chat-history file - '{filepath}'")
             with open(filepath, "w", encoding="utf-8") as fh:
                 fh.write(self.intro)
         else:
-            logging.debug(f"Loading conversation from '{filepath}'")
             with open(filepath, encoding="utf-8") as fh:
                 file_contents = fh.readlines()
                 if file_contents:
@@ -221,7 +212,7 @@ class Conversation:
         if role in role_formats:
             self.chat_history += f"\n{role_formats[role]} : {content}"
         else:
-            logger.warning(f"Unknown role '{role}' for message: {content}")
+            raise ValueError(f"Invalid role: {role}. Must be one of {list(role_formats.keys())}")
 
     #     # Enhanced logging for message addition
     #     logger.info(f"Added message from {role}: {content}")

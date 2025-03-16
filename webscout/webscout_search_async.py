@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import os
 import warnings
 from datetime import datetime, timezone
@@ -26,7 +25,7 @@ from .utils import (
     json_loads,
 )
 
-logger = logging.getLogger("webscout.AsyncWEBS")
+
 
 
 class AsyncWEBS:

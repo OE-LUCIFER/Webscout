@@ -7,7 +7,7 @@ from the wttr.in service with proper typing and a consistent interface.
 
 import requests
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional
 
 
 class CurrentCondition:

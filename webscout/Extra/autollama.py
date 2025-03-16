@@ -5,11 +5,9 @@
 import warnings
 from datetime import time
 import os
-import sys
 import subprocess
 import psutil
 from huggingface_hub import hf_hub_download
-from ..Litlogger import Logger, LogFormat
 from ..swiftcli import CLI, option
 # import ollama
 
@@ -18,23 +16,13 @@ warnings.filterwarnings(
     "ignore", category=FutureWarning, module="huggingface_hub.file_download"
 )
 
-# Initialize LitLogger with custom format and colors
-logger = Logger(
-    name="AutoLlama",
-    format=LogFormat.MODERN_EMOJI,
-
-)
-
-def show_art():
-    """Dropping that signature HAI love! 💝 Made with passion in India! 🇮🇳"""
-    logger.info("Made with love in India")
 
 def usage():
-    logger.info("Usage: python script.py -m <model_path> -g <gguf_file>")
-    logger.info("Options:")
-    logger.info("  -m <model_path>    Set the path to the model")
-    logger.info("  -g <gguf_file>     Set the GGUF file name")
-    logger.info("  -h                 Display this help and exit")
+    print("Usage: python script.py -m <model_path> -g <gguf_file>")
+    print("Options:")
+    print("  -m <model_path>    Set the path to the model")
+    print("  -g <gguf_file>     Set the GGUF file name")
+    print("  -h                 Display this help and exit")
 
 def is_model_downloaded(logging_name, download_log):
     """
@@ -121,7 +109,6 @@ def download_model(repo_id, filename, token, cache_dir="downloads"):
         return filepath
     
     except Exception as e:
-        logger.error(f"Error downloading model: {str(e)}")
         raise
 
 def is_ollama_running():
@@ -159,7 +146,6 @@ def download_command(model_path: str, gguf_file: str):
         ...     -m "OEvortex/HelpingAI-Lite-1.5T" \\
         ...     -g "HelpingAI-Lite-1.5T.q4_k_m.gguf"
     """
-    show_art()
 
     model_name = gguf_file.split(".Q4")[0]
     download_log = "downloaded_models.log"
@@ -172,54 +158,54 @@ def download_command(model_path: str, gguf_file: str):
     try:
         subprocess.check_output(['pip', 'show', 'huggingface-hub'])
     except subprocess.CalledProcessError:
-        logger.info("Installing huggingface-hub...")
+        print("Installing huggingface-hub...")
         subprocess.check_call(['pip', 'install', '-U', 'huggingface_hub[cli]'])
     else:
-        logger.info("huggingface-hub is already installed.")
+        print("huggingface-hub is already installed.")
 
     if is_model_downloaded(logging_name, download_log):
-        logger.info(f"Model {logging_name} has already been downloaded. Skipping download.")
+        print(f"Model {logging_name} has already been downloaded. Skipping download.")
     else:
-        logger.info(f"Downloading model {logging_name}...")
+        print(f"Downloading model {logging_name}...")
         token = os.getenv('HUGGINGFACE_TOKEN', None)
         if not token:
-            logger.warning("Warning: HUGGINGFACE_TOKEN environment variable is not set. Using None.")
+            print("Warning: HUGGINGFACE_TOKEN environment variable is not set. Using None.")
         
         filepath = download_model(model_path, gguf_file, token)
         log_downloaded_model(logging_name, download_log)
-        logger.info(f"Model {logging_name} downloaded and logged.")
+        print(f"Model {logging_name} downloaded and logged.")
 
     try:
         subprocess.check_output(['ollama', '--version'])
     except subprocess.CalledProcessError:
-        logger.info("Installing Ollama...")
-        subprocess.check_call(['curl', '-fsSL', 'https://ollama.com/install.sh', '|', 'sh'])
+        print("Installing Ollama...")
+        subprocess.check_call(['bash', '-c', 'curl -fsSL https://ollama.com/install.sh | sh'])
     else:
-        logger.info("Ollama is already installed.")
+        print("Ollama is already installed.")
 
     if is_ollama_running():
-        logger.info("Ollama is already running. Skipping the start.")
+        print("Ollama is already running. Skipping the start.")
     else:
-        logger.info("Starting Ollama...")
+        print("Starting Ollama...")
         subprocess.Popen(['ollama', 'serve'])
 
         while not is_ollama_running():
-            logger.info("Waiting for Ollama to start...")
+            print("Waiting for Ollama to start...")
             time.sleep(1)
 
-        logger.info("Ollama has started.")
+        print("Ollama has started.")
 
     if is_model_created(model_name):
-        logger.info(f"Model {model_name} is already created. Skipping creation.")
+        print(f"Model {model_name} is already created. Skipping creation.")
     else:
-        logger.info(f"Creating model {model_name}...")
+        print(f"Creating model {model_name}...")
         with open('Modelfile', 'w') as f:
             f.write(f"FROM ./downloads/{gguf_file}")
         subprocess.check_call(['ollama', 'create', model_name, '-f', 'Modelfile'])
-        logger.info(f"Model {model_name} created.")
+        print(f"Model {model_name} created.")
 
-    logger.success(f"model name is > {model_name}")
-    logger.info(f"Use Ollama run {model_name}")
+    print(f"model name is > {model_name}")
+    print(f"Use Ollama run {model_name}")
 
 def main():
     """

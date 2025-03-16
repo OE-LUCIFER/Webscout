@@ -1,27 +1,24 @@
 from datetime import datetime
 import json
-from webscout.Litlogger import Logger
 from webscout.litagent import LitAgent
 from time import sleep
 import requests
 from tqdm import tqdm
 from colorama import Fore
-from os import makedirs, path, getcwd, remove
+from os import makedirs, path, getcwd
 from threading import Thread
-from sys import stdout
 import os
 import subprocess
 import sys
 import tempfile
 from webscout.version import __prog__, __version__
-from webscout.swiftcli import CLI, option, argument, group
+from webscout.swiftcli import CLI, option, argument
 
 # Define cache directory using tempfile
 user_cache_dir = os.path.join(tempfile.gettempdir(), 'webscout')
 if not os.path.exists(user_cache_dir):
     os.makedirs(user_cache_dir)
 
-logging = Logger(name="YTDownloader")
 
 session = requests.session()
 
@@ -63,13 +60,10 @@ class utils:
                         return func(*args, **kwargs)
                     except KeyboardInterrupt as e:
                         print()
-                        logging.info(f"^KeyboardInterrupt quitting. Goodbye!")
                         exit(1)
                 except Exception as e:
                     if log:
-                        # logging.exception(e)
-                        logging.debug(f"Function ({func.__name__}) : {get_excep(e)}")
-                        logging.error(get_excep(e))
+                        raise(f"Error - {get_excep(e)}")
                     if exit_on_error:
                         exit(1)
 
@@ -110,7 +104,7 @@ class utils:
             with open(history_path, "w") as fh:
                 json.dump({__prog__: saved_data}, fh, indent=4)
         except Exception as e:
-            logging.error(f"Failed to add to history - {get_excep(e)}")
+            pass
 
     @staticmethod
     def get_history(dump: bool = False) -> list:
@@ -133,7 +127,6 @@ class utils:
                 resp.append(entry.get("vid"))
             return resp
         except Exception as e:
-            logging.error(f"Failed to load history - {get_excep(e)}")
             return []
 
 
@@ -185,7 +178,6 @@ class first_query:
         :param timeout: (Optional) Http requests timeout
         :type timeout: int
         """
-        logging.debug(f"Making first query  : {self.payload.get('k_query')}")
         okay_status, resp = utils.post(self.url, data=self.payload, timeout=timeout)
         # print(resp.headers["content-type"])
         # print(resp.content)
@@ -197,8 +189,9 @@ class first_query:
             self.is_link = not hasattr(self, "vitems")
             self.processed = True
         else:
-            logging.debug(f"{resp.headers.get('content-type')} - {resp.content}")
-            logging.error(f"First query failed - [{resp.status_code} : {resp.reason}")
+            raise Exception(
+                f"First query failed - [{resp.status_code} : {resp.reason}]"
+            )
         return self
 
 
@@ -321,9 +314,6 @@ class second_query:
             self.__setattr__("raw", dict_data)
             self.processed = True
 
-        else:
-            logging.debug(f"{resp.headers.get('content-type')} - {resp.content}")
-            logging.error(f"Second query failed - [{resp.status_code} : {resp.reason}]")
         return self
 
 
@@ -430,9 +420,6 @@ class third_query:
                         if repeat_count >= 4:
                             return (False, {})
                         else:
-                            logging.debug(
-                                f"Converting video  : sleeping for 5s - round {repeat_count+1}"
-                            )
                             sleep(5)
                             repeat_count += 1
                             return hunter_manager(souped_entry)
@@ -447,15 +434,8 @@ class third_query:
                 return resp_data
 
             else:
-                logging.debug(f"{resp.headers.get('content-type')} - {resp.content}")
-                logging.error(
-                    f"Third query failed - [{resp.status_code} : {resp.reason}]"
-                )
                 return {}
         else:
-            logging.error(
-                f"Zero media hunted with params : {{quality : {quality}, format : {format}  }}"
-            )
             return {}
 
 
@@ -567,16 +547,10 @@ class Handler:
                     if query_2.vid in self.dropped:
                         continue
                     if self.author and not self.author.lower() in query_2.a.lower():
-                        logging.warning(
-                            f"Dropping {Fore.YELLOW+query_2.title+Fore.RESET} by  {Fore.RED+query_2.a+Fore.RESET}"
-                        )
                         continue
                     else:
                         yes_download, reason = self.__verify_item(query_2)
                         if not yes_download:
-                            logging.warning(
-                                f"Skipping {Fore.YELLOW+query_2.title+Fore.RESET} by {Fore.MAGENTA+query_2.a+Fore.RESET} -  Reason : {Fore.BLUE+reason+Fore.RESET}"
-                            )
                             self.dropped.append(query_2.vid)
                             continue
                         self.related.append(query_2.related)
@@ -585,9 +559,10 @@ class Handler:
                         if x >= self.total:
                             break
                 else:
-                    logging.warning(
+                    print(
                         f"Dropping unprocessed query_two object of index {x}"
                     )
+                    yield
 
         else:
             query_2 = init_query_two.main(timeout=self.timeout)
@@ -606,16 +581,11 @@ class Handler:
                                 self.author
                                 and not self.author.lower() in query_2.a.lower()
                             ):
-                                logging.warning(
-                                    f"Dropping {Fore.YELLOW+query_2.title+Fore.RESET} by  {Fore.RED+query_2.a+Fore.RESET}"
-                                )
                                 continue
                             else:
                                 yes_download, reason = self.__verify_item(query_2)
                                 if not yes_download:
-                                    logging.warning(
-                                        f"Skipping {Fore.YELLOW+query_2.title+Fore.RESET} by {Fore.MAGENTA+query_2.a+Fore.RESET} -  Reason : {Fore.BLUE+reason+Fore.RESET}"
-                                    )
+
                                     self.dropped.append(query_2.vid)
                                     continue
 
@@ -625,12 +595,8 @@ class Handler:
                                 if x >= self.total:
                                     break
                         else:
-                            logging.warning(
-                                f"Dropping unprocessed query_two object of index {x}"
-                            )
                             yield
             else:
-                logging.warning("Dropping unprocessed query_two object")
                 yield
 
     def run(
@@ -670,8 +636,7 @@ class Handler:
                         timeout=self.timeout,
                     )
                 )
-            else:
-                logging.error(f"Empty object - {query_two_obj}")
+
 
     def generate_filename(self, third_dict: dict, naming_format: str = None) -> str:
         r"""Generate filename based on the response of `third_query`
@@ -760,9 +725,6 @@ class Handler:
                 t1.start()
                 thread_count = x + 1
                 if thread_count % self.thread == 0 or thread_count == self.total:
-                    logging.debug(
-                        f"Waiting for current running threads to finish - thread_count : {thread_count}"
-                    )
                     t1.join()
             else:
                 self.save(
@@ -814,7 +776,7 @@ class Handler:
                 "dlink"
             ), "The video selected does not support that quality, try lower qualities."
             if third_dict.get("mess"):
-                logging.warning(third_dict.get("mess"))
+                pass
 
             current_downloaded_size = 0
             current_downloaded_size_in_mb = 0
@@ -892,10 +854,9 @@ class Handler:
                     utils.add_history(third_dict)
 
                 try_play_media()
-                logging.info(f"{filename} - {size_in_mb}MB ")
+
                 return save_to
-        else:
-            logging.error(f"Empty `third_dict` parameter parsed : {third_dict}")
+
 
 
 mp4_qualities = [

@@ -5,7 +5,7 @@ Scout HTML Parser - Advanced HTML Parsing with Python's Built-in Parser
 import html
 import re
 from html.parser import HTMLParser as StdHTMLParser
-from typing import List, Optional, Dict, Any, Union
+from typing import List
 
 from ..element import Tag, NavigableString
 

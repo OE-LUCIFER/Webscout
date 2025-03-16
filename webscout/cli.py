@@ -1,34 +1,12 @@
-import os
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
-from urllib.parse import unquote
-from pathlib import Path
-from .swiftcli import CLI, option, argument, group
-from curl_cffi import requests
-import pyreqwest_impersonate as pri
+from .swiftcli import CLI, option
 from .webscout_search import WEBS
-from .utils import json_dumps, json_loads
 from .version import __version__
-from .Litlogger import LitLogger, LogFormat, ColorScheme
 from rich.console import Console
 from rich.panel import Panel
-from rich.markdown import Markdown
 from rich.table import Table
-from rich.style import Style
 from rich.text import Text
-from rich.align import Align
-from rich.progress import track, Progress
-from rich.prompt import Prompt, Confirm
-from rich.columns import Columns
-from pyfiglet import figlet_format
 
-logger = LitLogger(
-    name="webscout",
-    format=LogFormat.MODERN_EMOJI,
-    color_scheme=ColorScheme.CYBERPUNK,
-    console_output=True
-)
 
 COLORS = {
     0: "black",
@@ -89,7 +67,7 @@ def chat(proxy: str = None, model: str = "gpt-4o-mini"):
     console = Console()
     
     # Display header
-    console.print(f"[bold blue]{figlet_format('Webscout Chat')}[/]\n", justify="center")
+    # console.print(f"[bold blue]{figlet_format('Webscout Chat')}[/]\n", justify="center")
     console.print(f"[bold green]Using model:[/] {model}\n")
     console.print("[cyan]Type your message and press Enter. Press Ctrl+C or type 'exit' to quit.[/]\n")
     
@@ -97,23 +75,18 @@ def chat(proxy: str = None, model: str = "gpt-4o-mini"):
     try:
         while True:
             try:
-                user_input = input("You: ").strip()
+                user_input = input(">>> ").strip()
                 if not user_input or user_input.lower() in ['exit', 'quit']:
                     break
                     
-                logger.info(f"Sending message to {model}")
                 response = webs.chat(keywords=user_input, model=model)
                 console.print(f"\nAI: {response}\n")
-                logger.success("Received response from AI")
                 
             except Exception as e:
-                logger.error(f"Error in chat: {str(e)}")
                 console.print(f"[bold red]Error:[/] {str(e)}\n")
                 
     except KeyboardInterrupt:
-        logger.info("Chat session terminated by user")
-        
-    console.print("\n[cyan]Chat session ended. Goodbye![/]")
+        console.print("\n[bold red]Chat session interrupted. Exiting...[/]")
 
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
@@ -130,7 +103,6 @@ def text(keywords: str, region: str, safesearch: str, timelimit: str, backend: s
         results = webs.text(keywords, region, safesearch, timelimit, backend, max_results)
         _print_data(results)
     except Exception as e:
-        logger.error(f"Error in text search: {e}")
         raise e
 
 @app.command()
@@ -143,7 +115,6 @@ def answers(keywords: str, proxy: str = None):
         results = webs.answers(keywords)
         _print_data(results)
     except Exception as e:
-        logger.error(f"Error in answers search: {e}")
         raise e
 
 @app.command()
@@ -177,7 +148,6 @@ def images(
         results = webs.images(keywords, region, safesearch, timelimit, size, color, type, layout, license, max_results)
         _print_data(results)
     except Exception as e:
-        logger.error(f"Error in images search: {e}")
         raise e
 
 @app.command()
@@ -207,7 +177,6 @@ def videos(
         results = webs.videos(keywords, region, safesearch, timelimit, resolution, duration, license, max_results)
         _print_data(results)
     except Exception as e:
-        logger.error(f"Error in videos search: {e}")
         raise e
 
 @app.command()
@@ -224,7 +193,6 @@ def news(keywords: str, region: str, safesearch: str, timelimit: str, max_result
         results = webs.news(keywords, region, safesearch, timelimit, max_results)
         _print_data(results)
     except Exception as e:
-        logger.error(f"Error in news search: {e}")
         raise e
 
 @app.command()
@@ -275,7 +243,6 @@ def maps(
         )
         _print_data(results)
     except Exception as e:
-        logger.error(f"Error in maps search: {e}")
         raise e
 
 @app.command()
@@ -290,7 +257,6 @@ def translate(keywords: str, from_: str, to: str, proxy: str = None):
         results = webs.translate(keywords, from_, to)
         _print_data(results)
     except Exception as e:
-        logger.error(f"Error in translation: {e}")
         raise e
 
 @app.command()
@@ -304,7 +270,6 @@ def suggestions(keywords: str, region: str, proxy: str = None):
         results = webs.suggestions(keywords, region)
         _print_data(results)
     except Exception as e:
-        logger.error(f"Error in suggestions search: {e}")
         raise e
 
 def main():
@@ -312,7 +277,6 @@ def main():
     try:
         app.run()
     except Exception as e:
-        logger.error(f"Error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -6,9 +6,7 @@ Webscout Update Checker
 'New Webscout version available: 2.0.0 - Update with: pip install --upgrade webscout'
 """
 
-import sys
-import os
-from typing import Optional, Tuple, Dict, Any, Literal, Union
+from typing import Optional, Dict, Any, Literal
 
 import requests
 from packaging import version

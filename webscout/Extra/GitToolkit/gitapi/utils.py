@@ -1,7 +1,7 @@
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 import json
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from webscout import LitAgent
 
 class GitError(Exception):

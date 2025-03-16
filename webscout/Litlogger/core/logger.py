@@ -4,11 +4,10 @@ import sys
 import threading
 import traceback
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Union
 
 from ..core.level import LogLevel
 from ..styles.formats import LogFormat
-from ..styles.colors import LogColors
 
 class Logger:
     # Emoji mappings for different log levels

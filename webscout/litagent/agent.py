@@ -1,9 +1,8 @@
 """Main LitAgent implementation."""
 
 import random
-import time
 import threading
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional
 
 from webscout.litagent.constants import BROWSERS, OS_VERSIONS, DEVICES, FINGERPRINTS
 
