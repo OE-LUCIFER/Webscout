@@ -49,8 +49,6 @@ setup(
             "orjson",
             "PyYAML",
             "tls_client",
-            "clipman",
-            "playsound==1.3.0",
             "ollama",
             "pillow",
             "bson",

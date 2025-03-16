@@ -1,4 +1,4 @@
-  [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/PyscoutAI)
+[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/PyscoutAI)
   [![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/oevortex/)
   [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/oe-vortex-29a407265/)
   [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/oevortex)
@@ -387,8 +387,7 @@ with WEBS() as webs:
 ```
 
 
-
-#### 📜 List Available Models
+#### 📜 List Available LLM Models
 
 Retrieve a comprehensive list of all supported LLMs.
 
@@ -401,9 +400,9 @@ print("Available models:")
 print(all_models)
 ```
 
-#### 📊 Model Summary
+#### 📊 LLM Model Summary
 
-Obtain a summary of the available models, including provider details.
+Obtain a summary of the available LLMs, including provider details.
 
 ```python
 from webscout import model
@@ -414,9 +413,9 @@ print("Summary of models:")
 print(summary)
 ```
 
-#### 🔍 Provider-Specific Models
+#### 🔍 Provider-Specific LLM Models
 
-Filter and display models available from a specific provider.
+Filter and display LLMs available from a specific provider.
 
 ```python
 from webscout import model
@@ -430,6 +429,57 @@ if isinstance(available_models, list):
 else:
     print(f"Available models for {provider_name}: {available_models}")
 ```
+
+### TTS Voices
+
+#### 🎤 List Available TTS Voices
+
+Retrieve a comprehensive list of all supported TTS voices.
+
+```python
+from webscout import model
+from rich import print
+
+all_voices = model.tts.list()
+print("Available TTS voices:")
+print(all_voices)
+```
+
+#### 📊 TTS Voice Summary
+
+Obtain a summary of the available TTS voices, including provider details.
+
+```python
+from webscout import model
+from rich import print
+
+summary = model.tts.summary()
+print("Summary of TTS voices:")
+print(summary)
+```
+
+#### 🔍 Provider-Specific TTS Voices
+
+Filter and display TTS voices available from a specific provider.
+
+```python
+from webscout import model
+from rich import print
+
+provider_name = "ElevenlabsTTS"  # Example provider
+available_voices = model.tts.get(provider_name)
+
+if isinstance(available_voices, list):
+    print(f"Available voices for {provider_name}: {', '.join(available_voices)}")
+elif isinstance(available_voices, dict):
+    print(f"Available voices for {provider_name}:")
+    for voice_name, voice_id in available_voices.items():
+        print(f"  - {voice_name}: {voice_id}")
+else:
+    print(f"Available voices for {provider_name}: {available_voices}")
+```
+
+
 
 
 ### 💬 `Duckchat` - Chat with LLM
@@ -859,3 +909,4 @@ Contributions are welcome! If you'd like to contribute to Webscout, please follo
 
 * All the amazing developers who have contributed to the project!
 * The open-source community for their support and inspiration.
+
