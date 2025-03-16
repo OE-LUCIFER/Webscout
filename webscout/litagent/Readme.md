@@ -34,6 +34,35 @@ opera_ua = agent.opera()     # Latest Opera agent
 # Get mobile or desktop agents
 mobile_ua = agent.mobile()    # Mobile device agent
 desktop_ua = agent.desktop()  # Desktop device agent
+
+# New - Get agents for specific device types
+tablet_ua = agent.tablet()    # Tablet device agent
+tv_ua = agent.smart_tv()      # Smart TV agent
+console_ua = agent.gaming()   # Gaming console agent
+```
+
+### OS-Specific Agents
+
+```python
+# New - Get agents for specific operating systems
+windows_ua = agent.windows()  # Windows agent
+mac_ua = agent.macos()        # macOS agent
+linux_ua = agent.linux()      # Linux agent
+android_ua = agent.android()  # Android agent
+ios_ua = agent.ios()          # iOS agent
+```
+
+### Custom Agent Generation
+
+```python
+# New - Generate custom user agents with specific attributes
+custom_ua = agent.custom(
+    browser="chrome",
+    version="91.0",
+    os="windows",
+    os_version="10",
+    device_type="desktop"
+)
 ```
 
 ### Keep It Fresh
@@ -41,6 +70,9 @@ desktop_ua = agent.desktop()  # Desktop device agent
 ```python
 # Refresh your agents pool anytime
 agent.refresh()  # Generates new set of agents
+
+# New - Schedule automatic refreshes
+agent.auto_refresh(interval_minutes=30)  # Auto-refresh every 30 minutes
 ```
 
 ## 💫 Real-World Examples
@@ -112,6 +144,49 @@ driver = create_driver()
 driver.get('https://example.com')
 ```
 
+### New - With Playwright
+
+```python
+from playwright.sync_api import sync_playwright
+from webscout import LitAgent
+
+agent = LitAgent()
+
+def browse_with_playwright():
+    with sync_playwright() as p:
+        browser_options = {
+            "user_agent": agent.chrome(),
+            "viewport": {"width": 1280, "height": 720}
+        }
+        browser = p.chromium.launch()
+        context = browser.new_context(**browser_options)
+        page = context.new_page()
+        page.goto('https://example.com')
+        # Continue with your scraping logic
+        browser.close()
+```
+
+### New - With Proxy Rotation
+
+```python
+import requests
+from webscout import LitAgent, ProxyManager
+
+agent = LitAgent()
+proxy_mgr = ProxyManager(['http://proxy1:8080', 'http://proxy2:8080'])
+
+def secure_request(url):
+    proxy = proxy_mgr.get_random()
+    headers = {'User-Agent': agent.random()}
+    return requests.get(
+        url,
+        headers=headers,
+        proxies={"http": proxy, "https": proxy}
+    )
+
+response = secure_request('https://example.com')
+```
+
 ## 🌟 Pro Tips
 
 1. **Rotate Agents**: Refresh your agents pool periodically to avoid detection
@@ -148,11 +223,44 @@ driver.get('https://example.com')
    # Use these headers for all requests in this session
    ```
 
+4. **New - Browser Fingerprinting Defense**:
+   ```python
+   # Create consistent browser fingerprinting
+   fingerprint = agent.generate_fingerprint(browser="chrome")
+   
+   headers = {
+       'User-Agent': fingerprint['user_agent'],
+       'Accept-Language': fingerprint['accept_language'],
+       'Accept': fingerprint['accept'],
+       'Sec-Ch-Ua': fingerprint['sec_ch_ua'],
+       'Sec-Ch-Ua-Platform': fingerprint['platform']
+   }
+   
+   # Use this consistent set for all session requests
+   ```
+
+5. **New - Multi-threading Support**:
+   ```python
+   import concurrent.futures
+   from webscout import LitAgent
+   
+   agent = LitAgent(thread_safe=True)  # Thread-safe instance
+   
+   def fetch_url(url):
+       headers = {'User-Agent': agent.random()}
+       return requests.get(url, headers=headers).text
+   
+   urls = ['https://example1.com', 'https://example2.com', 'https://example3.com']
+   
+   with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+       results = list(executor.map(fetch_url, urls))
+   ```
+
 ## 🔧 Supported Browsers & Devices
 
-- **Browsers**: Chrome, Firefox, Safari, Edge, Opera
-- **Operating Systems**: Windows, macOS, Linux, Android, iOS
-- **Devices**: Mobile phones, Tablets, Desktops, Game consoles, Smart TVs
+- **Browsers**: Chrome, Firefox, Safari, Edge, Opera, Brave, Vivaldi
+- **Operating Systems**: Windows, macOS, Linux, Android, iOS, Chrome OS
+- **Devices**: Mobile phones, Tablets, Desktops, Game consoles, Smart TVs, Wearables
 
 ## 🎨 Why LitAgent?
 
@@ -162,5 +270,28 @@ driver.get('https://example.com')
 - 📱 Device-specific agents
 - 🌐 All major browsers supported
 - ⚡ Lightweight and fast
+- 🧩 Advanced fingerprinting protection
+- 🔄 Seamless proxy integration
+- 🧵 Thread-safe operation
+- 🕰️ Automatic refresh scheduling
+
+## 📊 New - Analytics and Reporting
+
+```python
+# Get statistics on your agent usage
+stats = agent.get_stats()
+print(f"Agents generated: {stats.total_generated}")
+print(f"Most used browser: {stats.top_browser}")
+print(f"Detection avoidance rate: {stats.avoidance_rate}%")
+
+# Export your usage data
+agent.export_stats('agent_usage.json')
+```
+
+## 📋 Installation
+
+```bash
+pip install webscout
+```
 
 Made with 💖 by the HelpingAI team

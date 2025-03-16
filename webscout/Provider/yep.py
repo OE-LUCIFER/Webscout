@@ -38,7 +38,8 @@ class YEPCHAT(Provider):
         act: str = None,
         model: str = "DeepSeek-R1-Distill-Qwen-32B",
         temperature: float = 0.6,
-        top_p: float = 0.7
+        top_p: float = 0.7,
+        browser: str = "chrome"
     ):
         """
         Initializes the YEPCHAT provider with the specified parameters.
@@ -69,20 +70,25 @@ class YEPCHAT(Provider):
 
         # Initialize LitAgent for user agent generation
         self.agent = LitAgent()
+        # Use fingerprinting to create a consistent browser identity
+        self.fingerprint = self.agent.generate_fingerprint(browser)
 
+        # Use the fingerprint for headers
         self.headers = {
-            "Accept": "*/*",
+            "Accept": self.fingerprint["accept"],
             "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Accept-Language": self.fingerprint["accept_language"],
             "Content-Type": "application/json; charset=utf-8",
             "DNT": "1",
             "Origin": "https://yep.com",
             "Referer": "https://yep.com/",
-            "Sec-CH-UA": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
             "Sec-CH-UA-Mobile": "?0",
-            "Sec-CH-UA-Platform": '"Windows"',
-            "User-Agent": self.agent.random(),  # Use LitAgent to generate a random user agent
+            "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
+            "User-Agent": self.fingerprint["user_agent"],
         }
+        
+        # Create session cookies with unique identifiers
         self.cookies = {"__Host-session": uuid.uuid4().hex, '__cf_bm': uuid.uuid4().hex}
 
         self.__available_optimizers = (
@@ -101,6 +107,38 @@ class YEPCHAT(Provider):
         )
         self.conversation.history_offset = history_offset
         self.session.proxies = proxies
+        
+        # Set consistent headers for the scraper session
+        for header, value in self.headers.items():
+            self.session.headers[header] = value
+
+    def refresh_identity(self, browser: str = None):
+        """
+        Refreshes the browser identity fingerprint.
+        
+        Args:
+            browser: Specific browser to use for the new fingerprint
+        """
+        browser = browser or self.fingerprint.get("browser_type", "chrome")
+        self.fingerprint = self.agent.generate_fingerprint(browser)
+        
+        # Update headers with new fingerprint
+        self.headers.update({
+            "Accept": self.fingerprint["accept"],
+            "Accept-Language": self.fingerprint["accept_language"],
+            "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or self.headers["Sec-CH-UA"],
+            "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
+            "User-Agent": self.fingerprint["user_agent"],
+        })
+        
+        # Update session headers
+        for header, value in self.headers.items():
+            self.session.headers[header] = value
+        
+        # Generate new cookies
+        self.cookies = {"__Host-session": uuid.uuid4().hex, '__cf_bm': uuid.uuid4().hex}
+        
+        return self.fingerprint
 
     def ask(
         self,
@@ -145,9 +183,20 @@ class YEPCHAT(Provider):
             try:
                 with self.session.post(self.chat_endpoint, headers=self.headers, cookies=self.cookies, json=data, stream=True, timeout=self.timeout) as response:
                     if not response.ok:
-                        raise exceptions.FailedToGenerateResponseError(
-                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                        )
+                        # If we get a non-200 response, try refreshing our identity once
+                        if response.status_code in [403, 429]:
+                            self.refresh_identity()
+                            # Retry with new identity
+                            with self.session.post(self.chat_endpoint, headers=self.headers, cookies=self.cookies, json=data, stream=True, timeout=self.timeout) as retry_response:
+                                if not retry_response.ok:
+                                    raise exceptions.FailedToGenerateResponseError(
+                                        f"Failed to generate response after identity refresh - ({retry_response.status_code}, {retry_response.reason}) - {retry_response.text}"
+                                    )
+                                response = retry_response
+                        else:
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                            )
 
                     streaming_text = ""
                     for line in response.iter_lines(decode_unicode=True):
