@@ -44,7 +44,7 @@
 * **[Awesome Prompts (Act)](webscout/Extra/Act.md):** A curated collection of system prompts designed to transform Webscout into specialized personas, enhancing its ability to assist with specific tasks. Simply prefix your request with the act name or index number to leverage these tailored capabilities.
 * **[Weather Tool kit](webscout/Extra/weather.md)** Webscout provides tools to retrieve weather information.
 ## ⚙️ Installation
-
+* **[AIsearch](webscout/Provider/AISEARCH)** AI Search Providers offer powerful and flexible AI-powered search Search Engine
 ```python
 pip install -U webscout
 ```

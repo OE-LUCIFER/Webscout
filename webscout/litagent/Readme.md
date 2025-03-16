@@ -166,27 +166,6 @@ def browse_with_playwright():
         browser.close()
 ```
 
-### New - With Proxy Rotation
-
-```python
-import requests
-from webscout import LitAgent, ProxyManager
-
-agent = LitAgent()
-proxy_mgr = ProxyManager(['http://proxy1:8080', 'http://proxy2:8080'])
-
-def secure_request(url):
-    proxy = proxy_mgr.get_random()
-    headers = {'User-Agent': agent.random()}
-    return requests.get(
-        url,
-        headers=headers,
-        proxies={"http": proxy, "https": proxy}
-    )
-
-response = secure_request('https://example.com')
-```
-
 ## 🌟 Pro Tips
 
 1. **Rotate Agents**: Refresh your agents pool periodically to avoid detection
