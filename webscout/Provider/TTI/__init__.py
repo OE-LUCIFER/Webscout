@@ -6,3 +6,5 @@ from .huggingface import *
 from .artbit import *
 from .talkai import *
 from .piclumen import *
+from .MagicStudio import *
+from .fastflux import *
