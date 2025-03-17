@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import queue
+import tempfile
 import threading
 import subprocess
 from rich.panel import Panel
@@ -15,11 +16,11 @@ from rich.theme import Theme
 from rich.live import Live
 from rich.rule import Rule
 from typing import Optional, Generator, List, Tuple
-from webscout.AIutel import run_system_command, default_path
+from webscout.AIutel import run_system_command
 from .autocoder_utiles import EXAMPLES, get_intro_prompt
 
 # Initialize LitLogger with custom format and colors 
-
+default_path = tempfile.mkdtemp(prefix="webscout_autocoder")
 
 # Custom theme for consistent styling
 CUSTOM_THEME = Theme({
