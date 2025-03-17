@@ -6,7 +6,6 @@ import sys
 import queue
 import threading
 import subprocess
-import pygetwindow as gw
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.console import Console, Group
@@ -104,19 +103,6 @@ class AutoCoder:
         
         self.logger.success("AutoCoder initialized successfully!")
 
-    def get_current_app(self) -> str:
-        """Get the name of the currently active application.
-
-        Returns:
-            str: Name of the active window or "Unknown"
-        """
-        try:
-            active_window = gw.getActiveWindow()
-            if active_window:
-                return active_window.title
-        except Exception as e:
-            self.logger.error(f"Error getting active window: {e}")
-        return "Unknown"
 
     def _extract_code_blocks(self, response: str) -> List[Tuple[str, str]]:
         """Extract code blocks from a response string.
