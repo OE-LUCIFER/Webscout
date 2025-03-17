@@ -8,15 +8,10 @@ from requests.exceptions import RequestException
 from pathlib import Path
 
 from webscout.AIbase import ImageProvider
-from webscout.Litlogger import Logger, LogFormat
+
 from webscout.litagent import LitAgent
 
-# Initialize our fire logger and agent 🔥
-logger = Logger(
-    "AiForce",
-    format=LogFormat.MODERN_EMOJI,
 
-)
 agent = LitAgent()
 
 class AiForceimager(ImageProvider):
@@ -43,8 +38,6 @@ class AiForceimager(ImageProvider):
     AVAILABLE_MODELS = [
         "stable-diffusion-xl-lightning",
         "stable-diffusion-xl-base",
-        "Flux-1.1-Pro",
-        "ideogram",
         "flux",
         "flux-realism",
         "flux-anime",
@@ -55,13 +48,12 @@ class AiForceimager(ImageProvider):
         "any-dark"
     ]
 
-    def __init__(self, timeout: int = 60, proxies: dict = {}, logging: bool = True):
+    def __init__(self, timeout: int = 60, proxies: dict = {}):
         """Initialize your AiForce provider with custom settings! ⚙️
 
         Args:
             timeout (int): Request timeout in seconds (default: 60)
             proxies (dict): Proxy settings for requests (default: {})
-            logging (bool): Enable fire logging (default: True)
         """
         self.api_endpoint = "https://api.airforce/imagine2"
         self.headers = {
@@ -76,16 +68,14 @@ class AiForceimager(ImageProvider):
         self.timeout = timeout
         self.prompt: str = "AI-generated image - webscout"
         self.image_extension: str = "png"
-        self.logging = logging
-        if self.logging:
-            logger.info("AiForce provider initialized! 🚀")
+
 
     def generate(
         self, 
         prompt: str, 
         amount: int = 1, 
         additives: bool = True,
-        model: str = "Flux-1.1-Pro", 
+        model: str = "flux-3d", 
         width: int = 768, 
         height: int = 768, 
         seed: Optional[int] = None,
@@ -139,8 +129,6 @@ class AiForceimager(ImageProvider):
         )
 
         self.prompt = prompt
-        if self.logging:
-            logger.info(f"Generating {amount} images with {model}... 🎨")
         response = []
         for _ in range(amount):
             url = f"{self.api_endpoint}?model={model}&prompt={prompt}&size={width}:{height}"
@@ -152,21 +140,13 @@ class AiForceimager(ImageProvider):
                     resp = self.session.get(url, timeout=self.timeout)
                     resp.raise_for_status()
                     response.append(resp.content)
-                    if self.logging:
-                        logger.success(f"Generated image {_ + 1}/{amount}! 🎨")
                     break
                 except RequestException as e:
                     if attempt == max_retries - 1:
-                        if self.logging:
-                            logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
                         raise
                     else:
-                        if self.logging:
-                            logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
                         time.sleep(retry_delay)
 
-        if self.logging:
-            logger.success("Images generated successfully! 🎉")
         return response
 
     def save(
@@ -203,12 +183,8 @@ class AiForceimager(ImageProvider):
         save_dir = dir if dir else os.getcwd()
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-            if self.logging:
-                logger.info(f"Created directory: {save_dir} 📁")
 
         name = self.prompt if name is None else name
-        if self.logging:
-            logger.info(f"Saving {len(response)} images... 💾")
         filenames = []
         count = 0
 
@@ -225,18 +201,45 @@ class AiForceimager(ImageProvider):
 
             with open(absolute_path_to_file, "wb") as fh:
                 fh.write(image)
-            if self.logging:
-                logger.success(f"Saved image to: {absolute_path_to_file} 💾")
 
-        if self.logging:
-            logger.success(f"Images saved successfully! Check {dir} 🎉")
         return filenames
 
 if __name__ == "__main__":
     bot = AiForceimager()
-    try:
-        resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
-        print(bot.save(resp))
-    except Exception as e:
-        if bot.logging:
-            logger.error(f"An error occurred: {e} 😢")
+    test_prompt = "A shiny red sports car speeding down a scenic mountain road"
+    
+    print(f"Testing all available models with prompt: '{test_prompt}'")
+    print("-" * 50)
+    
+    # Create a directory for test images if it doesn't exist
+    test_dir = "model_test_images"
+    if not os.path.exists(test_dir):
+        os.makedirs(test_dir)
+        
+    for model in bot.AVAILABLE_MODELS:
+        print(f"Testing model: {model}")
+        try:
+            # Generate an image with the current model
+            resp = bot.generate(
+                prompt=test_prompt,
+                amount=1,
+                model=model,
+                width=768,
+                height=768
+            )
+            
+            # Save the image with model name as prefix
+            saved_paths = bot.save(
+                resp, 
+                name=f"{model}_test", 
+                dir=test_dir, 
+                filenames_prefix=f"{model}_"
+            )
+            
+            print(f"✓ Success! Saved image: {saved_paths[0]}")
+        except Exception as e:
+            print(f"✗ Failed with model {model}: {str(e)}")
+        
+        print("-" * 30)
+    
+    print("All model tests completed!")

@@ -25,15 +25,7 @@ from pathlib import Path
 from typing import AsyncGenerator
 
 from webscout.AIbase import AsyncImageProvider
-from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
-
-# Set up logging with cyberpunk style! 🎨
-logger = Logger(
-    name="AsyncPollinationsAI",
-    format=LogFormat.MODERN_EMOJI,
-
-)
 
 # Get a fresh user agent! 🔄
 agent = LitAgent()
@@ -91,20 +83,13 @@ class AsyncPollinationsAI(AsyncImageProvider):
             - "any-dark": Dark/gothic style
             - "flux-pro": Professional quality
             - "turbo": Fast generation
-        DEFAULT_MODEL (str): Default model to use ("flux")
+
     """
 
     AVAILABLE_MODELS = [
         "flux",
-        "flux-realism",
-        "flux-cablyai",
-        "flux-anime",
-        "flux-3d",
-        "any-dark",
-        "flux-pro",
         "turbo"
     ]
-    DEFAULT_MODEL = "flux"
 
     def __init__(
         self, 
@@ -141,7 +126,7 @@ class AsyncPollinationsAI(AsyncImageProvider):
         additives: bool = True,
         width: int = 768,
         height: int = 768,
-        model: str = DEFAULT_MODEL,
+        model: str = "flux",
         max_retries: int = 3,
         retry_delay: int = 5,
         negative_prompt: Optional[str] = None,
@@ -214,11 +199,10 @@ class AsyncPollinationsAI(AsyncImageProvider):
                 params_str = "&".join(f"{k}={v}" for k, v in base_params.items())
                 url = f"{self.image_gen_endpoint.format(prompt=current_prompt)}?{params_str}"
                 
-                logger.info(f"Queueing image {_ + 1}/{amount} generation... ⚡")
                 tasks.append(self._generate_single(session, url, max_retries, retry_delay))
             
             response = await asyncio.gather(*tasks)
-            logger.success(f"Successfully generated {amount} images! 🎨")
+
 
         return response
 
@@ -237,9 +221,9 @@ class AsyncPollinationsAI(AsyncImageProvider):
                     return await resp.read()
             except aiohttp.ClientError as e:
                 if attempt == max_retries - 1:
-                    logger.error(f"Failed to generate image: {e} 😢")
+
                     raise
-                logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
+
                 await asyncio.sleep(retry_delay)
 
     async def save(
@@ -277,7 +261,6 @@ class AsyncPollinationsAI(AsyncImageProvider):
         save_dir = dir if dir else os.getcwd()
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-            logger.info(f"Created directory: {save_dir} 📁")
 
         saved_paths = []
         timestamp = int(time.time())
@@ -295,7 +278,6 @@ class AsyncPollinationsAI(AsyncImageProvider):
                 with open(filepath, "wb") as f:
                     f.write(image_bytes)
             
-            logger.success(f"Saved image to: {filepath} 💾")
             return filepath
 
         # Handle both List[bytes] and AsyncGenerator
@@ -306,7 +288,6 @@ class AsyncPollinationsAI(AsyncImageProvider):
 
         tasks = [save_single_image(img, i) for i, img in enumerate(image_list)]
         saved_paths = await asyncio.gather(*tasks)
-        logger.success(f"Successfully saved all {len(saved_paths)} images! 🎉")
         return saved_paths
 
 

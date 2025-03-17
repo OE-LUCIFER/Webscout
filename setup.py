@@ -40,6 +40,7 @@ setup(
             "curl_cffi",
             "nest-asyncio",
             'websocket-client',
+            'colorama',
             "rich",
             "markdownify",
             "requests",

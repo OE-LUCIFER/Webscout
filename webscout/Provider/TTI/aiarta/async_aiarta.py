@@ -70,7 +70,7 @@ class AsyncAIArtaImager(AsyncImageProvider):
     status_check_url = "https://img-gen-prod.ai-arta.com/api/v1/text2image/{record_id}/status"
 
     # Available models
-    model_aliases = {
+    AVAILABLE_MODELS = {
         "flux": "Flux",
         "medieval": "Medieval",
         "vincent_van_gogh": "Vincent Van Gogh",
@@ -109,17 +109,17 @@ class AsyncAIArtaImager(AsyncImageProvider):
         "surrealism": "Surrealism",
         "neo_traditional": "Neo-traditional",
         "on_limbs_black": "On limbs black",
-        "yamers_realistic_xl": "Yamers-realistic-xl",
-        "pony_xl": "Pony-xl",
-        "playground_xl": "Playground-xl",
-        "anything_xl": "Anything-xl",
-        "flame_design": "Flame design",
-        "kawaii": "Kawaii",
-        "cinematic_art": "Cinematic Art",
-        "professional": "Professional",
-        "flux_black_ink": "Flux Black Ink"
+        # "yamers_realistic_xl": "Yamers-realistic-xl",
+        # "pony_xl": "Pony-xl",
+        # "playground_xl": "Playground-xl",
+        # "anything_xl": "Anything-xl",
+        # "flame_design": "Flame design",
+        # "kawaii": "Kawaii",
+        # "cinematic_art": "Cinematic Art",
+        # "professional": "Professional",
+        # "flux_black_ink": "Flux Black Ink"
     }
-    models = list(model_aliases.keys())
+    models = list(AVAILABLE_MODELS.keys())
 
     def __init__(self, timeout: int = 60, proxies: dict = None, logging: bool = True):
         """Initialize your async AIArtaImager provider with custom settings ⚙️
@@ -226,8 +226,8 @@ class AsyncAIArtaImager(AsyncImageProvider):
 
     def get_model(self, model_name: str) -> str:
         """Get actual model name from alias"""
-        if model_name.lower() in self.model_aliases:
-            return self.model_aliases[model_name.lower()]
+        if model_name.lower() in self.AVAILABLE_MODELS:
+            return self.AVAILABLE_MODELS[model_name.lower()]
         return model_name
 
     async def generate(
@@ -261,7 +261,7 @@ class AsyncAIArtaImager(AsyncImageProvider):
         Args:
             prompt (str): Your image description
             amount (int): How many images you want (default: 1)
-            model (str): Model to use - check model_aliases (default: "flux")
+            model (str): Model to use - check AVAILABLE_MODELS (default: "flux")
             negative_prompt (str): What you don't want in the image
             guidance_scale (int): Controls how closely the model follows your prompt
             num_inference_steps (int): More steps = better quality but slower

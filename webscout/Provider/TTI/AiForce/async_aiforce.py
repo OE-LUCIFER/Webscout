@@ -9,15 +9,8 @@ from aiohttp import ClientError
 from pathlib import Path
 
 from webscout.AIbase import AsyncImageProvider
-from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
-# Initialize our fire logger and agent 🔥
-logger = Logger(
-    "AsyncAiForce",
-    format=LogFormat.MODERN_EMOJI,
-
-)
 agent = LitAgent()
 
 class AsyncAiForceimager(AsyncImageProvider):
@@ -46,8 +39,6 @@ class AsyncAiForceimager(AsyncImageProvider):
     AVAILABLE_MODELS = [
         "stable-diffusion-xl-lightning",
         "stable-diffusion-xl-base",
-        "Flux-1.1-Pro",
-        "ideogram",
         "flux",
         "flux-realism",
         "flux-anime",
@@ -58,13 +49,12 @@ class AsyncAiForceimager(AsyncImageProvider):
         "any-dark"
     ]
 
-    def __init__(self, timeout: int = 60, proxies: dict = {}, logging: bool = True):
+    def __init__(self, timeout: int = 60, proxies: dict = {}):
         """Initialize your async AiForce provider with custom settings! ⚙️
 
         Args:
             timeout (int): Request timeout in seconds (default: 60)
             proxies (dict): Proxy settings for requests (default: {})
-            logging (bool): Enable fire logging (default: True)
         """
         self.api_endpoint = "https://api.airforce/imagine2"
         self.headers = {
@@ -77,16 +67,13 @@ class AsyncAiForceimager(AsyncImageProvider):
         self.proxies = proxies
         self.prompt: str = "AI-generated image - webscout"
         self.image_extension: str = "png"
-        self.logging = logging
-        if self.logging:
-            logger.info("AsyncAiForce provider initialized! 🚀")
 
     async def generate(
         self, 
         prompt: str, 
         amount: int = 1, 
         additives: bool = True,
-        model: str = "Flux-1.1-Pro", 
+        model: str = "flux-3d", 
         width: int = 768, 
         height: int = 768, 
         seed: Optional[int] = None,
@@ -104,7 +91,7 @@ class AsyncAiForceimager(AsyncImageProvider):
             ...     images = await provider.generate(
             ...         prompt="Epic dragon",
             ...         amount=3,
-            ...         model="Flux-1.1-Pro"
+            ...         model="flux-3d"
             ...     )
 
         Args:
@@ -143,9 +130,6 @@ class AsyncAiForceimager(AsyncImageProvider):
         self.prompt = prompt
         response = []
         
-        if self.logging:
-            logger.info(f"Generating {amount} images with {model}... 🎨")
-        
         async with aiohttp.ClientSession(headers=self.headers) as session:
             for i in range(amount):
                 url = f"{self.api_endpoint}?model={model}&prompt={prompt}&size={width}:{height}"
@@ -157,21 +141,13 @@ class AsyncAiForceimager(AsyncImageProvider):
                         async with session.get(url, timeout=self.timeout, proxy=self.proxies.get('http')) as resp:
                             resp.raise_for_status()
                             response.append(await resp.read())
-                            if self.logging:
-                                logger.success(f"Generated image {i + 1}/{amount}! 🎨")
                             break
                     except ClientError as e:
                         if attempt == max_retries - 1:
-                            if self.logging:
-                                logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
                             raise
                         else:
-                            if self.logging:
-                                logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
                             await asyncio.sleep(retry_delay)
 
-        if self.logging:
-            logger.success("Images generated successfully! 🎉")
         return response
 
     async def save(
@@ -209,15 +185,10 @@ class AsyncAiForceimager(AsyncImageProvider):
         save_dir = dir if dir else os.getcwd()
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-            if self.logging:
-                logger.info(f"Created directory: {save_dir} 📁")
 
         name = self.prompt if name is None else name
         saved_paths = []
         timestamp = int(time.time())
-        
-        if self.logging:
-            logger.info(f"Saving {len(response)} images... 💾")
         
         async def save_single_image(image_bytes: bytes, index: int) -> str:
             filename = f"{filenames_prefix}{name}_{index}.{self.image_extension}"
@@ -228,8 +199,6 @@ class AsyncAiForceimager(AsyncImageProvider):
                 with open(filepath, "wb") as f:
                     f.write(image_bytes)
             
-            if self.logging:
-                logger.success(f"Saved image to: {filepath} 💾")
             return filepath
 
         # Handle both List[bytes] and AsyncGenerator
@@ -240,8 +209,6 @@ class AsyncAiForceimager(AsyncImageProvider):
 
         tasks = [save_single_image(img, i) for i, img in enumerate(image_list)]
         saved_paths = await asyncio.gather(*tasks)
-        if self.logging:
-            logger.success(f"Images saved successfully! Check {dir} 🎉")
         return saved_paths
 
 if __name__ == "__main__":
@@ -252,6 +219,6 @@ if __name__ == "__main__":
             paths = await bot.save(resp)
             print(paths)
         except Exception as e:
-            logger.error(f"An error occurred: {e} 😢")
+            print(f"An error occurred: {e}")
 
     asyncio.run(main())

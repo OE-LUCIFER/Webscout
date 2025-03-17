@@ -56,7 +56,7 @@ class AIArtaImager(ImageProvider):
     status_check_url = "https://img-gen-prod.ai-arta.com/api/v1/text2image/{record_id}/status"
 
     # Available models
-    model_aliases = {
+    AVAILABLE_MODELS = {
         "flux": "Flux",
         "medieval": "Medieval",
         "vincent_van_gogh": "Vincent Van Gogh",
@@ -95,17 +95,17 @@ class AIArtaImager(ImageProvider):
         "surrealism": "Surrealism",
         "neo_traditional": "Neo-traditional",
         "on_limbs_black": "On limbs black",
-        "yamers_realistic_xl": "Yamers-realistic-xl",
-        "pony_xl": "Pony-xl",
-        "playground_xl": "Playground-xl",
-        "anything_xl": "Anything-xl",
-        "flame_design": "Flame design",
-        "kawaii": "Kawaii",
-        "cinematic_art": "Cinematic Art",
-        "professional": "Professional",
-        "flux_black_ink": "Flux Black Ink"
+        # "yamers_realistic_xl": "Yamers-realistic-xl",
+        # "pony_xl": "Pony-xl",
+        # "playground_xl": "Playground-xl",
+        # "anything_xl": "Anything-xl",
+        # "flame_design": "Flame design",
+        # "kawaii": "Kawaii",
+        # "cinematic_art": "Cinematic Art",
+        # "professional": "Professional",
+        # "flux_black_ink": "Flux Black Ink"
     }
-    models = list(model_aliases.keys())
+    models = list(AVAILABLE_MODELS.keys())
 
     def __init__(self, timeout: int = 60, proxies: dict = None, logging: bool = True):
         """Initialize your AIArtaImager provider with custom settings
@@ -196,8 +196,8 @@ class AIArtaImager(ImageProvider):
 
     def get_model(self, model_name: str) -> str:
         """Get actual model name from alias"""
-        if model_name.lower() in self.model_aliases:
-            return self.model_aliases[model_name.lower()]
+        if model_name.lower() in self.AVAILABLE_MODELS:
+            return self.AVAILABLE_MODELS[model_name.lower()]
         return model_name
 
     def generate(
@@ -230,7 +230,7 @@ class AIArtaImager(ImageProvider):
         Args:
             prompt (str): Your image description
             amount (int): How many images you want (default: 1)
-            model (str): Model to use - check model_aliases (default: "flux")
+            model (str): Model to use - check AVAILABLE_MODELS (default: "flux")
             negative_prompt (str): What you don't want in the image
             guidance_scale (int): Controls how closely the model follows your prompt
             num_inference_steps (int): More steps = better quality but slower
@@ -400,10 +400,41 @@ class AIArtaImager(ImageProvider):
 
 if __name__ == "__main__":
     # Example usage
-    provider = AIArtaImager()
-    try:
-        images = provider.generate("A beautiful sunset over mountains", amount=1)
-        paths = provider.save(images, dir="generated_images")
-        print(f"Images saved to: {paths}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    bot = AIArtaImager()
+    test_prompt = "A shiny red sports car speeding down a scenic mountain road"
+    
+    print(f"Testing all available models with prompt: '{test_prompt}'")
+    print("-" * 50)
+    
+    # Create a directory for test images if it doesn't exist
+    test_dir = "model_test_images"
+    if not os.path.exists(test_dir):
+        os.makedirs(test_dir)
+        
+    for model in bot.AVAILABLE_MODELS:
+        print(f"Testing model: {model}")
+        try:
+            # Generate an image with the current model
+            resp = bot.generate(
+                prompt=test_prompt,
+                amount=1,
+                model=model,
+                width=768,
+                height=768
+            )
+            
+            # Save the image with model name as prefix
+            saved_paths = bot.save(
+                resp, 
+                name=f"{model}_test", 
+                dir=test_dir, 
+                filenames_prefix=f"{model}_"
+            )
+            
+            print(f"✓ Success! Saved image: {saved_paths[0]}")
+        except Exception as e:
+            print(f"✗ Failed with model {model}: {str(e)}")
+        
+        print("-" * 30)
+    
+    print("All model tests completed!")

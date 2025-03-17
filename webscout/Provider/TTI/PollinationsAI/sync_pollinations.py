@@ -28,15 +28,8 @@ from requests.exceptions import RequestException
 from pathlib import Path
 
 from webscout.AIbase import ImageProvider
-from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
-# Set up logging with cyberpunk style! 🎨
-logger = Logger(
-    name="PollinationsAI",
-    format=LogFormat.MODERN_EMOJI,
-
-)
 
 # Get a fresh user agent! 🔄
 agent = LitAgent()
@@ -83,20 +76,13 @@ class PollinationsAI(ImageProvider):
             - "any-dark": Dark/gothic style
             - "flux-pro": Professional quality
             - "turbo": Fast generation
-        DEFAULT_MODEL (str): Default model to use ("flux")
     """
 
     AVAILABLE_MODELS = [
         "flux",
-        "flux-realism",
-        "flux-cablyai",
-        "flux-anime",
-        "flux-3d",
-        "any-dark",
-        "flux-pro",
         "turbo"
     ]
-    DEFAULT_MODEL = "flux"
+
 
     def __init__(
         self, 
@@ -136,7 +122,7 @@ class PollinationsAI(ImageProvider):
         additives: bool = True,
         width: int = 768,
         height: int = 768,
-        model: str = DEFAULT_MODEL,
+        model: str = "flux",
         max_retries: int = 3,
         retry_delay: int = 5,
         negative_prompt: Optional[str] = None,
@@ -197,17 +183,13 @@ class PollinationsAI(ImageProvider):
             
             for attempt in range(max_retries):
                 try:
-                    logger.info(f"Generating image {_ + 1}/{amount} with prompt: {current_prompt[:50]}...")
                     resp = self.session.get(url, timeout=self.timeout)
                     resp.raise_for_status()
                     response.append(resp.content)
-                    logger.success(f"Successfully generated image {_ + 1}/{amount}! 🎨")
                     break
                 except RequestException as e:
                     if attempt == max_retries - 1:
-                        logger.error(f"Failed to generate image after {max_retries} attempts: {e} 😢")
                         raise
-                    logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds... 🔄")
                     time.sleep(retry_delay)
 
         return response
@@ -246,7 +228,6 @@ class PollinationsAI(ImageProvider):
         save_dir = dir if dir else os.getcwd()
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-            logger.info(f"Created directory: {save_dir} 📁")
 
         saved_paths = []
         timestamp = int(time.time())
@@ -263,7 +244,6 @@ class PollinationsAI(ImageProvider):
                 f.write(image_bytes)
             
             saved_paths.append(filepath)
-            logger.success(f"Saved image to: {filepath} 💾")
 
         return saved_paths
 

@@ -6,16 +6,13 @@ Welcome to WebScout's Text-to-Image providers - your ultimate collection of AI a
 
 * **[AiForce](AiForce/README.md):** Advanced AI image generation with 12 specialized models including Flux-1.1-Pro, SDXL Lightning, and Ideogram, perfect for both quick generations and high-quality art
 * **[Nexra](Nexra/README.md):** Next-gen image creation with 19+ models including MidJourney, DALL-E, and specialized SDXL variants for every use case from anime to photorealism
-* **[BlackboxAI](blackbox/README.md):** High-performance image generation with advanced retry mechanisms, perfect for reliable and consistent results
-* **[DeepInfra](deepinfra/README.md):** Powerful image generation using FLUX-1-schnell and other cutting-edge models, optimized for high-quality outputs
 * **[TalkAI](talkai/README.md):** Fast and reliable image generation with comprehensive error handling and dynamic user agent support
-* **[ImgNinza](imgninza/README.md):** Ninja-fast image generation with cyberpunk-themed logging and stealth capabilities
 * **[PollinationsAI](PollinationsAI/README.md):** Nature-inspired AI art generation with specialized models for organic and natural imagery
 * **[Artbit](artbit/README.md):** Bit-perfect AI art creation with precise control over generation parameters
 * **[HuggingFace](huggingface/README.md):** Direct integration with HuggingFace's powerful models for research-grade image generation
 * **[FreeAIPlayground](FreeAIPlayground/README.md):** Premium image generation with DALL-E 3 and Flux series models including Pro Ultra, Realism, and Aurora variants
 * **[PiclumenImager](piclumen/README.md):** Professional photorealistic image generation with advanced concurrent processing, optimized for macro photography, underwater scenes, and architectural visualization
-
+* **[MagicStudio](MagicStudio/README.md):** Generate amazing images with MagicStudio's AI art generator! 🚀
 ## 🚀 Features
 
 All providers come with these fire features:
@@ -49,7 +46,7 @@ All providers come with these fire features:
 # Sync way
 from webscout.Provider.TTI import BlackboxAIImager
 
-imager = BlackboxAIImager(logging=True)
+imager = BlackboxAIImager()
 images = imager.generate("Epic dragon breathing fire", amount=2)
 paths = imager.save(images)
 
@@ -58,7 +55,7 @@ from webscout.Provider.TTI import AsyncDeepInfraImager
 import asyncio
 
 async def generate_art():
-    imager = AsyncDeepInfraImager(logging=True)
+    imager = AsyncDeepInfraImager()
     images = await imager.generate("Cyberpunk city at night")
     paths = await imager.save(images)
 
@@ -113,7 +110,7 @@ Common configuration options:
 imager = Provider(
     timeout=60,      # Request timeout
     proxies={},      # Proxy settings
-    logging=True     # Enable logging
+
 )
 ```
 
