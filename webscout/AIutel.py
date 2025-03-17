@@ -121,3 +121,11 @@ class Updates:
             sorted["assets"] = whole_assets
 
             return sorted
+
+from .conversation import Conversation
+
+from .optimizers import Optimizers
+
+from .Extra.autocoder import AutoCoder
+
+from .prompt_manager import AwesomePrompts
