@@ -34,7 +34,6 @@
 * **Tempmail & Temp Number:** Generate temporary email addresses and phone numbers for enhanced privacy.
 * **[Text-to-Speech (TTS)](webscout/Provider/TTS/README.md):** Convert text into natural-sounding speech using multiple AI-powered providers like ElevenLabs, StreamElements, and Voicepods.
 * **GGUF Conversion & Quantization:** Convert and quantize Hugging Face models to GGUF format.
-* **Autollama:** Download Hugging Face models and automatically convert them for Ollama compatibility.
 * **[SwiftCLI](webscout/swiftcli/Readme.md):** A powerful and elegant CLI framework that makes it easy to create beautiful command-line interfaces.
 * **[LitPrinter](webscout/litprinter/Readme.md):** Provides beautiful, styled console output with rich formatting and colors
 * **[LitLogger](webscout/litlogger/Readme.md):** Simplifies logging with customizable formats and color schemes
@@ -844,18 +843,6 @@ gguf.convert(
 )
 ```
 
-## 🤖 Autollama
-
-Webscout's `autollama` utility downloads a model from Hugging Face and then automatically makes it Ollama-ready.
-
-```python
-from webscout.Extra import autollama
-
-model_path = "Vortex4ai/Jarvis-0.5B"
-gguf_file = "test2-q4_k_m.gguf"
-
-autollama.main(model_path, gguf_file)  
-```
 
 **Command Line Usage:**
 
@@ -864,11 +851,6 @@ autollama.main(model_path, gguf_file)
    ```bash
    python -m webscout.Extra.gguf -m "OEvortex/HelpingAI-Lite-1.5T" -u "your_username" -t "your_hf_token" -q "q4_k_m,q5_k_m" 
    ```
-
-* **Autollama:**
-
-   ```bash
-   python -m webscout.Extra.autollama -m "OEvortex/HelpingAI-Lite-1.5T" -g "HelpingAI-Lite-1.5T.q4_k_m.gguf" 
    ```
 
 **Note:**
