@@ -1,24 +1,30 @@
 """
+Convert Hugging Face models to GGUF format with advanced features.
 
 >>> python -m webscout.Extra.gguf convert -m "OEvortex/HelpingAI-Lite-1.5T" -q "q4_k_m,q5_k_m"
 >>> # With upload options:
 >>> python -m webscout.Extra.gguf convert -m "your-model" -u "username" -t "token" -q "q4_k_m"
-
+>>> # With imatrix quantization:
+>>> python -m webscout.Extra.gguf convert -m "your-model" -i -q "iq4_nl" -t "train_data.txt"
+>>> # With model splitting:
+>>> python -m webscout.Extra.gguf convert -m "your-model" -s --split-max-tensors 256
 """
 
 import subprocess
 import os 
 import sys
+import signal
+import tempfile
+import platform
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional, Dict, List
+
+from huggingface_hub import HfApi
 from webscout.zeroart import figlet_format
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.panel import Panel
 from rich.table import Table
 from ..swiftcli import CLI, option
-
-# Initialize LitLogger with ocean vibes
 
 console = Console()
 
@@ -30,46 +36,84 @@ class ModelConverter:
     """Handles the conversion of Hugging Face models to GGUF format."""
     
     VALID_METHODS = {
-        "q2_k": "2-bit quantization",
-        "q3_k_l": "3-bit quantization (large)",
-        "q3_k_m": "3-bit quantization (medium)",
-        "q3_k_s": "3-bit quantization (small)",
-        "q4_0": "4-bit quantization (version 0)",
-        "q4_1": "4-bit quantization (version 1)",
-        "q4_k_m": "4-bit quantization (medium)",
-        "q4_k_s": "4-bit quantization (small)",
-        "q5_0": "5-bit quantization (version 0)",
-        "q5_1": "5-bit quantization (version 1)",
-        "q5_k_m": "5-bit quantization (medium)",
-        "q5_k_s": "5-bit quantization (small)",
-        "q6_k": "6-bit quantization",
-        "q8_0": "8-bit quantization"
+        "q2_k": "2-bit quantization (smallest size, lowest accuracy)",
+        "q3_k_l": "3-bit quantization (large) - balanced for size/accuracy",
+        "q3_k_m": "3-bit quantization (medium) - good balance for most use cases",
+        "q3_k_s": "3-bit quantization (small) - optimized for speed",
+        "q4_0": "4-bit quantization (version 0) - standard 4-bit compression",
+        "q4_1": "4-bit quantization (version 1) - improved accuracy over q4_0",
+        "q4_k_m": "4-bit quantization (medium) - balanced for most models",
+        "q4_k_s": "4-bit quantization (small) - optimized for speed",
+        "q5_0": "5-bit quantization (version 0) - high accuracy, larger size",
+        "q5_1": "5-bit quantization (version 1) - improved accuracy over q5_0",
+        "q5_k_m": "5-bit quantization (medium) - best balance for quality/size",
+        "q5_k_s": "5-bit quantization (small) - optimized for speed",
+        "q6_k": "6-bit quantization - highest accuracy, largest size",
+        "q8_0": "8-bit quantization - maximum accuracy, largest size"
+    }
+    
+    VALID_IMATRIX_METHODS = {
+        "iq3_m": "3-bit imatrix quantization (medium) - balanced importance-based",
+        "iq3_xxs": "3-bit imatrix quantization (extra extra small) - maximum compression",
+        "q4_k_m": "4-bit imatrix quantization (medium) - balanced importance-based",
+        "q4_k_s": "4-bit imatrix quantization (small) - optimized for speed",
+        "iq4_nl": "4-bit imatrix quantization (non-linear) - best accuracy for 4-bit",
+        "iq4_xs": "4-bit imatrix quantization (extra small) - maximum compression",
+        "q5_k_m": "5-bit imatrix quantization (medium) - balanced importance-based",
+        "q5_k_s": "5-bit imatrix quantization (small) - optimized for speed"
     }
     
     def __init__(self, model_id: str, username: Optional[str] = None, 
-                 token: Optional[str] = None, quantization_methods: str = "q4_k_m,q5_k_m"):
+                 token: Optional[str] = None, quantization_methods: str = "q4_k_m",
+                 use_imatrix: bool = False, train_data_file: Optional[str] = None,
+                 split_model: bool = False, split_max_tensors: int = 256,
+                 split_max_size: Optional[str] = None):
         self.model_id = model_id
         self.username = username
         self.token = token
         self.quantization_methods = quantization_methods.split(',')
         self.model_name = model_id.split('/')[-1]
         self.workspace = Path(os.getcwd())
+        self.use_imatrix = use_imatrix
+        self.train_data_file = train_data_file
+        self.split_model = split_model
+        self.split_max_tensors = split_max_tensors
+        self.split_max_size = split_max_size
         
     def validate_inputs(self) -> None:
         """Validates all input parameters."""
         if not '/' in self.model_id:
             raise ValueError("Invalid model ID format. Expected format: 'organization/model-name'")
             
-        invalid_methods = [m for m in self.quantization_methods if m not in self.VALID_METHODS]
-        if invalid_methods:
-            raise ValueError(
-                f"Invalid quantization methods: {', '.join(invalid_methods)}.\n"
-                f"Valid methods are: {', '.join(self.VALID_METHODS.keys())}"
-            )
+        if self.use_imatrix:
+            invalid_methods = [m for m in self.quantization_methods if m not in self.VALID_IMATRIX_METHODS]
+            if invalid_methods:
+                raise ValueError(
+                    f"Invalid imatrix quantization methods: {', '.join(invalid_methods)}.\n"
+                    f"Valid methods are: {', '.join(self.VALID_IMATRIX_METHODS.keys())}"
+                )
+            if not self.train_data_file and not os.path.exists("llama.cpp/groups_merged.txt"):
+                raise ValueError("Training data file is required for imatrix quantization")
+        else:
+            invalid_methods = [m for m in self.quantization_methods if m not in self.VALID_METHODS]
+            if invalid_methods:
+                raise ValueError(
+                    f"Invalid quantization methods: {', '.join(invalid_methods)}.\n"
+                    f"Valid methods are: {', '.join(self.VALID_METHODS.keys())}"
+                )
             
         if bool(self.username) != bool(self.token):
             raise ValueError("Both username and token must be provided for upload, or neither.")
-    
+            
+        if self.split_model and self.split_max_size:
+            try:
+                size = int(self.split_max_size[:-1])
+                unit = self.split_max_size[-1].upper()
+                if unit not in ['M', 'G']:
+                    raise ValueError("Split max size must end with M or G")
+            except ValueError:
+                raise ValueError("Invalid split max size format. Use format like '256M' or '5G'")
+                
     @staticmethod
     def check_dependencies() -> Dict[str, bool]:
         """Check if all required dependencies are installed."""
@@ -77,7 +121,8 @@ class ModelConverter:
             'git': 'Git version control',
             'pip3': 'Python package installer',
             'huggingface-cli': 'Hugging Face CLI',
-            'nvcc': 'NVIDIA CUDA Compiler (optional)'
+            'cmake': 'CMake build system',
+            'ninja': 'Ninja build system (optional)'
         }
         
         status = {}
@@ -86,26 +131,130 @@ class ModelConverter:
             
         return status
     
+    def detect_hardware(self) -> Dict[str, bool]:
+        """Detect available hardware acceleration."""
+        hardware = {
+            'cuda': False,
+            'metal': False,
+            'opencl': False,
+            'vulkan': False,
+            'rocm': False
+        }
+        
+        # Check CUDA
+        try:
+            if subprocess.run(['nvcc', '--version'], capture_output=True).returncode == 0:
+                hardware['cuda'] = True
+        except FileNotFoundError:
+            pass
+            
+        # Check Metal (macOS)
+        if platform.system() == 'Darwin':
+            try:
+                if subprocess.run(['xcrun', '--show-sdk-path'], capture_output=True).returncode == 0:
+                    hardware['metal'] = True
+            except FileNotFoundError:
+                pass
+                
+        # Check OpenCL
+        try:
+            if subprocess.run(['clinfo'], capture_output=True).returncode == 0:
+                hardware['opencl'] = True
+        except FileNotFoundError:
+            pass
+            
+        # Check Vulkan
+        try:
+            if subprocess.run(['vulkaninfo'], capture_output=True).returncode == 0:
+                hardware['vulkan'] = True
+        except FileNotFoundError:
+            pass
+            
+        # Check ROCm
+        try:
+            if subprocess.run(['rocm-smi'], capture_output=True).returncode == 0:
+                hardware['rocm'] = True
+        except FileNotFoundError:
+            pass
+            
+        return hardware
+    
     def setup_llama_cpp(self) -> None:
         """Sets up and builds llama.cpp repository."""
         llama_path = self.workspace / "llama.cpp"
         
         with console.status("[bold green]Setting up llama.cpp...") as status:
+            # Clone llama.cpp if not exists
             if not llama_path.exists():
                 subprocess.run(['git', 'clone', 'https://github.com/ggerganov/llama.cpp'], check=True)
             
             os.chdir(llama_path)
-            subprocess.run(['pip3', 'install', '-r', 'requirements.txt'], check=True)
             
-            has_cuda = subprocess.run(['nvcc', '--version'], capture_output=True).returncode == 0
+            # Check if we're in a Nix environment
+            is_nix = platform.system() == "Linux" and os.path.exists("/nix/store")
             
-            subprocess.run(['make', 'clean'], check=True)
-            if has_cuda:
-                status.update("[bold green]Building with CUDA support...")
-                subprocess.run(['make', 'LLAMA_CUBLAS=1'], check=True)
+            if is_nix:
+                console.print("[yellow]Detected Nix environment. Using system Python packages...")
+                # In Nix, we need to use the system Python packages
+                try:
+                    # Try to import required packages to check if they're available
+                    import torch
+                    import numpy
+                    import sentencepiece
+                    import transformers
+                    console.print("[green]Required Python packages are already installed.")
+                except ImportError as e:
+                    console.print("[red]Missing required Python packages in Nix environment.")
+                    console.print("[yellow]Please install them using:")
+                    console.print("nix-shell -p python3Packages.torch python3Packages.numpy python3Packages.sentencepiece python3Packages.transformers")
+                    raise ConversionError("Missing required Python packages in Nix environment")
             else:
-                status.update("[bold yellow]Building without CUDA support...")
-                subprocess.run(['make'], check=True)
+                # In non-Nix environments, install requirements
+                try:
+                    subprocess.run(['pip3', 'install', '-r', 'requirements.txt'], check=True)
+                except subprocess.CalledProcessError as e:
+                    if "externally-managed-environment" in str(e):
+                        console.print("[yellow]Detected externally managed Python environment.")
+                        console.print("[yellow]Please install the required packages manually:")
+                        console.print("pip install torch numpy sentencepiece transformers")
+                        raise ConversionError("Failed to install requirements in externally managed environment")
+                    raise
+            
+            # Detect available hardware
+            hardware = self.detect_hardware()
+            console.print("[bold green]Detected hardware acceleration:")
+            for hw, available in hardware.items():
+                console.print(f"  {'✓' if available else '✗'} {hw.upper()}")
+            
+            # Configure CMake build
+            cmake_args = ['cmake', '-B', 'build']
+            
+            # Add hardware acceleration options
+            if hardware['cuda']:
+                cmake_args.extend(['-DLLAMA_CUBLAS=ON'])
+            if hardware['metal']:
+                cmake_args.extend(['-DLLAMA_METAL=ON'])
+            if hardware['opencl']:
+                cmake_args.extend(['-DLLAMA_CLBLAST=ON'])
+            if hardware['vulkan']:
+                cmake_args.extend(['-DLLAMA_VULKAN=ON'])
+            if hardware['rocm']:
+                cmake_args.extend(['-DLLAMA_HIPBLAS=ON'])
+                
+            # Use Ninja if available
+            if subprocess.run(['which', 'ninja'], capture_output=True).returncode == 0:
+                cmake_args.extend(['-G', 'Ninja'])
+                
+            # Configure the build
+            subprocess.run(cmake_args, check=True)
+            
+            # Build the project
+            if any(hardware.values()):
+                status.update("[bold green]Building with hardware acceleration...")
+            else:
+                status.update("[bold yellow]Building for CPU only...")
+                
+            subprocess.run(['cmake', '--build', 'build', '-j', str(os.cpu_count() or 1)], check=True)
             
             os.chdir(self.workspace)
     
@@ -126,6 +275,172 @@ class ModelConverter:
         
         console.print(Panel(table))
     
+    def generate_importance_matrix(self, model_path: str, train_data_path: str, output_path: str) -> None:
+        """Generates importance matrix for quantization."""
+        imatrix_command = [
+            "./llama.cpp/build/bin/llama-imatrix",
+            "-m", model_path,
+            "-f", train_data_path,
+            "-ngl", "99",
+            "--output-frequency", "10",
+            "-o", output_path,
+        ]
+
+        if not os.path.isfile(model_path):
+            raise ConversionError(f"Model file not found: {model_path}")
+
+        console.print("[bold green]Generating importance matrix...")
+        process = subprocess.Popen(imatrix_command, shell=False)
+
+        try:
+            process.wait(timeout=60)
+        except subprocess.TimeoutExpired:
+            console.print("[yellow]Imatrix computation timed out. Sending SIGINT...")
+            process.send_signal(signal.SIGINT)
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                console.print("[red]Imatrix process still running. Force terminating...")
+                process.kill()
+
+        if process.returncode != 0:
+            raise ConversionError("Failed to generate importance matrix")
+
+        console.print("[green]Importance matrix generation completed.")
+    
+    def split_model(self, model_path: str, outdir: str) -> List[str]:
+        """Splits the model into smaller chunks."""
+        split_cmd = [
+            "./llama.cpp/build/bin/llama-gguf-split",
+            "--split",
+        ]
+        
+        if self.split_max_size:
+            split_cmd.extend(["--split-max-size", self.split_max_size])
+        else:
+            split_cmd.extend(["--split-max-tensors", str(self.split_max_tensors)])
+
+        model_path_prefix = '.'.join(model_path.split('.')[:-1])
+        split_cmd.extend([model_path, model_path_prefix])
+
+        console.print(f"[bold green]Splitting model with command: {' '.join(split_cmd)}")
+        
+        result = subprocess.run(split_cmd, shell=False, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            raise ConversionError(f"Error splitting model: {result.stderr}")
+            
+        console.print("[green]Model split successfully!")
+        
+        # Get list of split files
+        model_file_prefix = model_path_prefix.split('/')[-1]
+        split_files = [f for f in os.listdir(outdir) 
+                      if f.startswith(model_file_prefix) and f.endswith(".gguf")]
+        
+        if not split_files:
+            raise ConversionError("No split files found")
+            
+        return split_files
+    
+    def upload_split_files(self, split_files: List[str], outdir: str, repo_id: str) -> None:
+        """Uploads split model files to Hugging Face."""
+        api = HfApi(token=self.token)
+        
+        for file in split_files:
+            file_path = os.path.join(outdir, file)
+            console.print(f"[bold green]Uploading file: {file}")
+            try:
+                api.upload_file(
+                    path_or_fileobj=file_path,
+                    path_in_repo=file,
+                    repo_id=repo_id,
+                )
+            except Exception as e:
+                raise ConversionError(f"Error uploading file {file}: {e}")
+    
+    def generate_readme(self, quantized_files: List[str]) -> str:
+        """Generate a README.md file for the Hugging Face Hub."""
+        readme = f"""# {self.model_name} GGUF
+
+This repository contains GGUF quantized versions of [{self.model_id}](https://huggingface.co/{self.model_id}).
+
+## About
+
+This model was converted using [Webscout](https://github.com/Webscout/webscout).
+
+## Quantization Methods
+
+The following quantization methods were used:
+
+"""
+        # Add quantization method descriptions
+        for method in self.quantization_methods:
+            if self.use_imatrix:
+                readme += f"- `{method}`: {self.VALID_IMATRIX_METHODS[method]}\n"
+            else:
+                readme += f"- `{method}`: {self.VALID_METHODS[method]}\n"
+
+        readme += """
+## Available Files
+
+The following quantized files are available:
+
+"""
+        # Add file information
+        for file in quantized_files:
+            readme += f"- `{file}`\n"
+
+        if self.use_imatrix:
+            readme += """
+## Importance Matrix
+
+This model was quantized using importance matrix quantization. The `imatrix.dat` file contains the importance matrix used for quantization.
+
+"""
+
+        readme += """
+## Usage
+
+These GGUF files can be used with [llama.cpp](https://github.com/ggerganov/llama.cpp) and compatible tools.
+
+Example usage:
+```bash
+./main -m model.gguf -n 1024 --repeat_penalty 1.0 --color -i -r "User:" -f prompts/chat-with-bob.txt
+```
+
+## Conversion Process
+
+This model was converted using the following command:
+```bash
+python -m webscout.Extra.gguf convert \\
+    -m "{self.model_id}" \\
+    -q "{','.join(self.quantization_methods)}" \\
+    {f'-i' if self.use_imatrix else ''} \\
+    {f'--train-data "{self.train_data_file}"' if self.train_data_file else ''} \\
+    {f'-s' if self.split_model else ''} \\
+    {f'--split-max-tensors {self.split_max_tensors}' if self.split_model else ''} \\
+    {f'--split-max-size {self.split_max_size}' if self.split_max_size else ''}
+```
+
+## License
+
+This repository is licensed under the same terms as the original model.
+"""
+        return readme
+
+    def upload_readme(self, readme_content: str, repo_id: str) -> None:
+        """Upload README.md to Hugging Face Hub."""
+        api = HfApi(token=self.token)
+        try:
+            api.upload_file(
+                path_or_fileobj=readme_content.encode(),
+                path_in_repo="README.md",
+                repo_id=repo_id,
+            )
+            console.print("[green]README.md uploaded successfully!")
+        except Exception as e:
+            console.print(f"[yellow]Warning: Failed to upload README.md: {e}")
+
     def convert(self) -> None:
         """Performs the model conversion process."""
         try:
@@ -138,59 +453,100 @@ class ModelConverter:
             
             # Check dependencies
             deps = self.check_dependencies()
-            missing = [name for name, installed in deps.items() if not installed and name != 'nvcc']
+            missing = [name for name, installed in deps.items() if not installed and name != 'ninja']
             if missing:
                 raise ConversionError(f"Missing required dependencies: {', '.join(missing)}")
             
             # Setup llama.cpp
             self.setup_llama_cpp()
             
-            # Create and execute conversion script
-            script_path = self.workspace / "gguf.sh"
-            if not script_path.exists():
-                self._create_conversion_script(script_path)
-            
-            # Prepare command
-            command = ["bash", str(script_path), "-m", self.model_id]
-            if self.username and self.token:
-                command.extend(["-u", self.username, "-t", self.token])
-            command.extend(["-q", ",".join(self.quantization_methods)])
-            
-            # Execute conversion with progress tracking
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                BarColumn(),
-                TaskProgressColumn(),
-                console=console
-            ) as progress:
-                task = progress.add_task("Converting model...", total=None)
+            # Create temporary directories
+            with tempfile.TemporaryDirectory() as outdir:
+                fp16 = str(Path(outdir)/f"{self.model_name}.fp16.gguf")
                 
-                process = subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    bufsize=1,
-                    universal_newlines=True
-                )
-                
-                while True:
-                    output = process.stdout.readline()
-                    if output == '' and process.poll() is not None:
-                        break
-                    if output:
-                        progress.update(task, description=output.strip())
-                        print(output.strip())
-                
-                stderr = process.stderr.read()
-                if stderr:
-                    print(stderr)
-                
-                if process.returncode != 0:
-                    raise ConversionError(f"Conversion failed with return code {process.returncode}")
-                
-                progress.update(task, completed=True)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    # Download model
+                    local_dir = Path(tmpdir)/self.model_name
+                    console.print("[bold green]Downloading model...")
+                    api = HfApi(token=self.token)
+                    api.snapshot_download(
+                        repo_id=self.model_id,
+                        local_dir=local_dir,
+                        local_dir_use_symlinks=False
+                    )
+                    
+                    # Convert to fp16
+                    console.print("[bold green]Converting to fp16...")
+                    result = subprocess.run([
+                        "python", "llama.cpp/convert_hf_to_gguf.py",
+                        str(local_dir),
+                        "--outtype", "f16",
+                        "--outfile", fp16
+                    ], capture_output=True, text=True)
+                    
+                    if result.returncode != 0:
+                        raise ConversionError(f"Error converting to fp16: {result.stderr}")
+                    
+                    # Generate importance matrix if needed
+                    imatrix_path = None
+                    if self.use_imatrix:
+                        train_data_path = self.train_data_file or "llama.cpp/groups_merged.txt"
+                        imatrix_path = str(Path(outdir)/"imatrix.dat")
+                        self.generate_importance_matrix(fp16, train_data_path, imatrix_path)
+                    
+                    # Quantize model
+                    console.print("[bold green]Quantizing model...")
+                    quantized_files = []
+                    for method in self.quantization_methods:
+                        quantized_name = f"{self.model_name.lower()}-{method.lower()}"
+                        if self.use_imatrix:
+                            quantized_name += "-imat"
+                        quantized_path = str(Path(outdir)/f"{quantized_name}.gguf")
+                        
+                        if self.use_imatrix:
+                            quantize_cmd = [
+                                "./llama.cpp/build/bin/llama-quantize",
+                                "--imatrix", imatrix_path,
+                                fp16, quantized_path, method
+                            ]
+                        else:
+                            quantize_cmd = [
+                                "./llama.cpp/build/bin/llama-quantize",
+                                fp16, quantized_path, method
+                            ]
+                        
+                        result = subprocess.run(quantize_cmd, capture_output=True, text=True)
+                        if result.returncode != 0:
+                            raise ConversionError(f"Error quantizing with {method}: {result.stderr}")
+                        
+                        quantized_files.append(f"{quantized_name}.gguf")
+                    
+                    # Split model if requested
+                    if self.split_model:
+                        split_files = self.split_model(quantized_path, outdir)
+                        if self.username and self.token:
+                            self.upload_split_files(split_files, outdir, f"{self.username}/{self.model_name}-GGUF")
+                    else:
+                        # Upload single file
+                        if self.username and self.token:
+                            api.upload_file(
+                                path_or_fileobj=quantized_path,
+                                path_in_repo=f"{self.model_name.lower()}-{self.quantization_methods[0].lower()}.gguf",
+                                repo_id=f"{self.username}/{self.model_name}-GGUF"
+                            )
+                    
+                    # Upload imatrix if generated
+                    if imatrix_path and self.username and self.token:
+                        api.upload_file(
+                            path_or_fileobj=imatrix_path,
+                            path_in_repo="imatrix.dat",
+                            repo_id=f"{self.username}/{self.model_name}-GGUF"
+                        )
+                    
+                    # Generate and upload README if token is provided
+                    if self.username and self.token:
+                        readme_content = self.generate_readme(quantized_files)
+                        self.upload_readme(readme_content, f"{self.username}/{self.model_name}-GGUF")
             
             # Display success message
             console.print(Panel.fit(
@@ -207,165 +563,6 @@ class ModelConverter:
                 border_style="red"
             ))
             raise
-    
-    def _create_conversion_script(self, script_path: Path) -> None:
-        """Creates the conversion shell script."""
-        script_content = """cat << "EOF"
-Made with love in India
-EOF
-
-# Default values
-MODEL_ID=""
-USERNAME=""
-TOKEN=""
-QUANTIZATION_METHODS="q4_k_m,q5_k_m" # Default to "q4_k_m,q5_k_m" if not provided
-
-# Display help/usage information
-usage() {
-  echo "Usage: $0 -m MODEL_ID [-u USERNAME] [-t TOKEN] [-q QUANTIZATION_METHODS]"
-  echo
-  echo "Options:"
-  echo "  -m MODEL_ID                   Required: Set the HF model ID"
-  echo "  -u USERNAME                   Optional: Set the username"
-  echo "  -t TOKEN                      Optional: Set the token"
-  echo "  -q QUANTIZATION_METHODS       Optional: Set the quantization methods (default: q4_k_m,q5_k_m)"
-  echo "  -h                            Display this help and exit"
-  echo
-}
-
-# Parse command-line options
-while getopts ":m:u:t:q:h" opt; do
-  case ${opt} in
-    m )
-      MODEL_ID=$OPTARG
-      ;;
-    u )
-      USERNAME=$OPTARG
-      ;;
-    t )
-      TOKEN=$OPTARG
-      ;;
-    q )
-      QUANTIZATION_METHODS=$OPTARG
-      ;;
-    h )
-      usage
-      exit 0
-      ;;
-    \? )
-      echo "Invalid Option: -$OPTARG" 1>&2
-      usage
-      exit 1
-      ;;
-    : )
-      echo "Invalid Option: -$OPTARG requires an argument" 1>&2
-      usage
-      exit 1
-      ;;
-  esac
-done
-shift $((OPTIND -1))
-
-# Ensure MODEL_ID is provided
-if [ -z "$MODEL_ID" ]; then
-    echo "Error: MODEL_ID is required."
-    usage
-    exit 1
-fi
-
-# # Echoing the arguments for checking
-# echo "MODEL_ID: $MODEL_ID"
-# echo "USERNAME: ${USERNAME:-'Not provided'}"
-# echo "TOKEN: ${TOKEN:-'Not provided'}"
-# echo "QUANTIZATION_METHODS: $QUANTIZATION_METHODS"
-
-# Splitting string into an array for quantization methods, if provided
-IFS=',' read -r -a QUANTIZATION_METHOD_ARRAY <<< "$QUANTIZATION_METHODS"
-echo "Quantization Methods: ${QUANTIZATION_METHOD_ARRAY[@]}"
-
-MODEL_NAME=$(echo "$MODEL_ID" | awk -F'/' '{print $NF}')
-
-
-# ----------- llama.cpp setup block-----------
-# Check if llama.cpp is already installed and skip the build step if it is
-if [ ! -d "llama.cpp" ]; then
-    echo "llama.cpp not found. Cloning and setting up..."
-    git clone https://github.com/ggerganov/llama.cpp
-    cd llama.cpp && git pull
-    # Install required packages
-    pip3 install -r requirements.txt
-    # Build llama.cpp as it's freshly cloned
-    if ! command -v nvcc &> /dev/null
-    then
-        echo "nvcc could not be found, building llama without LLAMA_CUBLAS"
-        make clean && make
-    else
-        make clean && LLAMA_CUBLAS=1 make
-    fi
-    cd ..
-else
-    echo "llama.cpp found. Assuming it's already built and up to date."
-    # Optionally, still update dependencies
-    # cd llama.cpp && pip3 install -r requirements.txt && cd ..
-fi
-# ----------- llama.cpp setup block-----------
-
-
-
-# Download model 
-#todo : shall we put condition to check if model has been already downloaded? similar to autogguf?
-echo "Downloading the model..."
-huggingface-cli download "$MODEL_ID" --local-dir "./${MODEL_NAME}" --local-dir-use-symlinks False --revision main
-
-
-# Convert to fp16
-FP16="${MODEL_NAME}/${MODEL_NAME,,}.fp16.bin"
-echo "Converting the model to fp16..."
-python3 llama.cpp/convert_hf_to_gguf.py "$MODEL_NAME" --outtype f16 --outfile "$FP16"
-
-# Quantize the model
-echo "Quantizing the model..."
-for METHOD in "${QUANTIZATION_METHOD_ARRAY[@]}"; do
-    QTYPE="${MODEL_NAME}/${MODEL_NAME,,}.${METHOD^^}.gguf"
-    ./llama.cpp/llama-quantize "$FP16" "$QTYPE" "$METHOD"
-done
-
-
-# Check if USERNAME and TOKEN are provided
-if [[ -n "$USERNAME" && -n "$TOKEN" ]]; then
-
-    # Login to Hugging Face
-    echo "Logging in to Hugging Face..."
-    huggingface-cli login --token "$TOKEN"
-
-
-    # Uploading .gguf, .md files, and config.json
-    echo "Uploading .gguf, .md files, and config.json..."
-
-
-    # Define a temporary directory
-    TEMP_DIR="./temp_upload_dir"
-
-    # Create the temporary directory
-    mkdir -p "${TEMP_DIR}"
-
-    # Copy the specific files to the temporary directory
-    find "./${MODEL_NAME}" -type f \( -name "*.gguf" -o -name "*.md" -o -name "config.json" \) -exec cp {} "${TEMP_DIR}/" \;
-
-    # Upload the temporary directory to Hugging Face
-    huggingface-cli upload "${USERNAME}/${MODEL_NAME}-GGUF" "${TEMP_DIR}" --private
-
-    # Remove the temporary directory after upload
-    rm -rf "${TEMP_DIR}"
-    echo "Upload completed."
-else
-    echo "USERNAME and TOKEN must be provided for upload."
-fi
-
-echo "Script completed."
-            """
-        script_path.write_text(script_content)
-        script_path.chmod(0o755)
 
 # Initialize CLI with HAI vibes
 app = CLI(
@@ -378,9 +575,17 @@ app = CLI(
 @option("-m", "--model-id", help="The HuggingFace model ID (e.g., 'OEvortex/HelpingAI-Lite-1.5T')", required=True)
 @option("-u", "--username", help="Your HuggingFace username for uploads", default=None)
 @option("-t", "--token", help="Your HuggingFace API token for uploads", default=None)
-@option("-q", "--quantization", help="Comma-separated quantization methods", default="q4_k_m,q5_k_m")
+@option("-q", "--quantization", help="Comma-separated quantization methods", default="q4_k_m")
+@option("-i", "--use-imatrix", help="Use importance matrix for quantization", is_flag=True)
+@option("--train-data", help="Training data file for imatrix quantization", default=None)
+@option("-s", "--split-model", help="Split the model into smaller chunks", is_flag=True)
+@option("--split-max-tensors", help="Maximum number of tensors per file when splitting", default=256)
+@option("--split-max-size", help="Maximum file size when splitting (e.g., '256M', '5G')", default=None)
 def convert_command(model_id: str, username: Optional[str] = None, 
-                   token: Optional[str] = None, quantization: str = "q4_k_m,q5_k_m"):
+                   token: Optional[str] = None, quantization: str = "q4_k_m",
+                   use_imatrix: bool = False, train_data: Optional[str] = None,
+                   split_model: bool = False, split_max_tensors: int = 256,
+                   split_max_size: Optional[str] = None):
     """
     Convert and quantize HuggingFace models to GGUF format! 🚀
     
@@ -389,6 +594,11 @@ def convert_command(model_id: str, username: Optional[str] = None,
         username (str, optional): Your HF username for uploads 👤
         token (str, optional): Your HF API token 🔑
         quantization (str): Quantization methods (default: q4_k_m,q5_k_m) 🎮
+        use_imatrix (bool): Use importance matrix for quantization 🔍
+        train_data (str, optional): Training data file for imatrix quantization 📚
+        split_model (bool): Split the model into smaller chunks 🔪
+        split_max_tensors (int): Max tensors per file when splitting (default: 256) 📊
+        split_max_size (str, optional): Max file size when splitting (e.g., '256M', '5G') 📏
         
     Example:
         >>> python -m webscout.Extra.gguf convert \\
@@ -400,12 +610,19 @@ def convert_command(model_id: str, username: Optional[str] = None,
             model_id=model_id,
             username=username,
             token=token,
-            quantization_methods=quantization
+            quantization_methods=quantization,
+            use_imatrix=use_imatrix,
+            train_data_file=train_data,
+            split_model=split_model,
+            split_max_tensors=split_max_tensors,
+            split_max_size=split_max_size
         )
         converter.convert()
     except (ConversionError, ValueError) as e:
+        console.print(f"[red]Error: {str(e)}")
         sys.exit(1)
     except Exception as e:
+        console.print(f"[red]Unexpected error: {str(e)}")
         sys.exit(1)
 
 def main():
