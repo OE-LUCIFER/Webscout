@@ -460,93 +460,25 @@ This repository is licensed under the same terms as the original model.
             # Setup llama.cpp
             self.setup_llama_cpp()
             
-            # Create temporary directories
-            with tempfile.TemporaryDirectory() as outdir:
-                fp16 = str(Path(outdir)/f"{self.model_name}.fp16.gguf")
-                
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    # Download model
-                    local_dir = Path(tmpdir)/self.model_name
-                    console.print("[bold green]Downloading model...")
-                    api = HfApi(token=self.token)
-                    api.snapshot_download(
-                        repo_id=self.model_id,
-                        local_dir=local_dir,
-                        local_dir_use_symlinks=False
-                    )
-                    
-                    # Convert to fp16
-                    console.print("[bold green]Converting to fp16...")
-                    result = subprocess.run([
-                        "python", "llama.cpp/convert_hf_to_gguf.py",
-                        str(local_dir),
-                        "--outtype", "f16",
-                        "--outfile", fp16
-                    ], capture_output=True, text=True)
-                    
-                    if result.returncode != 0:
-                        raise ConversionError(f"Error converting to fp16: {result.stderr}")
-                    
-                    # Generate importance matrix if needed
-                    imatrix_path = None
-                    if self.use_imatrix:
-                        train_data_path = self.train_data_file if self.train_data_file else "llama.cpp/groups_merged.txt"
-                        imatrix_path = str(Path(outdir)/"imatrix.dat")
-                        self.generate_importance_matrix(fp16, train_data_path, imatrix_path)
-                    
-                    # Quantize model
-                    console.print("[bold green]Quantizing model...")
-                    quantized_files = []
-                    for method in self.quantization_methods:
-                        quantized_name = f"{self.model_name.lower()}-{method.lower()}"
-                        if self.use_imatrix:
-                            quantized_name += "-imat"
-                        quantized_path = str(Path(outdir)/f"{quantized_name}.gguf")
-                        
-                        if self.use_imatrix:
-                            quantize_cmd = [
-                                "./llama.cpp/build/bin/llama-quantize",
-                                "--imatrix", imatrix_path,
-                                fp16, quantized_path, method
-                            ]
-                        else:
-                            quantize_cmd = [
-                                "./llama.cpp/build/bin/llama-quantize",
-                                fp16, quantized_path, method
-                            ]
-                        
-                        result = subprocess.run(quantize_cmd, capture_output=True, text=True)
-                        if result.returncode != 0:
-                            raise ConversionError(f"Error quantizing with {method}: {result.stderr}")
-                        
-                        quantized_files.append(f"{quantized_name}.gguf")
-                    
-                    # Split model if requested
-                    if self.split_model:
-                        split_files = self.split_model(quantized_path, outdir)
-                        if self.username and self.token:
-                            self.upload_split_files(split_files, outdir, f"{self.username}/{self.model_name}-GGUF")
-                    else:
-                        # Upload single file
-                        if self.username and self.token:
-                            api.upload_file(
-                                path_or_fileobj=quantized_path,
-                                path_in_repo=f"{self.model_name.lower()}-{self.quantization_methods[0].lower()}.gguf",
-                                repo_id=f"{self.username}/{self.model_name}-GGUF"
-                            )
-                    
-                    # Upload imatrix if generated
-                    if imatrix_path and self.username and self.token:
-                        api.upload_file(
-                            path_or_fileobj=imatrix_path,
-                            path_in_repo="imatrix.dat",
-                            repo_id=f"{self.username}/{self.model_name}-GGUF"
-                        )
-                    
-                    # Generate and upload README if token is provided
-                    if self.username and self.token:
-                        readme_content = self.generate_readme(quantized_files)
-                        self.upload_readme(readme_content, f"{self.username}/{self.model_name}-GGUF")
+            # Determine if we need temporary directories (only for uploads)
+            needs_temp = bool(self.username and self.token)
+            
+            if needs_temp:
+                # Use temporary directories for upload case
+                with tempfile.TemporaryDirectory() as outdir:
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        self._convert_with_dirs(tmpdir, outdir)
+            else:
+                # Use current directory for local output
+                outdir = os.getcwd()
+                tmpdir = os.path.join(outdir, "temp_download")
+                os.makedirs(tmpdir, exist_ok=True)
+                try:
+                    self._convert_with_dirs(tmpdir, outdir)
+                finally:
+                    # Clean up temporary download directory
+                    import shutil
+                    shutil.rmtree(tmpdir, ignore_errors=True)
             
             # Display success message
             console.print(Panel.fit(
@@ -563,6 +495,93 @@ This repository is licensed under the same terms as the original model.
                 border_style="red"
             ))
             raise
+            
+    def _convert_with_dirs(self, tmpdir: str, outdir: str) -> None:
+        """Helper method to perform conversion with given directories."""
+        fp16 = str(Path(outdir)/f"{self.model_name}.fp16.gguf")
+        
+        # Download model
+        local_dir = Path(tmpdir)/self.model_name
+        console.print("[bold green]Downloading model...")
+        api = HfApi(token=self.token)
+        api.snapshot_download(
+            repo_id=self.model_id,
+            local_dir=local_dir,
+            local_dir_use_symlinks=False
+        )
+        
+        # Convert to fp16
+        console.print("[bold green]Converting to fp16...")
+        result = subprocess.run([
+            "python", "llama.cpp/convert_hf_to_gguf.py",
+            str(local_dir),
+            "--outtype", "f16",
+            "--outfile", fp16
+        ], capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            raise ConversionError(f"Error converting to fp16: {result.stderr}")
+        
+        # Generate importance matrix if needed
+        imatrix_path = None
+        if self.use_imatrix:
+            train_data_path = self.train_data_file if self.train_data_file else "llama.cpp/groups_merged.txt"
+            imatrix_path = str(Path(outdir)/"imatrix.dat")
+            self.generate_importance_matrix(fp16, train_data_path, imatrix_path)
+        
+        # Quantize model
+        console.print("[bold green]Quantizing model...")
+        quantized_files = []
+        for method in self.quantization_methods:
+            quantized_name = f"{self.model_name.lower()}-{method.lower()}"
+            if self.use_imatrix:
+                quantized_name += "-imat"
+            quantized_path = str(Path(outdir)/f"{quantized_name}.gguf")
+            
+            if self.use_imatrix:
+                quantize_cmd = [
+                    "./llama.cpp/build/bin/llama-quantize",
+                    "--imatrix", imatrix_path,
+                    fp16, quantized_path, method
+                ]
+            else:
+                quantize_cmd = [
+                    "./llama.cpp/build/bin/llama-quantize",
+                    fp16, quantized_path, method
+                ]
+            
+            result = subprocess.run(quantize_cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise ConversionError(f"Error quantizing with {method}: {result.stderr}")
+            
+            quantized_files.append(f"{quantized_name}.gguf")
+        
+        # Split model if requested
+        if self.split_model:
+            split_files = self.split_model(quantized_path, outdir)
+            if self.username and self.token:
+                self.upload_split_files(split_files, outdir, f"{self.username}/{self.model_name}-GGUF")
+        else:
+            # Upload single file if credentials provided
+            if self.username and self.token:
+                api.upload_file(
+                    path_or_fileobj=quantized_path,
+                    path_in_repo=f"{self.model_name.lower()}-{self.quantization_methods[0].lower()}.gguf",
+                    repo_id=f"{self.username}/{self.model_name}-GGUF"
+                )
+        
+        # Upload imatrix if generated and credentials provided
+        if imatrix_path and self.username and self.token:
+            api.upload_file(
+                path_or_fileobj=imatrix_path,
+                path_in_repo="imatrix.dat",
+                repo_id=f"{self.username}/{self.model_name}-GGUF"
+            )
+        
+        # Generate and upload README if credentials provided
+        if self.username and self.token:
+            readme_content = self.generate_readme(quantized_files)
+            self.upload_readme(readme_content, f"{self.username}/{self.model_name}-GGUF")
 
 # Initialize CLI with HAI vibes
 app = CLI(
