@@ -198,10 +198,10 @@ class ModelConverter:
                 # In Nix, we need to use the system Python packages
                 try:
                     # Try to import required packages to check if they're available
-                    import torch
-                    import numpy
-                    import sentencepiece
-                    import transformers
+                    import torch # type: ignore
+                    import numpy # type: ignore 
+                    import sentencepiece # type: ignore
+                    import transformers # type: ignore
                     console.print("[green]Required Python packages are already installed.")
                 except ImportError as e:
                     console.print("[red]Missing required Python packages in Nix environment.")
@@ -490,7 +490,7 @@ This repository is licensed under the same terms as the original model.
                     # Generate importance matrix if needed
                     imatrix_path = None
                     if self.use_imatrix:
-                        train_data_path = self.train_data_file or "llama.cpp/groups_merged.txt"
+                        train_data_path = self.train_data_file if self.train_data_file else "llama.cpp/groups_merged.txt"
                         imatrix_path = str(Path(outdir)/"imatrix.dat")
                         self.generate_importance_matrix(fp16, train_data_path, imatrix_path)
                     
