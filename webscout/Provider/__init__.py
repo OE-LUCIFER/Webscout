@@ -38,14 +38,12 @@ from .cerebras import *
 from .lepton import *
 from .geminiapi import *
 from .elmo import *
-from .Bing import *
 from .GPTWeb import *
 from .Netwrck import Netwrck
 from .llamatutor import *
 from .promptrefine import *
 from .tutorai import *
 from .ChatGPTES import *
-from .Amigo import *
 from .bagoodex import *
 from .aimathgpt import *
 from .gaurish import *
@@ -139,14 +137,12 @@ __all__ = [
     'Cleeai',
     'Elmo',
     'Free2GPT',
-    'Bing',
     'GPTWeb',
     'Netwrck',
     'LlamaTutor',
     'PromptRefine',
     'TutorAI',
     'ChatGPTES',
-    'AmigoChat',
     'Bagoodex',
     'AIMathGPT',
     'GaurishCerebras',
