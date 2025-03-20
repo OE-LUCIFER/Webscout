@@ -12,7 +12,7 @@ class LlamaTutor(Provider):
     """
     A class to interact with the LlamaTutor API (Together.ai)
     """
-
+    AVAILABLE_MODELS = ["UNKNOWN"]
     def __init__(
         self,
         is_conversation: bool = True,

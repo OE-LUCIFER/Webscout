@@ -18,10 +18,10 @@ class AllenAI(Provider):
 
     AVAILABLE_MODELS = [
         'tulu3-405b',
-        'OLMo-2-1124-13B-Instruct',
-        'tulu-3-1-8b',
-        'Llama-3-1-Tulu-3-70B',
-        'olmoe-0125'
+        # 'OLMo-2-1124-13B-Instruct',
+        # 'tulu-3-1-8b',
+        # 'Llama-3-1-Tulu-3-70B',
+        # 'olmoe-0125'
     ]
 
 
@@ -275,8 +275,23 @@ class AllenAI(Provider):
         return response["text"]
 
 if __name__ == "__main__":
-    from rich import print
-    ai = AllenAI(timeout=5000)
-    response = ai.chat("write a poem about AI", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+
+    for model in AllenAI.AVAILABLE_MODELS:
+        try:
+            test_ai = AllenAI(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word")
+            response_text = response
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"{model:<50} {'✗':<10} {str(e)}")

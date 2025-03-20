@@ -12,12 +12,12 @@ class GliderAI(Provider):
     A class to interact with the Glider.so API.
     """
 
-    AVAILABLE_MODELS = {
+    AVAILABLE_MODELS = [
         "chat-llama-3-1-70b",
         "chat-llama-3-1-8b",
         "chat-llama-3-2-3b",
         "deepseek-ai/DeepSeek-R1",
-    }
+    ]
 
     def __init__(
         self,
@@ -180,9 +180,26 @@ class GliderAI(Provider):
         return response["text"]
 
 if __name__ == "__main__":
-    from rich import print
-    # For testing
-    ai = GliderAI(model="chat-llama-3-1-70b")
-    response = ai.chat("Meaning of Life", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+
+    for model in GliderAI.AVAILABLE_MODELS:
+        try:
+            test_ai = GliderAI(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word", stream=True)
+            response_text = ""
+            for chunk in response:
+                response_text += chunk
+                print(f"\r{model:<50} {'Testing...':<10}", end="", flush=True)
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"\r{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"\r{model:<50} {'✗':<10} {str(e)}")

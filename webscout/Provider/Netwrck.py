@@ -47,10 +47,10 @@ class Netwrck(Provider):
     ):
         """Initializes the Netwrck API client."""
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {list(self.AVAILABLE_MODELS.keys())}")
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
         self.model = model
-        self.model_name = self.AVAILABLE_MODELS[model]
+        self.model_name = model  # Use the model name directly since it's already in the correct format
         self.system_prompt = system_prompt
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -198,8 +198,30 @@ class Netwrck(Provider):
         return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
 
 if __name__ == "__main__":
-    from rich import print
-
-
-    netwrck = Netwrck(model="deepseek-r1")
-    print(netwrck.ask("Hello! How are you?"))
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+    
+    # Test all available models
+    working = 0
+    total = len(Netwrck.AVAILABLE_MODELS)
+    
+    for model in Netwrck.AVAILABLE_MODELS:
+        try:
+            test_ai = Netwrck(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word", stream=True)
+            response_text = ""
+            for chunk in response:
+                response_text += chunk
+                print(f"\r{model:<50} {'Testing...':<10}", end="", flush=True)
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"\r{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"\r{model:<50} {'✗':<10} {str(e)}")

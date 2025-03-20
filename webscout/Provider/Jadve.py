@@ -244,8 +244,23 @@ class JadveOpenAI(Provider):
         return response["text"]
 
 if __name__ == "__main__":
-    from rich import print
-    ai = JadveOpenAI(timeout=5000)
-    response = ai.chat("Who made u?", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+
+    for model in JadveOpenAI.AVAILABLE_MODELS:
+        try:
+            test_ai = JadveOpenAI(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word")
+            response_text = response
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"{model:<50} {'✗':<10} {str(e)}")

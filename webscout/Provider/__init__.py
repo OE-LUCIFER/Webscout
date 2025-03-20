@@ -23,7 +23,6 @@ from .Llama3 import *
 from .DARKAI import *
 from .koala import *
 from .meta import *
-from .DiscordRocks import *
 from .julius import *
 from .Youchat import *
 from .yep import *
@@ -123,7 +122,6 @@ __all__ = [
     'KOALA',
     'Meta',
     'AskMyAI',
-    'DiscordRocks',
     'PiAI',
     'Julius',
     'YouChat',

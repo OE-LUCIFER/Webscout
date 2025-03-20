@@ -9,11 +9,10 @@ from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
 from webscout import LitAgent
-from webscout.Litlogger import Logger, LogFormat
 
 class FreeAIChat(Provider):
     """
-    A class to interact with the FreeAIChat API with logging and LitAgent user-agent.
+    A class to interact with the FreeAIChat API with LitAgent user-agent.
     """
 
     AVAILABLE_MODELS = [
@@ -23,10 +22,10 @@ class FreeAIChat(Provider):
         "gemini-1.5-pro",
         "gemini-1.5-flash",
         "gemini-2.0-pro-exp-02-05",
-        "deepseek-r1",
+        # "deepseek-r1", >>>> NOT WORKING
         "deepseek-v3",
-        "Deepseek r1 14B",
-        "Deepseek r1 32B",
+        # "Deepseek r1 14B", >>>> NOT WORKING
+        # "Deepseek r1 32B", >>>> NOT WORKING
         "o3-mini-high",
         "o3-mini-medium",
         "o3-mini-low",
@@ -36,10 +35,10 @@ class FreeAIChat(Provider):
         "o1-mini",
         "GPT-4o",
         "Qwen coder",
-        "Qwen 2.5 72B",
+        # "Qwen 2.5 72B", >>>> NOT WORKING
         "Llama 3.1 405B",
-        "llama3.1-70b-fast",
-        "Llama 3.3 70B",
+        # "llama3.1-70b-fast", >>>> NOT WORKING
+        # "Llama 3.3 70B", >>>> NOT WORKING
         "claude 3.5 haiku",
         "claude 3.5 sonnet",
     ]
@@ -57,9 +56,8 @@ class FreeAIChat(Provider):
         act: str = None,
         model: str = "GPT-4o",
         system_prompt: str = "You are a helpful AI assistant.",
-        logging: bool = False
     ):
-        """Initializes the FreeAIChat API client with logging support."""
+        """Initializes the FreeAIChat API client."""
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
@@ -102,14 +100,6 @@ class FreeAIChat(Provider):
         )
         self.conversation.history_offset = history_offset
 
-        self.logger = Logger(
-            name="FreeAIChat",
-            format=LogFormat.MODERN_EMOJI,
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info(f"FreeAIChat initialized successfully with model: {model}")
-
     def ask(
         self,
         prompt: str,
@@ -124,11 +114,7 @@ class FreeAIChat(Provider):
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         messages = [
@@ -148,13 +134,9 @@ class FreeAIChat(Provider):
         }
 
         def for_stream():
-            if self.logger:
-                self.logger.debug("Sending streaming request to FreeAIChat API...")
             try:
                 with requests.post(self.url, headers=self.headers, json=payload, stream=True, timeout=self.timeout) as response:
                     if response.status_code != 200:
-                        if self.logger:
-                            self.logger.error(f"Request failed with status code {response.status_code}")
                         raise exceptions.FailedToGenerateResponseError(
                             f"Request failed with status code {response.status_code}"
                         )
@@ -177,17 +159,11 @@ class FreeAIChat(Provider):
                                             resp = dict(text=content)
                                             yield resp if raw else resp
                                 except json.JSONDecodeError:
-                                    if self.logger:
-                                        self.logger.error("JSON decode error in streaming data")
                                     pass
                     
                     self.conversation.update_chat_history(prompt, streaming_text)
-                    if self.logger:
-                        self.logger.info("Streaming response completed successfully")
                         
             except requests.RequestException as e:
-                if self.logger:
-                    self.logger.error(f"Request failed: {e}")
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         def for_non_stream():
@@ -234,18 +210,29 @@ class FreeAIChat(Provider):
             except (UnicodeError, AttributeError) as e:
                 return text
         return text
-        
 
 if __name__ == "__main__":
-    from rich import print
-    ai = FreeAIChat(model="GPT-4o", logging=True)
-    # response = ai.chat(input(">>>"), stream=True)
-    # full_text = ""
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
 
-    # for chunk in response:
-    #     corrected_chunk = ai.fix_encoding(chunk)
-    #     full_text += corrected_chunk
-    
-    response = ai.chat(input(">>>"), stream=False)
-    response = ai.fix_encoding(response)
-    print(response)
+    for model in FreeAIChat.AVAILABLE_MODELS:
+        try:
+            test_ai = FreeAIChat(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word", stream=True)
+            response_text = ""
+            for chunk in response:
+                response_text += chunk
+                print(f"\r{model:<50} {'Testing...':<10}", end="", flush=True)
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Clean and truncate response
+                clean_text = response_text.strip().encode('utf-8', errors='ignore').decode('utf-8')
+                display_text = clean_text[:50] + "..." if len(clean_text) > 50 else clean_text
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"\r{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"\r{model:<50} {'✗':<10} {str(e)}")

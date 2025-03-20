@@ -208,10 +208,26 @@ class HeckAI(Provider):
         return response["text"]
 
 if __name__ == "__main__":
-    from rich import print
-    ai = HeckAI(timeout=120)
-    response = ai.chat("Write a short poem about artificial intelligence", stream=False)
-    print(response)
-    # for chunk in response:
-    #     chunk = ai.fix_encoding(chunk)
-    #     print(chunk, end="", flush=True)
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+
+    for model in HeckAI.AVAILABLE_MODELS:
+        try:
+            test_ai = HeckAI(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word", stream=True)
+            response_text = ""
+            for chunk in response:
+                response_text += chunk
+                print(f"\r{model:<50} {'Testing...':<10}", end="", flush=True)
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"\r{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"\r{model:<50} {'✗':<10} {str(e)}")

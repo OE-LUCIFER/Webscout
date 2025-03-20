@@ -108,7 +108,6 @@ class GoogleS:
         max_workers: int = 20,
         cache_dir: Optional[str] = None,
         rate_limit: float = 2.0,
-        use_litlogger: bool = False
     ):
         """
         Initialize the GoogleS object with enhanced features.
@@ -116,7 +115,6 @@ class GoogleS:
         Args:
             cache_dir: Directory to store search result cache
             rate_limit: Minimum time between requests in seconds
-            use_litlogger: Whether to use LitLogger for logging (default: False)
         """
         self.proxy = proxy
         self.headers = headers if headers else {
@@ -134,14 +132,6 @@ class GoogleS:
             os.makedirs(cache_dir)
         self.last_request_time = 0
         self.rate_limit = rate_limit
-        self.use_litlogger = use_litlogger
-        
-        # Setup enhanced logging with LitLogger if enabled
-        if self.use_litlogger:
-            self.logger = Logger(
-                name="GoogleS",
-                format=LogFormat.MODERN_EMOJI,
-            )
 
     def _respect_rate_limit(self):
         """Ensure minimum time between requests"""
@@ -149,8 +139,6 @@ class GoogleS:
         time_since_last = current_time - self.last_request_time
         if time_since_last < self.rate_limit:
             sleep_time = self.rate_limit - time_since_last
-            if self.use_litlogger:
-                self.logger.debug(f"Rate limiting: Waiting {sleep_time:.2f} seconds")
             time.sleep(sleep_time)
         self.last_request_time = time.time()
 
@@ -185,8 +173,6 @@ class GoogleS:
                 
                 if response.status_code == 429:
                     retry_delay = base_delay * (2 ** retry_count)  # Exponential backoff
-                    if self.use_litlogger:
-                        self.logger.warning(f"Rate limited by Google. Waiting {retry_delay} seconds before retry...")
                     time.sleep(retry_delay)
                     retry_count += 1
                     continue
@@ -196,13 +182,9 @@ class GoogleS:
                 
             except requests.exceptions.RequestException as e:
                 if retry_count == max_retries - 1:
-                    if self.use_litlogger:
-                        self.logger.error(f"Max retries reached. Last error: {str(e)}")
                     raise
                 
                 retry_delay = base_delay * (2 ** retry_count)
-                if self.use_litlogger:
-                    self.logger.warning(f"Request failed. Retrying in {retry_delay} seconds... Error: {str(e)}")
                 time.sleep(retry_delay)
                 retry_count += 1
                 
@@ -223,11 +205,7 @@ class GoogleS:
             with open(cache_file, 'r') as f:
                 cached_data = json.load(f)
                 if datetime.fromisoformat(cached_data['timestamp']) + timedelta(hours=24) > datetime.now():
-                    if self.use_litlogger:
-                        self.logger.info(f"Using cached results for: {cache_key}")
                     return cached_data['results']
-        if self.use_litlogger:
-            self.logger.debug(f"No valid cache found for: {cache_key}")
         return None
 
     def _cache_results(self, cache_key: str, results: List[Dict[str, Any]]):
@@ -351,9 +329,6 @@ class GoogleS:
             exclude_terms: List of terms to exclude from search
             exact_phrase: Exact phrase to match
         """
-        if self.use_litlogger:
-            self.logger.info(f"Starting search for: {query}")
-        
         # Build advanced query
         advanced_query = query
         if site:
@@ -364,9 +339,6 @@ class GoogleS:
             advanced_query += " " + " ".join(f"-{term}" for term in exclude_terms)
         if exact_phrase:
             advanced_query = f'"{exact_phrase}"' + advanced_query
-            
-        if self.use_litlogger:
-            self.logger.debug(f"Advanced query: {advanced_query}")
         
         # Check cache first
         cache_key = self._cache_key(advanced_query, region=region, language=language,
@@ -483,7 +455,7 @@ class GoogleS:
 
 if __name__ == "__main__":
     from rich import print
-    searcher = GoogleS(rate_limit=3.0, use_litlogger=True)
+    searcher = GoogleS(rate_limit=3.0)
     results = searcher.search("HelpingAI-9B", max_results=5, extract_text=False, max_text_length=200)
     for result in results:
         print(result)

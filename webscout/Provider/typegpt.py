@@ -15,43 +15,64 @@ class TypeGPT(Provider):
     A class to interact with the TypeGPT.net API. Improved to match webscout standards.
     """
     url = "https://chat.typegpt.net"
-    working = True
-    supports_message_history = True
 
-    models = [
+    AVAILABLE_MODELS = [
         # OpenAI Models
         "gpt-3.5-turbo",
-        "chatgpt-4o-latest",
         "gpt-3.5-turbo-202201",
         "gpt-4o",
         "gpt-4o-2024-05-13",
+        "gpt-4o-2024-11-20",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        # "gpt-4o-mini-ddg", >>>> NOT WORKING
+        "o1",
+        # "o1-mini-2024-09-12", >>>> NOT WORKING
         "o1-preview",
+        "o3-mini",
+        "chatgpt-4o-latest",
         
         # Claude Models
-        "claude",
+        # "claude", >>>> NOT WORKING
         "claude-3-5-sonnet",
-        "claude-sonnet-3.5",
         "claude-3-5-sonnet-20240620",
+        "claude-3-5-sonnet-x",
+        # "claude-3-haiku-ddg", >>>> NOT WORKING
+        "claude-hybridspace",
+        "claude-sonnet-3.5",
+        "Claude-sonnet-3.7",
+        "anthropic/claude-3.5-sonnet",
+        "anthropic/claude-3.7-sonnet",
         
         # Meta/LLaMA Models
         "@cf/meta/llama-2-7b-chat-fp16",
         "@cf/meta/llama-2-7b-chat-int8",
         "@cf/meta/llama-3-8b-instruct",
         "@cf/meta/llama-3.1-8b-instruct",
-        "@cf/meta-llama/llama-2-7b-chat-hf-lora",
+        "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        # "@cf/meta-llama/llama-2-7b-chat-hf-lora", >>>> NOT WORKING
         "llama-3.1-405b",
         "llama-3.1-70b",
+        # "llama-3.1-70b-ddg", >>>> NOT WORKING
         "llama-3.1-8b",
-        "meta-llama/Llama-2-7b-chat-hf",
-        "meta-llama/Llama-3.1-70B-Instruct",
-        "meta-llama/Llama-3.1-8B-Instruct",
+        # "llama-scaleway", >>>> NOT WORKING
+        "llama3.1-8b", # >>>> NOT WORKING
+        "llama3.3-70b",
+        # "llamalight", >>>> NOT WORKING
+        "Meta-Llama-3.1-405B-Instruct-Turbo",
+        "Meta-Llama-3.3-70B-Instruct-Turbo",
+        # "meta-llama/Llama-2-7b-chat-hf", >>>> NOT WORKING
+        # "meta-llama/Llama-3.1-70B-Instruct", >>>> NOT WORKING
+        # "meta-llama/Llama-3.1-8B-Instruct", >>>> NOT WORKING
         "meta-llama/Llama-3.2-11B-Vision-Instruct",
-        "meta-llama/Llama-3.2-1B-Instruct",
-        "meta-llama/Llama-3.2-3B-Instruct",
+        # "meta-llama/Llama-3.2-1B-Instruct", >>>> NOT WORKING
+        # "meta-llama/Llama-3.2-3B-Instruct", >>>> NOT WORKING
         "meta-llama/Llama-3.2-90B-Vision-Instruct",
-        "meta-llama/Llama-Guard-3-8B",
-        "meta-llama/Meta-Llama-3-70B-Instruct",
-        "meta-llama/Meta-Llama-3-8B-Instruct",
+        "meta-llama/Llama-3.3-70B-Instruct",
+        "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        # "meta-llama/Llama-Guard-3-8B", >>>> NOT WORKING
+        # "meta-llama/Meta-Llama-3-70B-Instruct", >>>> NOT WORKING
+        # "meta-llama/Meta-Llama-3-8B-Instruct", >>>> NOT WORKING
         "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
         "meta-llama/Meta-Llama-3.1-8B-Instruct",
         "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
@@ -60,25 +81,34 @@ class TypeGPT(Provider):
         "mistral",
         "mistral-large",
         "@cf/mistral/mistral-7b-instruct-v0.1",
-        "@cf/mistral/mistral-7b-instruct-v0.2-lora",
+        # "@cf/mistral/mistral-7b-instruct-v0.2-lora", >>>> NOT WORKING
         "@hf/mistralai/mistral-7b-instruct-v0.2",
         "mistralai/Mistral-7B-Instruct-v0.2",
         "mistralai/Mistral-7B-Instruct-v0.3",
         "mistralai/Mixtral-8x22B-Instruct-v0.1",
         "mistralai/Mixtral-8x7B-Instruct-v0.1",
+        # "mixtral-8x7b-ddg", >>>> NOT WORKING
+        "Mistral-7B-Instruct-v0.2",
         
         # Qwen Models
         "@cf/qwen/qwen1.5-0.5b-chat",
         "@cf/qwen/qwen1.5-1.8b-chat",
-        "@cf/qwen/qwen1.5-7b-chat-awq",
         "@cf/qwen/qwen1.5-14b-chat-awq",
+        "@cf/qwen/qwen1.5-7b-chat-awq",
         "Qwen/Qwen2.5-3B-Instruct",
         "Qwen/Qwen2.5-72B-Instruct",
         "Qwen/Qwen2.5-Coder-32B-Instruct",
+        "Qwen/Qwen2-72B-Instruct",
+        "Qwen/QwQ-32B",
+        "Qwen/QwQ-32B-Preview",
+        "Qwen2.5-72B-Instruct",
+        "qwen",
+        "qwen-coder",
+        # "Qwen-QwQ-32B-Preview", >>>> NOT WORKING
         
         # Google/Gemini Models
-        "@cf/google/gemma-2b-it-lora",
-        "@cf/google/gemma-7b-it-lora",
+        # "@cf/google/gemma-2b-it-lora", >>>> NOT WORKING
+        # "@cf/google/gemma-7b-it-lora", >>>> NOT WORKING
         "@hf/google/gemma-7b-it",
         "google/gemma-1.1-2b-it",
         "google/gemma-1.1-7b-it",
@@ -86,22 +116,8 @@ class TypeGPT(Provider):
         "gemini-1.5-pro",
         "gemini-1.5-pro-latest",
         "gemini-1.5-flash",
-        
-        # Cohere Models
-        "c4ai-aya-23-35b",
-        "c4ai-aya-23-8b",
-        "command",
-        "command-light",
-        "command-light-nightly",
-        "command-nightly",
-        "command-r",
-        "command-r-08-2024",
-        "command-r-plus",
-        "command-r-plus-08-2024",
-        "rerank-english-v2.0",
-        "rerank-english-v3.0",
-        "rerank-multilingual-v2.0",
-        "rerank-multilingual-v3.0",
+        "gemini-flash-2.0",
+        "gemini-thinking",
         
         # Microsoft Models
         "@cf/microsoft/phi-2",
@@ -109,29 +125,45 @@ class TypeGPT(Provider):
         "microsoft/Phi-3-medium-4k-instruct",
         "microsoft/Phi-3-mini-4k-instruct",
         "microsoft/Phi-3.5-mini-instruct",
+        "microsoft/phi-4",
         "microsoft/WizardLM-2-8x22B",
         
         # Yi Models
         "01-ai/Yi-1.5-34B-Chat",
-        "01-ai/Yi-34B-Chat",
+        # "01-ai/Yi-34B-Chat", >>>> NOT WORKING
         
-        # Specialized Models and Tools
+        # DeepSeek Models
         "@cf/deepseek-ai/deepseek-math-7b-base",
         "@cf/deepseek-ai/deepseek-math-7b-instruct",
+        "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
+        "deepseek",
+        "deepseek-ai/DeepSeek-R1",
+        "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+        # "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", >>>> NOT WORKING
+        # "deepseek-ai/DeepSeek-V2.5", >>>> NOT WORKING
+        "deepseek-llm-67b-chat",
+        "deepseek-r1",
+        "deepseek-r1-distill-llama-70b",
+        # "deepseek-reasoner", >>>> NOT WORKING
+        "deepseek-v3",
+        
+        # Specialized Models and Tools
         "@cf/defog/sqlcoder-7b-2",
-        "@cf/openchat/openchat-3.5-0106",
         "@cf/thebloke/discolm-german-7b-v1-awq",
         "@cf/tiiuae/falcon-7b-instruct",
-        "@cf/tinyllama/tinyllama-1.1b-chat-v1.0",
-        "@hf/nexusflow/starling-lm-7b-beta",
-        "@hf/nousresearch/hermes-2-pro-mistral-7b",
-        "@hf/thebloke/deepseek-coder-6.7b-base-awq",
-        "@hf/thebloke/deepseek-coder-6.7b-instruct-awq",
-        "@hf/thebloke/llama-2-13b-chat-awq",
-        "@hf/thebloke/llamaguard-7b-awq",
-        "@hf/thebloke/neural-chat-7b-v3-1-awq",
-        "@hf/thebloke/openhermes-2.5-mistral-7b-awq",
-        "@hf/thebloke/zephyr-7b-beta-awq",
+        # "@cf/tinyllama/tinyllama-1.1b-chat-v1.0", >>>> NOT WORKING
+        # "@hf/nexusflow/starling-lm-7b-beta", >>>> NOT WORKING
+        # "@hf/nousresearch/hermes-2-pro-mistral-7b", >>>> NOT WORKING
+        # "@hf/thebloke/deepseek-coder-6.7b-base-awq", >>>> NOT WORKING
+        # "@hf/thebloke/deepseek-coder-6.7b-instruct-awq", >>>> NOT WORKING
+        # "@hf/thebloke/llama-2-13b-chat-awq", >>>> NOT WORKING
+        # "@hf/thebloke/llamaguard-7b-awq", >>>> NOT WORKING
+        # "@hf/thebloke/mistral-7b-instruct-v0.1-awq", >>>> NOT WORKING
+        # "@hf/thebloke/neural-chat-7b-v3-1-awq", >>>> NOT WORKING
+        # "@hf/thebloke/openhermes-2.5-mistral-7b-awq", >>>> NOT WORKING
+        # "@hf/thebloke/zephyr-7b-beta-awq", >>>> NOT WORKING
+        
+        # Development Agents
         "AndroidDeveloper",
         "AngularJSAgent",
         "AzureAgent",
@@ -150,8 +182,6 @@ class TypeGPT(Provider):
         "GodotAgent",
         "GoogleCloudAgent",
         "HTMLAgent",
-        "HerokuAgent",
-        "ImageGeneration",
         "JavaAgent",
         "JavaScriptAgent",
         "MongoDBAgent",
@@ -162,18 +192,54 @@ class TypeGPT(Provider):
         "RepoMap",
         "SwiftDeveloper",
         "XcodeAgent",
-        "YoutubeAgent",
+        # "YoutubeAgent", >>>> NOT WORKING
+        
+        # Other Models
         "blackboxai",
         "blackboxai-pro",
         "builderAgent",
-        "dify",
+        # "Cipher-20b", >>>> NOT WORKING
+        # "dify", >>>> NOT WORKING
         "flux",
-        "openchat/openchat-3.6-8b",
-        "rtist",
-        "searchgpt",
-        "sur",
-        "sur-mistral",
-        "unity"
+        # "flux-1-schnell", >>>> NOT WORKING
+        # "HelpingAI-15B", >>>> NOT WORKING
+        # "HelpingAI2-3b", >>>> NOT WORKING
+        # "HelpingAI2-6B", >>>> NOT WORKING
+        # "HelpingAI2-9B", >>>> NOT WORKING
+        # "HelpingAI2.5-10B", >>>> NOT WORKING
+        # "Helpingai2.5-10b-1m", >>>> NOT WORKING
+        # "HelpingAI2.5-2B", >>>> NOT WORKING
+        # "HELVETE", >>>> NOT WORKING
+        # "HELVETE-X", >>>> NOT WORKING
+        # "evil", >>>> NOT WORKING
+        # "Image-Generator", >>>> NOT WORKING
+        # "Image-Generator-NSFW", >>>> NOT WORKING
+        # "midijourney", >>>> NOT WORKING
+        # "Niansuh", >>>> NOT WORKING
+        # "niansuh-t1", >>>> NOT WORKING
+        # "Nous-Hermes-2-Mixtral-8x7B-DPO", >>>> NOT WORKING
+        # "NousResearch/Hermes-3-Llama-3.1-8B", >>>> NOT WORKING
+        # "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO", >>>> NOT WORKING
+        # "nvidia/Llama-3.1-Nemotron-70B-Instruct", >>>> NOT WORKING
+        # "openai", >>>> NOT WORKING
+        # "openai-audio", >>>> NOT WORKING
+        # "openai-large", >>>> NOT WORKING
+        # "openai-reasoning", >>>> NOT WORKING
+        # "openai/whisper-large-v3", >>>> NOT WORKING
+        # "openai/whisper-large-v3-turbo", >>>> NOT WORKING
+        # "openbmb/MiniCPM-Llama3-V-2_5", >>>> NOT WORKING
+        # "openchat/openchat-3.6-8b", >>>> NOT WORKING
+        # "p1", >>>> NOT WORKING
+        # "phi", >>>> NOT WORKING
+        # "Phi-4-multilmodal-instruct", >>>> NOT WORKING
+        # "Priya-3B", >>>> NOT WORKING
+        # "rtist", >>>> NOT WORKING
+        # "searchgpt", >>>> NOT WORKING
+        # "sur", >>>> NOT WORKING
+        # "sur-mistral", >>>> NOT WORKING
+        # "tiiuae/falcon-7b-instruct", >>>> NOT WORKING
+        # "TirexAi", >>>> NOT WORKING
+        # "unity", >>>> NOT WORKING
     ]
 
     def __init__(
@@ -195,8 +261,8 @@ class TypeGPT(Provider):
         top_p: float = 1,
     ):
         """Initializes the TypeGPT API client."""
-        if model not in self.models:
-            raise ValueError(f"Invalid model: {model}. Choose from: {', '.join(self.models)}")
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {', '.join(self.AVAILABLE_MODELS)}")
 
         self.session = requests.Session()
         self.is_conversation = is_conversation
@@ -354,7 +420,31 @@ class TypeGPT(Provider):
             raise TypeError("Invalid response type. Expected str or dict.")
 
 if __name__ == "__main__":
-    ai = TypeGPT(model="chatgpt-4o-latest")
-    response = ai.chat("hi", stream=True)
-    for chunks in response:
-        print(chunks, end="", flush=True)
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+    
+    # Test all available models
+    working = 0
+    total = len(TypeGPT.AVAILABLE_MODELS)
+    
+    for model in TypeGPT.AVAILABLE_MODELS:
+        try:
+            test_ai = TypeGPT(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word", stream=True)
+            response_text = ""
+            for chunk in response:
+                response_text += chunk
+                print(f"\r{model:<50} {'Testing...':<10}", end="", flush=True)
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"\r{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"\r{model:<50} {'✗':<10} {str(e)}")
+    

@@ -16,7 +16,15 @@ class C4ai(Provider):
     A class to interact with the Hugging Face Chat API.
     """
     # Default available models
-    AVAILABLE_MODELS = [] # Placeholder for available models, It will be updated in the constructor
+    AVAILABLE_MODELS = [
+        'command-a-03-2025',
+        'command-r-plus-08-2024',
+        'command-r-08-2024',
+        'command-r-plus',
+        'command-r',
+        'command-r7b-12-2024',
+        'command-r7b-arabic-02-2025'
+    ] # Placeholder for available models, It will be updated in the constructor
 
     def __repr__(self) -> str:
         return f"C4ai({self.model})"
@@ -402,13 +410,23 @@ class C4ai(Provider):
         return response.get("text", "")
 
 if __name__ == "__main__":
-    # Simple test code
-    from rich import print
-    try:
-        ai = C4ai()
-        response = ai.chat("How's it going?", stream=True, web_search=False)
-        for chunk in response:
-            print(chunk, end="", flush=True)
-        print()
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+
+    for model in C4ai.AVAILABLE_MODELS:
+        try:
+            test_ai = C4ai(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word")
+            response_text = response
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"{model:<50} {'✗':<10} {str(e)}")

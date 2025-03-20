@@ -1,4 +1,4 @@
-Apache License
+
                            Version 2.0, March 2025
                            Webscout License
 
@@ -87,7 +87,7 @@ Apache License
 
       (e) You must include the following attribution notice prominently 
           displayed in any Derivative Works:
-          "Based on Webscout (https://github.com/webscout)"
+          "Based on Webscout (https://github.com/OE-LUCIFER/webscout)"
 
    5. API Usage and Third-Party Services. When using the APIs and services
       accessed through this Work, you must:
@@ -133,11 +133,11 @@ END OF TERMS AND CONDITIONS
 
 Copyright 2024-2025 Webscout Contributors
 
-Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Webscout License (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    https://github.com/OE-LUCIFER/webscout/blob/main/LICENSE.md
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

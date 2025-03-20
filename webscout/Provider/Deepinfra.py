@@ -16,46 +16,46 @@ class DeepInfra(Provider):
     """
 
     AVAILABLE_MODELS = [
-        "anthropic/claude-3-7-sonnet-latest",
+        # "anthropic/claude-3-7-sonnet-latest",  # >>>> NOT WORKING
         "deepseek-ai/DeepSeek-R1",
         "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
         "deepseek-ai/DeepSeek-R1-Turbo",
         "deepseek-ai/DeepSeek-V3",
-        "google/gemma-2-27b-it",
-        "google/gemma-2-9b-it",
+        # "google/gemma-2-27b-it",  # >>>> NOT WORKING
+        # "google/gemma-2-9b-it",  # >>>> NOT WORKING
         "google/gemma-3-27b-it",
-        "google/gemini-1.5-flash",
-        "google/gemini-1.5-flash-8b",
-        "google/gemini-2.0-flash-001",
-        "Gryphe/MythoMax-L2-13b",
-        "meta-llama/Llama-3.2-1B-Instruct",
-        "meta-llama/Llama-3.2-3B-Instruct",
+        # "google/gemini-1.5-flash",  # >>>> NOT WORKING
+        # "google/gemini-1.5-flash-8b",  # >>>> NOT WORKING
+        # "google/gemini-2.0-flash-001",  # >>>> NOT WORKING
+        # "Gryphe/MythoMax-L2-13b",  # >>>> NOT WORKING
+        # "meta-llama/Llama-3.2-1B-Instruct",  # >>>> NOT WORKING
+        # "meta-llama/Llama-3.2-3B-Instruct",  # >>>> NOT WORKING
         "meta-llama/Llama-3.2-90B-Vision-Instruct",
         "meta-llama/Llama-3.2-11B-Vision-Instruct",
-        "meta-llama/Meta-Llama-3-70B-Instruct",
-        "meta-llama/Meta-Llama-3-8B-Instruct",
-        "meta-llama/Meta-Llama-3.1-70B-Instruct",
+        # "meta-llama/Meta-Llama-3-70B-Instruct",  # >>>> NOT WORKING
+        # "meta-llama/Meta-Llama-3-8B-Instruct",  # >>>> NOT WORKING
+        # "meta-llama/Meta-Llama-3.1-70B-Instruct",  # >>>> NOT WORKING
         "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
         "meta-llama/Meta-Llama-3.1-8B-Instruct",
         "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-        "meta-llama/Meta-Llama-3.1-405B-Instruct",
+        # "meta-llama/Meta-Llama-3.1-405B-Instruct",  # >>>> NOT WORKING
         "microsoft/phi-4",
         "microsoft/Phi-4-multimodal-instruct",
         "microsoft/WizardLM-2-8x22B",
-        "mistralai/Mixtral-8x7B-Instruct-v0.1",
-        "mistralai/Mistral-7B-Instruct-v0.3",
-        "mistralai/Mistral-Nemo-Instruct-2407",
+        # "mistralai/Mixtral-8x7B-Instruct-v0.1",  # >>>> NOT WORKING
+        # "mistralai/Mistral-7B-Instruct-v0.3",  # >>>> NOT WORKING
+        # "mistralai/Mistral-Nemo-Instruct-2407",  # >>>> NOT WORKING
         "mistralai/Mistral-Small-24B-Instruct-2501",
         "nvidia/Llama-3.1-Nemotron-70B-Instruct",
-        "NousResearch/Hermes-3-Llama-3.1-405B",
-        "NovaSky-AI/Sky-T1-32B-Preview",
+        # "NousResearch/Hermes-3-Llama-3.1-405B",  # >>>> NOT WORKING
+        # "NovaSky-AI/Sky-T1-32B-Preview",  # >>>> NOT WORKING
         "Qwen/QwQ-32B",
-        "Qwen/Qwen2.5-7B-Instruct",
+        # "Qwen/Qwen2.5-7B-Instruct",  # >>>> NOT WORKING
         "Qwen/Qwen2.5-72B-Instruct",
         "Qwen/Qwen2.5-Coder-32B-Instruct",
-        "Sao10K/L3.1-70B-Euryale-v2.2",
-        "Sao10K/L3.3-70B-Euryale-v2.3",
+        # "Sao10K/L3.1-70B-Euryale-v2.2",  # >>>> NOT WORKING
+        # "Sao10K/L3.3-70B-Euryale-v2.3",  # >>>> NOT WORKING
         "meta-llama/Llama-3.3-70B-Instruct",
         "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     ]
@@ -71,32 +71,41 @@ class DeepInfra(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo"  # Updated default model
+        model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        browser: str = "chrome"
     ):
         """Initializes the DeepInfra API client."""
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
             
         self.url = "https://api.deepinfra.com/v1/openai/chat/completions"
-        # Use LitAgent for user-agent instead of hardcoded string.
+        
+        # Initialize LitAgent for user agent generation
+        self.agent = LitAgent()
+        # Use fingerprinting to create a consistent browser identity
+        self.fingerprint = self.agent.generate_fingerprint(browser)
+        
+        # Use the fingerprint for headers
         self.headers = {
-            'User-Agent': LitAgent().random(),
-            'Accept-Language': 'en,fr-FR;q=0.9,fr;q=0.8,es-ES;q=0.7,es;q=0.6,en-US;q=0.5,am;q=0.4,de;q=0.3',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Content-Type': 'application/json',
-            'Origin': 'https://deepinfra.com',
-            'Pragma': 'no-cache',
-            'Referer': 'https://deepinfra.com/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
-            'X-Deepinfra-Source': 'web-embed',
-            'accept': 'text/event-stream',
-            'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"'
+            "Accept": self.fingerprint["accept"],
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": self.fingerprint["accept_language"],
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Origin": "https://deepinfra.com",
+            "Pragma": "no-cache",
+            "Referer": "https://deepinfra.com/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "X-Deepinfra-Source": "web-embed",
+            "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
+            "User-Agent": self.fingerprint["user_agent"],
         }
+        
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         self.session.proxies.update(proxies)
@@ -124,6 +133,31 @@ class DeepInfra(Provider):
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+    def refresh_identity(self, browser: str = None):
+        """
+        Refreshes the browser identity fingerprint.
+        
+        Args:
+            browser: Specific browser to use for the new fingerprint
+        """
+        browser = browser or self.fingerprint.get("browser_type", "chrome")
+        self.fingerprint = self.agent.generate_fingerprint(browser)
+        
+        # Update headers with new fingerprint
+        self.headers.update({
+            "Accept": self.fingerprint["accept"],
+            "Accept-Language": self.fingerprint["accept_language"],
+            "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or self.headers["Sec-CH-UA"],
+            "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
+            "User-Agent": self.fingerprint["user_agent"],
+        })
+        
+        # Update session headers
+        for header, value in self.headers.items():
+            self.session.headers[header] = value
+        
+        return self.fingerprint
 
     def ask(
         self,
@@ -180,15 +214,30 @@ class DeepInfra(Provider):
                                 except json.JSONDecodeError:
                                     continue
                     
+                    self.last_response = {"text": streaming_text}
                     self.conversation.update_chat_history(prompt, streaming_text)
                     
             except requests.RequestException as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}")
 
         def for_non_stream():
-            for _ in for_stream():
-                pass
-            return self.last_response
+            try:
+                response = requests.post(self.url, headers=self.headers, data=json.dumps(payload), timeout=self.timeout)
+                if response.status_code != 200:
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Request failed with status code {response.status_code}"
+                    )
+
+                response_data = response.json()
+                if 'choices' in response_data and len(response_data['choices']) > 0:
+                    content = response_data['choices'][0].get('message', {}).get('content', '')
+                    self.last_response = {"text": content}
+                    self.conversation.update_chat_history(prompt, content)
+                    return {"text": content}
+                else:
+                    raise exceptions.FailedToGenerateResponseError("No response content found")
+            except Exception as e:
+                raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         return for_stream() if stream else for_non_stream()
 
@@ -198,7 +247,7 @@ class DeepInfra(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str:
+    ) -> Union[str, Generator[str, None, None]]:
         def for_stream():
             for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):
                 yield self.get_message(response)
@@ -213,8 +262,26 @@ class DeepInfra(Provider):
         return response["text"]
 
 if __name__ == "__main__":
-    from rich import print
-    ai = DeepInfra(timeout=5000)
-    response = ai.chat("write a poem about AI", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+
+    for model in DeepInfra.AVAILABLE_MODELS:
+        try:
+            test_ai = DeepInfra(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word", stream=True)
+            response_text = ""
+            for chunk in response:
+                response_text += chunk
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Clean and truncate response
+                clean_text = response_text.strip().encode('utf-8', errors='ignore').decode('utf-8')
+                display_text = clean_text[:50] + "..." if len(clean_text) > 50 else clean_text
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"\r{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"\r{model:<50} {'✗':<10} {str(e)}")

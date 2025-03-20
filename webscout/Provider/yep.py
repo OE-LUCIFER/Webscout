@@ -224,9 +224,30 @@ class YEPCHAT(Provider):
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         def for_non_stream():
-            for _ in for_stream():
-                pass
-            return self.last_response
+            try:
+                response = self.session.post(self.chat_endpoint, headers=self.headers, cookies=self.cookies, json=data, timeout=self.timeout)
+                if not response.ok:
+                    if response.status_code in [403, 429]:
+                        self.refresh_identity()
+                        response = self.session.post(self.chat_endpoint, headers=self.headers, cookies=self.cookies, json=data, timeout=self.timeout)
+                        if not response.ok:
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"Failed to generate response after identity refresh - ({response.status_code}, {response.reason}) - {response.text}"
+                            )
+                    else:
+                        raise exceptions.FailedToGenerateResponseError(
+                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                        )
+
+                response_data = response.json()
+                if 'choices' in response_data and len(response_data['choices']) > 0:
+                    content = response_data['choices'][0].get('message', {}).get('content', '')
+                    self.conversation.update_chat_history(prompt, content)
+                    return {"text": content}
+                else:
+                    raise exceptions.FailedToGenerateResponseError("No response content found")
+            except Exception as e:
+                raise exceptions.FailedToGenerateResponseError(f"Request failed: {e}")
 
         return for_stream() if stream else for_non_stream()
 
@@ -236,7 +257,7 @@ class YEPCHAT(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str:
+    ) -> Union[str, Generator[str, None, None]]:
         """
         Initiates a chat with the Yep API using the provided prompt.
 
@@ -281,9 +302,23 @@ class YEPCHAT(Provider):
 
 
 if __name__ == "__main__":
-    from rich import print
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
 
-    ai = YEPCHAT(model="DeepSeek-R1-Distill-Qwen-32B")
-    response = ai.chat("how many r in 'strawberry'", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    for model in YEPCHAT.AVAILABLE_MODELS:
+        try:
+            test_ai = YEPCHAT(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word")
+            response_text = response
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"{model:<50} {'✗':<10} {str(e)}")

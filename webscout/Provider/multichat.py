@@ -66,6 +66,45 @@ MODEL_CONFIGS = {
 }
 
 class MultiChatAI(Provider):
+    """
+    A class to interact with the MultiChatAI API.
+    """
+    AVAILABLE_MODELS = [
+        # Llama Models
+        "llama-3.3-70b-versatile",
+        "llama-3.2-11b-vision-preview",
+        "deepseek-r1-distill-llama-70b",
+        
+        # Cohere Models
+        # "command-r", >>>> NOT WORKING
+        # "command", >>>> NOT WORKING
+        
+        # Google Models
+        # "gemini-1.5-flash-002", >>>> NOT WORKING
+        "gemma2-9b-it",
+        "gemini-2.0-flash",
+        
+        # DeepInfra Models
+        "Sao10K/L3.1-70B-Euryale-v2.2",
+        "Gryphe/MythoMax-L2-13b",
+        "nvidia/Llama-3.1-Nemotron-70B-Instruct",
+        "deepseek-ai/DeepSeek-V3",
+        "meta-llama/Meta-Llama-3.1-405B-Instruct",
+        "NousResearch/Hermes-3-Llama-3.1-405B",
+        # "gemma-2-27b-it", >>>> NOT WORKING
+        
+        # Mistral Models
+        # "mistral-small-latest", >>>> NOT WORKING
+        # "codestral-latest", >>>> NOT WORKING
+        # "open-mistral-7b", >>>> NOT WORKING
+        # "open-mixtral-8x7b", >>>> NOT WORKING
+        
+        # Alibaba Models
+        "Qwen/Qwen2.5-72B-Instruct",
+        "Qwen/Qwen2.5-Coder-32B-Instruct",
+        "Qwen/QwQ-32B-Preview"
+    ]
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -85,6 +124,8 @@ class MultiChatAI(Provider):
         top_p: float = 1
     ):
         """Initializes the MultiChatAI API client."""
+        if model not in self.AVAILABLE_MODELS:
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -258,12 +299,27 @@ class MultiChatAI(Provider):
         return str(response)
 
 if __name__ == "__main__":
-    from rich import print
-
-    # Example usage
-    ai = MultiChatAI(model="Qwen/QwQ-32B-Preview")
-    try:
-        response = ai.chat("What is quantum computing?")
-        print(response)
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
+    
+    # Test all available models
+    working = 0
+    total = len(MultiChatAI.AVAILABLE_MODELS)
+    
+    for model in MultiChatAI.AVAILABLE_MODELS:
+        try:
+            test_ai = MultiChatAI(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word")
+            response_text = response
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Truncate response if too long
+                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"{model:<50} {'✗':<10} {str(e)}")

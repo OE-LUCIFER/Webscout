@@ -5,13 +5,12 @@ import json
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
-from webscout.Litlogger import Logger, LogFormat
 from webscout import LitAgent as Lit
 
 
 class ChatGPTGratis(Provider):
     """
-    A class to interact with the chatgptgratis.eu backend API with logging and real-time streaming.
+    A class to interact with the chatgptgratis.eu backend API with real-time streaming.
     """
     AVAILABLE_MODELS = [
         "Meta-Llama-3.2-1B-Instruct",
@@ -20,14 +19,12 @@ class ChatGPTGratis(Provider):
         "Meta-Llama-3.1-70B-Instruct",
         "Meta-Llama-3.1-405B-Instruct",
         "gpt4o"
-
     ]
 
     def __init__(
         self,
-        model: str = "gpt4o",
+        model: str = "Meta-Llama-3.2-1B-Instruct",
         timeout: int = 30,
-        logging: bool = False,
         proxies: Optional[Dict[str, str]] = None,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -40,14 +37,6 @@ class ChatGPTGratis(Provider):
         """
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
-
-        self.logger = Logger(
-            name="ChatGPTGratis",
-            format=LogFormat.MODERN_EMOJI,
-        ) if logging else None
-
-        if self.logger:
-            self.logger.info(f"Initializing ChatGPTGratis with model: {model}")
 
         self.session = requests.Session()
         self.timeout = timeout
@@ -78,9 +67,6 @@ class ChatGPTGratis(Provider):
         )
         self.conversation.history_offset = history_offset
 
-        if self.logger:
-            self.logger.info("ChatGPTGratis initialized successfully.")
-
     def ask(
         self,
         prompt: str,
@@ -93,10 +79,6 @@ class ChatGPTGratis(Provider):
         Sends a request to the API and returns the response.
         If stream is True, yields response chunks as they are received.
         """
-        if self.logger:
-            self.logger.debug(f"Processing request - Prompt: {prompt[:50]}...")
-            self.logger.debug(f"Stream: {stream}, Optimizer: {optimizer}")
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             available_opts = (
@@ -107,22 +89,15 @@ class ChatGPTGratis(Provider):
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
-                if self.logger:
-                    self.logger.debug(f"Applied optimizer: {optimizer}")
             else:
-                if self.logger:
-                    self.logger.error(f"Invalid optimizer requested: {optimizer}")
                 raise Exception(f"Optimizer is not one of {list(available_opts)}")
 
         payload = {
             "message": conversation_prompt,
             "model": self.model,
-
         }
 
         def for_stream() -> Generator[Dict[str, Any], None, None]:
-            if self.logger:
-                self.logger.debug("Initiating streaming request to API")
             response = self.session.post(
                 self.api_endpoint,
                 json=payload,
@@ -130,23 +105,15 @@ class ChatGPTGratis(Provider):
                 timeout=self.timeout
             )
             if not response.ok:
-                if self.logger:
-                    self.logger.error(
-                        f"API request failed. Status: {response.status_code}, Reason: {response.reason}"
-                    )
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
-            if self.logger:
-                self.logger.info(f"API connection established. Status: {response.status_code}")
 
             full_response = ""
             for line in response.iter_lines():
                 if line:
                     line_decoded = line.decode('utf-8').strip()
                     if line_decoded == "data: [DONE]":
-                        if self.logger:
-                            self.logger.debug("Stream completed.")
                         break
                     if line_decoded.startswith("data: "):
                         try:
@@ -158,18 +125,12 @@ class ChatGPTGratis(Provider):
                                 content = ""
                             full_response += content
                             yield content if raw else {"text": content}
-                        except json.JSONDecodeError as e:
-                            if self.logger:
-                                self.logger.error(f"JSON parsing error: {str(e)}")
+                        except json.JSONDecodeError:
                             continue
             # Update last response and conversation history.
             self.conversation.update_chat_history(prompt, self.get_message({"text": full_response}))
-            if self.logger:
-                self.logger.debug("Response processing completed.")
 
         def for_non_stream() -> Dict[str, Any]:
-            if self.logger:
-                self.logger.debug("Processing non-streaming request")
             collected = ""
             for chunk in for_stream():
                 collected += chunk["text"] if isinstance(chunk, dict) else chunk
@@ -188,9 +149,6 @@ class ChatGPTGratis(Provider):
         Returns the response as a string.
         For streaming requests, yields each response chunk as a string.
         """
-        if self.logger:
-            self.logger.debug(f"Chat request initiated - Prompt: {prompt[:50]}...")
-
         def stream_response() -> Generator[str, None, None]:
             for response in self.ask(
                 prompt, stream=True, optimizer=optimizer, conversationally=conversationally
@@ -213,14 +171,24 @@ class ChatGPTGratis(Provider):
 
 
 if __name__ == "__main__":
-    from rich import print
+    print("-" * 80)
+    print(f"{'Model':<50} {'Status':<10} {'Response'}")
+    print("-" * 80)
 
-    # Create an instance of the ChatGPTGratis with logging enabled for testing.
-    client = ChatGPTGratis(
-        model="Meta-Llama-3.2-1B-Instruct",
-        logging=False
-    )
-    prompt_input = input(">>> ")
-    response = client.chat(prompt_input, stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    for model in ChatGPTGratis.AVAILABLE_MODELS:
+        try:
+            test_ai = ChatGPTGratis(model=model, timeout=60)
+            response = test_ai.chat("Say 'Hello' in one word")
+            response_text = response
+            
+            if response_text and len(response_text.strip()) > 0:
+                status = "✓"
+                # Clean and truncate response
+                clean_text = response_text.strip().encode('utf-8', errors='ignore').decode('utf-8')
+                display_text = clean_text[:50] + "..." if len(clean_text) > 50 else clean_text
+            else:
+                status = "✗"
+                display_text = "Empty or invalid response"
+            print(f"{model:<50} {status:<10} {display_text}")
+        except Exception as e:
+            print(f"{model:<50} {'✗':<10} {str(e)}")

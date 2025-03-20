@@ -10,7 +10,7 @@ from ..AIbase import Provider, AsyncProvider
 from ..Bard import Chatbot, Model
 
 # Import Logger and related classes (assumed similar to what is in yep.py)
-from webscout import Logger, LogFormat
+from webscout.Litlogger import Logger, LogFormat
 
 warnings.simplefilter("ignore", category=UserWarning)
 
