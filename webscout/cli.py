@@ -49,6 +49,42 @@ def _print_data(data):
             console.print(Panel(table, title=f"Result {i}", expand=False, style="green on black"))
             console.print("\n")
 
+def _print_weather(data):
+    """Prints weather data in a clean, focused format."""
+    console = Console()
+    
+    # Current weather panel
+    current = data["current"]
+    current_table = Table(show_header=False, show_lines=True, expand=True, box=None)
+    current_table.add_column("Metric", style="cyan", no_wrap=True, width=15)
+    current_table.add_column("Value", style="white")
+    
+    current_table.add_row("Temperature", f"{current['temperature_c']}°C")
+    current_table.add_row("Feels Like", f"{current['feels_like_c']}°C")
+    current_table.add_row("Humidity", f"{current['humidity']}%")
+    current_table.add_row("Wind", f"{current['wind_speed_ms']} m/s")
+    current_table.add_row("Direction", f"{current['wind_direction']}°")
+    
+    console.print(Panel(current_table, title=f"Current Weather in {data['location']}", expand=False, style="green on black"))
+    console.print("\n")
+    
+    # Daily forecast panel
+    daily_table = Table(show_header=True, show_lines=True, expand=True, box=None)
+    daily_table.add_column("Date", style="cyan")
+    daily_table.add_column("Condition", style="white")
+    daily_table.add_column("High", style="red")
+    daily_table.add_column("Low", style="blue")
+    
+    for day in data["daily_forecast"][:5]:  # Show next 5 days
+        daily_table.add_row(
+            day["date"],
+            day["condition"],
+            f"{day['max_temp_c']}°C",
+            f"{day['min_temp_c']}°C"
+        )
+    
+    console.print(Panel(daily_table, title="5-Day Forecast", expand=False, style="green on black"))
+
 # Initialize CLI app
 app = CLI(name="webscout", help="Search the web with a rich UI", version=__version__)
 
@@ -269,6 +305,19 @@ def suggestions(keywords: str, region: str, proxy: str = None):
     try:
         results = webs.suggestions(keywords, region)
         _print_data(results)
+    except Exception as e:
+        raise e
+
+@app.command()
+@option("--location", "-l", help="Location to get weather for", required=True)
+@option("--language", "-lang", help="Language code (e.g. 'en', 'es')", default="en")
+@option("--proxy", "-p", help="Proxy URL to use for requests")
+def weather(location: str, language: str, proxy: str = None):
+    """Get weather information for a location from DuckDuckGo."""
+    webs = WEBS(proxy=proxy)
+    try:
+        results = webs.weather(location, language)
+        _print_weather(results)
     except Exception as e:
         raise e
 

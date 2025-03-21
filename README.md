@@ -1,15 +1,21 @@
-[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/PyscoutAI)
-  [![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/oevortex/)
-  [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/oe-vortex-29a407265/)
-  [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/oevortex)
-
 <div align="center">
-  <a href="https://youtube.com/@OEvortex">▶️ Vortex’s YouTube Channel</a> &bull;
-  <a href="https://youtube.com/@devsdocode">▶️ Devs Do Code’s YouTube Channel</a> &bull;
-  <a href="https://t.me/ANONYMOUS_56788">📢 Anonymous Coder’s Telegram</a>
+  <!-- Replace `#` with your actual links -->
+  <a href="https://t.me/PyscoutAI"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+  <a href="https://www.instagram.com/oevortex/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
+  <a href="https://www.linkedin.com/in/oe-vortex-29a407265/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
+  <a href="https://buymeacoffee.com/oevortex"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>
 </div>
 
----
+<div align="center">
+  <!-- Replace `#` with your actual links -->
+  <a href="https://youtube.com/@OEvortex">▶️ Vortex's YouTube Channel</a>
+</div>
+<div align="center">
+  <a href="https://youtube.com/@devsdocode">▶️ Devs Do Code's YouTube Channel</a>
+</div>
+<div align="center">
+  <a href="https://t.me/ANONYMOUS_56788">📢 Anonymous Coder's Telegram</a>
+</div>
 
 <p align="center">
   <strong>Webscout</strong> is the all-in-one search and AI toolkit you need.
@@ -42,8 +48,10 @@
 * **[Scout](webscout/scout/README.md):** Advanced web parsing and crawling library with intelligent HTML/XML parsing, web crawling, and Markdown conversion
 * **[Awesome Prompts (Act)](webscout/Extra/Act.md):** A curated collection of system prompts designed to transform Webscout into specialized personas, enhancing its ability to assist with specific tasks. Simply prefix your request with the act name or index number to leverage these tailored capabilities.
 * **[Weather Tool kit](webscout/Extra/weather.md)** Webscout provides tools to retrieve weather information.
-## ⚙️ Installation
 * **[AIsearch](webscout/Provider/AISEARCH)** AI Search Providers offer powerful and flexible AI-powered search Search Engine
+
+## ⚙️ Installation
+
 ```python
 pip install -U webscout
 ```
@@ -64,7 +72,8 @@ python -m webscout --help
 | python -m webscout text -k Text           | CLI function to perform a text search using Webscout.                                           |
 | python -m webscout translate -k Text      | CLI function to perform translate using Webscout.                                               |
 | python -m webscout version                | A command-line interface command that prints and returns the version of the program.            |
-| python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |  
+| python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |
+| python -m webscout weather -k Text        | CLI function to get weather information for a location using Webscout.                          |
 
 
 
@@ -796,7 +805,7 @@ a = AndiSearch()
 print(a.chat("HelpingAI-9B"))
 ```
 
-### `LLAMA`, `C4ai`, `Venice`, `Copilot`, `HuggingFaceChat`, `TwoAI`, `HeckAI`, `AllenAI`, `PerplexityLabs`, `AkashGPT`, `DeepSeek`, `WiseCat`, `IBMGranite`, `QwenLM`, `ChatGPTGratis`, `TextPollinationsAI`, `GliderAI`, `Cohere`, `REKA`, `GROQ`, `AsyncGROQ`, `OPENAI`, `AsyncOPENAI`, `KOBOLDAI`, `AsyncKOBOLDAI`, `BLACKBOXAI`, `PhindSearch`, `GEMINI`, `DeepInfra`, `AI4Chat`, `Phindv2`, `OLLAMA`, `AndiSearch`, `PIZZAGPT`, `Sambanova`, `DARKAI`, `KOALA`, `Meta`, `AskMyAI`, `PiAI`, `Julius`, `YouChat`, `YEPCHAT`, `Cloudflare`, `TurboSeek`, `Editee`, `TeachAnything`, `AI21`, `Chatify`, `X0GPT`, `Cerebras`, `Lepton`, `GEMINIAPI`, `Cleeai`, `Elmo`, `Free2GPT`, `GPTWeb`, `Netwrck`, `LlamaTutor`, `PromptRefine`, `TutorAI`, `ChatGPTES`, `Bagoodex`, `AIMathGPT`, `GaurishCerebras`, `GeminiPro`, `LLMChat`, `Talkai`, `Llama3Mitril`, `Marcus`, `TypeGPT`, `Netwrck`, `MultiChatAI`, `JadveOpenAI`, `ChatGLM`, `NousHermes`, `FreeAIChat`, `ElectronHub`, `GithubChat`, `Flowith`
+### `LLAMA`, `C4ai`, `Venice`, `Copilot`, `HuggingFaceChat`, `TwoAI`, `HeckAI`, `AllenAI`, `PerplexityLabs`, `AkashGPT`, `DeepSeek`, `WiseCat`, `IBMGranite`, `QwenLM`, `ChatGPTGratis`, `TextPollinationsAI`, `GliderAI`, `Cohere`, `REKA`, `GROQ`, `AsyncGROQ`, `OPENAI`, `AsyncOPENAI`, `KOBOLDAI`, `AsyncKOBOLDAI`, `BLACKBOXAI`, `PhindSearch`, `GEMINI`, `DeepInfra`, `AI4Chat`, `Phindv2`, `OLLAMA`, `AndiSearch`, `PIZZAGPT`, `Sambanova`, `DARKAI`, `KOALA`, `Meta`, `AskMyAI`, `PiAI`, `Julius`, `YouChat`, `YEPCHAT`, `Cloudflare`, `TurboSeek`, `Editee`, `TeachAnything`, `AI21`, `Chatify`, `X0GPT`, `Cerebras`, `Lepton`, `GEMINIAPI`, `Cleeai`, `Elmo`, `Free2GPT`, `GPTWeb`, `Netwrck`, `LlamaTutor`, `PromptRefine`, `TutorAI`, `ChatGPTES`, `Bagoodex`, `AIMathGPT`, `GaurishCerebras`, `GeminiPro`, `LLMChat`, `Talkai`, `Llama3Mitril`, `Marcus`, `TypeGPT`, `Netwrck`, `MultiChatAI`, `JadveOpenAI`, `ChatGLM`, `NousHermes`, `FreeAIChat`, `ElectronHub`, `GithubChat`, `Flowith`, `SonusAI`
 
 Code is similar to other providers.
 
@@ -862,7 +871,7 @@ converter.convert()
 
 <div align="center">
   <!-- Replace `#` with your actual links -->
-  <a href="https://t.me/official_helpingai"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+  <a href="https://t.me/PyscoutAI"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
   <a href="https://www.instagram.com/oevortex/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
   <a href="https://www.linkedin.com/in/oe-vortex-29a407265/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
   <a href="https://buymeacoffee.com/oevortex"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>

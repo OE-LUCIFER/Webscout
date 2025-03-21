@@ -78,6 +78,7 @@ from .GithubChat import *
 from .copilot import *
 from .C4ai import *
 from .flowith import *
+from .sonus import *
 __all__ = [
     'LLAMA',
     'Flowith',
@@ -134,6 +135,7 @@ __all__ = [
     'Cerebras',
     'Lepton',
     'GEMINIAPI',
+    'SonusAI',
     'Cleeai',
     'Elmo',
     'Free2GPT',
