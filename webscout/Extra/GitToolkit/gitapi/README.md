@@ -82,6 +82,7 @@ for repo in repositories:
 ## 🔧 Available Methods
 
 ### Repository Class
+
 - `get_info()`: Basic repository information
 - `get_commits()`: Repository commit history
 - `get_pull_requests()`: Repository pull requests
@@ -91,6 +92,7 @@ for repo in repositories:
 - And many more...
 
 ### User Class
+
 - `get_profile()`: User profile information
 - `get_repositories()`: User's public repositories
 - `get_followers()`: User's followers
@@ -101,6 +103,7 @@ for repo in repositories:
 ## ⚠️ Error Handling
 
 The module includes several custom exception types:
+
 - `GitError`: Base exception for all GitHub API errors
 - `RateLimitError`: Raised when hitting API rate limits
 - `NotFoundError`: Raised when resource is not found

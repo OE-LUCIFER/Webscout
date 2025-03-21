@@ -17,7 +17,7 @@ import signal
 import tempfile
 import platform
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any, Union, Literal, TypedDict, Set
 
 from huggingface_hub import HfApi
 from webscout.zeroart import figlet_format
@@ -32,10 +32,15 @@ class ConversionError(Exception):
     """Custom exception for when things don't go as planned! ⚠️"""
     pass
 
+class QuantizationMethod(TypedDict):
+    """Type definition for quantization method descriptions."""
+    description: str
+
 class ModelConverter:
     """Handles the conversion of Hugging Face models to GGUF format."""
     
-    VALID_METHODS = {
+    VALID_METHODS: Dict[str, str] = {
+        "fp16": "16-bit floating point - maximum accuracy, largest size",
         "q2_k": "2-bit quantization (smallest size, lowest accuracy)",
         "q3_k_l": "3-bit quantization (large) - balanced for size/accuracy",
         "q3_k_m": "3-bit quantization (medium) - good balance for most use cases",
@@ -52,7 +57,7 @@ class ModelConverter:
         "q8_0": "8-bit quantization - maximum accuracy, largest size"
     }
     
-    VALID_IMATRIX_METHODS = {
+    VALID_IMATRIX_METHODS: Dict[str, str] = {
         "iq3_m": "3-bit imatrix quantization (medium) - balanced importance-based",
         "iq3_xxs": "3-bit imatrix quantization (extra extra small) - maximum compression",
         "q4_k_m": "4-bit imatrix quantization (medium) - balanced importance-based",
@@ -63,11 +68,18 @@ class ModelConverter:
         "q5_k_s": "5-bit imatrix quantization (small) - optimized for speed"
     }
     
-    def __init__(self, model_id: str, username: Optional[str] = None, 
-                 token: Optional[str] = None, quantization_methods: str = "q4_k_m",
-                 use_imatrix: bool = False, train_data_file: Optional[str] = None,
-                 split_model: bool = False, split_max_tensors: int = 256,
-                 split_max_size: Optional[str] = None):
+    def __init__(
+        self,
+        model_id: str,
+        username: Optional[str] = None,
+        token: Optional[str] = None,
+        quantization_methods: str = "q4_k_m",
+        use_imatrix: bool = False,
+        train_data_file: Optional[str] = None,
+        split_model: bool = False,
+        split_max_tensors: int = 256,
+        split_max_size: Optional[str] = None
+    ) -> None:
         self.model_id = model_id
         self.username = username
         self.token = token
@@ -79,6 +91,7 @@ class ModelConverter:
         self.split_model = split_model
         self.split_max_tensors = split_max_tensors
         self.split_max_size = split_max_size
+        self.fp16_only = "fp16" in self.quantization_methods and len(self.quantization_methods) == 1
         
     def validate_inputs(self) -> None:
         """Validates all input parameters."""
@@ -117,7 +130,7 @@ class ModelConverter:
     @staticmethod
     def check_dependencies() -> Dict[str, bool]:
         """Check if all required dependencies are installed."""
-        dependencies = {
+        dependencies: Dict[str, str] = {
             'git': 'Git version control',
             'pip3': 'Python package installer',
             'huggingface-cli': 'Hugging Face CLI',
@@ -125,7 +138,7 @@ class ModelConverter:
             'ninja': 'Ninja build system (optional)'
         }
         
-        status = {}
+        status: Dict[str, bool] = {}
         for cmd, desc in dependencies.items():
             status[cmd] = subprocess.run(['which', cmd], capture_output=True, text=True).returncode == 0
             
@@ -133,7 +146,7 @@ class ModelConverter:
     
     def detect_hardware(self) -> Dict[str, bool]:
         """Detect available hardware acceleration."""
-        hardware = {
+        hardware: Dict[str, bool] = {
             'cuda': False,
             'metal': False,
             'opencl': False,
@@ -227,7 +240,7 @@ class ModelConverter:
                 console.print(f"  {'✓' if available else '✗'} {hw.upper()}")
             
             # Configure CMake build
-            cmake_args = ['cmake', '-B', 'build']
+            cmake_args: List[str] = ['cmake', '-B', 'build']
             
             # Add hardware acceleration options
             if hardware['cuda']:
@@ -277,7 +290,7 @@ class ModelConverter:
     
     def generate_importance_matrix(self, model_path: str, train_data_path: str, output_path: str) -> None:
         """Generates importance matrix for quantization."""
-        imatrix_command = [
+        imatrix_command: List[str] = [
             "./llama.cpp/build/bin/llama-imatrix",
             "-m", model_path,
             "-f", train_data_path,
@@ -310,7 +323,7 @@ class ModelConverter:
     
     def split_model(self, model_path: str, outdir: str) -> List[str]:
         """Splits the model into smaller chunks."""
-        split_cmd = [
+        split_cmd: List[str] = [
             "./llama.cpp/build/bin/llama-gguf-split",
             "--split",
         ]
@@ -521,9 +534,20 @@ This repository is licensed under the same terms as the original model.
         
         if result.returncode != 0:
             raise ConversionError(f"Error converting to fp16: {result.stderr}")
-        
+            
+        # If fp16_only is True, we're done after fp16 conversion
+        if self.fp16_only:
+            quantized_files = [f"{self.model_name}.fp16.gguf"]
+            if self.username and self.token:
+                api.upload_file(
+                    path_or_fileobj=fp16,
+                    path_in_repo=f"{self.model_name}.fp16.gguf",
+                    repo_id=f"{self.username}/{self.model_name}-GGUF"
+                )
+            return
+            
         # Generate importance matrix if needed
-        imatrix_path = None
+        imatrix_path: Optional[str] = None
         if self.use_imatrix:
             train_data_path = self.train_data_file if self.train_data_file else "llama.cpp/groups_merged.txt"
             imatrix_path = str(Path(outdir)/"imatrix.dat")
@@ -531,7 +555,7 @@ This repository is licensed under the same terms as the original model.
         
         # Quantize model
         console.print("[bold green]Quantizing model...")
-        quantized_files = []
+        quantized_files: List[str] = []
         for method in self.quantization_methods:
             quantized_name = f"{self.model_name.lower()}-{method.lower()}"
             if self.use_imatrix:
@@ -539,7 +563,7 @@ This repository is licensed under the same terms as the original model.
             quantized_path = str(Path(outdir)/f"{quantized_name}.gguf")
             
             if self.use_imatrix:
-                quantize_cmd = [
+                quantize_cmd: List[str] = [
                     "./llama.cpp/build/bin/llama-quantize",
                     "--imatrix", imatrix_path,
                     fp16, quantized_path, method
@@ -600,11 +624,17 @@ app = CLI(
 @option("-s", "--split-model", help="Split the model into smaller chunks", is_flag=True)
 @option("--split-max-tensors", help="Maximum number of tensors per file when splitting", default=256)
 @option("--split-max-size", help="Maximum file size when splitting (e.g., '256M', '5G')", default=None)
-def convert_command(model_id: str, username: Optional[str] = None, 
-                   token: Optional[str] = None, quantization: str = "q4_k_m",
-                   use_imatrix: bool = False, train_data: Optional[str] = None,
-                   split_model: bool = False, split_max_tensors: int = 256,
-                   split_max_size: Optional[str] = None):
+def convert_command(
+    model_id: str,
+    username: Optional[str] = None,
+    token: Optional[str] = None,
+    quantization: str = "q4_k_m",
+    use_imatrix: bool = False,
+    train_data: Optional[str] = None,
+    split_model: bool = False,
+    split_max_tensors: int = 256,
+    split_max_size: Optional[str] = None
+) -> None:
     """
     Convert and quantize HuggingFace models to GGUF format! 🚀
     
@@ -644,7 +674,7 @@ def convert_command(model_id: str, username: Optional[str] = None,
         console.print(f"[red]Unexpected error: {str(e)}")
         sys.exit(1)
 
-def main():
+def main() -> None:
     """Fire up the GGUF converter! 🚀"""
     app.run()
 

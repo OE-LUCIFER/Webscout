@@ -267,7 +267,7 @@ class TypeGPT(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://chat.typegpt.net/api/openai/v1/chat/completions"
+        self.api_endpoint = "https://chat.typegpt.net/api/openai/typegpt/v1/chat/completions"
         self.timeout = timeout
         self.last_response = {}
         self.model = model

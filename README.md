@@ -827,7 +827,7 @@ Webscout provides tools to convert and quantize Hugging Face models into the GGU
 **Example:**
 
 ```python
-from webscout.Extra import gguf
+from webscout.Extra.gguf import ModelConverter
 """
 Valid quantization methods:
 "q2_k", "q3_k_l", "q3_k_m", "q3_k_s", 
@@ -835,12 +835,14 @@ Valid quantization methods:
 "q5_0", "q5_1", "q5_k_m", "q5_k_s", 
 "q6_k", "q8_0"
 """
-gguf.convert(
-    model_id="OEvortex/HelpingAI-Lite-1.5T",  # Replace with your model ID
-    username="Abhaykoul",  # Replace with your Hugging Face username
-    token="hf_token_write",  # Replace with your Hugging Face token
-    quantization_methods="q4_k_m"  # Optional, adjust quantization methods
+# Create a converter instance
+converter = ModelConverter(
+    model_id="prithivMLmods/QWQ-500M",
+    quantization_methods="q2_k"
 )
+
+# Run the conversion
+converter.convert()
 ```
 
 
@@ -849,9 +851,9 @@ gguf.convert(
 * **GGUF Conversion:**
 
    ```bash
-   python -m webscout.Extra.gguf -m "OEvortex/HelpingAI-Lite-1.5T" -u "your_username" -t "your_hf_token" -q "q4_k_m,q5_k_m" 
+    python -m webscout.Extra.gguf convert -m "prithivMLmods/QWQ-500M" -q "q2_k"
    ```
-   ```
+
 
 **Note:**
 
