@@ -79,6 +79,7 @@ from .copilot import *
 from .C4ai import *
 from .flowith import *
 from .sonus import *
+from .uncovr import *
 __all__ = [
     'LLAMA',
     'Flowith',
@@ -162,4 +163,5 @@ __all__ = [
     'FreeAIChat',
     'ElectronHub',
     'GithubChat',
+    'UncovrAI',
 ]
