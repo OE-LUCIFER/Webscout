@@ -124,10 +124,14 @@ class GliderAI(Provider):
                     if value.startswith("data: "):
                         try:
                             data = json.loads(value[6:])
-                            content = data['choices'][0].get('delta', {}).get("content", "")
-                            if content:
-                                streaming_text += content
-                                yield content if raw else {"text": content}
+                            # Handle both standard and DeepSeek response formats
+                            if "choices" in data and len(data["choices"]) > 0:
+                                choice = data["choices"][0]
+                                if "delta" in choice and "content" in choice["delta"]:
+                                    content = choice["delta"]["content"]
+                                    if content:
+                                        streaming_text += content
+                                        yield content if raw else {"text": content}
                         except json.JSONDecodeError:
                             if "stop" in value:
                                 break
