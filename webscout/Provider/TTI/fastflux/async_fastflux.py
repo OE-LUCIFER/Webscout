@@ -26,7 +26,6 @@ import aiofiles
 from webscout.AIbase import AsyncImageProvider
 from webscout.litagent import LitAgent
 
-
 class AsyncFastFluxImager(AsyncImageProvider):
     """Your go-to async provider for generating fire images with FastFlux! ⚡
 
@@ -55,7 +54,11 @@ class AsyncFastFluxImager(AsyncImageProvider):
         "sana_1_6b"        # SANA 1.6B model
     ]
     
-
+    AVAILABLE_SIZES = [
+        "1_1",
+        "16_9",
+        "4_3",
+    ]
 
     def __init__(self, timeout: int = 60, proxies: dict = None):
         """Initialize your async FastFluxImager provider with custom settings ⚙️
@@ -81,6 +84,7 @@ class AsyncFastFluxImager(AsyncImageProvider):
         self.proxies = proxies
         self.prompt: str = "AI-generated image - webscout"
         self.image_extension: str = "png"
+        self.logging = True
 
 
     async def generate(
