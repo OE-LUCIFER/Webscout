@@ -91,7 +91,6 @@ class FastFluxImager(ImageProvider):
         self.image_extension: str = "png"
         self.logging = True
 
-
     def generate(
         self,
         prompt: str,

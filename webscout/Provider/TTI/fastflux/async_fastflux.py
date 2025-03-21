@@ -26,7 +26,6 @@ import aiofiles
 from webscout.AIbase import AsyncImageProvider
 from webscout.litagent import LitAgent
 
-
 class AsyncFastFluxImager(AsyncImageProvider):
     """Your go-to async provider for generating fire images with FastFlux! ⚡
 
