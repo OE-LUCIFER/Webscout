@@ -4,8 +4,8 @@ ArtbitImager - Your go-to provider for generating fire images with Artbit! 🔥
 Examples:
     >>> from webscout import ArtbitImager
     >>> 
-    >>> # Initialize with logging
-    >>> provider = ArtbitImager(logging=True)
+    >>> # Initialize provider
+    >>> provider = ArtbitImager()
     >>> 
     >>> # Generate a single image
     >>> images = provider.generate("Cool art")
@@ -27,27 +27,19 @@ import os
 import requests
 from typing import List
 from webscout.AIbase import ImageProvider
-from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
-# Initialize our fire logger and agent 🔥
-logger = Logger(
-    "Artbit",
-    format=LogFormat.MODERN_EMOJI,
-
-)
 agent = LitAgent()
 
 class ArtbitImager(ImageProvider):
     """Your go-to provider for generating fire images with Artbit! 🔥"""
 
-    def __init__(self, timeout: int = 60, proxies: dict = {}, logging: bool = True):
+    def __init__(self, timeout: int = 60, proxies: dict = {}):
         """Initialize your Artbit provider with custom settings! ⚙️
 
         Args:
             timeout (int): Request timeout in seconds (default: 60)
             proxies (dict): Proxy settings for requests (default: {})
-            logging (bool): Enable fire logging (default: True)
         """
         self.url = "https://artbit.ai/api/generateImage"
         self.scraper = cloudscraper.create_scraper()
@@ -56,9 +48,6 @@ class ArtbitImager(ImageProvider):
         self.timeout = timeout
         self.prompt: str = "AI-generated image - webscout"
         self.image_extension: str = "png"
-        self.logging = logging
-        if self.logging:
-            logger.info("Artbit provider initialized! 🚀")
 
     def generate(
         self, 
@@ -87,9 +76,6 @@ class ArtbitImager(ImageProvider):
         self.prompt = prompt
         response: List[str] = []
 
-        if self.logging:
-            logger.info(f"Generating {amount} images with {caption_model}... 🎨")
-
         payload = {
             "captionInput": prompt,
             "captionModel": caption_model,
@@ -107,15 +93,8 @@ class ArtbitImager(ImageProvider):
             
             if imgs:
                 response.extend(imgs)
-                if self.logging:
-                    logger.success("Images generated successfully! 🎉")
-            else:
-                if self.logging:
-                    logger.warning("No images found in the response 😢")
 
         except requests.RequestException as e:
-            if self.logging:
-                logger.error(f"Failed to generate images: {e} 😢")
             raise
 
         return response
@@ -144,9 +123,6 @@ class ArtbitImager(ImageProvider):
         filenames = []
         count = 0
 
-        if self.logging:
-            logger.info(f"Saving {len(response)} images... 💾")
-
         for img_url in response:
             def complete_path():
                 count_value = "" if count == 0 else f"_{count}"
@@ -167,10 +143,6 @@ class ArtbitImager(ImageProvider):
                         fh.write(chunk)
 
             except requests.exceptions.RequestException as e:
-                if self.logging:
-                    logger.error(f"Failed to save image from {img_url}: {e} 😢")
                 raise
 
-        if self.logging:
-            logger.success(f"Images saved successfully! Check {dir} 🎉")
         return filenames

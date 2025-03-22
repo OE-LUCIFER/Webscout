@@ -80,8 +80,13 @@ from .C4ai import *
 from .flowith import *
 from .sonus import *
 from .uncovr import *
+from .labyrinth import *
+from .WebSim import *
+from .LambdaChat import *
+from .ChatGPTClone import *
 __all__ = [
     'LLAMA',
+    'LabyrinthAI',
     'Flowith',
     'C4ai',
     'Venice',
@@ -97,7 +102,7 @@ __all__ = [
     'IBMGranite',
     'QwenLM',
     'ChatGPTGratis',
-
+    'LambdaChat',
     'TextPollinationsAI',
     'GliderAI',
     'Cohere',
@@ -139,6 +144,7 @@ __all__ = [
     'SonusAI',
     'Cleeai',
     'Elmo',
+    'ChatGPTClone',
     'Free2GPT',
     'GPTWeb',
     'Netwrck',
@@ -164,4 +170,5 @@ __all__ = [
     'ElectronHub',
     'GithubChat',
     'UncovrAI',
+    'WebSim',
 ]

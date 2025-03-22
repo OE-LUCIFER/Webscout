@@ -8,10 +8,6 @@ import base64
 
 from webscout.AIbase import ImageProvider
 from webscout.litagent import LitAgent  # Import our fire user agent generator 🔥
-from webscout.Litlogger import Logger  # For that cyberpunk logging swag ⚡
-
-# Initialize our fire logger 🚀
-logger = Logger("FreeAIPlayground")
 
 class FreeAIImager(ImageProvider):
     """
@@ -48,7 +44,7 @@ class FreeAIImager(ImageProvider):
             "Accept": "application/json",
             "Accept-Language": "en-US,en;q=0.9",
             "Content-Type": "application/json",
-            "User-Agent": LitAgent().random(),  # Using our fire random agent! 🔥
+            "User-Agent": LitAgent().random(), 
             "Origin": "https://freeaichatplayground.com",
             "Referer": "https://freeaichatplayground.com/",
         }
@@ -59,9 +55,6 @@ class FreeAIImager(ImageProvider):
         self.model = model
         self.prompt: str = "AI-generated image - webscout"
         self.image_extension: str = "png"
-        self.logging = logging
-        if self.logging:
-            logger.info("FreeAIPlayground initialized! Ready to create some fire art! 🚀")
 
     def generate(
         self, prompt: str, amount: int = 1, additives: bool = True,
@@ -93,8 +86,6 @@ class FreeAIImager(ImageProvider):
             + choice(punctuation)
         )
 
-        if self.logging:
-            logger.info(f"Generating {amount} images... 🎨")
 
         self.prompt = prompt
         response = []
@@ -119,15 +110,8 @@ class FreeAIImager(ImageProvider):
                 img_resp = self.session.get(image_url, timeout=self.timeout)
                 img_resp.raise_for_status()
                 response.append(img_resp.content)
-                if self.logging:
-                    logger.success(f"Generated image {len(response)}/{amount}! 🎨")
             except Exception as e:
-                if self.logging:
-                    logger.error(f"Failed to generate image: {e} 😢")
-                raise
-
-        if self.logging:
-            logger.success("All images generated successfully! 🎉")
+                pass
         return response
 
     def save(
@@ -153,11 +137,6 @@ class FreeAIImager(ImageProvider):
 
         if not os.path.exists(dir):
             os.makedirs(dir)
-            if self.logging:
-                logger.info(f"Created directory: {dir} 📁")
-
-        if self.logging:
-            logger.info(f"Saving {len(response)} images... 💾")
 
         filenames = []
         count = 0
@@ -174,11 +153,6 @@ class FreeAIImager(ImageProvider):
 
             with open(absolute_path_to_file, "wb") as fh:
                 fh.write(image)
-            if self.logging:
-                logger.success(f"Saved image to: {absolute_path_to_file} 💾")
-
-        if self.logging:
-            logger.success(f"All images saved successfully! Check {dir} 🎉")
         return filenames
 
 
@@ -187,6 +161,6 @@ if __name__ == "__main__":
     try:
         resp = bot.generate("A shiny red sports car speeding down a scenic mountain road", 1)
         print(bot.save(resp))
-    except Exception as e:
-        if bot.logging:
-            logger.error(f"An error occurred: {e} 😢")
+    except Exception:
+        pass
+

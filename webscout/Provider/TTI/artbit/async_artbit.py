@@ -6,8 +6,8 @@ Examples:
     >>> import asyncio
     >>> 
     >>> async def example():
-    ...     # Initialize with logging
-    ...     provider = AsyncArtbitImager(logging=True)
+    ...     # Initialize provider
+    ...     provider = AsyncArtbitImager()
     ...     
     ...     # Generate a single image
     ...     images = await provider.generate("Cool art")
@@ -33,27 +33,19 @@ import asyncio
 import os
 from typing import List
 from webscout.AIbase import AsyncImageProvider
-from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent
 
-# Initialize our fire logger and agent 🔥
-logger = Logger(
-    "AsyncArtbit",
-    format=LogFormat.MODERN_EMOJI,
-
-)
 agent = LitAgent()
 
 class AsyncArtbitImager(AsyncImageProvider):
     """Your go-to async provider for generating fire images with Artbit! ⚡"""
 
-    def __init__(self, timeout: int = 60, proxies: dict = {}, logging: bool = True):
+    def __init__(self, timeout: int = 60, proxies: dict = {}):
         """Initialize your async Artbit provider with custom settings! ⚙️
 
         Args:
             timeout (int): Request timeout in seconds (default: 60)
             proxies (dict): Proxy settings for requests (default: {})
-            logging (bool): Enable fire logging (default: True)
         """
         self.url = "https://artbit.ai/api/generateImage"
         self.headers = {
@@ -65,9 +57,6 @@ class AsyncArtbitImager(AsyncImageProvider):
         self.proxies = proxies
         self.prompt: str = "AI-generated image - webscout"
         self.image_extension: str = "png"
-        self.logging = logging
-        if self.logging:
-            logger.info("AsyncArtbit provider initialized! 🚀")
 
     async def generate(
         self, 
@@ -96,9 +85,6 @@ class AsyncArtbitImager(AsyncImageProvider):
         self.prompt = prompt
         response: List[str] = []
 
-        if self.logging:
-            logger.info(f"Generating {amount} images with {caption_model}... 🎨")
-
         payload = {
             "captionInput": prompt,
             "captionModel": caption_model,
@@ -113,18 +99,10 @@ class AsyncArtbitImager(AsyncImageProvider):
                     resp.raise_for_status()
                     response_data = await resp.json()
                     imgs = response_data.get("imgs", [])
-                    
                     if imgs:
                         response.extend(imgs)
-                        if self.logging:
-                            logger.success("Images generated successfully! 🎉")
-                    else:
-                        if self.logging:
-                            logger.warning("No images found in the response 😢")
 
         except aiohttp.ClientError as e:
-            if self.logging:
-                logger.error(f"Failed to generate images: {e} 😢")
             raise
 
         return response
@@ -153,9 +131,6 @@ class AsyncArtbitImager(AsyncImageProvider):
         filenames = []
         count = 0
 
-        if self.logging:
-            logger.info(f"Saving {len(response)} images... 💾")
-
         async with aiohttp.ClientSession(headers=self.headers) as session:
             for img_url in response:
                 def complete_path():
@@ -175,10 +150,6 @@ class AsyncArtbitImager(AsyncImageProvider):
                             await fh.write(await resp.read())
 
                 except aiohttp.ClientError as e:
-                    if self.logging:
-                        logger.error(f"Failed to save image from {img_url}: {e} 😢")
                     raise
 
-        if self.logging:
-            logger.success(f"Images saved successfully! Check {dir} 🎉")
         return filenames

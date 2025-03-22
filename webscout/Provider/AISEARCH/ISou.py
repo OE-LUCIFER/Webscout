@@ -65,7 +65,6 @@ class Isou(AISearch):
         timeout: int = 120,
         proxies: Optional[dict] = None,
         model: str = "siliconflow:deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
-        logging: bool = False
     ):
         """Initialize the Isou API client.
         
@@ -73,7 +72,6 @@ class Isou(AISearch):
             timeout (int, optional): Request timeout in seconds. Defaults to 120.
             proxies (dict, optional): Proxy configuration for requests. Defaults to None.
             model (str, optional): Model to use for search. Defaults to DeepSeek-R1.
-            logging (bool, optional): Enable logging. Defaults to False.
         """
         self.available_models = [
             "siliconflow:deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
@@ -114,24 +112,6 @@ class Isou(AISearch):
         }
         self.session.headers.update(self.headers)
         self.proxies = proxies
-
-        # Initialize logger if enabled
-        if logging:
-            from webscout.Litlogger import Logger, LogFormat, ConsoleHandler
-            from webscout.Litlogger.core.level import LogLevel
-            
-            console_handler = ConsoleHandler(
-                level=LogLevel.DEBUG,
-            )
-            
-            self.logger = Logger(
-                name="Isou",                
-                level=LogLevel.DEBUG,
-                handlers=[console_handler]
-            )
-            self.logger.info("Isou initialized successfully ✨")
-        else:
-            self.logger = None
 
     def search(
         self,
@@ -268,7 +248,6 @@ if __name__ == "__main__":
     # Initialize with specific model and logging
     ai = Isou(
         model="siliconflow:deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
-        logging=False
     )
     
     response = ai.search(input(">>> "), stream=True, raw=False)
