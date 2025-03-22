@@ -103,14 +103,20 @@ class AsyncFreeAIImager(AsyncImageProvider):
                         async with session.post(self.image_gen_endpoint, json=payload) as resp:
                             resp.raise_for_status()
                             data = await resp.json()
-                            image_url = data['data'][0]['url']
-                            
-                            async with session.get(image_url) as img_resp:
-                                img_resp.raise_for_status()
-                                image_bytes = await img_resp.read()
-                                response.append(image_bytes)
-                            break
+                            if 'data' in data and len(data['data']) > 0:
+                                image_url = data['data'][0]['url']
+                                
+                                async with session.get(image_url) as img_resp:
+                                    img_resp.raise_for_status()
+                                    image_bytes = await img_resp.read()
+                                    response.append(image_bytes)
+                                break
+                            else:
+                                print(f"Warning: No image data in response: {data}")
+                                if attempt == max_retries - 1:
+                                    raise Exception("No image data received after all retries")
                     except Exception as e:
+                        print(f"Error generating image (attempt {attempt + 1}/{max_retries}): {str(e)}")
                         if attempt == max_retries - 1:
                             raise
                         await asyncio.sleep(retry_delay)

@@ -59,7 +59,7 @@ class FreeAIImager(ImageProvider):
     def generate(
         self, prompt: str, amount: int = 1, additives: bool = True,
         size: str = "1024x1024", quality: str = "standard",
-        style: str = "vivid"
+        style: str = "vivid", max_retries: int = 3, retry_delay: int = 5
     ) -> List[bytes]:
         """Generate some fire images from your prompt! 🎨
 
@@ -70,6 +70,8 @@ class FreeAIImager(ImageProvider):
             size (str): Image size (1024x1024, 1024x1792, 1792x1024)
             quality (str): Image quality (standard, hd)
             style (str): Image style (vivid, natural)
+            max_retries (int): Max retry attempts if generation fails
+            retry_delay (int): Delay between retries in seconds
 
         Returns:
             List[bytes]: Your generated images as bytes
@@ -86,7 +88,6 @@ class FreeAIImager(ImageProvider):
             + choice(punctuation)
         )
 
-
         self.prompt = prompt
         response = []
         for _ in range(amount):
@@ -98,20 +99,33 @@ class FreeAIImager(ImageProvider):
                 "quality": quality,
                 "style": style
             }
-            try:
-                resp = self.session.post(
-                    url=self.image_gen_endpoint,
-                    json=payload,
-                    timeout=self.timeout
-                )
-                resp.raise_for_status()
-                image_url = resp.json()['data'][0]['url']
-                # Get the image data from the URL
-                img_resp = self.session.get(image_url, timeout=self.timeout)
-                img_resp.raise_for_status()
-                response.append(img_resp.content)
-            except Exception as e:
-                pass
+            
+            for attempt in range(max_retries):
+                try:
+                    resp = self.session.post(
+                        url=self.image_gen_endpoint,
+                        json=payload,
+                        timeout=self.timeout
+                    )
+                    resp.raise_for_status()
+                    response_data = resp.json()
+                    if 'data' in response_data and len(response_data['data']) > 0:
+                        image_url = response_data['data'][0]['url']
+                        # Get the image data from the URL
+                        img_resp = self.session.get(image_url, timeout=self.timeout)
+                        img_resp.raise_for_status()
+                        response.append(img_resp.content)
+                        break
+                    else:
+                        print(f"Warning: No image data in response: {response_data}")
+                        if attempt == max_retries - 1:
+                            raise Exception("No image data received after all retries")
+                except Exception as e:
+                    print(f"Error generating image (attempt {attempt + 1}/{max_retries}): {str(e)}")
+                    if attempt == max_retries - 1:
+                        raise
+                    import time
+                    time.sleep(retry_delay)
         return response
 
     def save(
