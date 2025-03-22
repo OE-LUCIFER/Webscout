@@ -109,6 +109,17 @@ class Flowith(Provider):
 
         return text.strip()
 
+    def decode_response(self, content):
+        """Try to decode the response content using multiple encodings."""
+        encodings = ['utf-8', 'latin1', 'iso-8859-1', 'cp1252']
+        for encoding in encodings:
+            try:
+                return content.decode(encoding)
+            except UnicodeDecodeError:
+                continue
+        # If all encodings fail, try to decode with 'latin1' as it can decode any byte
+        return content.decode('latin1')
+
     def ask(
         self,
         prompt: str,
@@ -143,8 +154,8 @@ class Flowith(Provider):
                     f"Request failed with status code {response.status_code}"
                 )
             
-            # Get the response text directly
-            response_text = response.text.strip()
+            # Get the response text using our multi-encoding decoder
+            response_text = self.decode_response(response.content).strip()
             
             # Clean the response
             cleaned_text = self.clean_response(response_text)

@@ -37,7 +37,7 @@ class AllenAI(Provider):
         history_offset: int = 10250,
         act: str = None,
         model: str = "tulu3-405b",
-        system_prompt: str = "You are a helpful AI assistant.",
+
     ):
         """Initializes the AllenAI API client."""
         if model not in self.AVAILABLE_MODELS:
@@ -68,7 +68,6 @@ class AllenAI(Provider):
         self.session.headers.update(self.headers)
         self.session.proxies.update(proxies)
         self.model = model
-        self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.timeout = timeout
@@ -95,19 +94,6 @@ class AllenAI(Provider):
         )
         self.conversation.history_offset = history_offset
 
-    def format_prompt(self, messages):
-        """Format messages into a prompt string"""
-        formatted = []
-        for msg in messages:
-            role = msg.get("role", "")
-            content = msg.get("content", "")
-            if role == "system":
-                formatted.append(f"System: {content}")
-            elif role == "user":
-                formatted.append(f"User: {content}")
-            elif role == "assistant":
-                formatted.append(f"Assistant: {content}")
-        return "\n".join(formatted)
 
     def ask(
         self,
@@ -139,11 +125,8 @@ class AllenAI(Provider):
             "x-anonymous-user-id": self.x_anonymous_user_id
         })
         
-        # Format messages for AllenAI
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": conversation_prompt}
-        ]
+
+        messages = conversation_prompt
         
         # Build multipart form data
         form_data = [
@@ -154,7 +137,7 @@ class AllenAI(Provider):
             f'Content-Disposition: form-data; name="host"\r\n\r\n{host}\r\n',
             
             f'--{boundary}\r\n'
-            f'Content-Disposition: form-data; name="content"\r\n\r\n{self.format_prompt(messages)}\r\n',
+            f'Content-Disposition: form-data; name="content"\r\n\r\n{messages}\r\n',
             
             f'--{boundary}\r\n'
             f'Content-Disposition: form-data; name="private"\r\n\r\n{str(private).lower()}\r\n'
