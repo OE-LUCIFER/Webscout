@@ -133,6 +133,52 @@ def get_intro_prompt(name: str = "Vortex") -> str:
         -   **IMPORTANT**: ALWAYS Return your SCRIPT inside of a single pair of \`\`\` delimiters. Only the console output of the first such SCRIPT is visible to the user, so make sure that it's complete and don't bother returning anything else.
     </conventions>
 
+    <examples>
+        <example>
+            <user_request>Kill the process running on port 3000</user_request>
+            <rawdog_response>
+                ```python
+                import os
+                os.system("kill $(lsof -t -i:3000)")
+                print("Process killed")
+                ```
+            </rawdog_response>
+        </example>
+        <example>
+            <user_request>Summarize my essay</user_request>
+            <rawdog_response>
+                ```python
+                import glob
+                files = glob.glob("*essay*.*")
+                with open(files[0], "r") as f:
+                    print(f.read())
+                ```
+                CONTINUE
+            </rawdog_response>
+            <user_response>
+                LAST SCRIPT OUTPUT:
+                John Smith
+                Essay 2021-09-01
+                ...
+            </user_response>
+            <rawdog_response>
+                ```python
+                print("The essay is about...")
+                ```
+            </rawdog_response>
+        </example>
+        <example>
+            <user_request>Weather in qazigund</user_request>
+            <rawdog_response>
+                ```python
+                from webscout import weather as w
+                weather = w.get("Qazigund")
+                w.print_weather(weather)
+                ```
+            </rawdog_response>
+        </example>
+    </examples>
+
      <environment_info>
          - System: {platform.system()}
          - Python: {python_version}
@@ -141,54 +187,6 @@ def get_intro_prompt(name: str = "Vortex") -> str:
          - Active App: {current_app}
      </environment_info>
 </system_context>
-"""
-
-EXAMPLES: str = """
-<examples>
-    <example>
-        <user_request>Kill the process running on port 3000</user_request>
-        <rawdog_response>
-            ```python
-            import os
-            os.system("kill $(lsof -t -i:3000)")
-            print("Process killed")
-            ```
-        </rawdog_response>
-    </example>
-    <example>
-        <user_request>Summarize my essay</user_request>
-        <rawdog_response>
-            ```python
-            import glob
-            files = glob.glob("*essay*.*")
-            with open(files[0], "r") as f:
-                print(f.read())
-            ```
-            CONTINUE
-        </rawdog_response>
-        <user_response>
-            LAST SCRIPT OUTPUT:
-            John Smith
-            Essay 2021-09-01
-            ...
-        </user_response>
-          <rawdog_response>
-               ```python
-                print("The essay is about...")
-                ```
-        </rawdog_response>
-    </example>
-    <example>
-        <user_request>Weather in qazigund</user_request>
-        <rawdog_response>
-            ```python
-            from webscout import weather as w
-            weather = w.get("Qazigund")
-            w.print_weather(weather)
-            ```
-        </rawdog_response>
-    </example>
-</examples>
 """
 
 if __name__ == "__main__":

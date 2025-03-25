@@ -1,6 +1,6 @@
 import os
 import json
-from typing import Optional
+from typing import Optional, Union, Generator
 import uuid
 import requests
 import cloudscraper
@@ -118,7 +118,9 @@ class LearnFast(Provider):
         """
         payload = {
             "prompt": conversation_prompt,
+            "firstQuestionFlag": True,
             "sessionId": session_id,
+            "attachments": []
         }
         if image_url:
             payload["attachments"] = [
@@ -138,7 +140,7 @@ class LearnFast(Provider):
         optimizer: str = None,
         conversationally: bool = False,
         image_path: Optional[str] = None,
-    ) -> dict:
+    ) -> Union[dict, Generator[dict, None, None]]:
         """Chat with LearnFast
 
         Args:
@@ -151,7 +153,7 @@ class LearnFast(Provider):
                                                  Defaults to None.
 
         Returns:
-           dict : {}
+           Union[dict, Generator[dict, None, None]]: Response generated
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -194,20 +196,24 @@ class LearnFast(Provider):
             full_response = ""
             for line in response.iter_lines(decode_unicode=True):
                 if line:
-                    if line.strip() == "[DONE]":
+                    line = line.strip()
+                    if line == "[DONE]":
                         break
                     try:
                         json_response = json.loads(line)
-                        message = json_response.get('data', {}).get('message', '')
-                        if message:
-                            full_response += message
-                            # print(message, end='', flush=True)
+                        if json_response.get('code') == 200 and json_response.get('data'):
+                            message = json_response['data'].get('message', '')
+                            if message:
+                                full_response += message
+                                if stream:
+                                    yield {"text": message}
                     except json.JSONDecodeError:
-                        print(f"\nFailed to parse JSON: {line}")
+                        pass
             self.last_response.update({"text": full_response})
             self.conversation.update_chat_history(prompt, full_response)
 
-            return self.last_response
+            if not stream:
+                return self.last_response
         except requests.exceptions.RequestException as e:
             raise exceptions.FailedToGenerateResponseError(f"An error occurred: {e}")
 
@@ -218,7 +224,7 @@ class LearnFast(Provider):
         optimizer: str = None,
         conversationally: bool = False,
         image_path: Optional[str] = None,
-    ) -> str:
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
             prompt (str): Prompt to be send.
@@ -228,10 +234,17 @@ class LearnFast(Provider):
             image_path (Optional[str], optional): Path to the image to be uploaded.
                                                  Defaults to None.
         Returns:
-            str: Response generated
+            Union[str, Generator[str, None, None]]: Response generated
         """
-        response = self.ask(prompt, stream, optimizer=optimizer, conversationally=conversationally, image_path=image_path)
-        return self.get_message(response)
+        try:
+            response = self.ask(prompt, stream, optimizer=optimizer, conversationally=conversationally, image_path=image_path)
+            if stream:
+                for chunk in response:
+                    yield chunk["text"]
+            else:
+                return str(response)
+        except Exception as e:
+            return f"Error: {str(e)}"
 
     def get_message(self, response: dict) -> str:
         """Retrieves message only from response
@@ -248,6 +261,6 @@ class LearnFast(Provider):
 if __name__ == "__main__":
     from rich import print
     ai = LearnFast()
-    response = ai.chat(input(">>> "), image_path=None)
+    response = ai.chat(input(">>> "), stream=True)
     for chunk in response:
         print(chunk, end="", flush=True)
