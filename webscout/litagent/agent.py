@@ -340,21 +340,26 @@ class LitAgent:
         Returns:
             Dictionary with fingerprinting headers
         """
-        browser = browser.lower() if browser else random.choice(list(BROWSERS.keys()))
-        if browser not in BROWSERS:
-            browser = 'chrome'
-            
-        version = random.randint(*BROWSERS[browser])
-        user_agent = self.custom(browser=browser, version=str(version))
+        # Get a random user agent using the random() method
+        user_agent = self.random()
+        
+        # If browser is specified, try to get a matching one
+        if browser:
+            browser = browser.lower()
+            if browser in BROWSERS:
+                user_agent = self.browser(browser)
         
         accept_language = random.choice(FINGERPRINTS["accept_language"])
         accept = random.choice(FINGERPRINTS["accept"])
         platform = random.choice(FINGERPRINTS["platforms"])
         
-        # Generate sec-ch-ua
+        # Generate sec-ch-ua based on the user agent
         sec_ch_ua = ""
-        if browser in FINGERPRINTS["sec_ch_ua"]:
-            sec_ch_ua = FINGERPRINTS["sec_ch_ua"][browser].format(version, version)
+        for browser_name in FINGERPRINTS["sec_ch_ua"]:
+            if browser_name in user_agent.lower():
+                version = random.randint(*BROWSERS[browser_name])
+                sec_ch_ua = FINGERPRINTS["sec_ch_ua"][browser_name].format(version, version)
+                break
         
         fingerprint = {
             "user_agent": user_agent,
