@@ -1,4 +1,3 @@
-
 from os import path
 from json import load, dumps
 import warnings
@@ -8,9 +7,6 @@ from typing import Any, Dict
 from ..AIutel import Optimizers, Conversation, AwesomePrompts, sanitize_stream
 from ..AIbase import Provider, AsyncProvider
 from ..Bard import Chatbot, Model
-
-# Import Logger and related classes (assumed similar to what is in yep.py)
-from webscout.Litlogger import Logger, LogFormat
 
 warnings.simplefilter("ignore", category=UserWarning)
 
@@ -22,6 +18,7 @@ MODEL_ALIASES: Dict[str, Model] = {
     "thinking": Model.G_2_0_FLASH_THINKING,
     "thinking-with-apps": Model.G_2_0_FLASH_THINKING_WITH_APPS,
     "exp-advanced": Model.G_2_0_EXP_ADVANCED,
+    "2.5-exp-advanced": Model.G_2_5_EXP_ADVANCED,
     "1.5-flash": Model.G_1_5_FLASH,
     "1.5-pro": Model.G_1_5_PRO,
     "1.5-pro-research": Model.G_1_5_PRO_RESEARCH,
@@ -34,27 +31,22 @@ class GEMINI(Provider):
     def __init__(
         self,
         cookie_file: str,
-        model,  # Accepts either a Model enum or a str alias.
+        model: str = "flash",  # Accepts either a Model enum or a str alias.
         proxy: dict = {},
         timeout: int = 30,
-        logging: bool = False  # Flag to enable Logger debugging.
     ):
         """
-        Initializes GEMINI with model support and optional debugging.
+        Initializes GEMINI with model support.
 
         Args:
             cookie_file (str): Path to the cookies JSON file.
             model (Model or str): Selected model for the session. Can be a Model enum
                 or a string alias. Available aliases: flash, flash-exp, thinking, thinking-with-apps,
-                exp-advanced, 1.5-flash, 1.5-pro, 1.5-pro-research.
+                exp-advanced, 2.5-exp-advanced, 2.5-pro, 1.5-flash, 1.5-pro, 1.5-pro-research.
             proxy (dict, optional): HTTP request proxy. Defaults to {}.
             timeout (int, optional): HTTP request timeout in seconds. Defaults to 30.
-            logging (bool, optional): Flag to enable Logger debugging. Defaults to False.
         """
         self.conversation = Conversation(False)
-
-        # Initialize Logger only if logging is enabled; otherwise, set to None.
-        self.logger = Logger(name="GEMINI", format=LogFormat.MODERN_EMOJI) if logging else None
 
         # Ensure cookie_file existence.
         if not isinstance(cookie_file, str):
@@ -80,8 +72,6 @@ class GEMINI(Provider):
         self.__available_optimizers = (
             method for method in dir(Optimizers) if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        if self.logger:
-            self.logger.debug("GEMINI initialized with model: {}".format(selected_model.model_name))
         # Store cookies from Chatbot for later use (e.g. image generation)
         self.session_auth1 = self.session.secure_1psid
         self.session_auth2 = self.session.secure_1psidts
@@ -126,8 +116,6 @@ class GEMINI(Provider):
                 pass
             return self.last_response
 
-        if self.logger:
-            self.logger.debug(f"Request sent: {prompt}")
         return for_stream() if stream else for_non_stream()
 
     def chat(
@@ -175,5 +163,3 @@ class GEMINI(Provider):
         self.session.async_chatbot.conversation_id = ""
         self.session.async_chatbot.response_id = ""
         self.session.async_chatbot.choice_id = ""
-        if self.logger:
-            self.logger.debug("Conversation reset")
