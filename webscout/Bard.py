@@ -47,9 +47,7 @@ class Headers(Enum):
     ROTATE_COOKIES = {
         "Content-Type": "application/json",
     }
-    UPLOAD = {
-        "Push-ID": "feeds/mcudyrk2a4khkz",
-    }
+    UPLOAD = {"Push-ID": "feeds/mcudyrk2a4khkz"}
 
 class Model(Enum):
     UNSPECIFIED = ("unspecified", {}, False)
@@ -72,40 +70,45 @@ class Model(Enum):
         "gemini-2.0-flash-thinking-with-apps",
         {"x-goog-ext-525001261-jspb": '[null,null,null,null,"f8f8f5ea629f5d37"]'},
         False,
-    )
+    )  # Deprecated, should be removed in the future
     G_2_0_EXP_ADVANCED = (
         "gemini-2.0-exp-advanced",
         {"x-goog-ext-525001261-jspb": '[null,null,null,null,"b1e46a6037e6aa9f"]'},
+        True,
+    )
+    G_2_5_EXP_ADVANCED = (
+        "gemini-2.5-exp-advanced",
+        {"x-goog-ext-525001261-jspb": '[null,null,null,null,"203e6bb81620bcfe"]'},
         True,
     )
     G_1_5_FLASH = (
         "gemini-1.5-flash",
         {"x-goog-ext-525001261-jspb": '[null,null,null,null,"418ab5ea040b5c43"]'},
         False,
-    )
+    )  # Deprecated, should be removed in the future
     G_1_5_PRO = (
         "gemini-1.5-pro",
         {"x-goog-ext-525001261-jspb": '[null,null,null,null,"9d60dfae93c9ff1f"]'},
         True,
-    )
+    )  # Deprecated, should be removed in the future
     G_1_5_PRO_RESEARCH = (
         "gemini-1.5-pro-research",
         {"x-goog-ext-525001261-jspb": '[null,null,null,null,"e5a44cb1dae2b489"]'},
         True,
-    )
+    )  # Deprecated, should be removed in the future
 
-    def __init__(self, name: str, header: dict, advanced_only: bool):
+    def __init__(self, name, header, advanced_only):
         self.model_name = name
         self.model_header = header
         self.advanced_only = advanced_only
 
     @classmethod
-    def from_name(cls, name: str) -> "Model":
+    def from_name(cls, name: str):
         for model in cls:
             if model.model_name == name:
                 return model
         raise ValueError(
-            f"Unknown model name: {name}. Available models: {', '.join([m.model_name for m in cls])}"
+            f"Unknown model name: {name}. Available models: {', '.join([model.model_name for model in cls])}"
         )
 
 async def upload_file(file: Union[bytes, str, Path], proxy: Optional[str] = None) -> str:
