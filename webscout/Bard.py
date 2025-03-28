@@ -499,7 +499,7 @@ if __name__ == "__main__":
     - Demonstrates saving a conversation.
     """
     # Define the path to cookies file
-    cookies_file = r"C:\Users\hp\Desktop\Webscout\cookies.json"
+    cookies_file = r"cookies.json"
     
     # Create Chatbot instance with a chosen model
     try:

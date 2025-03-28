@@ -14,6 +14,7 @@ Welcome to WebScout's Text-to-Image providers - your ultimate collection of AI a
 * **[PiclumenImager](piclumen/README.md):** Professional photorealistic image generation with advanced concurrent processing, optimized for macro photography, underwater scenes, and architectural visualization
 * **[MagicStudio](MagicStudio/README.md):** Generate amazing images with MagicStudio's AI art generator! 🚀
 * **[FastFlux](fastflux/README.md):** Generate amazing images with FastFlux's AI art generator! 🚀
+* **[ImgSys](ImgSys/README.md):** Multi-provider image generation that creates 2 unique images from random AI models for each prompt, with comprehensive error handling and async support 🎨
 
 ## 🚀 Features
 
