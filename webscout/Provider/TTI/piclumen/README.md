@@ -125,6 +125,7 @@ except Exception as e:
 ## 🎯 Image Quality Specializations
 
 PiclumenImager excels in generating:
+
 - Photorealistic images with accurate lighting and shadows
 - Detailed textures and material representations
 - Complex underwater and nature scenes
@@ -142,6 +143,7 @@ PiclumenImager excels in generating:
 ## 💡 Optimization Tips
 
 For optimal results:
+
 1. Provide detailed, specific prompts
 2. Include lighting and environment details
 3. Reference professional photography styles
@@ -157,4 +159,3 @@ For optimal results:
 - Implements automatic error recovery
 - Handles concurrent image generation
 - Supports both sync and async workflows
-

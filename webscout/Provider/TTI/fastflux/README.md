@@ -70,8 +70,6 @@ asyncio.run(generate_images())
 - `flux_1_dev` - Developer model with detailed outputs
 - `sana_1_6b` - SANA 1.6B model for specialized images
 
-
-
 ## ⚙️ Configuration
 
 ```python

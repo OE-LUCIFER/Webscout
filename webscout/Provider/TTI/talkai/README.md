@@ -1,6 +1,6 @@
 # 🎨 TalkaiImager - Fire AI Art Generator! 🔥
 
-Yo fam! Welcome to TalkaiImager - your go-to provider for creating some absolutely fire AI art! 🎨 
+Yo fam! Welcome to TalkaiImager - your go-to provider for creating some absolutely fire AI art! 🎨
 
 ## 🚀 Features
 

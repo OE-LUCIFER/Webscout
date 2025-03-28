@@ -3,6 +3,7 @@
 Yo fam! This is the AiForce provider for generating some fire images! Part of the HelpingAI squad! 👑
 
 ## Features 💪
+
 - Both sync and async support ⚡
 - 12 fire models to choose from 🎨
 - Smart retry mechanism 🔄
@@ -14,6 +15,7 @@ Yo fam! This is the AiForce provider for generating some fire images! Part of th
 ## Quick Start 🚀
 
 ### Installation 📦
+
 ```bash
 pip install webscout
 ```
@@ -60,6 +62,7 @@ asyncio.run(generate())
 ## Advanced Examples 🔥
 
 ### Custom Settings 🛠️
+
 ```python
 provider = AiForceimager(
     timeout=120,  # Longer timeout
@@ -70,6 +73,7 @@ provider = AiForceimager(
 ```
 
 ### Multiple Images with Custom Size 📸
+
 ```python
 images = provider.generate(
     prompt="A shiny red sports car",
@@ -82,6 +86,7 @@ images = provider.generate(
 ```
 
 ### Custom Save Options 💾
+
 ```python
 paths = provider.save(
     images,
@@ -92,6 +97,7 @@ paths = provider.save(
 ```
 
 ### Async with Error Handling ⚡
+
 ```python
 async def generate_safely():
     provider = AsyncAiForceimager()
@@ -121,12 +127,14 @@ asyncio.run(generate_safely())
 ## Error Handling 🛡️
 
 The provider handles common errors:
+
 - Network issues
 - API timeouts
 - Invalid inputs
 - File saving errors
 
 Example with retry:
+
 ```python
 provider = AiForceimager()
 try:
@@ -142,6 +150,7 @@ except Exception as e:
 ## Contributing 🤝
 
 Pull up to the squad! We're always looking for improvements:
+
 1. Fork it
 2. Create your feature branch
 3. Push your changes

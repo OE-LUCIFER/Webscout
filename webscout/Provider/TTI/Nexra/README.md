@@ -3,6 +3,7 @@
 Yo fam! This is the Nexra provider for generating some fire images! Part of the HelpingAI squad! 👑
 
 ## Features 💪
+
 - Standard & Prodia models ⚡
 - 19+ fire models to choose from 🎨
 - Smart retry mechanism 🔄
@@ -14,6 +15,7 @@ Yo fam! This is the Nexra provider for generating some fire images! Part of the 
 ## Quick Start 🚀
 
 ### Installation 📦
+
 ```bash
 pip install webscout
 ```
@@ -40,6 +42,7 @@ paths = provider.save(images)
 ## Available Models 🎭
 
 ### Standard Models 🌟
+
 | Model | Description | Best For |
 |-------|-------------|----------|
 | `emi` | Eminent AI model | General purpose |
@@ -53,6 +56,7 @@ paths = provider.save(images)
 | `midjourney` | MJ style | Artistic images |
 
 ### Prodia Models 🚀
+
 | Model | Description |
 |-------|-------------|
 | `dreamshaperXL10_alpha2` | Dreamlike creations |
@@ -69,6 +73,7 @@ paths = provider.save(images)
 ## Advanced Examples 🔥
 
 ### Custom Settings 🛠️
+
 ```python
 provider = NexraImager(
     timeout=120,  # Longer timeout
@@ -79,6 +84,7 @@ provider = NexraImager(
 ```
 
 ### Prodia Model with Custom Params 📸
+
 ```python
 images = provider.generate(
     prompt="A shiny red sports car",
@@ -95,6 +101,7 @@ images = provider.generate(
 ```
 
 ### Custom Save Options 💾
+
 ```python
 paths = provider.save(
     images,
@@ -105,6 +112,7 @@ paths = provider.save(
 ```
 
 ### Error Handling 🛡️
+
 ```python
 try:
     images = provider.generate(
@@ -130,6 +138,7 @@ except Exception as e:
 ## Error Handling 🛡️
 
 The provider handles common errors:
+
 - Network issues
 - JSON parsing errors
 - API timeouts
@@ -139,6 +148,7 @@ The provider handles common errors:
 ## Contributing 🤝
 
 Pull up to the squad! We're always looking for improvements:
+
 1. Fork it
 2. Create your feature branch
 3. Push your changes
