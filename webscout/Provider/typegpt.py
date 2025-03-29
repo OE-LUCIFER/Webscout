@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Union, *
+from typing import Union, Any, Dict, Generator
 import requests.exceptions
 
 from webscout.AIutel import Optimizers
