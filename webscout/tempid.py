@@ -1,6 +1,6 @@
 import aiohttp
 from dataclasses import dataclass
-from typing import NoReturn, List, Dict, Any
+from typing import NoReturn, List, Dict, Any, Optional
 import requests
 
 @dataclass
@@ -19,15 +19,15 @@ class CreateEmailResponseModel:
 
 @dataclass
 class MessageResponseModel:
-    attachments: list | None
-    body_html: str | None
-    body_text: str | None
-    cc: str | None
+    attachments: Optional[List[Any]]
+    body_html: Optional[str]
+    body_text: Optional[str]
+    cc: Optional[str]
     created_at: str
-    email_from: str | None
+    email_from: Optional[str]
     id: str
-    subject: str | None
-    email_to: str | None
+    subject: Optional[str]
+    email_to: Optional[str]
 
 
 class TempMail:
