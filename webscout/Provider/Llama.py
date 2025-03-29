@@ -1,6 +1,4 @@
-
 import requests
-
 import json
 
 from webscout.AIutel import Optimizers
@@ -8,7 +6,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from typing import Any, AsyncGenerator, Dict, Union
 
 
 class LLAMA(Provider):
@@ -74,7 +72,7 @@ class LLAMA(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict | AsyncGenerator:
+    ) -> Union[dict, AsyncGenerator]:
         """Chat with AI
 
         Args:
@@ -152,7 +150,7 @@ class LLAMA(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | AsyncGenerator:
+    ) -> Union[str, AsyncGenerator]:
         """Generate response `str`
         Args:
             prompt (str): Prompt to be send.
