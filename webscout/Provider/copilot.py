@@ -142,11 +142,12 @@ class Copilot(Provider):
                         try:
                             self._access_token, self._cookies = readHAR(self.url)
                         except NoValidHarFileError as h:
+                            # print(f"Copilot: {h}")
                             if has_nodriver:
                                 yield {"type": "login", "provider": self.label, "url": os.environ.get("webscout_login", "")}
                                 self._access_token, self._cookies = asyncio.run(get_access_token_and_cookies(self.url, self.proxies.get("https")))
                             else:
-                                raise Exception("nodriver package is required for image uploads. Install it with: pip install nodriver")
+                                raise h
                     websocket_url = f"{websocket_url}&accessToken={quote(self._access_token)}"
                     headers = {"authorization": f"Bearer {self._access_token}"}
 
@@ -168,6 +169,7 @@ class Copilot(Provider):
                     user = response.json().get('firstName')
                     if user is None:
                         self._access_token = None
+                    # print(f"Copilot: User: {user or 'null'}")
 
                     # Create or use existing conversation
                     conversation = kwargs.get("conversation", None)
@@ -179,12 +181,14 @@ class Copilot(Provider):
                         conversation = CopilotConversation(conversation_id)
                         if kwargs.get("return_conversation", False):
                             yield conversation
+                        # print(f"Copilot: Created conversation: {conversation_id}")
                     else:
                         conversation_id = conversation.conversation_id
+                        # print(f"Copilot: Use conversation: {conversation_id}")
 
                     # Handle image uploads if any
                     uploaded_images = []
-                    if images is not None and has_nodriver:
+                    if images is not None:
                         for image, _ in images:
                             # Convert image to bytes if needed
                             if isinstance(image, str):
@@ -194,64 +198,100 @@ class Copilot(Provider):
                                     data = base64.b64decode(encoded)
                                 else:
                                     # File path or URL
-                                    try:
-                                        with open(image, "rb") as f:
-                                            data = f.read()
-                                    except FileNotFoundError:
-                                        response = requests.get(image)
-                                        if response.status_code != 200:
-                                            raise Exception(f"Failed to download image from URL: {image}")
-                                        data = response.content
+                                    with open(image, "rb") as f:
+                                        data = f.read()
                             else:
                                 data = image
-
-                            # Upload image
+                                
+                            # Get content type
+                            content_type = "image/jpeg"  # Default
+                            if data[:2] == b'\xff\xd8':
+                                content_type = "image/jpeg"
+                            elif data[:8] == b'\x89PNG\r\n\x1a\n':
+                                content_type = "image/png"
+                            elif data[:6] in (b'GIF87a', b'GIF89a'):
+                                content_type = "image/gif"
+                            elif data[:2] in (b'BM', b'BA'):
+                                content_type = "image/bmp"
+                            
                             response = session.post(
-                                f"{self.url}/c/api/images",
-                                files={"file": ("image.png", data, "image/png")},
-                                headers={"authorization": f"Bearer {self._access_token}"}
+                                f"{self.url}/c/api/attachments",
+                                headers={"content-type": content_type},
+                                data=data
                             )
                             if response.status_code != 200:
-                                raise exceptions.APIConnectionError(f"Failed to upload image: {response.text}")
-                            uploaded_images.append(response.json().get("id"))
+                                raise exceptions.APIConnectionError(f"Status {response.status_code}: {response.text}")
+                            uploaded_images.append({"type":"image", "url": response.json().get("url")})
+                            break
 
-                    # Send message
-                    payload = {
+                    # Connect to WebSocket
+                    wss = session.ws_connect(websocket_url)
+                    wss.send(json.dumps({
+                        "event": "send",
                         "conversationId": conversation_id,
-                        "message": conversation_prompt,
-                        "images": uploaded_images,
-                    }
+                        "content": [*uploaded_images, {
+                            "type": "text",
+                            "text": conversation_prompt,
+                        }],
+                        "mode": "chat"
+                    }).encode(), CurlWsFlag.TEXT)
 
-                    response = session.post(
-                        f"{self.conversation_url}/{conversation_id}/messages",
-                        json=payload,
-                        headers={"authorization": f"Bearer {self._access_token}"}
-                    )
-                    if response.status_code != 200:
-                        raise exceptions.APIConnectionError(f"Failed to send message: {response.text}")
-
-                    # Stream response
-                    for line in response.iter_lines():
-                        if line:
+                    # Process response
+                    is_started = False
+                    msg = None
+                    image_prompt: str = None
+                    last_msg = None
+                    streaming_text = ""
+                    
+                    try:
+                        while True:
                             try:
-                                data = json.loads(line)
-                                if data.get("type") == "message":
-                                    content = data.get("content", "")
-                                    if content:
-                                        yield content if raw else dict(text=content)
-                            except json.JSONDecodeError:
-                                continue
-
-                    self.last_response = {"text": ""}
-                    self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
-
+                                msg = wss.recv()[0]
+                                msg = json.loads(msg)
+                            except:
+                                break
+                            last_msg = msg
+                            if msg.get("event") == "appendText":
+                                is_started = True
+                                content = msg.get("text")
+                                streaming_text += content
+                                resp = {"text": content}
+                                yield resp if raw else resp
+                            elif msg.get("event") == "generatingImage":
+                                image_prompt = msg.get("prompt")
+                            elif msg.get("event") == "imageGenerated":
+                                yield {"type": "image", "url": msg.get("url"), "prompt": image_prompt, "preview": msg.get("thumbnailUrl")}
+                            elif msg.get("event") == "done":
+                                break
+                            elif msg.get("event") == "replaceText":
+                                content = msg.get("text")
+                                streaming_text += content
+                                resp = {"text": content}
+                                yield resp if raw else resp
+                            elif msg.get("event") == "error":
+                                raise exceptions.FailedToGenerateResponseError(f"Error: {msg}")
+                        
+                        if not is_started:
+                            raise exceptions.FailedToGenerateResponseError(f"Invalid response: {last_msg}")
+                            
+                        # Update conversation history
+                        self.conversation.update_chat_history(prompt, streaming_text)
+                        self.last_response = {"text": streaming_text}
+                        
+                    finally:
+                        wss.close()
+                        
+            except requests.RequestException as e:
+                raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}")
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"An error occurred: {str(e)}")
+                raise exceptions.FailedToGenerateResponseError(f"Error: {str(e)}")
 
         def for_non_stream():
-            # Run the generator to completion
-            for _ in for_stream():
-                pass
+            streaming_text = ""
+            for response in for_stream():
+                if isinstance(response, dict) and "text" in response:
+                    streaming_text += response["text"]
+            self.last_response = {"text": streaming_text}
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
@@ -266,79 +306,106 @@ class Copilot(Provider):
         api_key: str = None,
         **kwargs
     ) -> Union[str, Generator]:
-        """Generate response as a string using chat method"""
         def for_stream():
-            for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally, images=images, api_key=api_key, **kwargs):
-                yield self.get_message(response)
-
+            for response in self.ask(prompt, True, optimizer=optimizer, 
+                                     conversationally=conversationally, 
+                                     images=images, api_key=api_key, **kwargs):
+                if isinstance(response, dict) and "text" in response:
+                    yield response["text"]
+                elif isinstance(response, dict) and "type" in response and response["type"] == "image":
+                    yield f"\n![Image]({response['url']})\n"
+                    
         def for_non_stream():
-            return self.get_message(
-                self.ask(prompt, False, optimizer=optimizer, conversationally=conversationally, images=images, api_key=api_key, **kwargs)
-            )
-
+            response = self.ask(prompt, False, optimizer=optimizer, 
+                                conversationally=conversationally,
+                                images=images, api_key=api_key, **kwargs)
+            return self.get_message(response)
+            
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:
-        """Retrieves message only from response"""
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        return response.get("text", "")
 
 
-if has_nodriver:
-    async def get_access_token_and_cookies(url: str, proxy: str = None, target: str = "ChatAI"):
-        """Get access token and cookies using nodriver"""
-        browser = await get_nodriver(proxy)
-        try:
-            await browser.goto(url)
-            await browser.wait_for_selector("button[data-testid='login-button']")
-            await browser.click("button[data-testid='login-button']")
-            await browser.wait_for_selector("input[type='email']")
-            await browser.fill("input[type='email']", os.environ.get("webscout_email", ""))
-            await browser.click("button[type='submit']")
-            await browser.wait_for_selector("input[type='password']")
-            await browser.fill("input[type='password']", os.environ.get("webscout_password", ""))
-            await browser.click("button[type='submit']")
-            await browser.wait_for_selector("button[data-testid='login-button']", timeout=10000)
-            cookies = await browser.cookies()
-            access_token = None
-            for cookie in cookies:
-                if cookie["name"] == "U":
-                    access_token = cookie["value"]
-                    break
-            return access_token, {cookie["name"]: cookie["value"] for cookie in cookies}
-        finally:
-            await browser.close()
+async def get_access_token_and_cookies(url: str, proxy: str = None, target: str = "ChatAI"):
+    browser, stop_browser = await get_nodriver(proxy=proxy, user_data_dir="copilot")
+    try:
+        page = await browser.get(url)
+        access_token = None
+        while access_token is None:
+            access_token = await page.evaluate("""
+                (() => {
+                    for (var i = 0; i < localStorage.length; i++) {
+                        try {
+                            item = JSON.parse(localStorage.getItem(localStorage.key(i)));
+                            if (item.credentialType == "AccessToken" 
+                                && item.expiresOn > Math.floor(Date.now() / 1000)
+                                && item.target.includes("target")) {
+                                return item.secret;
+                            }
+                        } catch(e) {}
+                    }
+                })()
+            """.replace('"target"', json.dumps(target)))
+            if access_token is None:
+                await asyncio.sleep(1)
+        cookies = {}
+        for c in await page.send(nodriver.cdp.network.get_cookies([url])):
+            cookies[c.name] = c.value
+        await page.close()
+        return access_token, cookies
+    finally:
+        stop_browser()
 
-    async def get_nodriver(proxy=None, user_data_dir=None):
-        """Get nodriver instance"""
-        if user_data_dir is None:
-            user_data_dir = os.path.join(os.path.expanduser("~"), ".webscout")
-        os.makedirs(user_data_dir, exist_ok=True)
-        return await nodriver.launch(
-            proxy=proxy,
-            user_data_dir=user_data_dir,
-            headless=True,
-        )
 
 def readHAR(url: str):
-    """Read HAR file for access token and cookies"""
-    har_file = os.path.join(os.path.expanduser("~"), ".webscout", "copilot.har")
-    if not os.path.exists(har_file):
-        raise NoValidHarFileError("No valid HAR file found")
-    with open(har_file, "r") as f:
-        har = json.load(f)
-    for entry in har["log"]["entries"]:
-        if entry["request"]["url"] == url:
-            cookies = {}
-            for cookie in entry["request"]["cookies"]:
-                cookies[cookie["name"]] = cookie["value"]
-            access_token = None
-            for cookie in cookies:
-                if cookie == "U":
-                    access_token = cookies[cookie]
-                    break
-            return access_token, cookies
-    raise NoValidHarFileError("No valid HAR file found")
+    api_key = None
+    cookies = None
+    har_files = []
+    # Look for HAR files in common locations
+    har_paths = [
+        os.path.join(os.path.expanduser("~"), "Downloads"),
+        os.path.join(os.path.expanduser("~"), "Desktop")
+    ]
+    for path in har_paths:
+        if os.path.exists(path):
+            for file in os.listdir(path):
+                if file.endswith(".har"):
+                    har_files.append(os.path.join(path, file))
+    
+    for path in har_files:
+        with open(path, 'rb') as file:
+            try:
+                harFile = json.loads(file.read())
+            except json.JSONDecodeError:
+                # Error: not a HAR file!
+                continue
+            for v in harFile['log']['entries']:
+                if v['request']['url'].startswith(url):
+                    v_headers = {h['name'].lower(): h['value'] for h in v['request']['headers']}
+                    if "authorization" in v_headers:
+                        api_key = v_headers["authorization"].split(maxsplit=1).pop()
+                    if v['request']['cookies']:
+                        cookies = {c['name']: c['value'] for c in v['request']['cookies']}
+    if api_key is None:
+        raise NoValidHarFileError("No access token found in .har files")
+
+    return api_key, cookies
+
+
+# def get_clarity() -> bytes:
+#     body = base64.b64decode("H4sIAAAAAAAAA23RwU7DMAwG4HfJ2aqS2E5ibjxH1cMOnQYqYZvUTQPx7vyJRGGAemj01XWcP+9udg+j80MetDhSyrEISc5GrqrtZnmaTydHbrdUnSsWYT2u+8Obo0Ce/IQvaDBmjkwhUlKKIRNHmQgosqEArWPRDQMx90rxeUMPzB1j+UJvwNIxhTvsPcXyX1T+rizE4juK3mEEhpAUg/JvzW1/+U/tB1LATmhqotoiweMea50PLy2vui4LOY3XfD1dwnkor5fn/e18XBFgm6fHjSzZmCyV7d3aRByAEYextaTHEH3i5pgKGVP/s+DScE5PuLKIpW6FnCi1gY3Rbpqmj0/DI/+L7QEAAA==")
+#     return body
+
+
+async def get_nodriver(proxy=None, user_data_dir=None):
+    browser = await nodriver.Browser(
+        headless=True,
+        proxy=proxy,
+        user_data_dir=user_data_dir
+    )
+    return browser, lambda: browser.close()
 
 
 if __name__ == "__main__":
