@@ -69,7 +69,7 @@ class Marcus(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[Dict[str, Any], Generator[Any, None, None]][str, None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]]:
         """Sends a prompt to the AskMarcus API and returns the response."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
