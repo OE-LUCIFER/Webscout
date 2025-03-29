@@ -1,7 +1,9 @@
 import re
+import time
 import requests
 import json
 from typing import Any, Dict, Generator, Optional
+import uuid
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -11,15 +13,14 @@ from webscout import exceptions
 from webscout import LitAgent
 
 
-class WiseCat(Provider):
+class VercelAI(Provider):
     """
-    A class to interact with the WiseCat API.
+    A class to interact with the Vercel AI API.
     """
 
     AVAILABLE_MODELS = [
-        "chat-model-small",
-        "chat-model-large",
-        "chat-model-reasoning",
+        "chat-model",
+        "chat-model-reasoning"
     ]
 
     def __init__(
@@ -33,10 +34,10 @@ class WiseCat(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: str = None,
-        model: str = "chat-model-large",
+        model: str = "chat-model",
         system_prompt: str = "You are a helpful AI assistant."
     ):
-        """Initializes the WiseCat API client."""
+        """Initializes the Vercel AI API client."""
 
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
@@ -44,7 +45,7 @@ class WiseCat(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://wise-cat-groq.vercel.app/api/chat"
+        self.api_endpoint = "https://chat.vercel.ai/api/chat"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
@@ -54,6 +55,44 @@ class WiseCat(Provider):
         self.headers = self.litagent.generate_fingerprint()
         self.session.headers.update(self.headers)
         self.session.proxies = proxies
+
+        # Add Vercel AI specific headers
+        self.session.headers.update({
+            "authority": "chat.vercel.ai",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "content-type": "application/json",
+            "dnt": "1",
+            "origin": "https://chat.vercel.ai",
+            "priority": "u=1, i",
+            "referer": "https://chat.vercel.ai/",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "sec-gpc": "1",
+            "x-kpsdk-c": "1-Cl4OUDwFNA",
+            "x-kpsdk-cd": json.dumps({
+                "workTime": int(time.time() * 1000),
+                "id": str(uuid.uuid4()),
+                "answers": [5, 5],
+                "duration": 26.9,
+                "d": 1981,
+                "st": int(time.time() * 1000) - 1000,
+                "rst": int(time.time() * 1000) - 500
+            }),
+            "x-kpsdk-ct": str(uuid.uuid4()),
+            "x-kpsdk-r": "1-B1NfB2A",
+            "x-kpsdk-v": "j-1.0.0"
+        })
+
+        # Add cookies
+        self.session.cookies.update({
+            "KP_UIDz": str(uuid.uuid4()),
+            "KP_UIDz-ssn": str(uuid.uuid4())
+        })
 
         self.__available_optimizers = (
             method
@@ -93,18 +132,17 @@ class WiseCat(Provider):
                 )
 
         payload = {
-            "id": "ephemeral",
+            "id": "guest",
             "messages": [
                 {
-                    "role": "system",
-                    "content": self.system_prompt
-                },
-                {
+                    "id": str(uuid.uuid4()),
+                    "createdAt": "2025-03-29T09:13:16.992Z",
                     "role": "user",
                     "content": conversation_prompt,
+                    "parts": [{"type": "text", "text": conversation_prompt}]
                 }
             ],
-            "selectedChatModel": self.model
+            "selectedChatModelId": self.model
         }
 
         def for_stream():
@@ -173,11 +211,11 @@ if __name__ == "__main__":
     
     # Test all available models
     working = 0
-    total = len(WiseCat.AVAILABLE_MODELS)
+    total = len(VercelAI.AVAILABLE_MODELS)
     
-    for model in WiseCat.AVAILABLE_MODELS:
+    for model in VercelAI.AVAILABLE_MODELS:
         try:
-            test_ai = WiseCat(model=model, timeout=60)
+            test_ai = VercelAI(model=model, timeout=60)
             response = test_ai.chat("Say 'Hello' in one word", stream=True)
             response_text = ""
             for chunk in response:
@@ -193,4 +231,4 @@ if __name__ == "__main__":
                 display_text = "Empty or invalid response"
             print(f"\r{model:<50} {status:<10} {display_text}")
         except Exception as e:
-            print(f"\r{model:<50} {'✗':<10} {str(e)}")
+            print(f"\r{model:<50} {'✗':<10} {str(e)}") 

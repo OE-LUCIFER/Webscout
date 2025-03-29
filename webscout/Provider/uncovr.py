@@ -1,6 +1,7 @@
 import requests
 import json
 import uuid
+import re
 from typing import Any, Dict, Optional, Generator, Union
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -224,8 +225,9 @@ class UncovrAI(Provider):
                     if line:
                         try:
                             line = line.decode('utf-8')
-                            if line.startswith('0:'):  # Content message
-                                content = line[2:].strip('"')
+                            match = re.search(r'0:"(.*?)"', line)
+                            if match:
+                                content = match.group(1)
                                 full_response += content
                         except (json.JSONDecodeError, UnicodeDecodeError):
                             continue

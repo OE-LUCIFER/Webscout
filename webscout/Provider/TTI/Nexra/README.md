@@ -135,8 +135,6 @@ except Exception as e:
 5. Use custom negative prompts
 6. Set longer timeouts for complex generations
 
-## Error Handling 🛡️
-
 The provider handles common errors:
 
 - Network issues

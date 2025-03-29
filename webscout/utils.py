@@ -2,7 +2,7 @@ import re
 from decimal import Decimal
 from html import unescape
 from math import atan2, cos, radians, sin, sqrt
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional
 from urllib.parse import unquote
 
 from .exceptions import WebscoutE
@@ -16,7 +16,7 @@ except ImportError:
 
 REGEX_STRIP_TAGS = re.compile("<.*?>")
 
-def _expand_proxy_tb_alias(proxy: str | None) -> str | None:
+def _expand_proxy_tb_alias(proxy: Optional[str]) -> Optional[str]:
     """Expand "tb" to a full proxy URL if applicable."""
     return "socks5://127.0.0.1:9150" if proxy == "tb" else proxy
 

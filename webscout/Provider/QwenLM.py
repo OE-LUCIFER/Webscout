@@ -1,13 +1,10 @@
-import requests
 import json
 from typing import Any, Dict, Generator, Optional
-import uuid
-import re
 
 import cloudscraper
 
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
-from webscout.AIbase import Provider, AsyncProvider
+from webscout.AIbase import Provider
 from webscout import exceptions
 
 class QwenLM(Provider):
