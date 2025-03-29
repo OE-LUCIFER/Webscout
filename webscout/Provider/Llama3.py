@@ -90,7 +90,7 @@ class Sambanova(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[Any, Generator][Any, None, None]:
+    ) -> Union[Any, Generator[Any, None, None]]:
         """Chat with AI using the Sambanova API."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -171,16 +171,8 @@ class Sambanova(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[Any, Generator][str, None, None]:
-        """Generate response as a string.
-        Args:
-            prompt (str): Prompt to be sent.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name. Defaults to None.
-            conversationally (bool, optional): Use conversational tuning with the optimizer. Defaults to False.
-        Returns:
-            str: Generated response, or a generator of strings if streaming.
-        """
+    ) -> Union[str, Generator[str, None, None]]:
+        """Generate response `str`"""
         if stream:
             # For stream mode, yield the text chunks directly
             return self.ask(prompt, stream=True, optimizer=optimizer, conversationally=conversationally)
