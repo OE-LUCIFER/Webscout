@@ -114,7 +114,7 @@ class DeepFind(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-    ) -> Dict[str, Any] | Generator[str, None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]][str, None, None]:
         """Search using the DeepFind API and get AI-generated responses.
         
         This method sends a search query to DeepFind and returns the AI-generated response.

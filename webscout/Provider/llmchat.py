@@ -157,7 +157,7 @@ class LLMChat(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator][str, None, None]:
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response with logging capabilities"""
 
         def for_stream():

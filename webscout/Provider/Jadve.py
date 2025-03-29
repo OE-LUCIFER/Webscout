@@ -105,7 +105,7 @@ class JadveOpenAI(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[dict, Generator][dict, None, None]:
+    ) -> Union[dict, Generator[dict, None, None]]:
         """
         Chat with AI.
 
@@ -206,7 +206,7 @@ class JadveOpenAI(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator][str, None, None]:
+    ) -> Union[str, Generator[str, None, None]]:
         """
         Generate a chat response (string).
 

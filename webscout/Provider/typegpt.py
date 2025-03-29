@@ -309,7 +309,7 @@ class TypeGPT(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any] | Generator:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]]:
         """Sends a prompt to the TypeGPT.net API and returns the response."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -398,7 +398,7 @@ class TypeGPT(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator][str, None, None]:
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response string or stream."""
         if stream:
             gen = self.ask(

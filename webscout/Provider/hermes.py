@@ -99,7 +99,7 @@ class NousHermes(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]][Dict[str, Any], None, None]:
         """Chat with AI
         Args:
             prompt (str): Prompt to be send.
@@ -169,7 +169,7 @@ class NousHermes(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator][str, None, None]:
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
             prompt (str): Prompt to be send.

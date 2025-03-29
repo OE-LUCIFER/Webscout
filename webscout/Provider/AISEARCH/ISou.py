@@ -118,7 +118,7 @@ class Isou(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-    ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]][Dict[str, Any], None, None]:
         """Search using the Isou API and get AI-generated responses.
         
         Args:

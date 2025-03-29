@@ -69,7 +69,7 @@ class Marcus(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any] | Generator[str, None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]][str, None, None]:
         """Sends a prompt to the AskMarcus API and returns the response."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -119,7 +119,7 @@ class Marcus(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator][str, None, None]:
+    ) -> Union[str, Generator[str, None, None]]:
         """Generates a response from the AskMarcus API."""
         def for_stream():
             for response_chunk in self.ask(

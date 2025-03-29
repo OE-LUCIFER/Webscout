@@ -123,7 +123,7 @@ class QwenLM(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]][Dict[str, Any], None, None]:
         """Chat with AI."""
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -226,7 +226,7 @@ class QwenLM(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator][str, None, None]:
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response string from chat."""
 
         def for_stream() -> Generator[str, None, None]:

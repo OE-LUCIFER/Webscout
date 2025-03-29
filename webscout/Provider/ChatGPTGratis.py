@@ -74,7 +74,7 @@ class ChatGPTGratis(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]][Dict[str, Any], None, None]:
         """
         Sends a request to the API and returns the response.
         If stream is True, yields response chunks as they are received.
@@ -144,7 +144,7 @@ class ChatGPTGratis(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator][str, None, None]:
+    ) -> Union[str, Generator[str, None, None]]:
         """
         Returns the response as a string.
         For streaming requests, yields each response chunk as a string.

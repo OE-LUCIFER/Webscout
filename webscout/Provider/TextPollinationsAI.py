@@ -103,7 +103,7 @@ class TextPollinationsAI(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]][Dict[str, Any], None, None]:
         """Chat with AI"""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -175,7 +175,7 @@ class TextPollinationsAI(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator][str, None, None]:
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response as a string"""
         def for_stream():
             for response in self.ask(
