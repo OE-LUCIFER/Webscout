@@ -1,7 +1,7 @@
 import requests
 import json
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Union
 from datetime import datetime
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
@@ -284,7 +284,7 @@ class MultiChatAI(Provider):
         )
         return self.get_message(response)
 
-    def get_message(self, response: Dict[str, Any] | str) -> str:
+    def get_message(self, response: Union[Dict[str, Any], str]) -> str:
         """
         Retrieves message from response.
         
