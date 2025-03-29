@@ -61,7 +61,7 @@ class Bagoodex(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any] | Generator:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]]:
         """Sends a chat completion request to the Bagoodex API."""
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -113,7 +113,7 @@ class Bagoodex(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[str, Generator]:
+    ) -> Union[str, Generator[str, None, None]]:
 
 
         def for_stream():
