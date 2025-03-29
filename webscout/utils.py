@@ -2,7 +2,7 @@ import re
 from decimal import Decimal
 from html import unescape
 from math import atan2, cos, radians, sin, sqrt
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from urllib.parse import unquote
 
 from .exceptions import WebscoutE
