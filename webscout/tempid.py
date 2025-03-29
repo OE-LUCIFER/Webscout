@@ -1,6 +1,6 @@
 import aiohttp
 from dataclasses import dataclass
-from typing import NoReturn, List, Dict, Any, Optional
+from typing import NoReturn, List, Dict, Any, Optional, Union
 import requests
 
 @dataclass
@@ -52,12 +52,12 @@ class TempMail:
         await self.close()
         return None
 
-    async def get_domains(self) -> list[DomainModel]:
+    async def get_domains(self) -> List[DomainModel]:
         async with self._session.get("/api/v3/domains") as response:
             response_json = await response.json()
             return [DomainModel(domain['name'], domain['type'], domain['forward_available'], domain['forward_max_seconds']) for domain in response_json['domains']]
 
-    async def create_email(self, alias: str | None = None, domain: str | None = None) -> CreateEmailResponseModel:
+    async def create_email(self, alias: Optional[str] = None, domain: Optional[str] = None) -> CreateEmailResponseModel:
         async with self._session.post("/api/v3/email/new", data={'name': alias, 'domain': domain}) as response:
             response_json = await response.json()
             return CreateEmailResponseModel(response_json['email'], response_json['token'])
@@ -69,7 +69,7 @@ class TempMail:
             else:
                 return False
 
-    async def get_messages(self, email: str) -> list[MessageResponseModel] | None:
+    async def get_messages(self, email: str) -> Optional[List[MessageResponseModel]]:
         async with self._session.get(f"/api/v3/email/{email}/messages") as response:
             response_json = await response.json()
             if len(response_json) == 0:
