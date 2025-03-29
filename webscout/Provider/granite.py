@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Generator
+from typing import Union, Any, Dict, Generator
 
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
@@ -81,7 +81,7 @@ class IBMGranite(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[Dict[str, Any], Generator[Any, None, None]][Dict[str, Any], None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]]:
         """Chat with AI
         Args:
             prompt (str): Prompt to be sent.

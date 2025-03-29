@@ -123,7 +123,7 @@ class QwenLM(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Union[Dict[str, Any], Generator[Any, None, None]][Dict[str, Any], None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]]:
         """Chat with AI."""
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
