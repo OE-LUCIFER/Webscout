@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator
+from typing import Union, Any, Dict, Generator
 from uuid import uuid4
 import requests
 import re

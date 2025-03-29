@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Optional
+from typing import Union, Any, Dict, Optional
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream

@@ -1,7 +1,7 @@
 import re
 import requests
 import json
-from typing import Any, Dict, Generator, Optional
+from typing import Union, Any, Dict, Generator, Optional
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation

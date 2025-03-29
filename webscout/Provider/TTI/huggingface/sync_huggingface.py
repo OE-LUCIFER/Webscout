@@ -29,7 +29,7 @@ import os
 import requests
 import io
 from PIL import Image
-from typing import Any, List, Optional, Dict
+from typing import Union, Any, List, Optional, Dict
 from webscout.AIbase import ImageProvider
 from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent

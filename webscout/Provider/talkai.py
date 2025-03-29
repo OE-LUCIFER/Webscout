@@ -1,7 +1,7 @@
 import uuid
 import cloudscraper
 import json
-from typing import Any, Dict, Optional, Generator
+from typing import Union, Any, Dict, Optional, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -146,7 +146,7 @@ class Talkai(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generate response `str`
         Args:
             prompt (str): Prompt to be send.

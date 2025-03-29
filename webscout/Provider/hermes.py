@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Generator, Optional
+from typing import Union, Any, Dict, Generator, Optional
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -169,7 +169,7 @@ class NousHermes(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generate response `str`
         Args:
             prompt (str): Prompt to be send.

@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Generator
+from typing import Union, Any, Dict, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -90,7 +90,7 @@ class Sambanova(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Any | Generator[Any, None, None]:
+    ) -> Union[Any, Generator][Any, None, None]:
         """Chat with AI using the Sambanova API."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -171,7 +171,7 @@ class Sambanova(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Any | Generator[str, None, None]:
+    ) -> Union[Any, Generator][str, None, None]:
         """Generate response as a string.
         Args:
             prompt (str): Prompt to be sent.

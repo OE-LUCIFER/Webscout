@@ -1,6 +1,6 @@
 import requests
 from requests.exceptions import RequestException
-from typing import Any, Dict
+from typing import Union, Any, Dict
 from webscout.AIutel import Conversation, Optimizers
 from webscout.litagent import LitAgent
 from webscout.prompt_manager import AwesomePrompts

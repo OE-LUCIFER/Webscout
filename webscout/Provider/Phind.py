@@ -8,7 +8,7 @@ from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import  Provider
 
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from typing import Union, Any, AsyncGenerator, Dict
 
 
 #------------------------------------------------------phind-------------------------------------------------------------

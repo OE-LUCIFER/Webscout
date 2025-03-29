@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Generator
+from typing import Union, Any, Dict, Generator
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
@@ -175,7 +175,7 @@ class TextPollinationsAI(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generate response as a string"""
         def for_stream():
             for response in self.ask(

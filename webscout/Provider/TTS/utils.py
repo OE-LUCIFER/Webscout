@@ -1,7 +1,7 @@
 """
 Text processing utilities for TTS providers.
 """
-from typing import List, Dict, Tuple, Set, Optional, Pattern
+from typing import Union, List, Dict, Tuple, Set, Optional, Pattern
 import re
 
 

@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Optional, Generator, List
+from typing import Union, Any, Dict, Optional, Generator, List
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -157,7 +157,7 @@ class LLMChat(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generate response with logging capabilities"""
 
         def for_stream():

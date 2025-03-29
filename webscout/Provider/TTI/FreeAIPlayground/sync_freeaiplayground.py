@@ -1,6 +1,6 @@
 import requests
 import os
-from typing import List
+from typing import Union, List
 from string import punctuation
 from random import choice
 from random import randint

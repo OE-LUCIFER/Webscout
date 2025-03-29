@@ -34,7 +34,7 @@ import os
 import aiohttp
 import aiofiles
 import asyncio
-from typing import Any, List, Optional, Dict
+from typing import Union, Any, List, Optional, Dict
 from webscout.AIbase import AsyncImageProvider
 from webscout.Litlogger import Logger, LogFormat
 from webscout.litagent import LitAgent

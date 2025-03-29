@@ -1,7 +1,7 @@
 from os import path
 from json import load, dumps
 import warnings
-from typing import Any, Dict
+from typing import Union, Any, Dict
 
 # Import internal modules and dependencies
 from ..AIutel import Optimizers, Conversation, AwesomePrompts, sanitize_stream

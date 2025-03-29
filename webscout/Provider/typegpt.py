@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import *
+from typing import Union, *
 import requests.exceptions
 
 from webscout.AIutel import Optimizers
@@ -398,7 +398,7 @@ class TypeGPT(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generate response string or stream."""
         if stream:
             gen = self.ask(

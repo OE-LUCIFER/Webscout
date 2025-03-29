@@ -25,7 +25,7 @@ Examples:
 import cloudscraper
 import os
 import requests
-from typing import List
+from typing import Union, List
 from webscout.AIbase import ImageProvider
 from webscout.litagent import LitAgent
 

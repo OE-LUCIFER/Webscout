@@ -4,7 +4,7 @@ import requests
 import json
 import re
 import uuid
-from typing import List, Dict, Generator, Optional, Any, TypedDict, Final
+from typing import Union, List, Dict, Generator, Optional, Any, TypedDict, Final
 
 # Type definitions
 class Role(Enum):

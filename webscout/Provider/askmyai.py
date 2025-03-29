@@ -1,7 +1,7 @@
 import requests
 import json
 import re
-from typing import Any, Dict, Optional, Generator
+from typing import Union, Any, Dict, Optional, Generator
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
@@ -125,7 +125,7 @@ class AskMyAI(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generates a response from the AskMyAI API."""
 
         def for_stream():

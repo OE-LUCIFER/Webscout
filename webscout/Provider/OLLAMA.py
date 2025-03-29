@@ -79,7 +79,7 @@ class OLLAMA(Provider):
         conversationally: bool = False,
         tools: Optional[List[Dict]] = None,
         images: Optional[List[str]] = None,
-    ) -> dict | AsyncGenerator:
+    ) -> Union[dict, AsyncGenerator]:
         """Chat with AI
 
         Args:
@@ -91,7 +91,7 @@ class OLLAMA(Provider):
             tools (List[Dict], optional): List of tools/functions to use. Defaults to None.
             images (List[str], optional): List of image paths or base64 encoded images. Defaults to None.
         Returns:
-           dict|AsyncGenerator : ai content
+           Union[dict, AsyncGenerator] : ai content
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -150,7 +150,7 @@ class OLLAMA(Provider):
         conversationally: bool = False,
         tools: Optional[List[Dict]] = None,
         images: Optional[List[str]] = None,
-    ) -> dict | AsyncGenerator:
+    ) -> Union[dict, AsyncGenerator]:
         """Async version of ask method"""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -208,7 +208,7 @@ class OLLAMA(Provider):
         conversationally: bool = False,
         tools: Optional[List[Dict]] = None,
         images: Optional[List[str]] = None,
-    ) -> str | AsyncGenerator:
+    ) -> Union[str, AsyncGenerator]:
         """Generate response `str`
         Args:
             prompt (str): Prompt to be send.
@@ -218,7 +218,7 @@ class OLLAMA(Provider):
             tools (List[Dict], optional): List of tools/functions to use. Defaults to None.
             images (List[str], optional): List of image paths or base64 encoded images. Defaults to None.
         Returns:
-            str: Response generated
+            Union[str, AsyncGenerator]: Response generated
         """
         def for_stream():
             for response in self.ask(
@@ -249,7 +249,7 @@ class OLLAMA(Provider):
         conversationally: bool = False,
         tools: Optional[List[Dict]] = None,
         images: Optional[List[str]] = None,
-    ) -> str | AsyncGenerator:
+    ) -> Union[str, AsyncGenerator]:
         """Async version of chat method"""
         async def for_stream():
             async for response in await self.aask(
@@ -289,7 +289,7 @@ class OLLAMA(Provider):
         prompt: str,
         stream: bool = False,
         **kwargs
-    ) -> dict | AsyncGenerator:
+    ) -> Union[dict, AsyncGenerator]:
         """Generate text using the model"""
         try:
             if stream:
@@ -305,7 +305,7 @@ class OLLAMA(Provider):
         prompt: str,
         stream: bool = False,
         **kwargs
-    ) -> dict | AsyncGenerator:
+    ) -> Union[dict, AsyncGenerator]:
         """Async version of generate method"""
         try:
             if stream:

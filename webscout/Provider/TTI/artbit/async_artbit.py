@@ -31,7 +31,7 @@ import aiohttp
 import aiofiles
 import asyncio
 import os
-from typing import List
+from typing import Union, List
 from webscout.AIbase import AsyncImageProvider
 from webscout.litagent import LitAgent
 

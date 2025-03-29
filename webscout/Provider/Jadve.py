@@ -1,7 +1,7 @@
 import requests
 import json
 import re
-from typing import Any, Dict, Optional, Generator
+from typing import Union, Any, Dict, Optional, Generator
 
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
@@ -105,7 +105,7 @@ class JadveOpenAI(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict | Generator[dict, None, None]:
+    ) -> Union[dict, Generator][dict, None, None]:
         """
         Chat with AI.
 
@@ -206,7 +206,7 @@ class JadveOpenAI(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """
         Generate a chat response (string).
 

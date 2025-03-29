@@ -1,7 +1,7 @@
 import requests
 import json
 import re
-from typing import Any, Dict, Optional, Generator
+from typing import Union, Any, Dict, Optional, Generator
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts
@@ -143,7 +143,7 @@ class Llama3Mitril(Provider):
         stream: bool = True,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generates a response from the Llama3 Mitril API."""
 
         def for_stream():

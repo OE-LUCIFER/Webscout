@@ -8,7 +8,7 @@ from webscout.AIutel import Conversation
 from webscout.AIutel import AwesomePrompts, sanitize_stream
 from webscout.AIbase import Provider, AsyncProvider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from typing import Union, Any, AsyncGenerator, Dict
 
 
 class Julius(Provider):

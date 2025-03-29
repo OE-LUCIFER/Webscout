@@ -5,7 +5,7 @@ from ..AIutel import Conversation
 from ..AIutel import AwesomePrompts, sanitize_stream
 from ..AIbase import  Provider, AsyncProvider
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from typing import Union, Any, AsyncGenerator, Dict
 import httpx
 #------------------------------------------------------KOBOLDAI-----------------------------------------------------------
 class KOBOLDAI(Provider):
@@ -266,7 +266,7 @@ class AsyncKOBOLDAI(AsyncProvider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict | AsyncGenerator:
+    ) -> Union[dict, AsyncGenerator]:
         """Chat with AI asynchronously.
 
         Args:
@@ -338,7 +338,7 @@ class AsyncKOBOLDAI(AsyncProvider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | AsyncGenerator:
+    ) -> Union[str, AsyncGenerator]:
         """Generate response `str` asynchronously.
         Args:
             prompt (str): Prompt to be send.

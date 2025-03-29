@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Dict, Any
+from typing import Union, Dict, Any
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation

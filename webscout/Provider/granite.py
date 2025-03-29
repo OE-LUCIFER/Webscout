@@ -157,7 +157,7 @@ class IBMGranite(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generate response as a string using chat method"""
         def for_stream():
             for response in self.ask(prompt, True, optimizer=optimizer, conversationally=conversationally):

@@ -2,7 +2,7 @@ import requests
 import json
 import html
 import re
-from typing import Any, Dict
+from typing import Union, Any, Dict
 
 from webscout.AIutel import Optimizers
 from webscout.AIutel import Conversation

@@ -5,7 +5,7 @@ from ..AIutel import AwesomePrompts, sanitize_stream
 from ..AIbase import  Provider, AsyncProvider
 
 from webscout import exceptions
-from typing import Any, AsyncGenerator, Dict
+from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 import requests
 import httpx
 #----------------------------------------------------------OpenAI-----------------------------------
@@ -332,7 +332,8 @@ class AsyncOPENAI(AsyncProvider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> dict | AsyncGenerator:
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Union[dict, AsyncGenerator]:
         """Chat with AI asynchronously.
 
         Args:
@@ -341,6 +342,7 @@ class AsyncOPENAI(AsyncProvider):
             raw (bool, optional): Stream back raw response as received. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            tools (Optional[List[Dict[str, Any]]], optional): List of tools to be used. Defaults to None.
         Returns:
            dict|AsyncGenerator : ai content.
         ```json
@@ -444,13 +446,15 @@ class AsyncOPENAI(AsyncProvider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | AsyncGenerator:
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Union[str, AsyncGenerator]:
         """Generate response `str` asynchronously.
         Args:
             prompt (str): Prompt to be send.
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            tools (Optional[List[Dict[str, Any]]], optional): List of tools to be used. Defaults to None.
         Returns:
             str|AsyncGenerator: Response generated
         """

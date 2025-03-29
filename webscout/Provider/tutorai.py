@@ -1,6 +1,6 @@
 import requests
 import os
-from typing import List, Optional
+from typing import Union, List, Optional
 from string import punctuation
 from random import choice
 import json

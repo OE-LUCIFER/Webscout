@@ -2,7 +2,7 @@ import uuid
 import requests
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Union, Any, Dict, List, Optional
 
 from webscout.AIbase import ImageProvider
 from webscout import exceptions

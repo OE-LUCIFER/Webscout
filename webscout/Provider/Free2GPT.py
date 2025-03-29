@@ -13,7 +13,7 @@ Select the variant by passing the 'variant' parameter in the constructor:
     variant="gpt"     --> Uses https://chat1.free2gpt.com/api/generate
 """
 
-from typing import Optional, Dict
+from typing import Union, Optional, Dict
 import time
 import json
 import requests

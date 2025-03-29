@@ -2,7 +2,7 @@ import re
 import time
 import requests
 import json
-from typing import Any, Dict, Generator, Optional
+from typing import Union, Any, Dict, Generator, Optional
 import uuid
 
 from webscout.AIutel import Optimizers

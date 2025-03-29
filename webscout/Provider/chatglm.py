@@ -170,7 +170,7 @@ class ChatGLM(Provider):
         stream: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generate response `str`"""
 
         def for_stream():

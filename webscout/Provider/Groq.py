@@ -1,4 +1,4 @@
-from typing import Any, AsyncGenerator, Dict, Optional, Callable, List
+from typing import Any, AsyncGenerator, Dict, Optional, Callable, List, Union
 
 import httpx
 import requests
@@ -459,7 +459,7 @@ class AsyncGROQ(AsyncProvider):
         optimizer: str = None,
         conversationally: bool = False,
         tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> dict | AsyncGenerator:
+    ) -> Union[dict, AsyncGenerator]:
         """Chat with AI asynchronously.
 
         Args:
@@ -606,7 +606,7 @@ class AsyncGROQ(AsyncProvider):
         optimizer: str = None,
         conversationally: bool = False,
         tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> str | AsyncGenerator:
+    ) -> Union[str, AsyncGenerator]:
         """Generate response `str` asynchronously.
         Args:
             prompt (str): Prompt to be send.

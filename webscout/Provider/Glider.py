@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Any, Dict, Generator, Optional
+from typing import Union, Any, Dict, Generator, Optional
 
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
@@ -151,7 +151,7 @@ class GliderAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> str | Generator[str, None, None]:
+    ) -> Union[str, Generator][str, None, None]:
         """Generate response as a string.
 
         Args:

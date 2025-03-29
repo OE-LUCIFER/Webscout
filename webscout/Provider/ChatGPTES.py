@@ -2,7 +2,7 @@ import requests
 import re
 import json
 import os
-from typing import List, Dict
+from typing import Union, List, Dict
 from webscout.AIutel import Optimizers, Conversation, AwesomePrompts
 from webscout.AIbase import Provider
 from webscout import exceptions
