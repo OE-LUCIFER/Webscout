@@ -1,12 +1,13 @@
 import json
 import platform
 import subprocess
+from typing import Union
 
 
 
 def sanitize_stream(
     chunk: str, intro_value: str = "data:", to_json: bool = True
-) -> str | dict:
+) -> Union[str, dict]:
     """Remove streaming flags
 
     Args:
