@@ -68,7 +68,7 @@ class AskMyAI(Provider):
         raw: bool = False,
         optimizer: str = None,
         conversationally: bool = False,
-    ) -> Union[Dict[str, Any], Generator[Any, None, None]][Dict[str, Any], None, None]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None]]:
         """Sends a prompt to the askmyai.chat API and returns the response."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
